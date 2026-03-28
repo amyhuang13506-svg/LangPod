@@ -1,0 +1,34 @@
+"""
+LangPod Pipeline Configuration
+Copy this file to config.py and fill in your API keys.
+"""
+
+# === GPT API ===
+GPT_API_ENDPOINT = "https://api.v3.cm/v1/chat/completions"
+GPT_API_KEY = ""  # Your GPT API key
+GPT_MODEL = "gpt-4o"
+
+# === MiniMax TTS ===
+MINIMAX_API_KEY = ""  # Your MiniMax API key
+MINIMAX_API_ENDPOINT = "https://api.minimax.chat/v1/t2a_v2"
+MINIMAX_VOICE_ALEX = "English_DecentYoungMan"
+MINIMAX_VOICE_LISA = "English_Upbeat_Woman"
+MINIMAX_VOICE_ZH = "female-yujie"
+MINIMAX_VOICE_ZH_MALE = "male-qn-daxuesheng"
+MINIMAX_VOICE_ZH_FEMALE = "presenter_female"
+MINIMAX_MODEL = "speech-02-hd"
+
+# === Aliyun OSS ===
+OSS_ACCESS_KEY_ID = ""
+OSS_ACCESS_KEY_SECRET = ""
+OSS_BUCKET_NAME = "langpod"
+OSS_ENDPOINT = "oss-ap-southeast-1.aliyuncs.com"
+OSS_CDN_DOMAIN = "https://oss.langpod.com"
+
+# === Server ===
+SERVER_IP = "47.84.141.119"
+API_BASE_URL = "http://%s/langpod/api" % SERVER_IP
+
+BANNED_TOPICS = "politics, elections, political parties, military, war, conflict, religion, sensitive social events"
+
+# See config.py.local or original config.py for LEVELS definition

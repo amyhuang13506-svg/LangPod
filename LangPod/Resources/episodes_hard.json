@@ -1,0 +1,336 @@
+[
+  {
+    "id": "ep-2026-0325-hard-001",
+    "title": "OpenAI Unveils Its Latest AI Model",
+    "level": "hard",
+    "date": "2026-03-29",
+    "duration_seconds": 51,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "OpenAI has just released its latest AI model, claimed to be more advanced than GPT-4.",
+        "translation_zh": "OpenAI刚刚发布了其最新的AI模型，据称比GPT-4更先进。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 4.99
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Indeed, it's a remarkable achievement. The model reportedly improves contextual understanding significantly.",
+        "translation_zh": "确实，这是一个了不起的成就。据说这个模型显著提高了语境理解能力。",
+        "emotion": "happy",
+        "start": 5.79,
+        "end": 12.57
+      },
+      {
+        "speaker": "Alex",
+        "text": "However, some experts argue that these models still lack true comprehension of human nuances.",
+        "translation_zh": "然而，一些专家认为这些模型仍然缺乏对人类细微差别的真正理解。",
+        "emotion": "neutral",
+        "start": 13.37,
+        "end": 19.8
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, that's true. But the model's ability to generate human-like text is unparalleled.",
+        "translation_zh": "在某种程度上，确实如此。但这个模型生成类人文本的能力是无与伦比的。",
+        "emotion": "neutral",
+        "start": 20.6,
+        "end": 26.54
+      },
+      {
+        "speaker": "Alex",
+        "text": "There’s concern about ethical implications, particularly in misinformation dissemination.",
+        "translation_zh": "人们对道德影响表示担忧，尤其是在虚假信息传播方面。",
+        "emotion": "sad",
+        "start": 27.34,
+        "end": 32.38
+      },
+      {
+        "speaker": "Lisa",
+        "text": "OpenAI has implemented stricter filters and safety measures, addressing misuse concerns more effectively.",
+        "translation_zh": "OpenAI实施了更严格的过滤和安全措施，更有效地解决了误用问题。",
+        "emotion": "happy",
+        "start": 33.18,
+        "end": 39.11
+      },
+      {
+        "speaker": "Alex",
+        "text": "Still, the rapid pace of AI development requires ongoing vigilance.",
+        "translation_zh": "然而，AI发展的快速步伐需要持续警惕。",
+        "emotion": "neutral",
+        "start": 39.91,
+        "end": 43.82
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Absolutely. Transparency and public discourse are essential as we integrate AI into daily life.",
+        "translation_zh": "绝对。透明度和公众讨论在将AI融入日常生活中是至关重要的。",
+        "emotion": "happy",
+        "start": 44.62,
+        "end": 51.02
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "contextual",
+        "phonetic": "/kənˈtɛkstʃuəl/",
+        "translation_zh": "语境的",
+        "example": "The model improves contextual understanding significantly.",
+        "audio": ""
+      },
+      {
+        "word": "unparalleled",
+        "phonetic": "/ʌnˈparəlɛld/",
+        "translation_zh": "无与伦比的",
+        "example": "The model's ability to generate human-like text is unparalleled.",
+        "audio": ""
+      },
+      {
+        "word": "ethical",
+        "phonetic": "/ˈɛθɪkəl/",
+        "translation_zh": "伦理的",
+        "example": "There’s concern about ethical implications.",
+        "audio": ""
+      },
+      {
+        "word": "misinformation",
+        "phonetic": "/ˌmɪsɪnfərˈmeɪʃən/",
+        "translation_zh": "虚假信息",
+        "example": "Particularly in misinformation dissemination.",
+        "audio": ""
+      },
+      {
+        "word": "filters",
+        "phonetic": "/ˈfɪltərz/",
+        "translation_zh": "过滤器",
+        "example": "OpenAI has implemented stricter filters.",
+        "audio": ""
+      },
+      {
+        "word": "vigilance",
+        "phonetic": "/ˈvɪdʒɪləns/",
+        "translation_zh": "警惕",
+        "example": "The rapid pace of AI development requires ongoing vigilance.",
+        "audio": ""
+      }
+    ],
+    "audio": {
+      "english": "bundle://test_hard_en",
+      "translation_zh": "bundle://test_hard_zh"
+    },
+    "thumbnail": "bundle://cover_hard"
+  },
+  {
+    "id": "ep-2026-0326-hard-002",
+    "title": "AI in Healthcare",
+    "level": "hard",
+    "date": "2026-03-26",
+    "duration_seconds": 540,
+    "audio": {
+      "english": "https://oss.langpod.com/episodes/hard-002/en.mp3",
+      "translation_zh": "https://oss.langpod.com/episodes/hard-002/zh.mp3"
+    },
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "A groundbreaking study published in Nature Medicine this week demonstrates that an AI diagnostic system outperformed radiologists in detecting early-stage lung cancer.",
+        "start": 0.0,
+        "end": 9.0,
+        "translation_zh": "本周发表在《自然·医学》上的一项突破性研究表明，一个AI诊断系统在检测早期肺癌方面超过了放射科医生。"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "The accuracy gap was remarkable — 94% versus 82%. But I think the real story is about how this technology will reshape the doctor-patient relationship.",
+        "start": 9.3,
+        "end": 19.0,
+        "translation_zh": "准确率差距很显著——94%对82%。但我认为真正的故事是这项技术将如何重塑医患关系。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Exactly. There's a philosophical dimension here. When an algorithm makes a life-or-death diagnosis, who bears the liability? The developer, the hospital, or the physician who signed off on it?",
+        "start": 19.3,
+        "end": 30.0,
+        "translation_zh": "没错。这里有一个哲学层面的问题。当算法做出关乎生死的诊断时，谁来承担责任？开发者、医院，还是签字认可的医生？"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "That's the regulatory gray area that lawmakers are scrambling to address. The EU's AI Act has some provisions, but they weren't designed with this level of clinical integration in mind.",
+        "start": 30.3,
+        "end": 40.5,
+        "translation_zh": "这就是立法者正在争先恐后解决的监管灰色地带。欧盟的AI法案有一些条款，但并非针对这种程度的临床整合而设计。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Meanwhile, developing nations see this as a leapfrog opportunity. Countries with physician shortages could deploy AI screening at a fraction of the cost.",
+        "start": 40.8,
+        "end": 50.0,
+        "translation_zh": "与此同时，发展中国家把这看作弯道超车的机会。医生短缺的国家可以以极低的成本部署AI筛查。"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "It's a compelling argument. Democratizing access to world-class diagnostics could save millions of lives, particularly in regions where specialists are virtually nonexistent.",
+        "start": 50.3,
+        "end": 60.0,
+        "translation_zh": "这是一个很有说服力的论点。普及世界级的诊断技术可以拯救数百万人的生命，尤其是在几乎没有专科医生的地区。"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "groundbreaking",
+        "phonetic": "/ˈɡraʊndbreɪkɪŋ/",
+        "translation_zh": "突破性的，开创性的",
+        "example": "a groundbreaking discovery in physics",
+        "audio": "https://oss.langpod.com/words/groundbreaking.mp3"
+      },
+      {
+        "word": "diagnostic",
+        "phonetic": "/ˌdaɪəɡˈnɑːstɪk/",
+        "translation_zh": "诊断的",
+        "example": "diagnostic tools for disease detection",
+        "audio": "https://oss.langpod.com/words/diagnostic.mp3"
+      },
+      {
+        "word": "liability",
+        "phonetic": "/ˌlaɪəˈbɪləti/",
+        "translation_zh": "责任，法律责任",
+        "example": "The company denied any liability for the accident.",
+        "audio": "https://oss.langpod.com/words/liability.mp3"
+      },
+      {
+        "word": "regulatory",
+        "phonetic": "/ˈreɡjələtɔːri/",
+        "translation_zh": "监管的，管理的",
+        "example": "regulatory requirements for new drugs",
+        "audio": "https://oss.langpod.com/words/regulatory.mp3"
+      },
+      {
+        "word": "provision",
+        "phonetic": "/prəˈvɪʒn/",
+        "translation_zh": "条款，规定",
+        "example": "legal provisions for data protection",
+        "audio": "https://oss.langpod.com/words/provision.mp3"
+      },
+      {
+        "word": "leapfrog",
+        "phonetic": "/ˈliːpfrɑːɡ/",
+        "translation_zh": "跨越式发展，弯道超车",
+        "example": "developing nations leapfrogging traditional infrastructure",
+        "audio": "https://oss.langpod.com/words/leapfrog.mp3"
+      },
+      {
+        "word": "democratizing",
+        "phonetic": "/dɪˈmɑːkrətaɪzɪŋ/",
+        "translation_zh": "使民主化，使大众化",
+        "example": "Technology is democratizing education.",
+        "audio": "https://oss.langpod.com/words/democratizing.mp3"
+      }
+    ]
+  },
+  {
+    "id": "ep-2026-0327-hard-003",
+    "title": "The Housing Crisis",
+    "level": "hard",
+    "date": "2026-03-27",
+    "duration_seconds": 500,
+    "audio": {
+      "english": "https://oss.langpod.com/episodes/hard-003/en.mp3",
+      "translation_zh": "https://oss.langpod.com/episodes/hard-003/zh.mp3"
+    },
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Housing affordability has reached a crisis point in virtually every major metropolitan area. The ratio of median home price to median income has hit historic highs.",
+        "start": 0.0,
+        "end": 9.5,
+        "translation_zh": "住房可负担性在几乎所有大城市都已达到危机点。房价中位数与收入中位数的比率已创下历史新高。"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "And it's not just about purchasing. Rental markets are equally strained. In cities like London and San Francisco, young professionals are spending upwards of 50% of their income on rent.",
+        "start": 9.8,
+        "end": 20.0,
+        "translation_zh": "而且不仅是购房问题。租房市场同样紧张。在伦敦和旧金山这样的城市，年轻专业人士将超过50%的收入花在房租上。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "The root causes are multifaceted: restrictive zoning laws, NIMBYism, supply chain disruptions in construction materials, and of course, institutional investors snapping up residential properties.",
+        "start": 20.3,
+        "end": 32.0,
+        "translation_zh": "根本原因是多方面的：限制性的分区法、邻避主义、建筑材料供应链中断，当然还有机构投资者抢购住宅物业。"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Some cities have experimented with rent control, but economists are largely skeptical. It tends to reduce the overall housing supply because developers lose the incentive to build.",
+        "start": 32.3,
+        "end": 43.0,
+        "translation_zh": "一些城市尝试了租金管控，但经济学家普遍持怀疑态度。这往往会减少整体住房供应，因为开发商失去了建设的动力。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Vienna's social housing model is often cited as a success story. Nearly 60% of residents live in subsidized housing, and quality remains remarkably high.",
+        "start": 43.3,
+        "end": 53.0,
+        "translation_zh": "维也纳的社会住房模式经常被引用为成功案例。近60%的居民住在补贴住房中，而且质量保持在相当高的水平。"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "True, but replicating that model requires decades of sustained political will and enormous upfront investment. It's not a quick fix by any means.",
+        "start": 53.3,
+        "end": 62.0,
+        "translation_zh": "确实，但复制这个模式需要数十年持续的政治意愿和巨大的前期投资。这绝不是一个快速解决方案。"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "affordability",
+        "phonetic": "/əˌfɔːrdəˈbɪləti/",
+        "translation_zh": "可负担性",
+        "example": "housing affordability remains a key issue",
+        "audio": "https://oss.langpod.com/words/affordability.mp3"
+      },
+      {
+        "word": "metropolitan",
+        "phonetic": "/ˌmetrəˈpɑːlɪtən/",
+        "translation_zh": "大都市的",
+        "example": "the Tokyo metropolitan area",
+        "audio": "https://oss.langpod.com/words/metropolitan.mp3"
+      },
+      {
+        "word": "multifaceted",
+        "phonetic": "/ˌmʌltiˈfæsɪtɪd/",
+        "translation_zh": "多方面的，多层次的",
+        "example": "a multifaceted approach to the problem",
+        "audio": "https://oss.langpod.com/words/multifaceted.mp3"
+      },
+      {
+        "word": "incentive",
+        "phonetic": "/ɪnˈsentɪv/",
+        "translation_zh": "激励，动力",
+        "example": "financial incentives for green energy",
+        "audio": "https://oss.langpod.com/words/incentive.mp3"
+      },
+      {
+        "word": "subsidized",
+        "phonetic": "/ˈsʌbsɪdaɪzd/",
+        "translation_zh": "补贴的，资助的",
+        "example": "government-subsidized childcare",
+        "audio": "https://oss.langpod.com/words/subsidized.mp3"
+      },
+      {
+        "word": "replicating",
+        "phonetic": "/ˈreplɪkeɪtɪŋ/",
+        "translation_zh": "复制，再现",
+        "example": "replicating the experiment in a different lab",
+        "audio": "https://oss.langpod.com/words/replicating.mp3"
+      },
+      {
+        "word": "sustained",
+        "phonetic": "/səˈsteɪnd/",
+        "translation_zh": "持续的，持久的",
+        "example": "sustained economic growth",
+        "audio": "https://oss.langpod.com/words/sustained.mp3"
+      }
+    ]
+  }
+]

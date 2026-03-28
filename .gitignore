@@ -1,0 +1,19 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+
+# Pipeline output (generated content, not code)
+pipeline/output/
+pipeline/logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# API keys are in config.py — DO NOT commit
+# pipeline/config.py is tracked but keys should be rotated before open-sourcing
+pipeline/config.py
+pipeline/config.py.local

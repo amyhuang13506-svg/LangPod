@@ -1,0 +1,271 @@
+[
+  {
+    "id": "ep-2026-0325-easy-001",
+    "title": "AI Fitness App",
+    "level": "easy",
+    "date": "2026-03-29",
+    "duration_seconds": 23,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hi Lisa! Have you heard about the new app?",
+        "translation_zh": "嗨 Lisa！你听说过这个新应用吗？",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 3.67
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yes, it is very popular now.",
+        "translation_zh": "是的，它现在非常受欢迎。",
+        "emotion": "happy",
+        "start": 4.47,
+        "end": 7.62
+      },
+      {
+        "speaker": "Alex",
+        "text": "It helps people exercise with AI.",
+        "translation_zh": "它帮助人们通过人工智能锻炼。",
+        "emotion": "neutral",
+        "start": 8.41,
+        "end": 11.34
+      },
+      {
+        "speaker": "Lisa",
+        "text": "That's great! I want to try it.",
+        "translation_zh": "太好了！我想试试。",
+        "emotion": "happy",
+        "start": 12.14,
+        "end": 15.29
+      },
+      {
+        "speaker": "Alex",
+        "text": "OK, let's download it together later.",
+        "translation_zh": "好的，我们稍后一起下载。",
+        "emotion": "happy",
+        "start": 16.09,
+        "end": 19.65
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Sure! Thanks for telling me.",
+        "translation_zh": "当然！谢谢你告诉我。",
+        "emotion": "happy",
+        "start": 20.45,
+        "end": 23.21
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "popular",
+        "phonetic": "/ˈpɒpjʊlər/",
+        "translation_zh": "受欢迎的",
+        "example": "The app is very popular now.",
+        "audio": ""
+      },
+      {
+        "word": "exercise",
+        "phonetic": "/ˈɛksəsaɪz/",
+        "translation_zh": "锻炼",
+        "example": "It helps people exercise with AI.",
+        "audio": ""
+      },
+      {
+        "word": "download",
+        "phonetic": "/ˈdaʊnloʊd/",
+        "translation_zh": "下载",
+        "example": "Let's download it together later.",
+        "audio": ""
+      }
+    ],
+    "audio": {
+      "english": "bundle://test_en",
+      "translation_zh": "bundle://test_zh"
+    },
+    "thumbnail": "bundle://cover_easy"
+  },
+  {
+    "id": "ep-2026-0326-easy-002",
+    "title": "At the Store",
+    "level": "easy",
+    "date": "2026-03-26",
+    "duration_seconds": 200,
+    "audio": {
+      "english": "https://oss.langpod.com/episodes/easy-002/en.mp3",
+      "translation_zh": "https://oss.langpod.com/episodes/easy-002/zh.mp3"
+    },
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Excuse me, how much is this?",
+        "start": 0.0,
+        "end": 2.2,
+        "translation_zh": "不好意思，这个多少钱？"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "That one is five dollars.",
+        "start": 2.5,
+        "end": 4.5,
+        "translation_zh": "那个五美元。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Do you have a smaller size?",
+        "start": 4.8,
+        "end": 6.8,
+        "translation_zh": "有小一点的尺码吗？"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Let me check. Yes, we have small and medium.",
+        "start": 7.0,
+        "end": 10.5,
+        "translation_zh": "我查一下。有的，我们有小号和中号。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "I'll take the small one, please.",
+        "start": 10.8,
+        "end": 13.0,
+        "translation_zh": "请给我小号的。"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Sure. Would you like a bag?",
+        "start": 13.3,
+        "end": 15.5,
+        "translation_zh": "好的。需要袋子吗？"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "excuse me",
+        "phonetic": "/ɪkˈskjuːz miː/",
+        "translation_zh": "不好意思，打扰一下",
+        "example": "Excuse me, where is the station?",
+        "audio": "https://oss.langpod.com/words/excuse-me.mp3"
+      },
+      {
+        "word": "size",
+        "phonetic": "/saɪz/",
+        "translation_zh": "尺码，大小",
+        "example": "What size do you wear?",
+        "audio": "https://oss.langpod.com/words/size.mp3"
+      },
+      {
+        "word": "check",
+        "phonetic": "/tʃek/",
+        "translation_zh": "查看，检查",
+        "example": "Let me check the price.",
+        "audio": "https://oss.langpod.com/words/check.mp3"
+      },
+      {
+        "word": "medium",
+        "phonetic": "/ˈmiːdiəm/",
+        "translation_zh": "中号的，中等的",
+        "example": "I'd like a medium coffee.",
+        "audio": "https://oss.langpod.com/words/medium.mp3"
+      },
+      {
+        "word": "bag",
+        "phonetic": "/bæɡ/",
+        "translation_zh": "袋子，包",
+        "example": "Can I have a paper bag?",
+        "audio": "https://oss.langpod.com/words/bag.mp3"
+      }
+    ]
+  },
+  {
+    "id": "ep-2026-0327-easy-003",
+    "title": "The Weather",
+    "level": "easy",
+    "date": "2026-03-27",
+    "duration_seconds": 190,
+    "audio": {
+      "english": "https://oss.langpod.com/episodes/easy-003/en.mp3",
+      "translation_zh": "https://oss.langpod.com/episodes/easy-003/zh.mp3"
+    },
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "It's really cold today, isn't it?",
+        "start": 0.0,
+        "end": 2.5,
+        "translation_zh": "今天真的很冷，对吧？"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yes! I think it might rain later.",
+        "start": 2.8,
+        "end": 5.5,
+        "translation_zh": "是啊！我觉得一会儿可能会下雨。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Did you bring an umbrella?",
+        "start": 5.8,
+        "end": 7.8,
+        "translation_zh": "你带伞了吗？"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "No, I forgot. I hope it doesn't rain too hard.",
+        "start": 8.0,
+        "end": 11.5,
+        "translation_zh": "没有，我忘了。希望不会下太大。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "The forecast says it will be sunny tomorrow.",
+        "start": 11.8,
+        "end": 14.8,
+        "translation_zh": "天气预报说明天会是晴天。"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "That's great. I want to go to the park.",
+        "start": 15.0,
+        "end": 17.5,
+        "translation_zh": "太好了。我想去公园。"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "weather",
+        "phonetic": "/ˈweðər/",
+        "translation_zh": "天气",
+        "example": "The weather is nice today.",
+        "audio": "https://oss.langpod.com/words/weather.mp3"
+      },
+      {
+        "word": "umbrella",
+        "phonetic": "/ʌmˈbrelə/",
+        "translation_zh": "雨伞",
+        "example": "Take an umbrella with you.",
+        "audio": "https://oss.langpod.com/words/umbrella.mp3"
+      },
+      {
+        "word": "forecast",
+        "phonetic": "/ˈfɔːrkæst/",
+        "translation_zh": "预报",
+        "example": "Check the weather forecast.",
+        "audio": "https://oss.langpod.com/words/forecast.mp3"
+      },
+      {
+        "word": "sunny",
+        "phonetic": "/ˈsʌni/",
+        "translation_zh": "晴朗的",
+        "example": "It's a sunny day.",
+        "audio": "https://oss.langpod.com/words/sunny.mp3"
+      },
+      {
+        "word": "forgot",
+        "phonetic": "/fərˈɡɑːt/",
+        "translation_zh": "忘记了（forget的过去式）",
+        "example": "I forgot my keys.",
+        "audio": "https://oss.langpod.com/words/forgot.mp3"
+      }
+    ]
+  }
+]

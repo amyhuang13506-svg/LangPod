@@ -1,0 +1,328 @@
+[
+  {
+    "id": "ep-2026-0325-medium-001",
+    "title": "Smart Glasses Revolution",
+    "level": "medium",
+    "date": "2026-03-29",
+    "duration_seconds": 43,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hey Lisa, have you heard about how smart glasses are like, becoming a big thing?",
+        "translation_zh": "嘿，丽莎，你听说过智能眼镜怎么成了个大热门吗?",
+        "emotion": "happy",
+        "start": 0.0,
+        "end": 4.72
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Oh yeah, totally! They're really changing the way people do everyday tasks, you know?",
+        "translation_zh": "是啊，当然！它们真的在改变人们处理日常事情的方式，你知道吗?",
+        "emotion": "happy",
+        "start": 5.53,
+        "end": 10.77
+      },
+      {
+        "speaker": "Alex",
+        "text": "I mean, they're more than just fancy gadgets now, right?",
+        "translation_zh": "我的意思是，它们现在不仅仅是花哨的小玩意了，对吧?",
+        "emotion": "neutral",
+        "start": 11.57,
+        "end": 14.85
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Exactly! People use them for navigation, taking photos, even reading text messages without needing their phones.",
+        "translation_zh": "没错！人们用它们来导航、拍照，甚至不需要手机就能阅读短信。",
+        "emotion": "happy",
+        "start": 15.65,
+        "end": 23.11
+      },
+      {
+        "speaker": "Alex",
+        "text": "Wow, that's impressive. So, they have some kind of augmented reality feature?",
+        "translation_zh": "哇，好厉害啊。那么，它们有某种增强现实功能吗?",
+        "emotion": "surprised",
+        "start": 23.91,
+        "end": 30.39
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yeah, and that's super helpful for things like shopping or traveling. You get real-time info right in your view.",
+        "translation_zh": "是的，这在购物或旅行时非常有用。你可以实时获得信息，就在你的视野里。",
+        "emotion": "happy",
+        "start": 31.19,
+        "end": 37.92
+      },
+      {
+        "speaker": "Alex",
+        "text": "I might need to try them out sometime. Could be cool to see directions right in front of me.",
+        "translation_zh": "我可能需要找个时间试试。能直接看到方向应该很酷。",
+        "emotion": "neutral",
+        "start": 38.72,
+        "end": 43.67
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "navigation",
+        "phonetic": "/ˌnævɪˈɡeɪʃən/",
+        "translation_zh": "导航",
+        "example": "Smart glasses are improving navigation in cities.",
+        "audio": ""
+      },
+      {
+        "word": "augmented",
+        "phonetic": "/ɔːɡˈmɛntɪd/",
+        "translation_zh": "增强的",
+        "example": "The glasses provide augmented reality features.",
+        "audio": ""
+      },
+      {
+        "word": "real-time",
+        "phonetic": "/ˌriːəlˈtaɪm/",
+        "translation_zh": "实时的",
+        "example": "You get real-time updates with smart glasses.",
+        "audio": ""
+      },
+      {
+        "word": "gadget",
+        "phonetic": "/ˈɡædʒɪt/",
+        "translation_zh": "小工具",
+        "example": "Smart glasses are not just gadgets anymore.",
+        "audio": ""
+      },
+      {
+        "word": "feature",
+        "phonetic": "/ˈfiːtʃər/",
+        "translation_zh": "功能",
+        "example": "The feature that shows text messages is cool.",
+        "audio": ""
+      }
+    ],
+    "audio": {
+      "english": "bundle://test_medium_en",
+      "translation_zh": "bundle://test_medium_zh"
+    },
+    "thumbnail": "bundle://cover_medium"
+  },
+  {
+    "id": "ep-2026-0326-medium-002",
+    "title": "Weekend Plans",
+    "level": "medium",
+    "date": "2026-03-26",
+    "duration_seconds": 380,
+    "audio": {
+      "english": "https://oss.langpod.com/episodes/medium-002/en.mp3",
+      "translation_zh": "https://oss.langpod.com/episodes/medium-002/zh.mp3"
+    },
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Do you have any plans for the weekend?",
+        "start": 0.0,
+        "end": 2.5,
+        "translation_zh": "你周末有什么计划吗？"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "I'm thinking about going hiking. There's a trail I've been wanting to try.",
+        "start": 2.8,
+        "end": 7.0,
+        "translation_zh": "我在考虑去徒步。有一条我一直想试的步道。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "That sounds amazing. How long is the trail?",
+        "start": 7.3,
+        "end": 9.8,
+        "translation_zh": "听起来很棒。那条步道有多长？"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "About eight kilometers round trip. It takes roughly three hours including breaks.",
+        "start": 10.0,
+        "end": 15.0,
+        "translation_zh": "往返大约八公里。包括休息大概要三个小时。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Is it beginner-friendly? I haven't hiked in ages.",
+        "start": 15.3,
+        "end": 18.5,
+        "translation_zh": "适合新手吗？我很久没徒步了。"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Mostly yes, but there's one steep section near the top. The view from the summit is worth it though.",
+        "start": 18.8,
+        "end": 25.0,
+        "translation_zh": "大部分适合，不过快到顶的时候有一段比较陡。不过山顶的景色很值得。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Count me in. Should I bring anything specific?",
+        "start": 25.3,
+        "end": 28.5,
+        "translation_zh": "算我一个。我需要带什么特别的东西吗？"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Just comfortable shoes, plenty of water, and maybe a packed lunch. I'll handle the navigation.",
+        "start": 28.8,
+        "end": 35.0,
+        "translation_zh": "穿舒服的鞋，带够水，可能再带个便当。导航我来搞定。"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "hiking",
+        "phonetic": "/ˈhaɪkɪŋ/",
+        "translation_zh": "徒步，远足",
+        "example": "We went hiking in the mountains.",
+        "audio": "https://oss.langpod.com/words/hiking.mp3"
+      },
+      {
+        "word": "trail",
+        "phonetic": "/treɪl/",
+        "translation_zh": "小径，步道",
+        "example": "The trail goes through the forest.",
+        "audio": "https://oss.langpod.com/words/trail.mp3"
+      },
+      {
+        "word": "round trip",
+        "phonetic": "/raʊnd trɪp/",
+        "translation_zh": "往返",
+        "example": "The round trip takes two hours.",
+        "audio": "https://oss.langpod.com/words/round-trip.mp3"
+      },
+      {
+        "word": "steep",
+        "phonetic": "/stiːp/",
+        "translation_zh": "陡峭的",
+        "example": "Be careful, the stairs are steep.",
+        "audio": "https://oss.langpod.com/words/steep.mp3"
+      },
+      {
+        "word": "summit",
+        "phonetic": "/ˈsʌmɪt/",
+        "translation_zh": "山顶，顶峰",
+        "example": "We reached the summit at noon.",
+        "audio": "https://oss.langpod.com/words/summit.mp3"
+      },
+      {
+        "word": "navigation",
+        "phonetic": "/ˌnævɪˈɡeɪʃn/",
+        "translation_zh": "导航",
+        "example": "I'll use GPS for navigation.",
+        "audio": "https://oss.langpod.com/words/navigation.mp3"
+      }
+    ]
+  },
+  {
+    "id": "ep-2026-0327-medium-003",
+    "title": "Street Food Adventure",
+    "level": "medium",
+    "date": "2026-03-27",
+    "duration_seconds": 400,
+    "audio": {
+      "english": "https://oss.langpod.com/episodes/medium-003/en.mp3",
+      "translation_zh": "https://oss.langpod.com/episodes/medium-003/zh.mp3"
+    },
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Have you ever been to a night market in Asia?",
+        "start": 0.0,
+        "end": 3.0,
+        "translation_zh": "你去过亚洲的夜市吗？"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yes! I went to one in Taipei last year. The variety of food was incredible.",
+        "start": 3.3,
+        "end": 8.0,
+        "translation_zh": "去过！去年我去了台北的一个夜市。食物种类太丰富了。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "What was your favorite thing to eat there?",
+        "start": 8.3,
+        "end": 10.8,
+        "translation_zh": "你最喜欢吃什么？"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Definitely the grilled squid. They season it with this amazing spice blend.",
+        "start": 11.0,
+        "end": 16.0,
+        "translation_zh": "绝对是烤鱿鱼。他们用一种很棒的混合香料调味。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "I've heard the stinky tofu is a must-try, but I'm not sure I'm brave enough.",
+        "start": 16.3,
+        "end": 21.5,
+        "translation_zh": "我听说臭豆腐是必尝的，但我不确定自己够不够勇敢。"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "It's actually not as bad as it smells. The texture is crispy on the outside and soft inside.",
+        "start": 21.8,
+        "end": 28.0,
+        "translation_zh": "其实没有闻起来那么可怕。口感外脆内软。"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Maybe I'll give it a shot next time. Street food is such an authentic way to experience a culture.",
+        "start": 28.3,
+        "end": 34.5,
+        "translation_zh": "也许下次我试试。街头美食是体验一个文化最地道的方式。"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "variety",
+        "phonetic": "/vəˈraɪəti/",
+        "translation_zh": "种类，多样性",
+        "example": "The store offers a wide variety of products.",
+        "audio": "https://oss.langpod.com/words/variety.mp3"
+      },
+      {
+        "word": "incredible",
+        "phonetic": "/ɪnˈkredəbl/",
+        "translation_zh": "难以置信的，极好的",
+        "example": "The sunset was incredible.",
+        "audio": "https://oss.langpod.com/words/incredible.mp3"
+      },
+      {
+        "word": "season",
+        "phonetic": "/ˈsiːzn/",
+        "translation_zh": "调味（动词）",
+        "example": "Season the chicken with salt and pepper.",
+        "audio": "https://oss.langpod.com/words/season.mp3"
+      },
+      {
+        "word": "texture",
+        "phonetic": "/ˈtekstʃər/",
+        "translation_zh": "口感，质地",
+        "example": "The cake has a smooth texture.",
+        "audio": "https://oss.langpod.com/words/texture.mp3"
+      },
+      {
+        "word": "crispy",
+        "phonetic": "/ˈkrɪspi/",
+        "translation_zh": "酥脆的",
+        "example": "I like crispy fried chicken.",
+        "audio": "https://oss.langpod.com/words/crispy.mp3"
+      },
+      {
+        "word": "authentic",
+        "phonetic": "/ɔːˈθentɪk/",
+        "translation_zh": "地道的，正宗的",
+        "example": "This restaurant serves authentic Italian food.",
+        "audio": "https://oss.langpod.com/words/authentic.mp3"
+      }
+    ]
+  }
+]

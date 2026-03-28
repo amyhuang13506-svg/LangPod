@@ -1,0 +1,548 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10001 /* LangPodApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20001; };
+		A10002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20002; };
+		A10003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20003; };
+		A10004 /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20004; };
+		A10005 /* PodcastLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20005; };
+		A10006 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20006; };
+		A10007 /* VocabularyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20007; };
+		A10008 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20008; };
+		A10009 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20009; };
+		A10010 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20010; };
+		A10011 /* Episode.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20013; };
+		A10012 /* MockDataLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20014; };
+		A10013 /* episodes_easy.json in Resources */ = {isa = PBXBuildFile; fileRef = A20015; };
+		A10014 /* episodes_medium.json in Resources */ = {isa = PBXBuildFile; fileRef = A20016; };
+		A10015 /* episodes_hard.json in Resources */ = {isa = PBXBuildFile; fileRef = A20017; };
+		A10016 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20018; };
+		A10017 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20019; };
+		A10018 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20020; };
+		A10019 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20021; };
+		A10020 /* SubtitleOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20022; };
+		A10021 /* EpisodeCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20023; };
+		A10022 /* SavedWord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20024; };
+		A10023 /* VocabularyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20025; };
+		A10024 /* MemoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20026; };
+		A10025 /* MasteryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20027; };
+		A10026 /* WordMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20028; };
+		A10027 /* FeynmanChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20029; };
+		A10028 /* ListeningLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20030; };
+		A10029 /* LevelUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20031; };
+		A10030 /* ShareCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20032; };
+		A10031 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20033; };
+		A10032 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20034; };
+		A10033 /* ListenedEpisode.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20035; };
+		A10034 /* test_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A20036; };
+		A10035 /* test_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A20037; };
+		A10036 /* test_medium_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A20038; };
+		A10037 /* test_medium_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A20039; };
+		A10038 /* test_hard_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A20040; };
+		A10039 /* test_hard_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A20041; };
+		A10040 /* EpisodeThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20042; };
+		A10041 /* cover_easy.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A20043; };
+		A10042 /* cover_medium.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A20044; };
+		A10043 /* cover_hard.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A20045; };
+		A10044 /* AllEpisodesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20046; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20001 /* LangPodApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LangPodApp.swift; sourceTree = "<group>"; };
+		A20002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A20003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A20004 /* DataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStore.swift; sourceTree = "<group>"; };
+		A20005 /* PodcastLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastLevel.swift; sourceTree = "<group>"; };
+		A20006 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		A20007 /* VocabularyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyView.swift; sourceTree = "<group>"; };
+		A20008 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
+		A20009 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		A20010 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A20011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20012 /* LangPod.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LangPod.entitlements; sourceTree = "<group>"; };
+		A20013 /* Episode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Episode.swift; sourceTree = "<group>"; };
+		A20014 /* MockDataLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDataLoader.swift; sourceTree = "<group>"; };
+		A20015 /* episodes_easy.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = episodes_easy.json; sourceTree = "<group>"; };
+		A20016 /* episodes_medium.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = episodes_medium.json; sourceTree = "<group>"; };
+		A20017 /* episodes_hard.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = episodes_hard.json; sourceTree = "<group>"; };
+		A20018 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		A20019 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		A20020 /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
+		A20021 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
+		A20022 /* SubtitleOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubtitleOverlay.swift; sourceTree = "<group>"; };
+		A20023 /* EpisodeCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeCompleteView.swift; sourceTree = "<group>"; };
+		A20024 /* SavedWord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWord.swift; sourceTree = "<group>"; };
+		A20025 /* VocabularyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStore.swift; sourceTree = "<group>"; };
+		A20026 /* MemoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryDetailView.swift; sourceTree = "<group>"; };
+		A20027 /* MasteryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasteryDetailView.swift; sourceTree = "<group>"; };
+		A20028 /* WordMatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordMatchView.swift; sourceTree = "<group>"; };
+		A20029 /* FeynmanChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeynmanChallengeView.swift; sourceTree = "<group>"; };
+		A20030 /* ListeningLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningLevel.swift; sourceTree = "<group>"; };
+		A20031 /* LevelUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelUpView.swift; sourceTree = "<group>"; };
+		A20032 /* ShareCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareCardView.swift; sourceTree = "<group>"; };
+		A20033 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		A20034 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		A20035 /* ListenedEpisode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenedEpisode.swift; sourceTree = "<group>"; };
+		A20036 /* test_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = test_en.mp3; sourceTree = "<group>"; };
+		A20037 /* test_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = test_zh.mp3; sourceTree = "<group>"; };
+		A20038 /* test_medium_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = test_medium_en.mp3; sourceTree = "<group>"; };
+		A20039 /* test_medium_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = test_medium_zh.mp3; sourceTree = "<group>"; };
+		A20040 /* test_hard_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = test_hard_en.mp3; sourceTree = "<group>"; };
+		A20041 /* test_hard_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = test_hard_zh.mp3; sourceTree = "<group>"; };
+		A20042 /* EpisodeThumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeThumbnail.swift; sourceTree = "<group>"; };
+		A20043 /* cover_easy.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = cover_easy.jpg; sourceTree = "<group>"; };
+		A20044 /* cover_medium.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = cover_medium.jpg; sourceTree = "<group>"; };
+		A20045 /* cover_hard.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = cover_hard.jpg; sourceTree = "<group>"; };
+		A20046 /* AllEpisodesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllEpisodesView.swift; sourceTree = "<group>"; };
+		A30001 /* LangPod.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LangPod.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A40001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A50001 = {
+			isa = PBXGroup;
+			children = (
+				A50002 /* LangPod */,
+				A50005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A50002 /* LangPod */ = {
+			isa = PBXGroup;
+			children = (
+				A20001 /* LangPodApp.swift */,
+				A20002 /* ContentView.swift */,
+				A20003 /* Assets.xcassets */,
+				A20011 /* Info.plist */,
+				A20012 /* LangPod.entitlements */,
+				A20010 /* PrivacyInfo.xcprivacy */,
+				A20019 /* Theme.swift */,
+				A50003 /* Models */,
+				A50004 /* Services */,
+				A50006 /* Views */,
+				A50007 /* Resources */,
+			);
+			path = LangPod;
+			sourceTree = "<group>";
+		};
+		A50003 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A20005 /* PodcastLevel.swift */,
+				A20013 /* Episode.swift */,
+				A20024 /* SavedWord.swift */,
+				A20030 /* ListeningLevel.swift */,
+				A20035 /* ListenedEpisode.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A50004 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A20004 /* DataStore.swift */,
+				A20014 /* MockDataLoader.swift */,
+				A20020 /* AudioPlayer.swift */,
+				A20025 /* VocabularyStore.swift */,
+				A20034 /* APIService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A50005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A30001 /* LangPod.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A50006 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A20006 /* HomeView.swift */,
+				A20007 /* VocabularyView.swift */,
+				A20008 /* StatsView.swift */,
+				A20009 /* ProfileView.swift */,
+				A20018 /* OnboardingView.swift */,
+				A20021 /* PlayerView.swift */,
+				A20022 /* SubtitleOverlay.swift */,
+				A20023 /* EpisodeCompleteView.swift */,
+				A20026 /* MemoryDetailView.swift */,
+				A20027 /* MasteryDetailView.swift */,
+				A20028 /* WordMatchView.swift */,
+				A20029 /* FeynmanChallengeView.swift */,
+				A20031 /* LevelUpView.swift */,
+				A20032 /* ShareCardView.swift */,
+				A20033 /* PaywallView.swift */,
+				A20042 /* EpisodeThumbnail.swift */,
+				A20046 /* AllEpisodesView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A50007 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A20015 /* episodes_easy.json */,
+				A20016 /* episodes_medium.json */,
+				A20017 /* episodes_hard.json */,
+				A20036 /* test_en.mp3 */,
+				A20037 /* test_zh.mp3 */,
+				A20038 /* test_medium_en.mp3 */,
+				A20039 /* test_medium_zh.mp3 */,
+				A20040 /* test_hard_en.mp3 */,
+				A20041 /* test_hard_zh.mp3 */,
+				A20043 /* cover_easy.jpg */,
+				A20044 /* cover_medium.jpg */,
+				A20045 /* cover_hard.jpg */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A60001 /* LangPod */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A80002 /* Build configuration list for PBXNativeTarget "LangPod" */;
+			buildPhases = (
+				A70001 /* Sources */,
+				A40001 /* Frameworks */,
+				A70002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LangPod;
+			productName = LangPod;
+			productReference = A30001 /* LangPod.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A90001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A60001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A80001 /* Build configuration list for PBXProject "LangPod" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = "zh-Hans";
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				"zh-Hans",
+				en,
+				ja,
+				Base,
+			);
+			mainGroup = A50001;
+			productRefGroup = A50005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A60001 /* LangPod */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A70002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10003 /* Assets.xcassets in Resources */,
+				A10010 /* PrivacyInfo.xcprivacy in Resources */,
+				A10013 /* episodes_easy.json in Resources */,
+				A10014 /* episodes_medium.json in Resources */,
+				A10015 /* episodes_hard.json in Resources */,
+				A10034 /* test_en.mp3 in Resources */,
+				A10035 /* test_zh.mp3 in Resources */,
+				A10036 /* test_medium_en.mp3 in Resources */,
+				A10037 /* test_medium_zh.mp3 in Resources */,
+				A10038 /* test_hard_en.mp3 in Resources */,
+				A10039 /* test_hard_zh.mp3 in Resources */,
+				A10041 /* cover_easy.jpg in Resources */,
+				A10042 /* cover_medium.jpg in Resources */,
+				A10043 /* cover_hard.jpg in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A70001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10001 /* LangPodApp.swift in Sources */,
+				A10002 /* ContentView.swift in Sources */,
+				A10004 /* DataStore.swift in Sources */,
+				A10005 /* PodcastLevel.swift in Sources */,
+				A10006 /* HomeView.swift in Sources */,
+				A10007 /* VocabularyView.swift in Sources */,
+				A10008 /* StatsView.swift in Sources */,
+				A10009 /* ProfileView.swift in Sources */,
+				A10011 /* Episode.swift in Sources */,
+				A10012 /* MockDataLoader.swift in Sources */,
+				A10016 /* OnboardingView.swift in Sources */,
+				A10017 /* Theme.swift in Sources */,
+				A10018 /* AudioPlayer.swift in Sources */,
+				A10019 /* PlayerView.swift in Sources */,
+				A10020 /* SubtitleOverlay.swift in Sources */,
+				A10021 /* EpisodeCompleteView.swift in Sources */,
+				A10022 /* SavedWord.swift in Sources */,
+				A10023 /* VocabularyStore.swift in Sources */,
+				A10024 /* MemoryDetailView.swift in Sources */,
+				A10025 /* MasteryDetailView.swift in Sources */,
+				A10026 /* WordMatchView.swift in Sources */,
+				A10027 /* FeynmanChallengeView.swift in Sources */,
+				A10028 /* ListeningLevel.swift in Sources */,
+				A10029 /* LevelUpView.swift in Sources */,
+				A10030 /* ShareCardView.swift in Sources */,
+				A10031 /* PaywallView.swift in Sources */,
+				A10032 /* APIService.swift in Sources */,
+				A10033 /* ListenedEpisode.swift in Sources */,
+				A10040 /* EpisodeThumbnail.swift in Sources */,
+				A10044 /* AllEpisodesView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AB0001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AB0002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AB0003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LangPod/LangPod.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5GK8J334QK;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LangPod/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LangPod;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.amyhuang.langpod;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AB0004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LangPod/LangPod.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5GK8J334QK;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LangPod/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LangPod;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.amyhuang.langpod;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A80001 /* Build configuration list for PBXProject "LangPod" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB0001 /* Debug */,
+				AB0002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A80002 /* Build configuration list for PBXNativeTarget "LangPod" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB0003 /* Debug */,
+				AB0004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = A90001 /* Project object */;
+}
