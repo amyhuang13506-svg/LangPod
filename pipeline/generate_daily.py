@@ -15,7 +15,8 @@ import sys
 from datetime import datetime
 
 from generate_script import generate_episode_script, save_episode
-from generate_audio import process_episode
+from generate_audio import process_episode as process_audio
+from generate_cover import process_episode as process_cover
 from upload_oss import get_bucket, upload_episode, update_episode_list
 from config import LEVELS, OUTPUT_DIR
 
@@ -74,11 +75,18 @@ def run_pipeline(target_level=None):
                 log.info(f"   → {episode['title']}")
 
                 # Step 2: Generate audio
-                log.info(f"   Step 2/3: Generating audio...")
-                process_episode(json_path)
+                log.info(f"   Step 2/4: Generating audio...")
+                process_audio(json_path)
 
-                # Step 3: Upload to OSS
-                log.info(f"   Step 3/3: Uploading to OSS...")
+                # Step 3: Generate cover
+                log.info(f"   Step 3/4: Generating cover...")
+                try:
+                    process_cover(json_path)
+                except Exception as e:
+                    log.warning(f"   ⚠️ Cover generation failed (non-fatal): {e}")
+
+                # Step 4: Upload to OSS
+                log.info(f"   Step 4/4: Uploading to OSS...")
                 if bucket is None:
                     bucket = get_bucket()
                 upload_episode(bucket, json_path, level)

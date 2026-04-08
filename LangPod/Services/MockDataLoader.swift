@@ -5,14 +5,11 @@ struct MockDataLoader {
         let filename = "episodes_\(level.rawValue)"
         guard let url = Bundle.main.url(forResource: filename, withExtension: "json"),
               let data = try? Data(contentsOf: url) else {
-            print("❌ MockDataLoader: File not found: \(filename).json")
             return []
         }
         do {
-            let episodes = try JSONDecoder().decode([Episode].self, from: data)
-            return episodes
+            return try JSONDecoder().decode([Episode].self, from: data)
         } catch {
-            print("❌ MockDataLoader: Decode error for \(filename): \(error)")
             return []
         }
     }

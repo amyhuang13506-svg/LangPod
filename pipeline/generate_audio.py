@@ -31,6 +31,9 @@ PAUSE_BETWEEN_LINES_MS = 800  # 0.8s pause between dialogue lines
 MAX_CHARS_PER_CHUNK = 150     # MiniMax limit ~200 chars, keep margin
 VALID_EMOTIONS = {"happy", "sad", "angry", "surprised", "neutral"}
 
+# Speaker gender map — set per episode in process_episode()
+speakers = {}  # e.g. {"Ryan": "male", "Emma": "female", "Host": "male"}
+
 
 def sanitize_emotion(emotion):
     """Map invalid emotion values to valid MiniMax ones."""
@@ -180,7 +183,7 @@ def generate_english_audio(episode, output_dir):
     pause = AudioSegment.silent(duration=PAUSE_BETWEEN_LINES_MS)
 
     for i, line in enumerate(episode["script"]):
-        voice = MINIMAX_VOICE_ALEX if line["speaker"] in ("Alex", "Host") else MINIMAX_VOICE_LISA
+        voice = MINIMAX_VOICE_ALEX if speakers.get(line["speaker"], "male") == "male" else MINIMAX_VOICE_LISA
         emotion = line.get("emotion", "neutral")
         print("   🎤 [%s] (%s) %s..." % (line["speaker"], emotion, line["text"][:35]))
 
@@ -214,7 +217,7 @@ def generate_chinese_audio(episode, output_dir):
 
     for i, line in enumerate(episode["script"]):
         # Match voice gender to speaker
-        voice = MINIMAX_VOICE_ZH_MALE if line["speaker"] in ("Alex", "Host") else MINIMAX_VOICE_ZH_FEMALE
+        voice = MINIMAX_VOICE_ZH_MALE if speakers.get(line["speaker"], "male") == "male" else MINIMAX_VOICE_ZH_FEMALE
         text = line.get("translation_zh", "")
         if not text:
             continue
@@ -235,6 +238,24 @@ def generate_chinese_audio(episode, output_dir):
     return audio_path
 
 
+def detect_speakers(episode):
+    """Auto-detect speaker genders. First unique speaker = male, second = female, Host = male."""
+    global speakers
+    speakers = {}
+    seen = []
+    for line in episode.get("script", []):
+        name = line["speaker"]
+        if name not in speakers:
+            if name == "Host":
+                speakers[name] = "male"
+            elif len(seen) == 0:
+                speakers[name] = "male"
+                seen.append(name)
+            else:
+                speakers[name] = "female"
+                seen.append(name)
+
+
 def process_episode(json_path):
     """Generate audio for a single episode and update timestamps."""
     with open(json_path, "r", encoding="utf-8") as f:
@@ -242,6 +263,9 @@ def process_episode(json_path):
 
     episode_dir = os.path.splitext(json_path)[0]
     os.makedirs(episode_dir, exist_ok=True)
+
+    # Detect speaker genders for voice assignment
+    detect_speakers(episode)
 
     print("\n🎙️  Generating audio for: %s (%s)" % (episode["title"], episode["id"]))
 

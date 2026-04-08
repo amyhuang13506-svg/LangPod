@@ -1,336 +1,1542 @@
 [
   {
-    "id": "ep-2026-0325-hard-001",
-    "title": "OpenAI Unveils Its Latest AI Model",
+    "id": "ep-20260319-hard-001",
+    "title": "Revolutionizing AI: OpenAI's New Model",
     "level": "hard",
-    "date": "2026-03-29",
-    "duration_seconds": 51,
+    "date": "2026-03-19",
+    "duration_seconds": 38,
     "script": [
       {
         "speaker": "Alex",
-        "text": "OpenAI has just released its latest AI model, claimed to be more advanced than GPT-4.",
-        "translation_zh": "OpenAI刚刚发布了其最新的AI模型，据称比GPT-4更先进。",
+        "text": "OpenAI recently unveiled a groundbreaking AI model that could transform the technology landscape.",
+        "translation_zh": "OpenAI最近推出了一种突破性的AI模型，可能会改变技术格局。",
         "emotion": "neutral",
         "start": 0.0,
         "end": 4.99
       },
       {
         "speaker": "Lisa",
-        "text": "Indeed, it's a remarkable achievement. The model reportedly improves contextual understanding significantly.",
-        "translation_zh": "确实，这是一个了不起的成就。据说这个模型显著提高了语境理解能力。",
+        "text": "Indeed, the model is said to be exceptionally advanced, offering significant improvements in natural language processing capabilities.",
+        "translation_zh": "确实，据说该模型在自然语言处理能力方面有显著提升。",
         "emotion": "happy",
         "start": 5.79,
-        "end": 12.57
+        "end": 13.66
       },
       {
         "speaker": "Alex",
-        "text": "However, some experts argue that these models still lack true comprehension of human nuances.",
-        "translation_zh": "然而，一些专家认为这些模型仍然缺乏对人类细微差别的真正理解。",
-        "emotion": "neutral",
-        "start": 13.37,
-        "end": 19.8
-      },
-      {
-        "speaker": "Lisa",
-        "text": "To some extent, that's true. But the model's ability to generate human-like text is unparalleled.",
-        "translation_zh": "在某种程度上，确实如此。但这个模型生成类人文本的能力是无与伦比的。",
-        "emotion": "neutral",
-        "start": 20.6,
-        "end": 26.54
-      },
-      {
-        "speaker": "Alex",
-        "text": "There’s concern about ethical implications, particularly in misinformation dissemination.",
-        "translation_zh": "人们对道德影响表示担忧，尤其是在虚假信息传播方面。",
+        "text": "However, some experts argue that increased automation could lead to job displacement in certain sectors.",
+        "translation_zh": "然而，一些专家认为，自动化的增加可能会导致某些行业的失业。",
         "emotion": "sad",
-        "start": 27.34,
-        "end": 32.38
+        "start": 14.46,
+        "end": 21.01
       },
       {
         "speaker": "Lisa",
-        "text": "OpenAI has implemented stricter filters and safety measures, addressing misuse concerns more effectively.",
-        "translation_zh": "OpenAI实施了更严格的过滤和安全措施，更有效地解决了误用问题。",
-        "emotion": "happy",
-        "start": 33.18,
-        "end": 39.11
+        "text": "To some extent, yes. But it's also important to consider the potential for job creation in new fields.",
+        "translation_zh": "在某种程度上，是的。但也要考虑到在新领域创造就业的潜力。",
+        "emotion": "neutral",
+        "start": 21.81,
+        "end": 27.78
       },
       {
         "speaker": "Alex",
-        "text": "Still, the rapid pace of AI development requires ongoing vigilance.",
-        "translation_zh": "然而，AI发展的快速步伐需要持续警惕。",
+        "text": "Do we have any data on the model's performance compared to previous iterations?",
+        "translation_zh": "我们有关于该模型与之前版本相比性能的数据吗？",
         "emotion": "neutral",
-        "start": 39.91,
-        "end": 43.82
+        "start": 28.58,
+        "end": 32.26
       },
       {
         "speaker": "Lisa",
-        "text": "Absolutely. Transparency and public discourse are essential as we integrate AI into daily life.",
-        "translation_zh": "绝对。透明度和公众讨论在将AI融入日常生活中是至关重要的。",
+        "text": "According to OpenAI, the new model is twice as efficient in processing data, leading to more nuanced understanding.",
+        "translation_zh": "根据OpenAI的数据，新模型的数据处理效率提高了两倍，从而获得了更细致的理解。",
         "emotion": "happy",
-        "start": 44.62,
-        "end": 51.02
+        "start": 33.06,
+        "end": 38.8
+      },
+      {
+        "speaker": "Alex",
+        "text": "That's impressive, but it raises questions about data privacy and ethical concerns.",
+        "translation_zh": "这令人印象深刻，但也引发了对数据隐私和伦理问题的担忧。",
+        "emotion": "angry"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "OpenAI has emphasized its commitment to ethical AI development, but monitoring and regulation will be crucial.",
+        "translation_zh": "OpenAI强调了其对伦理AI发展的承诺，但监控和监管将至关重要。",
+        "emotion": "neutral"
       }
     ],
     "vocabulary": [
       {
-        "word": "contextual",
-        "phonetic": "/kənˈtɛkstʃuəl/",
-        "translation_zh": "语境的",
-        "example": "The model improves contextual understanding significantly.",
-        "audio": ""
+        "word": "unveiled",
+        "phonetic": "/ʌnˈveɪld/",
+        "translation_zh": "揭幕",
+        "example": "The company unveiled its latest product.",
+        "audio": "",
+        "example_zh": "公司推出了最新产品。"
       },
       {
-        "word": "unparalleled",
-        "phonetic": "/ʌnˈparəlɛld/",
-        "translation_zh": "无与伦比的",
-        "example": "The model's ability to generate human-like text is unparalleled.",
-        "audio": ""
+        "word": "groundbreaking",
+        "phonetic": "/ˈɡraʊndˌbreɪkɪŋ/",
+        "translation_zh": "突破性的",
+        "example": "The research offered groundbreaking insights.",
+        "audio": "",
+        "example_zh": "研究提供了突破性的见解。"
+      },
+      {
+        "word": "automation",
+        "phonetic": "/ˌɔːtəˈmeɪʃən/",
+        "translation_zh": "自动化",
+        "example": "Automation is reshaping industries.",
+        "audio": "",
+        "example_zh": "自动化正在重塑各个行业。"
+      },
+      {
+        "word": "iterations",
+        "phonetic": "/ˌɪtəˈreɪʃənz/",
+        "translation_zh": "迭代",
+        "example": "Each iteration improved the software.",
+        "audio": "",
+        "example_zh": "每次迭代都改进了软件。"
+      },
+      {
+        "word": "nuanced",
+        "phonetic": "/ˈnjuː.ɑːnst/",
+        "translation_zh": "细致的",
+        "example": "Her analysis was very nuanced.",
+        "audio": "",
+        "example_zh": "她的分析非常细致入微。"
+      },
+      {
+        "word": "ethical",
+        "phonetic": "/ˈɛθɪkəl/",
+        "translation_zh": "道德的",
+        "example": "Ethical considerations are important in AI.",
+        "audio": "",
+        "example_zh": "在人工智能中，道德考量非常重要。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260319-hard-001_en",
+      "translation_zh": "bundle://ep-20260319-hard-001_zh"
+    },
+    "thumbnail": "bundle://ep-20260319-hard-001_cover"
+  },
+  {
+    "id": "ep-20260320-hard-002",
+    "title": "Central Banks' Role in Taming Global Inflation",
+    "level": "hard",
+    "date": "2026-03-20",
+    "duration_seconds": 52,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Today, we're examining how central banks worldwide are responding to inflation trends that have persisted into 2026.",
+        "translation_zh": "今天，我们正在研究全球各国央行如何应对持续到2026年的通胀趋势。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 8.02
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Indeed, Alex, the inflationary pressures remain a significant concern, especially as supply chain disruptions continue.",
+        "translation_zh": "的确，Alex，通胀压力仍然是一个重大问题，尤其是在供应链中断持续的情况下。",
+        "emotion": "sad",
+        "start": 8.82,
+        "end": 16.34
+      },
+      {
+        "speaker": "Alex",
+        "text": "Some argue that the U.S. Federal Reserve's interest rate hikes might not suffice to curb inflation.",
+        "translation_zh": "有人认为，美国联邦储备局的加息可能不足以抑制通货膨胀。",
+        "emotion": "neutral",
+        "start": 17.15,
+        "end": 22.61
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, that's true. However, the Fed aims to strike a balance between inflation control and economic growth.",
+        "translation_zh": "在某种程度上，这是真的。然而，美联储的目标是在控制通胀和经济增长之间取得平衡。",
+        "emotion": "neutral",
+        "start": 23.41,
+        "end": 30.51
+      },
+      {
+        "speaker": "Alex",
+        "text": "On the other hand, the European Central Bank has adopted a somewhat different strategy.",
+        "translation_zh": "另一方面，欧洲央行采取了略有不同的策略。",
+        "emotion": "neutral",
+        "start": 31.31,
+        "end": 35.49
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yes, they've been more cautious with rate hikes, arguably due to varied economic conditions across member states.",
+        "translation_zh": "是的，他们对加息更加谨慎，可以说这是由于成员国之间不同的经济状况。",
+        "emotion": "neutral",
+        "start": 36.29,
+        "end": 41.94
+      },
+      {
+        "speaker": "Alex",
+        "text": "Do you think these varied approaches will lead to divergent economic outcomes?",
+        "translation_zh": "你认为这些不同的方法会导致经济结果的分歧吗？",
+        "emotion": "neutral",
+        "start": 42.74,
+        "end": 46.11
+      },
+      {
+        "speaker": "Lisa",
+        "text": "It's possible. Divergent strategies may lead to varying levels of inflation stability across regions.",
+        "translation_zh": "这是可能的。不同的策略可能导致各地区的通胀稳定程度不同。",
+        "emotion": "neutral",
+        "start": 46.91,
+        "end": 52.49
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "inflation",
+        "phonetic": "/ɪnˈfleɪʃn/",
+        "translation_zh": "通货膨胀",
+        "example": "Inflation rates have risen globally.",
+        "audio": "",
+        "example_zh": "全球的通货膨胀率已经上升。"
+      },
+      {
+        "word": "interest rate",
+        "phonetic": "/ˈɪntrəst reɪt/",
+        "translation_zh": "利率",
+        "example": "The central bank raised the interest rate to combat inflation.",
+        "audio": "",
+        "example_zh": "中央银行提高了利率以对抗通货膨胀。"
+      },
+      {
+        "word": "supply chain",
+        "phonetic": "/səˈplaɪ tʃeɪn/",
+        "translation_zh": "供应链",
+        "example": "Supply chain disruptions have exacerbated inflation.",
+        "audio": "",
+        "example_zh": "供应链中断加剧了通货膨胀。"
+      },
+      {
+        "word": "hike",
+        "phonetic": "/haɪk/",
+        "translation_zh": "提高",
+        "example": "The interest rate hike aims to control inflation.",
+        "audio": "",
+        "example_zh": "加息旨在控制通货膨胀。"
+      },
+      {
+        "word": "strategy",
+        "phonetic": "/ˈstrætədʒi/",
+        "translation_zh": "策略",
+        "example": "The strategy adopted by central banks varies globally.",
+        "audio": "",
+        "example_zh": "各国中央银行采取的策略不同。"
+      },
+      {
+        "word": "divergent",
+        "phonetic": "/daɪˈvɜːrdʒənt/",
+        "translation_zh": "分歧的",
+        "example": "Divergent policies may lead to different economic outcomes.",
+        "audio": "",
+        "example_zh": "不同的政策可能导致不同的经济结果。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260320-hard-002_en",
+      "translation_zh": "bundle://ep-20260320-hard-002_zh"
+    },
+    "thumbnail": "bundle://ep-20260320-hard-002_cover"
+  },
+  {
+    "id": "ep-20260321-hard-003",
+    "title": "Tesla's Affordable Disruption",
+    "level": "hard",
+    "date": "2026-03-21",
+    "duration_seconds": 53,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Tesla has launched a new affordable electric vehicle that is set to disrupt the auto market.",
+        "translation_zh": "特斯拉推出了一款新的经济型电动车，势必颠覆汽车市场。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 4.76
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, Tesla's strategy relies heavily on scaling production efficiency to lower costs.",
+        "translation_zh": "在某种程度上，特斯拉的策略严重依赖于规模化生产效率以降低成本。",
+        "emotion": "neutral",
+        "start": 5.56,
+        "end": 10.71
+      },
+      {
+        "speaker": "Alex",
+        "text": "However, competitors like Ford and GM might argue that their own EV rollouts are just as impactful.",
+        "translation_zh": "然而，像福特和通用这样的竞争对手可能会认为他们的电动车推出同样具有影响力。",
+        "emotion": "neutral",
+        "start": 11.52,
+        "end": 18.1
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Tesla's brand perception arguably gives it an edge in attracting eco-conscious consumers.",
+        "translation_zh": "特斯拉的品牌形象在吸引环保消费者方面无疑具有优势。",
+        "emotion": "happy",
+        "start": 18.9,
+        "end": 23.77
+      },
+      {
+        "speaker": "Alex",
+        "text": "Yet, the affordability aspect is crucial; the new model starts at $25,000.",
+        "translation_zh": "然而，经济实惠这一点至关重要；新款起价为25,000美元。",
+        "emotion": "neutral",
+        "start": 24.57,
+        "end": 30.23
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Analysts predict that this move could increase Tesla's market share by approximately 15% in the next year.",
+        "translation_zh": "分析师预测，这一举措可能会使特斯拉的市场份额在明年增长约15%。",
+        "emotion": "neutral",
+        "start": 31.03,
+        "end": 36.3
+      },
+      {
+        "speaker": "Alex",
+        "text": "On the other hand, supply chain challenges remain a potential hurdle for all automakers.",
+        "translation_zh": "另一方面，供应链挑战仍然是所有汽车制造商可能面临的障碍。",
+        "emotion": "sad",
+        "start": 37.1,
+        "end": 42.06
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Tesla's innovation in battery technology might alleviate some of these concerns.",
+        "translation_zh": "特斯拉在电池技术方面的创新可能会缓解其中一些担忧。",
+        "emotion": "happy",
+        "start": 42.86,
+        "end": 47.47
+      },
+      {
+        "speaker": "Alex",
+        "text": "It's an interesting time for the automotive industry, as it navigates these transformative changes.",
+        "translation_zh": "这是汽车行业的一个有趣时刻，因为它正在应对这些变革。",
+        "emotion": "happy",
+        "start": 48.27,
+        "end": 53.57
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "disrupt",
+        "phonetic": "/dɪsˈrʌpt/",
+        "translation_zh": "打乱",
+        "example": "The new technology could disrupt existing markets.",
+        "audio": "",
+        "example_zh": "新技术可能会扰乱现有市场。"
+      },
+      {
+        "word": "efficiency",
+        "phonetic": "/ɪˈfɪʃənsi/",
+        "translation_zh": "效率",
+        "example": "Improving efficiency is crucial for reducing costs.",
+        "audio": "",
+        "example_zh": "提高效率对降低成本至关重要。"
+      },
+      {
+        "word": "impactful",
+        "phonetic": "/ˈɪmpæktfəl/",
+        "translation_zh": "有影响力的",
+        "example": "Her speech was impactful and resonated with many.",
+        "audio": "",
+        "example_zh": "她的演讲很有影响力，引起了许多人的共鸣。"
+      },
+      {
+        "word": "perception",
+        "phonetic": "/pərˈsɛpʃən/",
+        "translation_zh": "看法",
+        "example": "Public perception of the brand has improved.",
+        "audio": "",
+        "example_zh": "公众对品牌的看法有所改善。"
+      },
+      {
+        "word": "analysts",
+        "phonetic": "/ˈænəlɪsts/",
+        "translation_zh": "分析师",
+        "example": "Analysts are forecasting a rise in demand.",
+        "audio": "",
+        "example_zh": "分析师预测需求将会上升。"
+      },
+      {
+        "word": "supply chain",
+        "phonetic": "/səˈplaɪ tʃeɪn/",
+        "translation_zh": "供应链",
+        "example": "The supply chain is facing significant disruptions.",
+        "audio": "",
+        "example_zh": "供应链正面临重大干扰。"
+      },
+      {
+        "word": "innovation",
+        "phonetic": "/ˌɪnəˈveɪʃən/",
+        "translation_zh": "创新",
+        "example": "Innovation is key to staying competitive.",
+        "audio": "",
+        "example_zh": "创新是保持竞争力的关键。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260321-hard-003_en",
+      "translation_zh": "bundle://ep-20260321-hard-003_zh"
+    },
+    "thumbnail": "bundle://ep-20260321-hard-003_cover"
+  },
+  {
+    "id": "ep-20260322-hard-004",
+    "title": "The New Era of Space Tourism",
+    "level": "hard",
+    "date": "2026-03-22",
+    "duration_seconds": 45,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Recent breakthroughs suggest that space tourism might become commonplace in the next decade.",
+        "translation_zh": "最近的突破表明，太空旅游可能在未来十年变得司空见惯。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 4.38
+      },
+      {
+        "speaker": "Lisa",
+        "text": "SpaceX and Blue Origin have opened new possibilities with successful launches and landings.",
+        "translation_zh": "SpaceX和Blue Origin成功的发射和着陆开启了新的可能性。",
+        "emotion": "happy",
+        "start": 5.18,
+        "end": 10.56
+      },
+      {
+        "speaker": "Alex",
+        "text": "However, the cost is still prohibitively high for most potential travelers.",
+        "translation_zh": "然而，费用对于大多数潜在旅行者来说仍然过于高昂。",
+        "emotion": "sad",
+        "start": 11.36,
+        "end": 16.79
+      },
+      {
+        "speaker": "Lisa",
+        "text": "That's true, but economies of scale could reduce prices as demand grows.",
+        "translation_zh": "确实如此，但随着需求增长，规模经济可能会降低价格。",
+        "emotion": "neutral",
+        "start": 17.59,
+        "end": 22.35
+      },
+      {
+        "speaker": "Alex",
+        "text": "There's also the question of environmental impact, with rocket launches contributing to pollution.",
+        "translation_zh": "还有环境影响的问题，火箭发射会导致污染。",
+        "emotion": "concerned",
+        "start": 23.15,
+        "end": 28.61
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, innovation in fuel technology is addressing these environmental concerns.",
+        "translation_zh": "在某种程度上，燃料技术的创新正在解决这些环境问题。",
+        "emotion": "neutral",
+        "start": 29.41,
+        "end": 34.1
+      },
+      {
+        "speaker": "Alex",
+        "text": "Will regulators impose limits that could slow the industry's growth?",
+        "translation_zh": "监管机构会不会施加限制，从而减缓行业增长?",
+        "emotion": "neutral",
+        "start": 34.9,
+        "end": 38.19
+      },
+      {
+        "speaker": "Lisa",
+        "text": "That's possible, but the excitement around space tourism could drive public support for sensible policies.",
+        "translation_zh": "这是可能的，但围绕太空旅游的兴奋可能会推动公众支持合理的政策。",
+        "emotion": "happy",
+        "start": 38.99,
+        "end": 45.23
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "breakthrough",
+        "phonetic": "/ˈbreɪkˌθruː/",
+        "translation_zh": "突破",
+        "example": "The new technology marks a major breakthrough in the field.",
+        "audio": "",
+        "example_zh": "这项新技术标志着该领域的重大突破。"
+      },
+      {
+        "word": "commonplace",
+        "phonetic": "/ˈkɒmənˌpleɪs/",
+        "translation_zh": "司空见惯",
+        "example": "Smartphones are now commonplace in modern society.",
+        "audio": "",
+        "example_zh": "智能手机现在在现代社会中随处可见。"
+      },
+      {
+        "word": "prohibitively",
+        "phonetic": "/prəˈhɪbɪtɪvli/",
+        "translation_zh": "过于高昂地",
+        "example": "The cost of living in the city is prohibitively expensive for many.",
+        "audio": "",
+        "example_zh": "城市的生活成本对许多人来说过于昂贵。"
+      },
+      {
+        "word": "economies of scale",
+        "phonetic": "/ɪˈkɒnəmiz əv skeɪl/",
+        "translation_zh": "规模经济",
+        "example": "The company benefits from economies of scale.",
+        "audio": "",
+        "example_zh": "公司从规模经济中获益。"
+      },
+      {
+        "word": "pollution",
+        "phonetic": "/pəˈluːʃən/",
+        "translation_zh": "污染",
+        "example": "Air pollution is a major concern for urban areas.",
+        "audio": "",
+        "example_zh": "空气污染是城市地区的主要问题。"
+      },
+      {
+        "word": "innovation",
+        "phonetic": "/ˌɪnəˈveɪʃən/",
+        "translation_zh": "创新",
+        "example": "Innovation is the key to staying competitive.",
+        "audio": "",
+        "example_zh": "创新是保持竞争力的关键。"
+      },
+      {
+        "word": "regulators",
+        "phonetic": "/ˈregjʊˌleɪtərz/",
+        "translation_zh": "监管机构",
+        "example": "Regulators are assessing new safety standards.",
+        "audio": "",
+        "example_zh": "监管机构正在评估新的安全标准。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260322-hard-004_en",
+      "translation_zh": "bundle://ep-20260322-hard-004_zh"
+    },
+    "thumbnail": "bundle://ep-20260322-hard-004_cover"
+  },
+  {
+    "id": "ep-20260323-hard-005",
+    "title": "Surge in Climate Tech Investment",
+    "level": "hard",
+    "date": "2026-03-23",
+    "duration_seconds": 38,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Recent reports highlight that climate tech startups are receiving unprecedented investment, breaking previous funding records.",
+        "translation_zh": "最近的报告显示，气候科技初创公司正在获得前所未有的投资，打破了以往的融资记录。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 7.06
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Indeed, venture capitalists are increasingly attracted to clean energy solutions, reflecting a growing awareness and urgency around climate change.",
+        "translation_zh": "确实，风险资本家越来越被清洁能源解决方案吸引，这反映出对气候变化日益增长的意识和紧迫感。",
+        "emotion": "happy",
+        "start": 7.86,
+        "end": 15.85
+      },
+      {
+        "speaker": "Alex",
+        "text": "However, some argue that a bubble might be forming in the climate tech sector, similar to past tech booms.",
+        "translation_zh": "然而，有些人认为，气候科技领域可能正在形成泡沫，类似于过去的科技热潮。",
+        "emotion": "neutral",
+        "start": 16.65,
+        "end": 21.92
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, that concern is valid, but unlike past tech booms, climate tech addresses critical environmental issues.",
+        "translation_zh": "在某种程度上，这种担忧是有道理的，但与过去的科技热潮不同，气候科技解决的是关键的环境问题。",
+        "emotion": "neutral",
+        "start": 22.72,
+        "end": 29.27
+      },
+      {
+        "speaker": "Alex",
+        "text": "The International Energy Agency reports a 20% growth in investment in clean energy technologies this year alone.",
+        "translation_zh": "国际能源署报告称，仅今年清洁能源技术的投资就增长了20%。",
+        "emotion": "surprised",
+        "start": 30.07,
+        "end": 38.09
+      },
+      {
+        "speaker": "Lisa",
+        "text": "That's a significant leap, showing both investor confidence and the sector's potential to deliver impactful solutions.",
+        "translation_zh": "这是一个显著的飞跃，表明了投资者的信心以及该领域提供有影响力解决方案的潜力。",
+        "emotion": "happy"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Yet, companies must prove their scalability and financial sustainability to avoid investor disillusionment.",
+        "translation_zh": "然而，公司必须证明其可扩展性和财务可持续性，以避免投资者失望。",
+        "emotion": "sad"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Certainly, the pressure is on. But with the right strategies, climate tech startups could redefine global industry standards.",
+        "translation_zh": "当然，压力很大。但有了正确的策略，气候科技初创公司可能会重新定义全球行业标准。",
+        "emotion": "happy"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "unprecedented",
+        "phonetic": "/ʌnˈprɛsɪˌdɛntɪd/",
+        "translation_zh": "前所未有的",
+        "example": "The project achieved unprecedented success.",
+        "audio": "",
+        "example_zh": "这个项目取得了前所未有的成功。"
+      },
+      {
+        "word": "venture capitalist",
+        "phonetic": "/ˈvɛntʃər ˈkæpɪtəlɪst/",
+        "translation_zh": "风险资本家",
+        "example": "Venture capitalists invested heavily in the new company.",
+        "audio": "",
+        "example_zh": "风险投资者对这家新公司进行了大量投资。"
+      },
+      {
+        "word": "bubble",
+        "phonetic": "/ˈbʌbəl/",
+        "translation_zh": "泡沫",
+        "example": "Some fear the market is in a bubble.",
+        "audio": "",
+        "example_zh": "一些人担心市场处于泡沫状态。"
+      },
+      {
+        "word": "scalability",
+        "phonetic": "/ˌskeɪləˈbɪlɪti/",
+        "translation_zh": "可扩展性",
+        "example": "The software's scalability is crucial for handling large datasets.",
+        "audio": "",
+        "example_zh": "软件的可扩展性对于处理大型数据集至关重要。"
+      },
+      {
+        "word": "sustainability",
+        "phonetic": "/səˌsteɪnəˈbɪlɪti/",
+        "translation_zh": "可持续性",
+        "example": "The company's sustainability practices are commendable.",
+        "audio": "",
+        "example_zh": "公司的可持续发展实践值得称赞。"
+      },
+      {
+        "word": "disillusionment",
+        "phonetic": "/ˌdɪsɪˈluːʒənmənt/",
+        "translation_zh": "失望",
+        "example": "Disillusionment set in after the project's failure.",
+        "audio": "",
+        "example_zh": "项目失败后，失望情绪开始蔓延。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260323-hard-005_en",
+      "translation_zh": "bundle://ep-20260323-hard-005_zh"
+    },
+    "thumbnail": "bundle://ep-20260323-hard-005_cover"
+  },
+  {
+    "id": "ep-20260324-hard-006",
+    "title": "Supply Chain Disruption",
+    "level": "hard",
+    "date": "2026-03-24",
+    "duration_seconds": 31,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "The global chip shortage is causing significant disruptions in tech supply chains.",
+        "translation_zh": "全球芯片短缺正导致技术供应链显著中断。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 4.76
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Indeed, companies like Apple and Samsung have reported delays in product launches due to this issue.",
+        "translation_zh": "的确，像苹果和三星这样的公司已经报告因这一问题导致产品发布延迟。",
+        "emotion": "sad",
+        "start": 5.56,
+        "end": 11.68
+      },
+      {
+        "speaker": "Alex",
+        "text": "However, some argue that the shortage could accelerate innovation as firms seek alternatives.",
+        "translation_zh": "然而，有些人认为，由于公司寻找替代方案，短缺可能会加速创新。",
+        "emotion": "neutral",
+        "start": 12.48,
+        "end": 18.33
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, that's true. Tesla, for example, is exploring new semiconductor technologies.",
+        "translation_zh": "在某种程度上，这是真的。例如，特斯拉正在探索新的半导体技术。",
+        "emotion": "happy",
+        "start": 19.13,
+        "end": 24.75
+      },
+      {
+        "speaker": "Alex",
+        "text": "On the other hand, smaller companies might struggle to keep up, lacking resources to pivot quickly.",
+        "translation_zh": "另一方面，较小的公司可能难以跟上，因为缺乏迅速调整的资源。",
+        "emotion": "sad",
+        "start": 25.55,
+        "end": 31.05
+      },
+      {
+        "speaker": "Lisa",
+        "text": "The semiconductor industry is investing heavily to increase production capacity, which is promising.",
+        "translation_zh": "半导体行业正在大力投资以增加生产能力，这是一个积极的信号。",
+        "emotion": "happy"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Yet, it will take time to see tangible results, possibly extending well into 2027.",
+        "translation_zh": "然而，看到实质性的结果需要时间，可能会延续到2027年。",
+        "emotion": "neutral"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Overall, the chip shortage is arguably a catalyst for long-term changes in global manufacturing.",
+        "translation_zh": "总的来说，芯片短缺可以说是全球制造业长期变革的催化剂。",
+        "emotion": "neutral"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "disruption",
+        "phonetic": "/dɪsˈrʌpʃən/",
+        "translation_zh": "中断",
+        "example": "The power outage caused a disruption in service.",
+        "audio": "",
+        "example_zh": "停电导致了服务中断。"
+      },
+      {
+        "word": "innovation",
+        "phonetic": "/ˌɪnəˈveɪʃən/",
+        "translation_zh": "创新",
+        "example": "Innovation is crucial for business growth.",
+        "audio": "",
+        "example_zh": "创新对企业增长至关重要。"
+      },
+      {
+        "word": "semiconductor",
+        "phonetic": "/ˈsɛmɪkənˌdʌktər/",
+        "translation_zh": "半导体",
+        "example": "Semiconductors are essential components of modern electronics.",
+        "audio": "",
+        "example_zh": "半导体是现代电子产品的关键组件。"
+      },
+      {
+        "word": "capacity",
+        "phonetic": "/kəˈpæsɪti/",
+        "translation_zh": "能力",
+        "example": "The company expanded its production capacity last year.",
+        "audio": "",
+        "example_zh": "公司去年扩大了生产能力。"
+      },
+      {
+        "word": "accelerate",
+        "phonetic": "/əkˈsɛləˌreɪt/",
+        "translation_zh": "加速",
+        "example": "The new strategy aims to accelerate growth.",
+        "audio": "",
+        "example_zh": "新战略旨在加速增长。"
+      },
+      {
+        "word": "tangible",
+        "phonetic": "/ˈtændʒəbl/",
+        "translation_zh": "有形的",
+        "example": "The project produced tangible benefits for the community.",
+        "audio": "",
+        "example_zh": "该项目为社区带来了实实在在的好处。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260324-hard-006_en",
+      "translation_zh": "bundle://ep-20260324-hard-006_zh"
+    },
+    "thumbnail": "bundle://ep-20260324-hard-006_cover"
+  },
+  {
+    "id": "ep-20260325-hard-007",
+    "title": "The Vision Pro Revolution",
+    "level": "hard",
+    "date": "2026-03-25",
+    "duration_seconds": 54,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Apple's Vision Pro is making waves in the tech industry, arguably altering the future of personal computing.",
+        "translation_zh": "苹果的Vision Pro正在科技行业掀起波澜，可以说正在改变个人计算的未来。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 6.24
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Indeed, the device's augmented reality capabilities are impressive, merging digital content seamlessly with the physical world.",
+        "translation_zh": "确实，这款设备的增强现实功能令人印象深刻，能够将数字内容与物理世界无缝融合。",
+        "emotion": "happy",
+        "start": 7.03,
+        "end": 14.32
+      },
+      {
+        "speaker": "Alex",
+        "text": "However, some critics argue that its high price point could limit widespread adoption.",
+        "translation_zh": "然而，一些批评者认为其高昂的价格可能会限制广泛采用。",
+        "emotion": "neutral",
+        "start": 15.13,
+        "end": 20.86
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, that's true. The Vision Pro starts at $3,499, which is a significant investment.",
+        "translation_zh": "在某种程度上，这是真的。Vision Pro起价为3,499美元，这是一笔不小的投资。",
+        "emotion": "sad",
+        "start": 21.66,
+        "end": 30.11
+      },
+      {
+        "speaker": "Alex",
+        "text": "On the other hand, Apple's brand loyalty could drive sales despite the cost.",
+        "translation_zh": "另一方面，苹果的品牌忠诚度可能推动销售，尽管价格不菲。",
+        "emotion": "neutral",
+        "start": 30.91,
+        "end": 35.33
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Furthermore, developers are excited about the new possibilities in app design and user interaction.",
+        "translation_zh": "此外，开发人员对应用设计和用户交互的新可能性感到兴奋。",
+        "emotion": "happy",
+        "start": 36.12,
+        "end": 41.43
+      },
+      {
+        "speaker": "Alex",
+        "text": "Are there any specific sectors where Vision Pro is expected to make the most impact?",
+        "translation_zh": "有哪一些特定行业预计Vision Pro会产生最大影响吗？",
+        "emotion": "neutral",
+        "start": 42.23,
+        "end": 45.95
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Healthcare and education are prime candidates. The ability to overlay digital information on the real world could transform these fields.",
+        "translation_zh": "医疗和教育是主要候选者。将数字信息覆盖在现实世界上的能力可能会改变这些领域。",
+        "emotion": "happy",
+        "start": 46.74,
+        "end": 54.53
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "augmented",
+        "phonetic": "/ɔːɡˈmɛntɪd/",
+        "translation_zh": "增强的",
+        "example": "The augmented reality feature enhances the user experience.",
+        "audio": "",
+        "example_zh": "增强现实功能提升了用户体验。"
+      },
+      {
+        "word": "adoption",
+        "phonetic": "/əˈdɒpʃən/",
+        "translation_zh": "采用",
+        "example": "The adoption of new technology can be challenging.",
+        "audio": "",
+        "example_zh": "采用新技术可能会很有挑战性。"
+      },
+      {
+        "word": "investment",
+        "phonetic": "/ɪnˈvɛstmənt/",
+        "translation_zh": "投资",
+        "example": "Investing in technology often requires a significant financial commitment.",
+        "audio": "",
+        "example_zh": "投资于技术通常需要大量的财务投入。"
+      },
+      {
+        "word": "loyalty",
+        "phonetic": "/ˈlɔɪəlti/",
+        "translation_zh": "忠诚",
+        "example": "Customer loyalty is crucial for business success.",
+        "audio": "",
+        "example_zh": "客户忠诚度对企业成功至关重要。"
+      },
+      {
+        "word": "overlay",
+        "phonetic": "/ˈəʊvərleɪ/",
+        "translation_zh": "覆盖",
+        "example": "The software overlays digital information onto real-world images.",
+        "audio": "",
+        "example_zh": "该软件将数字信息叠加到现实世界的图像上。"
+      },
+      {
+        "word": "sectors",
+        "phonetic": "/ˈsɛktərz/",
+        "translation_zh": "行业",
+        "example": "Different sectors are adopting augmented reality at varying rates.",
+        "audio": "",
+        "example_zh": "不同的行业正在以不同的速度采用增强现实技术。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260325-hard-007_en",
+      "translation_zh": "bundle://ep-20260325-hard-007_zh"
+    },
+    "thumbnail": "bundle://ep-20260325-hard-007_cover"
+  },
+  {
+    "id": "ep-20260326-hard-008",
+    "title": "AI Revolution in Healthcare",
+    "level": "hard",
+    "date": "2026-03-26",
+    "duration_seconds": 34,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "The integration of AI into drug discovery is transforming the healthcare landscape significantly.",
+        "translation_zh": "人工智能在药物发现中的整合正在显著改变医疗保健领域。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 4.14
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Absolutely, AI models can analyze vast datasets at unprecedented speeds, potentially reducing drug development time from years to months.",
+        "translation_zh": "确实如此，人工智能模型可以以前所未有的速度分析大量数据，有可能将药物开发时间从几年缩短到几个月。",
+        "emotion": "happy",
+        "start": 4.95,
+        "end": 13.23
+      },
+      {
+        "speaker": "Alex",
+        "text": "However, reliance on algorithm accuracy raises ethical concerns about patient safety and data privacy.",
+        "translation_zh": "然而，依赖算法的准确性引发了关于患者安全和数据隐私的伦理问题。",
+        "emotion": "sad",
+        "start": 14.03,
+        "end": 21.09
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, these concerns are valid, but there is also robust regulatory oversight to mitigate risks.",
+        "translation_zh": "在某种程度上，这些担忧是合理的，但也有健全的监管监督来减轻风险。",
+        "emotion": "neutral",
+        "start": 21.89,
+        "end": 27.89
+      },
+      {
+        "speaker": "Alex",
+        "text": "Many experts argue that AI could revolutionize personalized medicine by tailoring treatments to individual genetic profiles.",
+        "translation_zh": "许多专家认为，人工智能可以通过针对个人基因概况量身定制治疗方案来革命化个性化医学。",
+        "emotion": "surprised",
+        "start": 28.7,
+        "end": 34.58
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Indeed, companies like Insilico Medicine and Exscientia are pioneering these advancements, showing promising results.",
+        "translation_zh": "确实，像Insilico Medicine和Exscientia这样的公司正在开创这些进步，并显示出令人鼓舞的成果。",
+        "emotion": "happy"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Still, one must consider the potential for algorithmic bias, which could lead to inequities in healthcare outcomes.",
+        "translation_zh": "然而，人们必须考虑算法偏见的可能性，这可能导致医疗结果的不公平。",
+        "emotion": "angry"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "That's a critical point. Continuous monitoring and diverse data sets are essential to address these biases.",
+        "translation_zh": "这是一个关键点。持续监测和多样化的数据集对于解决这些偏见至关重要。",
+        "emotion": "neutral"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "integration",
+        "phonetic": "/ˌɪntɪˈɡreɪʃən/",
+        "translation_zh": "整合",
+        "example": "The integration of technology has transformed many industries.",
+        "audio": "",
+        "example_zh": "技术的整合已经改变了许多行业。"
+      },
+      {
+        "word": "dataset",
+        "phonetic": "/ˈdeɪtəˌsɛt/",
+        "translation_zh": "数据集",
+        "example": "AI requires large datasets to improve accuracy.",
+        "audio": "",
+        "example_zh": "人工智能需要大量数据集来提高准确性。"
+      },
+      {
+        "word": "algorithm",
+        "phonetic": "/ˈælɡəˌrɪðəm/",
+        "translation_zh": "算法",
+        "example": "The new algorithm improves the speed of data processing.",
+        "audio": "",
+        "example_zh": "新算法提高了数据处理的速度。"
       },
       {
         "word": "ethical",
         "phonetic": "/ˈɛθɪkəl/",
         "translation_zh": "伦理的",
-        "example": "There’s concern about ethical implications.",
-        "audio": ""
+        "example": "Ethical considerations are crucial in AI development.",
+        "audio": "",
+        "example_zh": "伦理考虑在人工智能开发中至关重要。"
       },
       {
-        "word": "misinformation",
-        "phonetic": "/ˌmɪsɪnfərˈmeɪʃən/",
-        "translation_zh": "虚假信息",
-        "example": "Particularly in misinformation dissemination.",
-        "audio": ""
+        "word": "personalized",
+        "phonetic": "/ˈpɜrsənəˌlaɪzd/",
+        "translation_zh": "个性化的",
+        "example": "Personalized medicine tailors treatment to individual needs.",
+        "audio": "",
+        "example_zh": "个性化医疗根据个人需求量身定制治疗方案。"
       },
       {
-        "word": "filters",
-        "phonetic": "/ˈfɪltərz/",
-        "translation_zh": "过滤器",
-        "example": "OpenAI has implemented stricter filters.",
-        "audio": ""
-      },
-      {
-        "word": "vigilance",
-        "phonetic": "/ˈvɪdʒɪləns/",
-        "translation_zh": "警惕",
-        "example": "The rapid pace of AI development requires ongoing vigilance.",
-        "audio": ""
+        "word": "bias",
+        "phonetic": "/ˈbaɪəs/",
+        "translation_zh": "偏见",
+        "example": "Algorithmic bias can impact decision-making processes.",
+        "audio": "",
+        "example_zh": "算法偏见可能会影响决策过程。"
       }
     ],
     "audio": {
-      "english": "bundle://test_hard_en",
-      "translation_zh": "bundle://test_hard_zh"
+      "english": "bundle://ep-20260326-hard-008_en",
+      "translation_zh": "bundle://ep-20260326-hard-008_zh"
     },
-    "thumbnail": "bundle://cover_hard"
+    "thumbnail": "bundle://ep-20260326-hard-008_cover"
   },
   {
-    "id": "ep-2026-0326-hard-002",
-    "title": "AI in Healthcare",
-    "level": "hard",
-    "date": "2026-03-26",
-    "duration_seconds": 540,
-    "audio": {
-      "english": "https://oss.langpod.com/episodes/hard-002/en.mp3",
-      "translation_zh": "https://oss.langpod.com/episodes/hard-002/zh.mp3"
-    },
-    "script": [
-      {
-        "speaker": "Alex",
-        "text": "A groundbreaking study published in Nature Medicine this week demonstrates that an AI diagnostic system outperformed radiologists in detecting early-stage lung cancer.",
-        "start": 0.0,
-        "end": 9.0,
-        "translation_zh": "本周发表在《自然·医学》上的一项突破性研究表明，一个AI诊断系统在检测早期肺癌方面超过了放射科医生。"
-      },
-      {
-        "speaker": "Lisa",
-        "text": "The accuracy gap was remarkable — 94% versus 82%. But I think the real story is about how this technology will reshape the doctor-patient relationship.",
-        "start": 9.3,
-        "end": 19.0,
-        "translation_zh": "准确率差距很显著——94%对82%。但我认为真正的故事是这项技术将如何重塑医患关系。"
-      },
-      {
-        "speaker": "Alex",
-        "text": "Exactly. There's a philosophical dimension here. When an algorithm makes a life-or-death diagnosis, who bears the liability? The developer, the hospital, or the physician who signed off on it?",
-        "start": 19.3,
-        "end": 30.0,
-        "translation_zh": "没错。这里有一个哲学层面的问题。当算法做出关乎生死的诊断时，谁来承担责任？开发者、医院，还是签字认可的医生？"
-      },
-      {
-        "speaker": "Lisa",
-        "text": "That's the regulatory gray area that lawmakers are scrambling to address. The EU's AI Act has some provisions, but they weren't designed with this level of clinical integration in mind.",
-        "start": 30.3,
-        "end": 40.5,
-        "translation_zh": "这就是立法者正在争先恐后解决的监管灰色地带。欧盟的AI法案有一些条款，但并非针对这种程度的临床整合而设计。"
-      },
-      {
-        "speaker": "Alex",
-        "text": "Meanwhile, developing nations see this as a leapfrog opportunity. Countries with physician shortages could deploy AI screening at a fraction of the cost.",
-        "start": 40.8,
-        "end": 50.0,
-        "translation_zh": "与此同时，发展中国家把这看作弯道超车的机会。医生短缺的国家可以以极低的成本部署AI筛查。"
-      },
-      {
-        "speaker": "Lisa",
-        "text": "It's a compelling argument. Democratizing access to world-class diagnostics could save millions of lives, particularly in regions where specialists are virtually nonexistent.",
-        "start": 50.3,
-        "end": 60.0,
-        "translation_zh": "这是一个很有说服力的论点。普及世界级的诊断技术可以拯救数百万人的生命，尤其是在几乎没有专科医生的地区。"
-      }
-    ],
-    "vocabulary": [
-      {
-        "word": "groundbreaking",
-        "phonetic": "/ˈɡraʊndbreɪkɪŋ/",
-        "translation_zh": "突破性的，开创性的",
-        "example": "a groundbreaking discovery in physics",
-        "audio": "https://oss.langpod.com/words/groundbreaking.mp3"
-      },
-      {
-        "word": "diagnostic",
-        "phonetic": "/ˌdaɪəɡˈnɑːstɪk/",
-        "translation_zh": "诊断的",
-        "example": "diagnostic tools for disease detection",
-        "audio": "https://oss.langpod.com/words/diagnostic.mp3"
-      },
-      {
-        "word": "liability",
-        "phonetic": "/ˌlaɪəˈbɪləti/",
-        "translation_zh": "责任，法律责任",
-        "example": "The company denied any liability for the accident.",
-        "audio": "https://oss.langpod.com/words/liability.mp3"
-      },
-      {
-        "word": "regulatory",
-        "phonetic": "/ˈreɡjələtɔːri/",
-        "translation_zh": "监管的，管理的",
-        "example": "regulatory requirements for new drugs",
-        "audio": "https://oss.langpod.com/words/regulatory.mp3"
-      },
-      {
-        "word": "provision",
-        "phonetic": "/prəˈvɪʒn/",
-        "translation_zh": "条款，规定",
-        "example": "legal provisions for data protection",
-        "audio": "https://oss.langpod.com/words/provision.mp3"
-      },
-      {
-        "word": "leapfrog",
-        "phonetic": "/ˈliːpfrɑːɡ/",
-        "translation_zh": "跨越式发展，弯道超车",
-        "example": "developing nations leapfrogging traditional infrastructure",
-        "audio": "https://oss.langpod.com/words/leapfrog.mp3"
-      },
-      {
-        "word": "democratizing",
-        "phonetic": "/dɪˈmɑːkrətaɪzɪŋ/",
-        "translation_zh": "使民主化，使大众化",
-        "example": "Technology is democratizing education.",
-        "audio": "https://oss.langpod.com/words/democratizing.mp3"
-      }
-    ]
-  },
-  {
-    "id": "ep-2026-0327-hard-003",
-    "title": "The Housing Crisis",
+    "id": "ep-20260327-hard-009",
+    "title": "The Rise of the Creator Economy",
     "level": "hard",
     "date": "2026-03-27",
-    "duration_seconds": 500,
-    "audio": {
-      "english": "https://oss.langpod.com/episodes/hard-003/en.mp3",
-      "translation_zh": "https://oss.langpod.com/episodes/hard-003/zh.mp3"
-    },
+    "duration_seconds": 30,
     "script": [
       {
         "speaker": "Alex",
-        "text": "Housing affordability has reached a crisis point in virtually every major metropolitan area. The ratio of median home price to median income has hit historic highs.",
+        "text": "Today we're discussing how the creator economy is reshaping traditional employment models.",
+        "translation_zh": "今天我们讨论创作者经济如何重塑传统的就业模式。",
+        "emotion": "neutral",
         "start": 0.0,
-        "end": 9.5,
-        "translation_zh": "住房可负担性在几乎所有大城市都已达到危机点。房价中位数与收入中位数的比率已创下历史新高。"
+        "end": 4.81
       },
       {
         "speaker": "Lisa",
-        "text": "And it's not just about purchasing. Rental markets are equally strained. In cities like London and San Francisco, young professionals are spending upwards of 50% of their income on rent.",
-        "start": 9.8,
-        "end": 20.0,
-        "translation_zh": "而且不仅是购房问题。租房市场同样紧张。在伦敦和旧金山这样的城市，年轻专业人士将超过50%的收入花在房租上。"
+        "text": "It's fascinating to observe how platforms like YouTube and TikTok provide individuals the opportunity to monetize their creativity.",
+        "translation_zh": "观察像YouTube和TikTok这样的平台如何为个人提供通过创造力获利的机会是很有趣的。",
+        "emotion": "happy",
+        "start": 5.61,
+        "end": 12.7
       },
       {
         "speaker": "Alex",
-        "text": "The root causes are multifaceted: restrictive zoning laws, NIMBYism, supply chain disruptions in construction materials, and of course, institutional investors snapping up residential properties.",
-        "start": 20.3,
-        "end": 32.0,
-        "translation_zh": "根本原因是多方面的：限制性的分区法、邻避主义、建筑材料供应链中断，当然还有机构投资者抢购住宅物业。"
+        "text": "However, some argue that this gig economy lacks the stability and benefits of traditional jobs.",
+        "translation_zh": "然而，一些人认为这种零工经济缺乏传统工作的稳定性和福利。",
+        "emotion": "neutral",
+        "start": 13.5,
+        "end": 18.49
       },
       {
         "speaker": "Lisa",
-        "text": "Some cities have experimented with rent control, but economists are largely skeptical. It tends to reduce the overall housing supply because developers lose the incentive to build.",
-        "start": 32.3,
-        "end": 43.0,
-        "translation_zh": "一些城市尝试了租金管控，但经济学家普遍持怀疑态度。这往往会减少整体住房供应，因为开发商失去了建设的动力。"
+        "text": "To some extent, that's true. Yet, it offers unparalleled autonomy and the potential for high earnings.",
+        "translation_zh": "在某种程度上，这是真的。然而，它提供了无与伦比的自主权和高收入的潜力。",
+        "emotion": "neutral",
+        "start": 19.29,
+        "end": 25.18
       },
       {
         "speaker": "Alex",
-        "text": "Vienna's social housing model is often cited as a success story. Nearly 60% of residents live in subsidized housing, and quality remains remarkably high.",
-        "start": 43.3,
-        "end": 53.0,
-        "translation_zh": "维也纳的社会住房模式经常被引用为成功案例。近60%的居民住在补贴住房中，而且质量保持在相当高的水平。"
+        "text": "According to a recent report, the creator economy is projected to be worth over $100 billion by 2026.",
+        "translation_zh": "根据最近的一份报告，到2026年，创作者经济预计将超过1000亿美元。",
+        "emotion": "neutral",
+        "start": 25.98,
+        "end": 30.94
       },
       {
         "speaker": "Lisa",
-        "text": "True, but replicating that model requires decades of sustained political will and enormous upfront investment. It's not a quick fix by any means.",
-        "start": 53.3,
-        "end": 62.0,
-        "translation_zh": "确实，但复制这个模式需要数十年持续的政治意愿和巨大的前期投资。这绝不是一个快速解决方案。"
+        "text": "Indeed, but it's crucial to recognize the risks involved, such as income unpredictability and platform dependency.",
+        "translation_zh": "确实如此，但重要的是要认识到其中的风险，比如收入的不确定性和对平台的依赖。",
+        "emotion": "sad"
+      },
+      {
+        "speaker": "Alex",
+        "text": "On the other hand, many creators have managed to diversify their income streams successfully.",
+        "translation_zh": "另一方面，许多创作者已经成功地实现了收入渠道的多样化。",
+        "emotion": "happy"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Absolutely, this trend is a testament to the evolving landscape of work in the digital age.",
+        "translation_zh": "确实，这一趋势证明了数字时代工作环境的演变。",
+        "emotion": "happy"
       }
     ],
     "vocabulary": [
       {
-        "word": "affordability",
-        "phonetic": "/əˌfɔːrdəˈbɪləti/",
-        "translation_zh": "可负担性",
-        "example": "housing affordability remains a key issue",
-        "audio": "https://oss.langpod.com/words/affordability.mp3"
+        "word": "monetize",
+        "phonetic": "/ˈmʌnɪtaɪz/",
+        "translation_zh": "货币化",
+        "example": "Platforms provide individuals the opportunity to monetize their creativity.",
+        "audio": "",
+        "example_zh": "平台为个人提供了将创造力货币化的机会。"
       },
       {
-        "word": "metropolitan",
-        "phonetic": "/ˌmetrəˈpɑːlɪtən/",
-        "translation_zh": "大都市的",
-        "example": "the Tokyo metropolitan area",
-        "audio": "https://oss.langpod.com/words/metropolitan.mp3"
+        "word": "autonomy",
+        "phonetic": "/ɔːˈtɒnəmi/",
+        "translation_zh": "自主权",
+        "example": "The gig economy offers unparalleled autonomy.",
+        "audio": "",
+        "example_zh": "零工经济提供了无与伦比的自主性。"
       },
       {
-        "word": "multifaceted",
-        "phonetic": "/ˌmʌltiˈfæsɪtɪd/",
-        "translation_zh": "多方面的，多层次的",
-        "example": "a multifaceted approach to the problem",
-        "audio": "https://oss.langpod.com/words/multifaceted.mp3"
+        "word": "projected",
+        "phonetic": "/prəˈdʒɛktɪd/",
+        "translation_zh": "预计的",
+        "example": "The creator economy is projected to be worth over $100 billion by 2026.",
+        "audio": "",
+        "example_zh": "预计到2026年，创作者经济的价值将超过1000亿美元。"
       },
       {
-        "word": "incentive",
-        "phonetic": "/ɪnˈsentɪv/",
-        "translation_zh": "激励，动力",
-        "example": "financial incentives for green energy",
-        "audio": "https://oss.langpod.com/words/incentive.mp3"
+        "word": "unpredictability",
+        "phonetic": "/ˌʌnprɪˌdɪkˈtæbɪlɪti/",
+        "translation_zh": "不可预测性",
+        "example": "It's crucial to recognize risks such as income unpredictability.",
+        "audio": "",
+        "example_zh": "认识到收入不稳定等风险至关重要。"
       },
       {
-        "word": "subsidized",
-        "phonetic": "/ˈsʌbsɪdaɪzd/",
-        "translation_zh": "补贴的，资助的",
-        "example": "government-subsidized childcare",
-        "audio": "https://oss.langpod.com/words/subsidized.mp3"
+        "word": "dependency",
+        "phonetic": "/dɪˈpɛndənsi/",
+        "translation_zh": "依赖",
+        "example": "There is a risk of platform dependency for creators.",
+        "audio": "",
+        "example_zh": "创作者存在对平台依赖的风险。"
       },
       {
-        "word": "replicating",
-        "phonetic": "/ˈreplɪkeɪtɪŋ/",
-        "translation_zh": "复制，再现",
-        "example": "replicating the experiment in a different lab",
-        "audio": "https://oss.langpod.com/words/replicating.mp3"
+        "word": "diversify",
+        "phonetic": "/daɪˈvɜːsɪfaɪ/",
+        "translation_zh": "多样化",
+        "example": "Many creators have managed to diversify their income streams successfully.",
+        "audio": "",
+        "example_zh": "许多创作者成功地实现了收入来源的多样化。"
       },
       {
-        "word": "sustained",
-        "phonetic": "/səˈsteɪnd/",
-        "translation_zh": "持续的，持久的",
-        "example": "sustained economic growth",
-        "audio": "https://oss.langpod.com/words/sustained.mp3"
+        "word": "testament",
+        "phonetic": "/ˈtɛstəmənt/",
+        "translation_zh": "证明",
+        "example": "This trend is a testament to the evolving landscape of work.",
+        "audio": "",
+        "example_zh": "这一趋势证明了工作环境的不断演变。"
       }
-    ]
+    ],
+    "audio": {
+      "english": "bundle://ep-20260327-hard-009_en",
+      "translation_zh": "bundle://ep-20260327-hard-009_zh"
+    },
+    "thumbnail": "bundle://ep-20260327-hard-009_cover"
+  },
+  {
+    "id": "ep-20260328-hard-010",
+    "title": "The Future of AI Regulation",
+    "level": "hard",
+    "date": "2026-03-28",
+    "duration_seconds": 45,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Today we're diving into the ongoing debate over AI regulation in the tech industry.",
+        "translation_zh": "今天我们将深入探讨科技行业中有关人工智能监管的持续辩论。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 5.16
+      },
+      {
+        "speaker": "Lisa",
+        "text": "The call for regulation is growing. Many experts argue it is necessary to prevent potential misuse.",
+        "translation_zh": "对监管的呼声越来越高，许多专家认为有必要防止潜在的误用。",
+        "emotion": "sad",
+        "start": 5.96,
+        "end": 12.24
+      },
+      {
+        "speaker": "Alex",
+        "text": "However, companies like IBM and Google have expressed concerns that overregulation might stifle innovation.",
+        "translation_zh": "然而，像IBM和谷歌这样的公司担心过度监管可能会抑制创新。",
+        "emotion": "angry",
+        "start": 13.04,
+        "end": 19.12
+      },
+      {
+        "speaker": "Lisa",
+        "text": "True, but the rise of AI technologies such as ChatGPT has shown the power and risks associated with AI.",
+        "translation_zh": "确实如此，但人工智能技术如ChatGPT的崛起已经显示出人工智能相关的力量和风险。",
+        "emotion": "surprised",
+        "start": 19.92,
+        "end": 27.16
+      },
+      {
+        "speaker": "Alex",
+        "text": "Microsoft's recent investment in AI safety research highlights the industry's awareness of these risks.",
+        "translation_zh": "微软最近对人工智能安全研究的投资凸显了业界对这些风险的意识。",
+        "emotion": "neutral",
+        "start": 27.96,
+        "end": 33.23
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, effective regulation could arguably lead to more trustworthy AI systems.",
+        "translation_zh": "在一定程度上，有效的监管可能会导致更值得信赖的人工智能系统。",
+        "emotion": "happy",
+        "start": 34.03,
+        "end": 39.19
+      },
+      {
+        "speaker": "Alex",
+        "text": "The balance between innovation and regulation remains a complex issue that the industry must navigate carefully.",
+        "translation_zh": "在创新和监管之间取得平衡仍然是一个复杂的问题，行业必须小心应对。",
+        "emotion": "neutral",
+        "start": 39.99,
+        "end": 45.92
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "regulation",
+        "phonetic": "/ˌrɛɡjʊˈleɪʃən/",
+        "translation_zh": "监管",
+        "example": "The government is considering new regulations for the industry.",
+        "audio": "",
+        "example_zh": "政府正在考虑为该行业制定新的法规。"
+      },
+      {
+        "word": "innovation",
+        "phonetic": "/ˌɪnəˈveɪʃən/",
+        "translation_zh": "创新",
+        "example": "Innovation drives economic growth in modern societies.",
+        "audio": "",
+        "example_zh": "创新推动现代社会的经济增长。"
+      },
+      {
+        "word": "misuse",
+        "phonetic": "/ˌmɪsˈjuːs/",
+        "translation_zh": "误用",
+        "example": "Misuse of technology can lead to unintended consequences.",
+        "audio": "",
+        "example_zh": "技术的滥用可能导致意想不到的后果。"
+      },
+      {
+        "word": "investment",
+        "phonetic": "/ɪnˈvɛstmənt/",
+        "translation_zh": "投资",
+        "example": "Investment in renewable energy is crucial for sustainable development.",
+        "audio": "",
+        "example_zh": "对可再生能源的投资对可持续发展至关重要。"
+      },
+      {
+        "word": "navigation",
+        "phonetic": "/ˌnavəˈɡeɪʃən/",
+        "translation_zh": "导航",
+        "example": "Effective navigation of regulatory frameworks is essential for businesses.",
+        "audio": "",
+        "example_zh": "有效地导航监管框架对企业至关重要。"
+      },
+      {
+        "word": "highlight",
+        "phonetic": "/ˈhaɪlaɪt/",
+        "translation_zh": "强调",
+        "example": "The report highlights the key challenges facing the industry.",
+        "audio": "",
+        "example_zh": "报告强调了该行业面临的主要挑战。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260328-hard-010_en",
+      "translation_zh": "bundle://ep-20260328-hard-010_zh"
+    },
+    "thumbnail": "bundle://ep-20260328-hard-010_cover"
+  },
+  {
+    "id": "ep-20260330-hard-001",
+    "title": "AI Revolutionizes Global Education",
+    "level": "hard",
+    "date": "2026-03-30",
+    "duration_seconds": 46,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Recent studies show AI integration in education is increasing rapidly worldwide.",
+        "translation_zh": "最近的研究显示，AI在全球教育中的整合正在迅速增加。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 4.84
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Indeed, AI offers personalized learning experiences, catering to individual student needs.",
+        "translation_zh": "的确，人工智能提供个性化的学习体验，满足学生的个体需求。",
+        "emotion": "happy",
+        "start": 5.64,
+        "end": 11.18
+      },
+      {
+        "speaker": "Alex",
+        "text": "However, some educators worry about the diminishing role of human teachers.",
+        "translation_zh": "然而，一些教育工作者担心人类教师的角色正在减弱。",
+        "emotion": "sad",
+        "start": 11.98,
+        "end": 16.9
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, AI complements teachers rather than replacing them entirely.",
+        "translation_zh": "在某种程度上，人工智能是对教师的补充，而不是完全替代他们。",
+        "emotion": "neutral",
+        "start": 17.7,
+        "end": 22.0
+      },
+      {
+        "speaker": "Alex",
+        "text": "There are concerns about data privacy with AI collecting vast amounts of student information.",
+        "translation_zh": "有些人担心人工智能收集大量学生信息会影响数据隐私。",
+        "emotion": "sad",
+        "start": 22.8,
+        "end": 28.22
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Despite these concerns, AI's ability to analyze learning patterns is quite beneficial.",
+        "translation_zh": "尽管有这些担忧，人工智能分析学习模式的能力还是非常有益的。",
+        "emotion": "happy",
+        "start": 29.02,
+        "end": 34.17
+      },
+      {
+        "speaker": "Alex",
+        "text": "Arguably, the biggest impact of AI in education is accessibility.",
+        "translation_zh": "可以说，人工智能在教育中最大的影响是可达性。",
+        "emotion": "neutral",
+        "start": 34.97,
+        "end": 39.35
+      },
+      {
+        "speaker": "Lisa",
+        "text": "That's true. AI can help bridge gaps for students in remote areas lacking educational resources.",
+        "translation_zh": "确实如此。人工智能可以帮助弥合缺乏教育资源的偏远地区学生的差距。",
+        "emotion": "happy",
+        "start": 40.15,
+        "end": 46.39
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "integration",
+        "phonetic": "/ˌɪntɪˈɡreɪʃən/",
+        "translation_zh": "整合",
+        "example": "The integration of new technology into our curriculum is essential.",
+        "example_zh": "将新技术整合到我们的课程中是必不可少的。",
+        "audio": ""
+      },
+      {
+        "word": "personalized",
+        "phonetic": "/ˈpɜːrsənəlaɪzd/",
+        "translation_zh": "个性化的",
+        "example": "Personalized learning tailors education to individual student's needs.",
+        "example_zh": "个性化学习根据学生的个人需求量身定制教育。",
+        "audio": ""
+      },
+      {
+        "word": "diminishing",
+        "phonetic": "/dɪˈmɪnɪʃɪŋ/",
+        "translation_zh": "减少",
+        "example": "The economic downturn has led to diminishing job opportunities.",
+        "example_zh": "经济衰退导致就业机会减少。",
+        "audio": ""
+      },
+      {
+        "word": "complements",
+        "phonetic": "/ˈkɒmplɪments/",
+        "translation_zh": "补充",
+        "example": "This software complements the existing system, enhancing its capabilities.",
+        "example_zh": "这款软件补充了现有系统，增强了其功能。",
+        "audio": ""
+      },
+      {
+        "word": "privacy",
+        "phonetic": "/ˈpraɪvəsi/",
+        "translation_zh": "隐私",
+        "example": "Users are increasingly concerned about their online privacy.",
+        "example_zh": "用户越来越担心他们的在线隐私。",
+        "audio": ""
+      },
+      {
+        "word": "accessibility",
+        "phonetic": "/əkˌsɛsəˈbɪlɪti/",
+        "translation_zh": "可达性",
+        "example": "Improving the accessibility of education is vital for all.",
+        "example_zh": "提高教育的可达性对所有人来说都至关重要。",
+        "audio": ""
+      },
+      {
+        "word": "resources",
+        "phonetic": "/rɪˈsɔːrsɪz/",
+        "translation_zh": "资源",
+        "example": "Efficient use of resources can lead to sustainable growth.",
+        "example_zh": "资源的有效利用可以带来可持续发展。",
+        "audio": ""
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260330-hard-001_en",
+      "translation_zh": "bundle://ep-20260330-hard-001_zh"
+    },
+    "thumbnail": "bundle://ep-20260330-hard-001_cover"
+  },
+  {
+    "id": "ep-20260330-hard-002",
+    "title": "Renewable Energy Revolution",
+    "level": "hard",
+    "date": "2026-03-30",
+    "duration_seconds": 69,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Today, we're discussing the global shift toward renewable energy. Lisa, what are the driving forces behind this transition?",
+        "translation_zh": "今天，我们讨论全球向可再生能源的转变。Lisa，推动这一转变的力量是什么？",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 7.06
+      },
+      {
+        "speaker": "Lisa",
+        "text": "The primary drivers include environmental concerns and economic benefits. Renewables have become significantly cheaper, with solar costs dropping by over 80% in the past decade.",
+        "translation_zh": "主要驱动力包括环境问题和经济利益。可再生能源变得明显便宜，过去十年太阳能成本下降了80%以上。",
+        "emotion": "happy",
+        "start": 7.86,
+        "end": 18.47
+      },
+      {
+        "speaker": "Alex",
+        "text": "Critics argue that renewables cannot fully replace fossil fuels due to intermittency issues. How do you respond to that?",
+        "translation_zh": "批评者认为由于间歇性问题，可再生能源无法完全替代化石燃料。对此你怎么回应？",
+        "emotion": "angry",
+        "start": 19.27,
+        "end": 25.32
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To some extent, they're right. However, advancements in energy storage, like lithium-ion batteries, are addressing these issues substantially.",
+        "translation_zh": "在某种程度上，他们是对的。然而，像锂离子电池这样的储能技术进步正在显著解决这些问题。",
+        "emotion": "neutral",
+        "start": 26.12,
+        "end": 33.83
+      },
+      {
+        "speaker": "Alex",
+        "text": "There's a significant investment required to transition to renewables. Is this feasible for developing countries?",
+        "translation_zh": "转向可再生能源需要大量投资。这对发展中国家来说可行吗？",
+        "emotion": "sad",
+        "start": 34.63,
+        "end": 41.06
+      },
+      {
+        "speaker": "Lisa",
+        "text": "International funds and technology transfer are crucial. Many developing nations are already making strides, supported by global initiatives like the Green Climate Fund.",
+        "translation_zh": "国际基金和技术转让是关键。许多发展中国家已经在进步，由绿色气候基金等全球倡议支持。",
+        "emotion": "happy",
+        "start": 41.86,
+        "end": 51.13
+      },
+      {
+        "speaker": "Alex",
+        "text": "It's encouraging to see this momentum, but what about job displacement as the energy sector evolves?",
+        "translation_zh": "看到这种势头令人鼓舞，但随着能源行业的发展，工作机会的流失怎么办？",
+        "emotion": "neutral",
+        "start": 51.93,
+        "end": 57.51
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Certainly, job displacement is a concern. Nevertheless, the renewable sector is creating new opportunities, with employment in solar and wind projected to double by 2030.",
+        "translation_zh": "当然，工作机会的流失是一个问题。然而，可再生能源部门正在创造新的机会，预计太阳能和风能的就业到2030年将翻倍。",
+        "emotion": "happy",
+        "start": 58.31,
+        "end": 69.29
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "intermittency",
+        "phonetic": "/ˌɪntərˈmɪtənsi/",
+        "translation_zh": "间歇性",
+        "example": "Intermittency of renewable energy sources is a challenge for grid stability.",
+        "example_zh": "可再生能源的间歇性是电网稳定性的一项挑战。",
+        "audio": ""
+      },
+      {
+        "word": "transition",
+        "phonetic": "/trænˈzɪʃən/",
+        "translation_zh": "转变",
+        "example": "The transition to renewable energy is a complex process involving multiple stakeholders.",
+        "example_zh": "转向可再生能源是一个涉及多个利益相关者的复杂过程。",
+        "audio": ""
+      },
+      {
+        "word": "lithium-ion",
+        "phonetic": "/ˌlɪθiəm ˈaɪən/",
+        "translation_zh": "锂离子",
+        "example": "Lithium-ion batteries are essential for storing energy generated by solar panels.",
+        "example_zh": "锂离子电池对于储存太阳能电池板产生的能量至关重要。",
+        "audio": ""
+      },
+      {
+        "word": "displacement",
+        "phonetic": "/dɪsˈpleɪsmənt/",
+        "translation_zh": "流失",
+        "example": "Job displacement in fossil fuel industries is a major concern during the energy transition.",
+        "example_zh": "能源转型期间化石燃料行业的工作流失是一个主要问题。",
+        "audio": ""
+      },
+      {
+        "word": "initiative",
+        "phonetic": "/ɪˈnɪʃətɪv/",
+        "translation_zh": "倡议",
+        "example": "Global initiatives are crucial for accelerating the shift to renewable energy.",
+        "example_zh": "全球倡议对于加速向可再生能源的转变至关重要。",
+        "audio": ""
+      },
+      {
+        "word": "momentum",
+        "phonetic": "/moʊˈmɛntəm/",
+        "translation_zh": "势头",
+        "example": "The momentum for renewable energy adoption is increasing worldwide.",
+        "example_zh": "全球范围内对可再生能源的采用势头正在增加。",
+        "audio": ""
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260330-hard-002_en",
+      "translation_zh": "bundle://ep-20260330-hard-002_zh"
+    },
+    "thumbnail": "bundle://ep-20260330-hard-002_cover"
   }
 ]

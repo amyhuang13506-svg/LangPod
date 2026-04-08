@@ -14,6 +14,12 @@ struct FeynmanChallengeView: View {
     @State private var answerState: AnswerState = .building
     @State private var correctSentence = ""
 
+    // Session tracking
+    @State private var sessionPracticedWords: Set<String> = []
+    @State private var sessionRound = 1
+    @State private var isFirstCompletion = true
+    @State private var wrongWordCounts: [String: Int] = [:]  // word → remaining repeat count
+
     enum AnswerState {
         case building
         case correct
@@ -27,7 +33,7 @@ struct FeynmanChallengeView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             if completed {
                 completedContent
@@ -37,7 +43,7 @@ struct FeynmanChallengeView: View {
                 challengeContent
             }
         }
-        .onAppear { loadWords() }
+        .onAppear { startGame() }
     }
 
     // MARK: - Challenge Content
@@ -51,26 +57,33 @@ struct FeynmanChallengeView: View {
                 Button { dismiss() } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(Color(hex: "94A3B8"))
+                        .foregroundStyle(Color.textTertiary)
                 }
                 Spacer()
-                Text("组词造句")
+                Text("连词成句")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
                 Spacer()
-                Text("\(currentIndex + 1)/\(challengeWords.count)")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                HStack(spacing: 4) {
+                    Text("\(currentIndex + 1)/\(challengeWords.count)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.appPrimary)
+                    if sessionRound > 1 {
+                        Text("· 累计\(sessionPracticedWords.count)词")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+                }
             }
 
             // Progress bar
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(Color(hex: "E2E8F0"))
+                        .fill(Color.border)
                         .frame(height: 4)
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(Color(hex: "3B82F6"))
+                        .fill(Color.appPrimary)
                         .frame(width: geo.size.width * CGFloat(currentIndex + 1) / CGFloat(challengeWords.count), height: 4)
                 }
             }
@@ -78,28 +91,35 @@ struct FeynmanChallengeView: View {
 
             // Word card
             VStack(spacing: 8) {
-                Text(word.word)
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                HStack(spacing: 8) {
+                    Text(word.word)
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Button { WordSpeaker.shared.speak(word.word) } label: {
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color.appPrimary)
+                    }
+                }
                 Text(word.phonetic)
                     .font(.system(size: 14))
-                    .foregroundStyle(Color(hex: "94A3B8"))
+                    .foregroundStyle(Color.textTertiary)
                 Text(word.translationZh)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
             }
             .padding(.vertical, 20)
             .frame(maxWidth: .infinity)
             .background(.white, in: RoundedRectangle(cornerRadius: 20))
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                    .stroke(Color.border, lineWidth: 1)
             )
 
             // Prompt
             Text("用这个词组成正确的句子：")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Color(hex: "64748B"))
+                .foregroundStyle(Color.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             // Answer area — selected tokens
@@ -122,15 +142,15 @@ struct FeynmanChallengeView: View {
 
     private var answerArea: some View {
         let borderColor: Color = switch answerState {
-        case .building: Color(hex: "E2E8F0")
-        case .correct: Color(hex: "22C55E")
-        case .wrong: Color(hex: "EF4444")
+        case .building: Color.border
+        case .correct: Color.success
+        case .wrong: Color.danger
         }
 
         let bgColor: Color = switch answerState {
         case .building: Color.white
         case .correct: Color(hex: "F0FDF4")
-        case .wrong: Color(hex: "FEF2F2")
+        case .wrong: Color.dangerLight
         }
 
         return VStack(spacing: 8) {
@@ -143,10 +163,10 @@ struct FeynmanChallengeView: View {
                     } label: {
                         Text(token.text)
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(Color(hex: "1E293B"))
+                            .foregroundStyle(Color.textPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
-                            .background(Color(hex: "EFF6FF"), in: RoundedRectangle(cornerRadius: 10))
+                            .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 10))
                     }
                     .buttonStyle(.plain)
                 }
@@ -155,7 +175,7 @@ struct FeynmanChallengeView: View {
             if selectedTokens.isEmpty {
                 Text("点击下方单词组成句子")
                     .font(.system(size: 14))
-                    .foregroundStyle(Color(hex: "CBD5E1"))
+                    .foregroundStyle(Color.textQuaternary)
                     .padding(.vertical, 12)
             }
         }
@@ -180,10 +200,10 @@ struct FeynmanChallengeView: View {
                 } label: {
                     Text(token.text)
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(Color(hex: "64748B"))
+                        .foregroundStyle(Color.textSecondary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(Color(hex: "F1F5F9"), in: RoundedRectangle(cornerRadius: 10))
+                        .background(Color.divider, in: RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
             }
@@ -205,7 +225,7 @@ struct FeynmanChallengeView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
                         .background(
-                            selectedTokens.isEmpty ? Color(hex: "CBD5E1") : Color(hex: "3B82F6"),
+                            selectedTokens.isEmpty ? Color.textQuaternary : Color.appPrimary,
                             in: RoundedRectangle(cornerRadius: 14)
                         )
                 }
@@ -215,10 +235,40 @@ struct FeynmanChallengeView: View {
                 VStack(spacing: 12) {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(Color(hex: "22C55E"))
+                            .foregroundStyle(Color.success)
                         Text("正确！")
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(Color(hex: "22C55E"))
+                            .foregroundStyle(Color.success)
+                    }
+
+                    // Play correct sentence
+                    Button { WordSpeaker.shared.speak(correctSentence) } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "speaker.wave.2.fill")
+                                .font(.system(size: 16))
+                                .foregroundStyle(Color.appPrimary)
+                            Text(correctSentence)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(Color.textPrimary)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(hex: "F0FDF4"), in: RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
+
+                    // Sentence translation
+                    if let exampleZh = challengeWords[currentIndex].exampleZh, !exampleZh.isEmpty {
+                        Text(exampleZh)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color.textSecondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        Text("\(challengeWords[currentIndex].word) = \(challengeWords[currentIndex].translationZh)")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.textTertiary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
                     Button { advanceWord() } label: {
@@ -227,7 +277,7 @@ struct FeynmanChallengeView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
-                            .background(Color(hex: "22C55E"), in: RoundedRectangle(cornerRadius: 14))
+                            .background(Color.success, in: RoundedRectangle(cornerRadius: 14))
                     }
                 }
 
@@ -236,14 +286,14 @@ struct FeynmanChallengeView: View {
                     VStack(spacing: 4) {
                         HStack(spacing: 6) {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(Color(hex: "EF4444"))
+                                .foregroundStyle(Color.danger)
                             Text("再试一次")
                                 .font(.system(size: 16, weight: .bold))
-                                .foregroundStyle(Color(hex: "EF4444"))
+                                .foregroundStyle(Color.danger)
                         }
                         Text("正确答案：\(correctSentence)")
                             .font(.system(size: 13))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                     }
 
                     Button {
@@ -254,7 +304,7 @@ struct FeynmanChallengeView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
-                            .background(Color(hex: "3B82F6"), in: RoundedRectangle(cornerRadius: 14))
+                            .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
                     }
                 }
             }
@@ -263,34 +313,121 @@ struct FeynmanChallengeView: View {
 
     // MARK: - Completed
 
+    @State private var starScale: CGFloat = 0
+    @State private var textOpacity: Double = 0
+    @State private var confettiOffsets: [(CGFloat, CGFloat)] = (0..<12).map { _ in
+        (CGFloat.random(in: -150...150), CGFloat.random(in: -200...(-50)))
+    }
+    @State private var confettiVisible = false
+
     private var completedContent: some View {
-        VStack(spacing: 24) {
-            Spacer()
-
-            Image(systemName: "star.circle.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(Color(hex: "F59E0B"))
-
-            Text("全部完成！")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(Color(hex: "1E293B"))
-
-            Text("你完成了 \(challengeWords.count) 个词的组词练习")
-                .font(.system(size: 16))
-                .foregroundStyle(Color(hex: "94A3B8"))
-
-            Spacer()
-
-            Button { dismiss() } label: {
-                Text("完成")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(Color(hex: "3B82F6"), in: RoundedRectangle(cornerRadius: 14))
+        ZStack {
+            // Confetti particles (only on first completion)
+            if confettiVisible && isFirstCompletion {
+                ForEach(0..<12, id: \.self) { i in
+                    Circle()
+                        .fill([Color.appPrimary, Color.warning, Color.success, Color.danger][i % 4])
+                        .frame(width: CGFloat.random(in: 6...10), height: CGFloat.random(in: 6...10))
+                        .offset(x: confettiOffsets[i].0, y: confettiOffsets[i].1)
+                        .opacity(confettiVisible ? 0 : 1)
+                        .animation(.easeOut(duration: 1.5).delay(Double(i) * 0.05), value: confettiVisible)
+                }
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 40)
+
+            VStack(spacing: 24) {
+                Spacer()
+
+                Image(systemName: "star.circle.fill")
+                    .font(.system(size: 64))
+                    .foregroundStyle(Color.warning)
+                    .scaleEffect(starScale)
+
+                Text("本组完成！")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                    .opacity(textOpacity)
+
+                Text("完成 \(challengeWords.count) 个词的连词成句练习")
+                    .font(.system(size: 16))
+                    .foregroundStyle(Color.textTertiary)
+                    .opacity(textOpacity)
+
+                if sessionPracticedWords.count > challengeWords.count {
+                    Text("本次累计已练 \(sessionPracticedWords.count) 个词")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.textSecondary)
+                        .opacity(textOpacity)
+                }
+
+                Spacer()
+
+                VStack(spacing: 12) {
+                    let hasMore = hasMoreWords
+                    Button {
+                        startNextSet()
+                    } label: {
+                        HStack(spacing: 8) {
+                            Text("🔥")
+                            Text("再来一组")
+                                .font(.system(size: 16, weight: .semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(
+                            hasMore ? Color.warning : Color.textQuaternary,
+                            in: RoundedRectangle(cornerRadius: 14)
+                        )
+                    }
+                    .disabled(!hasMore)
+
+                    if !hasMore {
+                        Text("所有词汇都练过了")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+
+                    Button { dismiss() } label: {
+                        Text("返回词汇本")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
+                .opacity(textOpacity)
+            }
+        }
+        .onAppear {
+            celebrateCompletion()
+        }
+    }
+
+    private func celebrateCompletion() {
+        // Haptic
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+
+        // Star bounce in
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {
+            starScale = 1.0
+        }
+
+        // Text fade in
+        withAnimation(.easeOut(duration: 0.4).delay(0.4)) {
+            textOpacity = 1.0
+        }
+
+        // Confetti burst (only first time)
+        if isFirstCompletion {
+            confettiVisible = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation { confettiVisible = true }
+            }
+        }
+
+        // Second haptic for emphasis
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
     }
 
@@ -301,15 +438,15 @@ struct FeynmanChallengeView: View {
             Spacer()
             Text("还没有可以练习的词汇")
                 .font(.system(size: 16))
-                .foregroundStyle(Color(hex: "94A3B8"))
+                .foregroundStyle(Color.textTertiary)
             Text("先听一些播客，积累词汇")
                 .font(.system(size: 14))
-                .foregroundStyle(Color(hex: "94A3B8"))
+                .foregroundStyle(Color.textTertiary)
             Spacer()
             Button { dismiss() } label: {
                 Text("返回")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
             }
             .padding(.bottom, 40)
         }
@@ -317,9 +454,65 @@ struct FeynmanChallengeView: View {
 
     // MARK: - Logic
 
+    private var hasMoreWords: Bool {
+        return store.words.filter { !$0.example.isEmpty }.count > 0
+    }
+
+    private func startGame() {
+        sessionPracticedWords = []
+        wrongWordCounts = [:]
+        sessionRound = 1
+        isFirstCompletion = true
+        loadWords()
+    }
+
+    private func startNextSet() {
+        sessionRound += 1
+        isFirstCompletion = false
+        // Reset animation states
+        starScale = 0
+        textOpacity = 0
+        completed = false
+        currentIndex = 0
+        loadWords()
+    }
+
+    private let maxWordsPerSet = 8
+
     private func loadWords() {
-        let candidates = store.words
-        challengeWords = Array(candidates.prefix(10))
+        let wordsWithExamples = store.words.filter { !$0.example.isEmpty }
+        var pool: [SavedWord] = []
+
+        if sessionRound == 1 {
+            // First set: priority reviewing → new → mastered
+            pool += wordsWithExamples.filter { $0.memoryState == .fading }.shuffled()
+            pool += wordsWithExamples.filter { $0.memoryState == .forgetting }.shuffled()
+            pool += wordsWithExamples.filter { $0.memoryState == .strong }.shuffled()
+        } else {
+            // Subsequent sets: wrong words + unpracticed, mixed randomly
+            let wrongWords = wordsWithExamples.filter { wrongWordCounts[$0.word, default: 0] > 0 }
+            let unpracticed = wordsWithExamples.filter {
+                !sessionPracticedWords.contains($0.word) && wrongWordCounts[$0.word, default: 0] == 0
+            }
+            pool = (wrongWords + unpracticed).shuffled()
+
+            // Not enough — add practiced words (excluding wrong words)
+            if pool.count < maxWordsPerSet {
+                let extras = wordsWithExamples.filter {
+                    sessionPracticedWords.contains($0.word) && wrongWordCounts[$0.word, default: 0] == 0
+                }.shuffled()
+                pool += extras
+            }
+        }
+
+        // Decrement wrong word counts for words entering this set
+        for word in pool.prefix(maxWordsPerSet) {
+            if let count = wrongWordCounts[word.word], count > 0 {
+                wrongWordCounts[word.word] = count - 1
+            }
+        }
+
+        challengeWords = Array(pool.prefix(maxWordsPerSet))
         currentIndex = 0
         completed = false
         if !challengeWords.isEmpty {
@@ -329,10 +522,13 @@ struct FeynmanChallengeView: View {
 
     private func setupQuestion() {
         let word = challengeWords[currentIndex]
-        // Use the example sentence from the word
         correctSentence = word.example
+        // Split into tokens, strip punctuation from each token for display
         let words = correctSentence.split(separator: " ").map(String.init)
-        availableTokens = words.shuffled().map { WordToken(text: $0) }
+        let cleanWords = words.map { token in
+            token.trimmingCharacters(in: .punctuationCharacters)
+        }.filter { !$0.isEmpty }
+        availableTokens = cleanWords.shuffled().map { WordToken(text: $0) }
         selectedTokens = []
         answerState = .building
     }
@@ -356,12 +552,15 @@ struct FeynmanChallengeView: View {
     private func checkAnswer() {
         let userSentence = selectedTokens.map(\.text).joined(separator: " ")
         if normalize(userSentence) == normalize(correctSentence) {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
             withAnimation(.easeInOut(duration: 0.3)) {
                 answerState = .correct
             }
-            store.upgradeMastery(challengeWords[currentIndex].word, to: .canUse)
-            store.markReviewed(challengeWords[currentIndex].word)
+            store.recordSentenceCorrect(challengeWords[currentIndex].word)
+            sessionPracticedWords.insert(challengeWords[currentIndex].word)
         } else {
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            wrongWordCounts[challengeWords[currentIndex].word] = 5
             withAnimation(.easeInOut(duration: 0.3)) {
                 answerState = .wrong
             }

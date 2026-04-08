@@ -15,19 +15,19 @@ struct SubtitleOverlay: View {
                     // Speaker name
                     Text(line.speaker)
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Color(hex: "3B82F6"))
+                        .foregroundStyle(Color.appPrimary)
 
                     // English text
                     Text(line.text)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(Color(hex: "1E293B"))
+                        .foregroundStyle(Color.textPrimary)
                         .multilineTextAlignment(.center)
 
                     // Chinese translation (only during translation round or if toggled)
                     if showTranslation || phase == .translationRound {
                         Text(line.translationZh)
                             .font(.system(size: 14))
-                            .foregroundStyle(Color(hex: "64748B"))
+                            .foregroundStyle(Color.textSecondary)
                             .multilineTextAlignment(.center)
                     }
                 }

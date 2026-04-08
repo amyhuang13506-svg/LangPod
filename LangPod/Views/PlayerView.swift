@@ -12,7 +12,7 @@ struct PlayerView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             if showLevelUp, let level = dataStore.pendingLevelUp {
                 LevelUpView(
@@ -53,11 +53,14 @@ struct PlayerView: View {
         }
         .onAppear {
             player.onEpisodeFinished = {
-                dataStore.completeEpisode(totalWords: vocabularyStore.totalCount)
+                dataStore.completeEpisode(totalWords: vocabularyStore.totalCount, episode: player.currentEpisode)
                 withAnimation(.easeInOut(duration: 0.3)) {
                     showComplete = true
                 }
             }
+        }
+        .onDisappear {
+            player.onEpisodeFinished = nil
         }
         .fullScreenCover(isPresented: $showShareCard) {
             ShareCardView()
@@ -84,16 +87,16 @@ struct PlayerView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.down")
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                     }
                     Spacer()
                     Text("正在播放")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color(hex: "64748B"))
+                        .foregroundStyle(Color.textSecondary)
                     Spacer()
                     Image(systemName: "ellipsis")
                         .font(.system(size: 20))
-                        .foregroundStyle(Color(hex: "94A3B8"))
+                        .foregroundStyle(Color.textTertiary)
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
@@ -109,25 +112,25 @@ struct PlayerView: View {
                 VStack(spacing: 6) {
                     Text(player.currentEpisode?.title ?? "")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundStyle(Color(hex: "1E293B"))
+                        .foregroundStyle(Color.textPrimary)
                         .tracking(-0.5)
 
                     Text(episodeMetaText)
                         .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: "94A3B8"))
+                        .foregroundStyle(Color.textTertiary)
 
                     // Phase badge
                     HStack(spacing: 6) {
                         Circle()
-                            .fill(Color(hex: "3B82F6"))
+                            .fill(Color.appPrimary)
                             .frame(width: 8, height: 8)
                         Text(player.phase.label)
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color(hex: "3B82F6"))
+                            .foregroundStyle(Color.appPrimary)
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
-                    .background(Color(hex: "EFF6FF"), in: Capsule())
+                    .background(Color.primaryLight, in: Capsule())
                 }
                 .padding(.top, 28)
                 .padding(.horizontal, 24)
@@ -137,11 +140,11 @@ struct PlayerView: View {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 3)
-                                .fill(Color(hex: "E2E8F0"))
+                                .fill(Color.border)
                                 .frame(height: 6)
 
                             RoundedRectangle(cornerRadius: 3)
-                                .fill(Color(hex: "3B82F6"))
+                                .fill(Color.appPrimary)
                                 .frame(width: progressWidth(in: geo.size.width), height: 6)
                         }
                         .gesture(
@@ -159,11 +162,11 @@ struct PlayerView: View {
                     HStack {
                         Text(formatTime(player.progress))
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                         Spacer()
                         Text(formatTime(player.duration))
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                     }
                 }
                 .padding(.top, 32)
@@ -174,7 +177,7 @@ struct PlayerView: View {
                     Button { player.skipToPreviousEpisode() } label: {
                         Image(systemName: "backward.fill")
                             .font(.system(size: 28))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                     }
 
                     Button { player.togglePlayPause() } label: {
@@ -182,13 +185,13 @@ struct PlayerView: View {
                             .font(.system(size: 28))
                             .foregroundStyle(.white)
                             .frame(width: 72, height: 72)
-                            .background(Color(hex: "3B82F6"), in: Circle())
+                            .background(Color.appPrimary, in: Circle())
                     }
 
                     Button { player.skipToNextEpisode() } label: {
                         Image(systemName: "forward.fill")
                             .font(.system(size: 28))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                     }
                 }
                 .padding(.top, 24)
@@ -206,11 +209,11 @@ struct PlayerView: View {
                             } label: {
                                 Text(rate == Float(Int(rate)) ? String(format: "%.0fx", rate) : String(format: "%.2gx", rate))
                                     .font(.system(size: 14, weight: isSelected ? .bold : .medium))
-                                    .foregroundStyle(isSelected ? .white : Color(hex: "64748B"))
+                                    .foregroundStyle(isSelected ? .white : Color.textSecondary)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
                                     .background(
-                                        isSelected ? Color(hex: "3B82F6") : Color.clear,
+                                        isSelected ? Color.appPrimary : Color.clear,
                                         in: Capsule()
                                     )
                             }
@@ -218,7 +221,7 @@ struct PlayerView: View {
                         }
                     }
                     .padding(4)
-                    .background(Color(hex: "F1F5F9"), in: Capsule())
+                    .background(Color.divider, in: Capsule())
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
@@ -232,10 +235,10 @@ struct PlayerView: View {
                         VStack(spacing: 4) {
                             Image(systemName: "captions.bubble")
                                 .font(.system(size: 22))
-                                .foregroundStyle(player.showSubtitles ? Color(hex: "3B82F6") : Color(hex: "94A3B8"))
+                                .foregroundStyle(player.showSubtitles ? Color.appPrimary : Color.textTertiary)
                             Text("字幕")
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(player.showSubtitles ? Color(hex: "3B82F6") : Color(hex: "94A3B8"))
+                                .foregroundStyle(player.showSubtitles ? Color.appPrimary : Color.textTertiary)
                         }
                     }
 
@@ -247,16 +250,16 @@ struct PlayerView: View {
                         VStack(spacing: 4) {
                             Text(rateLabel)
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(player.playbackRate != 1.0 ? Color(hex: "3B82F6") : Color(hex: "64748B"))
+                                .foregroundStyle(player.playbackRate != 1.0 ? Color.appPrimary : Color.textSecondary)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(
-                                    player.playbackRate != 1.0 ? Color(hex: "EFF6FF") : Color(hex: "F1F5F9"),
+                                    player.playbackRate != 1.0 ? Color.primaryLight : Color.divider,
                                     in: RoundedRectangle(cornerRadius: 6)
                                 )
                             Text("速度")
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(player.playbackRate != 1.0 ? Color(hex: "3B82F6") : Color(hex: "94A3B8"))
+                                .foregroundStyle(player.playbackRate != 1.0 ? Color.appPrimary : Color.textTertiary)
                         }
                     }
 
@@ -264,10 +267,10 @@ struct PlayerView: View {
                         VStack(spacing: 4) {
                             Image(systemName: isCurrentEpisodeStarred ? "star.fill" : "star")
                                 .font(.system(size: 22))
-                                .foregroundStyle(isCurrentEpisodeStarred ? Color(hex: "F59E0B") : Color(hex: "94A3B8"))
+                                .foregroundStyle(isCurrentEpisodeStarred ? Color.warning : Color.textTertiary)
                             Text("收藏")
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(isCurrentEpisodeStarred ? Color(hex: "F59E0B") : Color(hex: "94A3B8"))
+                                .foregroundStyle(isCurrentEpisodeStarred ? Color.warning : Color.textTertiary)
                         }
                     }
                 }
@@ -293,9 +296,8 @@ struct PlayerView: View {
     private var episodeMetaText: String {
         guard let episode = player.currentEpisode else { return "" }
         let level = episode.podcastLevel?.tabName ?? ""
-        let min = episode.durationSeconds / 60
         let idx = player.episodeQueue.firstIndex(where: { $0.id == episode.id }).map { $0 + 1 } ?? 1
-        return "第 \(idx) 集 · \(level) · \(min) 分钟"
+        return "\(episode.dateDisplay) · \(level) · \(episode.durationDisplay)"
     }
 
     private func progressWidth(in totalWidth: CGFloat) -> CGFloat {

@@ -1,328 +1,1366 @@
 [
   {
-    "id": "ep-2026-0325-medium-001",
-    "title": "Smart Glasses Revolution",
+    "id": "ep-20260319-medium-001",
+    "title": "City Life and Remote Work",
     "level": "medium",
-    "date": "2026-03-29",
-    "duration_seconds": 43,
+    "date": "2026-03-19",
+    "duration_seconds": 44,
     "script": [
       {
         "speaker": "Alex",
-        "text": "Hey Lisa, have you heard about how smart glasses are like, becoming a big thing?",
-        "translation_zh": "嘿，丽莎，你听说过智能眼镜怎么成了个大热门吗?",
-        "emotion": "happy",
+        "text": "Lisa, have you noticed how remote work is, like, changing city life?",
+        "translation_zh": "丽莎，你有没有注意到远程工作在改变城市生活？",
+        "emotion": "neutral",
         "start": 0.0,
-        "end": 4.72
+        "end": 4.98
       },
       {
         "speaker": "Lisa",
-        "text": "Oh yeah, totally! They're really changing the way people do everyday tasks, you know?",
-        "translation_zh": "是啊，当然！它们真的在改变人们处理日常事情的方式，你知道吗?",
+        "text": "Oh, definitely! It's, you know, really transforming how people use urban spaces.",
+        "translation_zh": "哦，当然！远程工作真的在改变人们如何利用城市空间。",
         "emotion": "happy",
-        "start": 5.53,
-        "end": 10.77
+        "start": 5.78,
+        "end": 11.19
       },
       {
         "speaker": "Alex",
-        "text": "I mean, they're more than just fancy gadgets now, right?",
-        "translation_zh": "我的意思是，它们现在不仅仅是花哨的小玩意了，对吧?",
+        "text": "I mean, there are fewer commuters now, right?",
+        "translation_zh": "我的意思是，现在通勤的人少了，对吧？",
         "emotion": "neutral",
-        "start": 11.57,
-        "end": 14.85
+        "start": 11.99,
+        "end": 15.01
       },
       {
         "speaker": "Lisa",
-        "text": "Exactly! People use them for navigation, taking photos, even reading text messages without needing their phones.",
-        "translation_zh": "没错！人们用它们来导航、拍照，甚至不需要手机就能阅读短信。",
+        "text": "Exactly! And more people are choosing to live in suburbs or rural areas.",
+        "translation_zh": "确实如此！而且更多的人选择住在郊区或农村。",
         "emotion": "happy",
-        "start": 15.65,
-        "end": 23.11
+        "start": 15.81,
+        "end": 20.63
       },
       {
         "speaker": "Alex",
-        "text": "Wow, that's impressive. So, they have some kind of augmented reality feature?",
-        "translation_zh": "哇，好厉害啊。那么，它们有某种增强现实功能吗?",
+        "text": "That's interesting. Cities must feel different, like less crowded.",
+        "translation_zh": "这很有趣。城市一定感觉不同，像是没那么拥挤了。",
         "emotion": "surprised",
-        "start": 23.91,
-        "end": 30.39
+        "start": 21.43,
+        "end": 26.28
       },
       {
         "speaker": "Lisa",
-        "text": "Yeah, and that's super helpful for things like shopping or traveling. You get real-time info right in your view.",
-        "translation_zh": "是的，这在购物或旅行时非常有用。你可以实时获得信息，就在你的视野里。",
-        "emotion": "happy",
-        "start": 31.19,
-        "end": 37.92
+        "text": "Yeah, they do. Plus, there's a rise in co-working spaces now to support remote teams.",
+        "translation_zh": "是的，确实如此。此外，现在还有更多的共享办公空间来支持远程团队。",
+        "emotion": "neutral",
+        "start": 27.08,
+        "end": 32.84
       },
       {
         "speaker": "Alex",
-        "text": "I might need to try them out sometime. Could be cool to see directions right in front of me.",
-        "translation_zh": "我可能需要找个时间试试。能直接看到方向应该很酷。",
-        "emotion": "neutral",
-        "start": 38.72,
-        "end": 43.67
+        "text": "Oh, I hadn't thought about that. It's like cities are adapting, you know?",
+        "translation_zh": "哦，我还没想到这个。就像城市在适应一样，你知道吗？",
+        "emotion": "surprised",
+        "start": 33.64,
+        "end": 38.97
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Totally! Urban life is evolving with this shift in work culture.",
+        "translation_zh": "完全如此！随着工作文化的转变，城市生活正在变化。",
+        "emotion": "happy",
+        "start": 39.77,
+        "end": 44.08
       }
     ],
     "vocabulary": [
       {
-        "word": "navigation",
-        "phonetic": "/ˌnævɪˈɡeɪʃən/",
-        "translation_zh": "导航",
-        "example": "Smart glasses are improving navigation in cities.",
-        "audio": ""
+        "word": "commuters",
+        "phonetic": "/kəˈmjuːtəz/",
+        "translation_zh": "通勤者",
+        "example": "Fewer commuters mean less traffic in the city.",
+        "audio": "",
+        "example_zh": "通勤者减少意味着城市交通更少。"
       },
       {
-        "word": "augmented",
-        "phonetic": "/ɔːɡˈmɛntɪd/",
-        "translation_zh": "增强的",
-        "example": "The glasses provide augmented reality features.",
-        "audio": ""
+        "word": "transforming",
+        "phonetic": "/trænsˈfɔːrmɪŋ/",
+        "translation_zh": "改变",
+        "example": "Remote work is transforming urban spaces.",
+        "audio": "",
+        "example_zh": "远程工作正在改变城市空间。"
       },
       {
-        "word": "real-time",
-        "phonetic": "/ˌriːəlˈtaɪm/",
-        "translation_zh": "实时的",
-        "example": "You get real-time updates with smart glasses.",
-        "audio": ""
+        "word": "suburbs",
+        "phonetic": "/ˈsʌbɜːrbz/",
+        "translation_zh": "郊区",
+        "example": "More people are moving to the suburbs.",
+        "audio": "",
+        "example_zh": "越来越多的人搬到郊区。"
       },
       {
-        "word": "gadget",
-        "phonetic": "/ˈɡædʒɪt/",
-        "translation_zh": "小工具",
-        "example": "Smart glasses are not just gadgets anymore.",
-        "audio": ""
+        "word": "co-working",
+        "phonetic": "/ˈkoʊˌwɜrkɪŋ/",
+        "translation_zh": "共享办公",
+        "example": "Co-working spaces are becoming popular.",
+        "audio": "",
+        "example_zh": "共享办公空间越来越受欢迎。"
       },
       {
-        "word": "feature",
-        "phonetic": "/ˈfiːtʃər/",
-        "translation_zh": "功能",
-        "example": "The feature that shows text messages is cool.",
-        "audio": ""
+        "word": "evolving",
+        "phonetic": "/ɪˈvɒlvɪŋ/",
+        "translation_zh": "演变",
+        "example": "The city is evolving with new work habits.",
+        "audio": "",
+        "example_zh": "城市正在随着新的工作习惯而发展。"
       }
     ],
     "audio": {
-      "english": "bundle://test_medium_en",
-      "translation_zh": "bundle://test_medium_zh"
+      "english": "bundle://ep-20260319-medium-001_en",
+      "translation_zh": "bundle://ep-20260319-medium-001_zh"
     },
-    "thumbnail": "bundle://cover_medium"
+    "thumbnail": "bundle://ep-20260319-medium-001_cover"
   },
   {
-    "id": "ep-2026-0326-medium-002",
-    "title": "Weekend Plans",
+    "id": "ep-20260320-medium-002",
+    "title": "The Rise of Plant-Based Food",
+    "level": "medium",
+    "date": "2026-03-20",
+    "duration_seconds": 38,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hey Lisa, have you noticed how plant-based foods are getting more popular these days?",
+        "translation_zh": "嘿，丽莎，你有没有注意到最近植物性食物越来越受欢迎？",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 5.2
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Oh yeah, it's everywhere now! I mean, even fast food places have plant-based options.",
+        "translation_zh": "哦，是的，现在到处都是！我说，连快餐店都有植物性选择。",
+        "emotion": "happy",
+        "start": 6.0,
+        "end": 11.38
+      },
+      {
+        "speaker": "Alex",
+        "text": "That's true, I've seen a lot of new brands popping up too, you know?",
+        "translation_zh": "这是真的，我也注意到有很多新品牌出现了，你知道吧？",
+        "emotion": "happy",
+        "start": 12.18,
+        "end": 16.69
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To be honest, I think it's great for health and, well, the environment.",
+        "translation_zh": "说实话，我觉得这对健康和环境都很好。",
+        "emotion": "happy",
+        "start": 17.49,
+        "end": 21.93
+      },
+      {
+        "speaker": "Alex",
+        "text": "Do you think people are actually buying more plant-based foods for health reasons?",
+        "translation_zh": "你觉得人们真的是因为健康原因而购买更多植物性食物吗？",
+        "emotion": "neutral",
+        "start": 22.73,
+        "end": 26.4
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Honestly, I think a lot of folks are curious, and some are definitely making changes for their health.",
+        "translation_zh": "老实说，我觉得很多人都很感兴趣，有些人确实在为了健康而改变饮食。",
+        "emotion": "happy",
+        "start": 27.2,
+        "end": 33.34
+      },
+      {
+        "speaker": "Alex",
+        "text": "It makes sense. Plus, it's becoming more tasty, don't you think?",
+        "translation_zh": "这很合理。而且，它变得更美味了，你不觉得吗？",
+        "emotion": "happy",
+        "start": 34.14,
+        "end": 38.7
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "popular",
+        "phonetic": "/ˈpɒpjʊlər/",
+        "translation_zh": "受欢迎的",
+        "example": "Plant-based foods are becoming more popular.",
+        "audio": "",
+        "example_zh": "植物性食品越来越受欢迎。"
+      },
+      {
+        "word": "options",
+        "phonetic": "/ˈɒpʃənz/",
+        "translation_zh": "选择",
+        "example": "Fast food places have plant-based options.",
+        "audio": "",
+        "example_zh": "快餐店有植物性选项。"
+      },
+      {
+        "word": "brands",
+        "phonetic": "/brændz/",
+        "translation_zh": "品牌",
+        "example": "New brands are popping up.",
+        "audio": "",
+        "example_zh": "新的品牌正在涌现。"
+      },
+      {
+        "word": "environment",
+        "phonetic": "/ɪnˈvaɪrənmənt/",
+        "translation_zh": "环境",
+        "example": "It's great for the environment.",
+        "audio": "",
+        "example_zh": "这对环境很好。"
+      },
+      {
+        "word": "curious",
+        "phonetic": "/ˈkjʊəriəs/",
+        "translation_zh": "好奇的",
+        "example": "A lot of folks are curious.",
+        "audio": "",
+        "example_zh": "很多人都很好奇。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260320-medium-002_en",
+      "translation_zh": "bundle://ep-20260320-medium-002_zh"
+    },
+    "thumbnail": "bundle://ep-20260320-medium-002_cover"
+  },
+  {
+    "id": "ep-20260321-medium-003",
+    "title": "Social Media and Sleep",
+    "level": "medium",
+    "date": "2026-03-21",
+    "duration_seconds": 42,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hey Lisa, I was reading about how social media might be messing with our sleep.",
+        "translation_zh": "嘿，丽莎，我在读关于社交媒体可能会干扰我们睡眠的文章。",
+        "emotion": "curious",
+        "start": 0.0,
+        "end": 4.69
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Oh definitely, it's a big issue nowadays. People are scrolling through their feeds instead of winding down.",
+        "translation_zh": "哦，当然，现在这是一个大问题。人们在睡觉前都在刷动态，而不是放松。",
+        "emotion": "concerned",
+        "start": 5.49,
+        "end": 13.04
+      },
+      {
+        "speaker": "Alex",
+        "text": "Really? I guess staying up late on TikTok isn't helping either.",
+        "translation_zh": "真的吗？我猜熬夜刷TikTok也没什么帮助。",
+        "emotion": "neutral",
+        "start": 13.84,
+        "end": 18.14
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Exactly, it disrupts our sleep cycle. To be honest, the light from screens tricks our brains, you know?",
+        "translation_zh": "就是这样的，它会扰乱我们的睡眠周期。说实话，屏幕的光线会迷惑我们的脑袋，你知道吗？",
+        "emotion": "neutral",
+        "start": 18.94,
+        "end": 24.83
+      },
+      {
+        "speaker": "Alex",
+        "text": "I mean, that's surprising. I never thought the light could be a big deal.",
+        "translation_zh": "我觉得，这很让人吃惊。我从来没想到光线会是个大问题。",
+        "emotion": "surprised",
+        "start": 25.63,
+        "end": 30.79
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yeah, it's called 'blue light'. It actually suppresses melatonin, which is the sleep hormone.",
+        "translation_zh": "是的，这叫做“蓝光”。它实际上抑制了褪黑素，就是那个帮助睡眠的激素。",
+        "emotion": "explaining",
+        "start": 31.59,
+        "end": 37.51
+      },
+      {
+        "speaker": "Alex",
+        "text": "Wow, I need to rethink my night routine.",
+        "translation_zh": "哇，我需要重新考虑我的夜间习惯了。",
+        "emotion": "concerned",
+        "start": 38.31,
+        "end": 42.52
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "issue",
+        "phonetic": "/ˈɪʃuː/",
+        "translation_zh": "问题",
+        "example": "This has been a major issue for many people.",
+        "audio": "",
+        "example_zh": "这对许多人来说是个重大问题。"
+      },
+      {
+        "word": "scroll",
+        "phonetic": "/skroʊl/",
+        "translation_zh": "滚动",
+        "example": "I often scroll through my social media feed before bed.",
+        "audio": "",
+        "example_zh": "我经常在睡前浏览社交媒体动态。"
+      },
+      {
+        "word": "disrupt",
+        "phonetic": "/dɪsˈrʌpt/",
+        "translation_zh": "扰乱",
+        "example": "The loud noise can disrupt your concentration.",
+        "audio": "",
+        "example_zh": "噪音会干扰你的注意力。"
+      },
+      {
+        "word": "cycle",
+        "phonetic": "/ˈsaɪkl/",
+        "translation_zh": "周期",
+        "example": "Our sleep cycle can be affected by various factors.",
+        "audio": "",
+        "example_zh": "我们的睡眠周期可能会受到各种因素的影响。"
+      },
+      {
+        "word": "suppress",
+        "phonetic": "/səˈprɛs/",
+        "translation_zh": "抑制",
+        "example": "The medication can suppress your appetite.",
+        "audio": "",
+        "example_zh": "药物可能会抑制你的食欲。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260321-medium-003_en",
+      "translation_zh": "bundle://ep-20260321-medium-003_zh"
+    },
+    "thumbnail": "bundle://ep-20260321-medium-003_cover"
+  },
+  {
+    "id": "ep-20260322-medium-004",
+    "title": "Electric Cars: More Affordable Than Ever",
+    "level": "medium",
+    "date": "2026-03-22",
+    "duration_seconds": 33,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hey Lisa, have you noticed that electric cars are getting cheaper lately?",
+        "translation_zh": "嘿，丽莎，你有没有注意到最近电动车变得更便宜了？",
+        "emotion": "curious",
+        "start": 0.0,
+        "end": 4.34
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yeah, I actually read about that. It's really exciting, you know?",
+        "translation_zh": "是啊，我确实读到过。真的很令人兴奋，你知道吗？",
+        "emotion": "happy",
+        "start": 5.14,
+        "end": 8.81
+      },
+      {
+        "speaker": "Alex",
+        "text": "Really? I mean, what’s causing the prices to drop?",
+        "translation_zh": "真的吗？我是说，是什么导致价格下降的？",
+        "emotion": "surprised",
+        "start": 9.61,
+        "end": 13.36
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Well, to be honest, it's partly because battery technology is improving and becoming more affordable.",
+        "translation_zh": "嗯，说实话，这部分是因为电池技术在进步并且变得更便宜。",
+        "emotion": "neutral",
+        "start": 14.16,
+        "end": 19.41
+      },
+      {
+        "speaker": "Alex",
+        "text": "That makes sense. I guess more people will start buying them now.",
+        "translation_zh": "这很有道理。我猜更多的人现在会开始购买它们。",
+        "emotion": "happy",
+        "start": 20.21,
+        "end": 24.0
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Exactly! Plus, subsidies and incentives are making them even more attractive.",
+        "translation_zh": "确实如此！另外，补贴和激励措施使它们更具吸引力。",
+        "emotion": "happy",
+        "start": 24.8,
+        "end": 29.75
+      },
+      {
+        "speaker": "Alex",
+        "text": "It’s cool how the market is shifting, right?",
+        "translation_zh": "市场正在发生变化，这很酷，对吧？",
+        "emotion": "happy",
+        "start": 30.55,
+        "end": 33.1
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "battery",
+        "phonetic": "/ˈbætəri/",
+        "translation_zh": "电池",
+        "example": "The battery technology is improving rapidly.",
+        "audio": "",
+        "example_zh": "电池技术正在迅速提高。"
+      },
+      {
+        "word": "subsidies",
+        "phonetic": "/ˈsʌbsɪdiz/",
+        "translation_zh": "补贴",
+        "example": "Government subsidies can lower the cost of electric cars.",
+        "audio": "",
+        "example_zh": "政府补贴可以降低电动车的成本。"
+      },
+      {
+        "word": "incentives",
+        "phonetic": "/ɪnˈsɛntɪvz/",
+        "translation_zh": "激励措施",
+        "example": "Incentives are encouraging people to switch to electric vehicles.",
+        "audio": "",
+        "example_zh": "激励措施正在鼓励人们转向电动车。"
+      },
+      {
+        "word": "affordable",
+        "phonetic": "/əˈfɔːrdəbl/",
+        "translation_zh": "实惠",
+        "example": "Electric cars are becoming more affordable every year.",
+        "audio": "",
+        "example_zh": "电动车每年都变得更加实惠。"
+      },
+      {
+        "word": "technology",
+        "phonetic": "/tɛkˈnɑːlədʒi/",
+        "translation_zh": "技术",
+        "example": "Advancements in technology drive down costs.",
+        "audio": "",
+        "example_zh": "技术进步降低了成本。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260322-medium-004_en",
+      "translation_zh": "bundle://ep-20260322-medium-004_zh"
+    },
+    "thumbnail": "bundle://ep-20260322-medium-004_cover"
+  },
+  {
+    "id": "ep-20260323-medium-005",
+    "title": "Four-Day Work Week Revolution",
+    "level": "medium",
+    "date": "2026-03-23",
+    "duration_seconds": 28,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hey Lisa, did you hear about this four-day work week they're talking about?",
+        "translation_zh": "嘿，丽莎，你听说过他们正在讨论的四天工作周吗？",
+        "emotion": "curious",
+        "start": 0.0,
+        "end": 4.31
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yeah, I actually read that in some places it boosts productivity.",
+        "translation_zh": "是的，我确实读到在某些地方它提高了生产力。",
+        "emotion": "happy",
+        "start": 5.11,
+        "end": 9.16
+      },
+      {
+        "speaker": "Alex",
+        "text": "Really? That sounds amazing. How does that work?",
+        "translation_zh": "真的吗？那听起来很棒。它是怎么运作的？",
+        "emotion": "intrigued",
+        "start": 9.96,
+        "end": 14.09
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Well, they say people are more focused because they have more time to rest.",
+        "translation_zh": "嗯，他们说因为人们有更多的休息时间，所以更专注。",
+        "emotion": "neutral",
+        "start": 14.89,
+        "end": 18.85
+      },
+      {
+        "speaker": "Alex",
+        "text": "I bet people would love that. More time for hobbies and family.",
+        "translation_zh": "我敢打赌人们会喜欢这样。更多的时间给爱好和家人。",
+        "emotion": "happy",
+        "start": 19.65,
+        "end": 23.61
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Exactly, and companies save money too. It's like a win-win.",
+        "translation_zh": "确实，公司也能省钱。这就像双赢。",
+        "emotion": "happy",
+        "start": 24.41,
+        "end": 28.59
+      },
+      {
+        "speaker": "Alex",
+        "text": "So you think it could become the norm someday?",
+        "translation_zh": "所以你觉得有一天它可能成为常态吗？",
+        "emotion": "curious"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "productivity",
+        "phonetic": "/ˌprɒdʌkˈtɪvəti/",
+        "translation_zh": "生产力",
+        "example": "High productivity means we get more done in less time.",
+        "audio": "",
+        "example_zh": "高生产力意味着我们在更短的时间内完成更多的事情。"
+      },
+      {
+        "word": "focused",
+        "phonetic": "/ˈfəʊkəst/",
+        "translation_zh": "专注的",
+        "example": "She was very focused on her task.",
+        "audio": "",
+        "example_zh": "她非常专注于她的任务。"
+      },
+      {
+        "word": "rest",
+        "phonetic": "/rɛst/",
+        "translation_zh": "休息",
+        "example": "It's important to get enough rest after a long day.",
+        "audio": "",
+        "example_zh": "在漫长的一天后，充足的休息很重要。"
+      },
+      {
+        "word": "hobbies",
+        "phonetic": "/ˈhɒbiz/",
+        "translation_zh": "爱好",
+        "example": "His hobbies include painting and hiking.",
+        "audio": "",
+        "example_zh": "他的爱好包括绘画和徒步旅行。"
+      },
+      {
+        "word": "norm",
+        "phonetic": "/nɔːm/",
+        "translation_zh": "规范",
+        "example": "Working from home has become the new norm.",
+        "audio": "",
+        "example_zh": "在家工作已经成为新的常态。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260323-medium-005_en",
+      "translation_zh": "bundle://ep-20260323-medium-005_zh"
+    },
+    "thumbnail": "bundle://ep-20260323-medium-005_cover"
+  },
+  {
+    "id": "ep-20260324-medium-006",
+    "title": "Learning Languages with AI",
+    "level": "medium",
+    "date": "2026-03-24",
+    "duration_seconds": 37,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hey Lisa, have you heard about people using AI to learn languages?",
+        "translation_zh": "嘿，丽莎，你听说过人们用人工智能学习语言吗？",
+        "emotion": "happy",
+        "start": 0.0,
+        "end": 4.31
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yeah, it's actually becoming really popular. AI can personalize lessons, you know.",
+        "translation_zh": "是的，这其实变得非常受欢迎。人工智能可以个性化课程，你知道吗。",
+        "emotion": "happy",
+        "start": 5.11,
+        "end": 10.36
+      },
+      {
+        "speaker": "Alex",
+        "text": "That's interesting. I guess it makes learning more efficient.",
+        "translation_zh": "这很有趣。我想这让学习更高效。",
+        "emotion": "neutral",
+        "start": 11.15,
+        "end": 14.99
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Exactly. Plus, AI can give instant feedback on pronunciation and grammar.",
+        "translation_zh": "没错。而且，人工智能可以即刻反馈发音和语法。",
+        "emotion": "happy",
+        "start": 15.79,
+        "end": 21.07
+      },
+      {
+        "speaker": "Alex",
+        "text": "I mean, traditional methods can be pretty slow. This sounds like a game changer.",
+        "translation_zh": "我的意思是，传统方法可能相当慢。这听起来像是个改变游戏规则的东西。",
+        "emotion": "surprised",
+        "start": 21.87,
+        "end": 27.33
+      },
+      {
+        "speaker": "Lisa",
+        "text": "To be honest, it's great for people who want to learn fast and effectively.",
+        "translation_zh": "说实话，这对于那些想要快速有效学习的人来说非常好。",
+        "emotion": "happy",
+        "start": 28.12,
+        "end": 32.56
+      },
+      {
+        "speaker": "Alex",
+        "text": "I might actually try it out. Do you have any recommendations?",
+        "translation_zh": "我可能真的会尝试一下。你有什么推荐吗？",
+        "emotion": "neutral",
+        "start": 33.36,
+        "end": 37.54
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "popular",
+        "phonetic": "/ˈpɒpjʊlər/",
+        "translation_zh": "受欢迎的",
+        "example": "AI is becoming popular for language learning.",
+        "audio": "",
+        "example_zh": "人工智能在语言学习中越来越受欢迎。"
+      },
+      {
+        "word": "personalize",
+        "phonetic": "/ˈpɜːsənəlaɪz/",
+        "translation_zh": "个性化",
+        "example": "AI can personalize lessons for each student.",
+        "audio": "",
+        "example_zh": "人工智能可以为每个学生量身定制课程。"
+      },
+      {
+        "word": "efficient",
+        "phonetic": "/ɪˈfɪʃənt/",
+        "translation_zh": "高效的",
+        "example": "The new method is more efficient than the old one.",
+        "audio": "",
+        "example_zh": "新方法比旧方法更有效率。"
+      },
+      {
+        "word": "feedback",
+        "phonetic": "/ˈfiːdbæk/",
+        "translation_zh": "反馈",
+        "example": "Instant feedback helps learners improve.",
+        "audio": "",
+        "example_zh": "即时反馈帮助学习者提高。"
+      },
+      {
+        "word": "recommendation",
+        "phonetic": "/ˌrekəmenˈdeɪʃən/",
+        "translation_zh": "推荐",
+        "example": "She gave me a recommendation for a good app.",
+        "audio": "",
+        "example_zh": "她给我推荐了一个不错的应用程序。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260324-medium-006_en",
+      "translation_zh": "bundle://ep-20260324-medium-006_zh"
+    },
+    "thumbnail": "bundle://ep-20260324-medium-006_cover"
+  },
+  {
+    "id": "ep-20260325-medium-007",
+    "title": "Living as a Digital Nomad in Southeast Asia",
+    "level": "medium",
+    "date": "2026-03-25",
+    "duration_seconds": 36,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "So, I keep hearing about people becoming digital nomads in Southeast Asia. What's that all about?",
+        "translation_zh": "所以，我一直听说有人在东南亚成为数字游民。这是怎么回事？",
+        "emotion": "curious",
+        "start": 0.0,
+        "end": 6.69
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yeah, it's really popular now. You know, it's about working remotely while traveling.",
+        "translation_zh": "是的，现在真的很流行。你知道，这是关于远程工作同时旅行。",
+        "emotion": "happy",
+        "start": 7.49,
+        "end": 12.39
+      },
+      {
+        "speaker": "Alex",
+        "text": "Sounds exciting! But, how do they manage internet access and stuff?",
+        "translation_zh": "听起来很刺激！但是，他们怎么管理上网和其他事情呢？",
+        "emotion": "interested",
+        "start": 13.19,
+        "end": 18.0
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Well, places like Thailand and Bali have great internet connections, actually. It's quite convenient.",
+        "translation_zh": "嗯，像泰国和巴厘岛这样的地方实际上有很好的互联网连接。这很方便。",
+        "emotion": "neutral",
+        "start": 18.8,
+        "end": 24.64
+      },
+      {
+        "speaker": "Alex",
+        "text": "I guess it's a good way to explore new cultures while working. Have you heard any crazy stories?",
+        "translation_zh": "我想这是一个在工作时探索新文化的好方法。你听说过什么疯狂的故事吗？",
+        "emotion": "intrigued",
+        "start": 25.45,
+        "end": 31.37
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Oh, totally! Some people even start local businesses once they settle in.",
+        "translation_zh": "哦，当然！有些人定居后还会开始当地生意。",
+        "emotion": "happy",
+        "start": 32.17,
+        "end": 36.98
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "nomad",
+        "phonetic": "/ˈnoʊ.mæd/",
+        "translation_zh": "游牧者",
+        "example": "Many digital nomads move from place to place, seeking new adventures.",
+        "audio": "",
+        "example_zh": "许多数字游民从一个地方搬到另一个地方，寻找新的冒险。"
+      },
+      {
+        "word": "remote",
+        "phonetic": "/rɪˈmoʊt/",
+        "translation_zh": "远程的",
+        "example": "Remote work allows people to work from anywhere in the world.",
+        "audio": "",
+        "example_zh": "远程工作让人们可以在世界任何地方工作。"
+      },
+      {
+        "word": "convenient",
+        "phonetic": "/kənˈviː.ni.ənt/",
+        "translation_zh": "方便的",
+        "example": "Living in a city with convenient transport is a huge advantage.",
+        "audio": "",
+        "example_zh": "住在交通便利的城市是一个巨大的优势。"
+      },
+      {
+        "word": "culture",
+        "phonetic": "/ˈkʌl.tʃɚ/",
+        "translation_zh": "文化",
+        "example": "Exploring different cultures can be very enriching.",
+        "audio": "",
+        "example_zh": "探索不同的文化可以非常丰富。"
+      },
+      {
+        "word": "business",
+        "phonetic": "/ˈbɪz.nɪs/",
+        "translation_zh": "生意",
+        "example": "Starting a business in a new country can be challenging.",
+        "audio": "",
+        "example_zh": "在一个新的国家创业可能会很有挑战性。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260325-medium-007_en",
+      "translation_zh": "bundle://ep-20260325-medium-007_zh"
+    },
+    "thumbnail": "bundle://ep-20260325-medium-007_cover"
+  },
+  {
+    "id": "ep-20260326-medium-008",
+    "title": "Traveling Solo: The New Trend",
     "level": "medium",
     "date": "2026-03-26",
-    "duration_seconds": 380,
-    "audio": {
-      "english": "https://oss.langpod.com/episodes/medium-002/en.mp3",
-      "translation_zh": "https://oss.langpod.com/episodes/medium-002/zh.mp3"
-    },
+    "duration_seconds": 30,
     "script": [
       {
         "speaker": "Alex",
-        "text": "Do you have any plans for the weekend?",
+        "text": "Hey Lisa, I've been hearing a lot about solo traveling lately. What's the deal with that?",
+        "translation_zh": "嘿，Lisa，我最近听说了很多关于单独旅行的事情。这是什么意思呢？",
+        "emotion": "neutral",
         "start": 0.0,
-        "end": 2.5,
-        "translation_zh": "你周末有什么计划吗？"
+        "end": 5.63
       },
       {
         "speaker": "Lisa",
-        "text": "I'm thinking about going hiking. There's a trail I've been wanting to try.",
-        "start": 2.8,
-        "end": 7.0,
-        "translation_zh": "我在考虑去徒步。有一条我一直想试的步道。"
+        "text": "Oh, it's really becoming popular! People love the freedom and adventure it offers, you know?",
+        "translation_zh": "哦，它真的越来越受欢迎了！大家喜欢它带来的自由和冒险，你知道吗？",
+        "emotion": "happy",
+        "start": 6.43,
+        "end": 12.22
       },
       {
         "speaker": "Alex",
-        "text": "That sounds amazing. How long is the trail?",
-        "start": 7.3,
-        "end": 9.8,
-        "translation_zh": "听起来很棒。那条步道有多长？"
+        "text": "I mean, it does sound exciting to explore places on your own. But isn't it kind of risky?",
+        "translation_zh": "我是说，一个人探索地方确实听起来很刺激。但这不是有点危险吗？",
+        "emotion": "surprised",
+        "start": 13.02,
+        "end": 18.86
       },
       {
         "speaker": "Lisa",
-        "text": "About eight kilometers round trip. It takes roughly three hours including breaks.",
-        "start": 10.0,
-        "end": 15.0,
-        "translation_zh": "往返大约八公里。包括休息大概要三个小时。"
+        "text": "Well, actually, many people feel it's safer because they can make their own choices and stay alert.",
+        "translation_zh": "嗯，其实很多人觉得更安全，因为他们可以做自己的选择并保持警觉。",
+        "emotion": "neutral",
+        "start": 19.66,
+        "end": 24.91
       },
       {
         "speaker": "Alex",
-        "text": "Is it beginner-friendly? I haven't hiked in ages.",
-        "start": 15.3,
-        "end": 18.5,
-        "translation_zh": "适合新手吗？我很久没徒步了。"
+        "text": "Interesting! I guess it also builds confidence when you're navigating everything alone.",
+        "translation_zh": "有趣！我想当你一个人处理一切时，也会增强信心。",
+        "emotion": "happy",
+        "start": 25.71,
+        "end": 30.66
       },
       {
         "speaker": "Lisa",
-        "text": "Mostly yes, but there's one steep section near the top. The view from the summit is worth it though.",
-        "start": 18.8,
-        "end": 25.0,
-        "translation_zh": "大部分适合，不过快到顶的时候有一段比较陡。不过山顶的景色很值得。"
+        "text": "Exactly! Plus, you meet new people, have unique experiences. It's quite enriching.",
+        "translation_zh": "没错！另外，你会遇到新朋友，享有独特的经历。这很充实。",
+        "emotion": "happy"
       },
       {
         "speaker": "Alex",
-        "text": "Count me in. Should I bring anything specific?",
-        "start": 25.3,
-        "end": 28.5,
-        "translation_zh": "算我一个。我需要带什么特别的东西吗？"
-      },
-      {
-        "speaker": "Lisa",
-        "text": "Just comfortable shoes, plenty of water, and maybe a packed lunch. I'll handle the navigation.",
-        "start": 28.8,
-        "end": 35.0,
-        "translation_zh": "穿舒服的鞋，带够水，可能再带个便当。导航我来搞定。"
+        "text": "Sounds like I should give it a try sometime.",
+        "translation_zh": "听起来我应该找个时间试试。",
+        "emotion": "happy"
       }
     ],
     "vocabulary": [
       {
-        "word": "hiking",
-        "phonetic": "/ˈhaɪkɪŋ/",
-        "translation_zh": "徒步，远足",
-        "example": "We went hiking in the mountains.",
-        "audio": "https://oss.langpod.com/words/hiking.mp3"
+        "word": "solo",
+        "phonetic": "/ˈsoʊloʊ/",
+        "translation_zh": "单独的",
+        "example": "She decided to go on a solo trip to the mountains.",
+        "audio": "",
+        "example_zh": "她决定独自去山区旅行。"
       },
       {
-        "word": "trail",
-        "phonetic": "/treɪl/",
-        "translation_zh": "小径，步道",
-        "example": "The trail goes through the forest.",
-        "audio": "https://oss.langpod.com/words/trail.mp3"
+        "word": "adventure",
+        "phonetic": "/ədˈvɛntʃər/",
+        "translation_zh": "冒险",
+        "example": "He was looking for adventure in the wild.",
+        "audio": "",
+        "example_zh": "他在野外寻找冒险。"
       },
       {
-        "word": "round trip",
-        "phonetic": "/raʊnd trɪp/",
-        "translation_zh": "往返",
-        "example": "The round trip takes two hours.",
-        "audio": "https://oss.langpod.com/words/round-trip.mp3"
+        "word": "risky",
+        "phonetic": "/ˈrɪski/",
+        "translation_zh": "危险的",
+        "example": "Investing in start-ups can be risky.",
+        "audio": "",
+        "example_zh": "投资初创公司可能有风险。"
       },
       {
-        "word": "steep",
-        "phonetic": "/stiːp/",
-        "translation_zh": "陡峭的",
-        "example": "Be careful, the stairs are steep.",
-        "audio": "https://oss.langpod.com/words/steep.mp3"
+        "word": "confidence",
+        "phonetic": "/ˈkɒnfɪdəns/",
+        "translation_zh": "自信",
+        "example": "She spoke with great confidence during the presentation.",
+        "audio": "",
+        "example_zh": "她在演讲中表现得非常自信。"
       },
       {
-        "word": "summit",
-        "phonetic": "/ˈsʌmɪt/",
-        "translation_zh": "山顶，顶峰",
-        "example": "We reached the summit at noon.",
-        "audio": "https://oss.langpod.com/words/summit.mp3"
+        "word": "unique",
+        "phonetic": "/juˈniːk/",
+        "translation_zh": "独特的",
+        "example": "Each painting was unique in its own way.",
+        "audio": "",
+        "example_zh": "每幅画都有其独特之处。"
       },
       {
-        "word": "navigation",
-        "phonetic": "/ˌnævɪˈɡeɪʃn/",
-        "translation_zh": "导航",
-        "example": "I'll use GPS for navigation.",
-        "audio": "https://oss.langpod.com/words/navigation.mp3"
+        "word": "enriching",
+        "phonetic": "/ɪnˈrɪtʃɪŋ/",
+        "translation_zh": "充实的",
+        "example": "Traveling can be an enriching experience.",
+        "audio": "",
+        "example_zh": "旅行可以是一种丰富的体验。"
       }
-    ]
+    ],
+    "audio": {
+      "english": "bundle://ep-20260326-medium-008_en",
+      "translation_zh": "bundle://ep-20260326-medium-008_zh"
+    },
+    "thumbnail": "bundle://ep-20260326-medium-008_cover"
   },
   {
-    "id": "ep-2026-0327-medium-003",
-    "title": "Street Food Adventure",
+    "id": "ep-20260327-medium-009",
+    "title": "Streaming's Impact on Music",
     "level": "medium",
     "date": "2026-03-27",
-    "duration_seconds": 400,
-    "audio": {
-      "english": "https://oss.langpod.com/episodes/medium-003/en.mp3",
-      "translation_zh": "https://oss.langpod.com/episodes/medium-003/zh.mp3"
-    },
+    "duration_seconds": 34,
     "script": [
       {
         "speaker": "Alex",
-        "text": "Have you ever been to a night market in Asia?",
+        "text": "Hey Lisa, have you noticed how streaming has changed the music world?",
+        "translation_zh": "嘿，丽莎，你注意到流媒体如何改变了音乐界吗？",
+        "emotion": "curious",
         "start": 0.0,
-        "end": 3.0,
-        "translation_zh": "你去过亚洲的夜市吗？"
+        "end": 4.0
       },
       {
         "speaker": "Lisa",
-        "text": "Yes! I went to one in Taipei last year. The variety of food was incredible.",
-        "start": 3.3,
-        "end": 8.0,
-        "translation_zh": "去过！去年我去了台北的一个夜市。食物种类太丰富了。"
+        "text": "Definitely! I mean, now artists can reach a global audience instantly.",
+        "translation_zh": "当然！我的意思是，现在艺术家可以立即接触全球观众。",
+        "emotion": "happy",
+        "start": 4.8,
+        "end": 9.53
       },
       {
         "speaker": "Alex",
-        "text": "What was your favorite thing to eat there?",
-        "start": 8.3,
-        "end": 10.8,
-        "translation_zh": "你最喜欢吃什么？"
+        "text": "Yeah, and it’s amazing how you can discover new music so easily.",
+        "translation_zh": "是啊，而且发现新音乐真的很容易。",
+        "emotion": "happy",
+        "start": 10.33,
+        "end": 14.97
       },
       {
         "speaker": "Lisa",
-        "text": "Definitely the grilled squid. They season it with this amazing spice blend.",
-        "start": 11.0,
-        "end": 16.0,
-        "translation_zh": "绝对是烤鱿鱼。他们用一种很棒的混合香料调味。"
+        "text": "Exactly. Plus, the royalties are quite different compared to album sales.",
+        "translation_zh": "没错。还有，版税和专辑销售相比有很大不同。",
+        "emotion": "neutral",
+        "start": 15.78,
+        "end": 20.89
       },
       {
         "speaker": "Alex",
-        "text": "I've heard the stinky tofu is a must-try, but I'm not sure I'm brave enough.",
-        "start": 16.3,
-        "end": 21.5,
-        "translation_zh": "我听说臭豆腐是必尝的，但我不确定自己够不够勇敢。"
+        "text": "I heard some artists aren't too happy about that. They say it affects their income.",
+        "translation_zh": "我听说有些艺术家对此不太满意。他们说这影响了他们的收入。",
+        "emotion": "concerned",
+        "start": 21.69,
+        "end": 26.94
       },
       {
         "speaker": "Lisa",
-        "text": "It's actually not as bad as it smells. The texture is crispy on the outside and soft inside.",
-        "start": 21.8,
-        "end": 28.0,
-        "translation_zh": "其实没有闻起来那么可怕。口感外脆内软。"
+        "text": "True, but it also opens up opportunities for indie musicians, you know?",
+        "translation_zh": "确实，不过这也为独立音乐人打开了机会，你知道吗？",
+        "emotion": "happy",
+        "start": 27.74,
+        "end": 32.05
       },
       {
         "speaker": "Alex",
-        "text": "Maybe I'll give it a shot next time. Street food is such an authentic way to experience a culture.",
-        "start": 28.3,
-        "end": 34.5,
-        "translation_zh": "也许下次我试试。街头美食是体验一个文化最地道的方式。"
+        "text": "I guess it's a double-edged sword then.",
+        "translation_zh": "我想这就是一把双刃剑吧。",
+        "emotion": "neutral",
+        "start": 32.85,
+        "end": 34.77
       }
     ],
     "vocabulary": [
       {
-        "word": "variety",
-        "phonetic": "/vəˈraɪəti/",
-        "translation_zh": "种类，多样性",
-        "example": "The store offers a wide variety of products.",
-        "audio": "https://oss.langpod.com/words/variety.mp3"
+        "word": "streaming",
+        "phonetic": "/ˈstriːmɪŋ/",
+        "translation_zh": "流媒体",
+        "example": "Streaming has become the most popular way to listen to music.",
+        "audio": "",
+        "example_zh": "流媒体已经成为听音乐最流行的方式。"
       },
       {
-        "word": "incredible",
-        "phonetic": "/ɪnˈkredəbl/",
-        "translation_zh": "难以置信的，极好的",
-        "example": "The sunset was incredible.",
-        "audio": "https://oss.langpod.com/words/incredible.mp3"
+        "word": "audience",
+        "phonetic": "/ˈɔːdiəns/",
+        "translation_zh": "观众",
+        "example": "The artist performed live for a large audience.",
+        "audio": "",
+        "example_zh": "这位艺术家为众多观众进行了现场表演。"
       },
       {
-        "word": "season",
-        "phonetic": "/ˈsiːzn/",
-        "translation_zh": "调味（动词）",
-        "example": "Season the chicken with salt and pepper.",
-        "audio": "https://oss.langpod.com/words/season.mp3"
+        "word": "royalties",
+        "phonetic": "/ˈrɔɪəltiz/",
+        "translation_zh": "版税",
+        "example": "Musicians receive royalties from their published works.",
+        "audio": "",
+        "example_zh": "音乐家从他们发表的作品中获得版税。"
       },
       {
-        "word": "texture",
-        "phonetic": "/ˈtekstʃər/",
-        "translation_zh": "口感，质地",
-        "example": "The cake has a smooth texture.",
-        "audio": "https://oss.langpod.com/words/texture.mp3"
+        "word": "album",
+        "phonetic": "/ˈælbəm/",
+        "translation_zh": "专辑",
+        "example": "She released her fifth studio album last year.",
+        "audio": "",
+        "example_zh": "她去年发行了她的第五张录音室专辑。"
       },
       {
-        "word": "crispy",
-        "phonetic": "/ˈkrɪspi/",
-        "translation_zh": "酥脆的",
-        "example": "I like crispy fried chicken.",
-        "audio": "https://oss.langpod.com/words/crispy.mp3"
+        "word": "income",
+        "phonetic": "/ˈɪnkʌm/",
+        "translation_zh": "收入",
+        "example": "His main source of income comes from music sales.",
+        "audio": "",
+        "example_zh": "他的主要收入来源来自音乐销售。"
       },
       {
-        "word": "authentic",
-        "phonetic": "/ɔːˈθentɪk/",
-        "translation_zh": "地道的，正宗的",
-        "example": "This restaurant serves authentic Italian food.",
-        "audio": "https://oss.langpod.com/words/authentic.mp3"
+        "word": "indie",
+        "phonetic": "/ˈɪndi/",
+        "translation_zh": "独立",
+        "example": "Indie musicians often release their music online.",
+        "audio": "",
+        "example_zh": "独立音乐人通常在网上发布他们的音乐。"
       }
-    ]
+    ],
+    "audio": {
+      "english": "bundle://ep-20260327-medium-009_en",
+      "translation_zh": "bundle://ep-20260327-medium-009_zh"
+    },
+    "thumbnail": "bundle://ep-20260327-medium-009_cover"
+  },
+  {
+    "id": "ep-20260328-medium-010",
+    "title": "Cold Plunge Craze",
+    "level": "medium",
+    "date": "2026-03-28",
+    "duration_seconds": 18,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hey Lisa, have you heard about cold plunge therapy? It's all over the place lately!",
+        "translation_zh": "嘿，丽莎，你听说过冷水浸泡疗法吗？最近到处都在谈论这个！",
+        "emotion": "happy",
+        "start": 0.0,
+        "end": 5.07
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Oh yeah, I actually tried it last week. It's pretty refreshing, you know?",
+        "translation_zh": "哦，是的，我上周其实尝试过。你知道吗，它真的很提神。",
+        "emotion": "happy",
+        "start": 5.87,
+        "end": 10.13
+      },
+      {
+        "speaker": "Alex",
+        "text": "Really? How does it work exactly?",
+        "translation_zh": "真的吗？它到底是怎么回事？",
+        "emotion": "neutral",
+        "start": 10.93,
+        "end": 13.82
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Well, you just immerse yourself in cold water for a few minutes. It's said to boost energy and reduce stress.",
+        "translation_zh": "嗯，你只需在冷水中浸泡几分钟。据说它可以提升能量和减压。",
+        "emotion": "neutral",
+        "start": 14.62,
+        "end": 18.2
+      },
+      {
+        "speaker": "Alex",
+        "text": "I mean, isn't it just like taking a freezing shower?",
+        "translation_zh": "我的意思是，这不就是像洗一个冷水澡吗？",
+        "emotion": "surprised"
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Kind of! But the cold plunge is usually colder and more intense. It feels invigorating!",
+        "translation_zh": "有点像！但冷水浸泡通常更冷，更刺激。感觉很振奋！",
+        "emotion": "happy"
+      },
+      {
+        "speaker": "Alex",
+        "text": "Sounds interesting. I might give it a shot.",
+        "translation_zh": "听起来很有趣。我可能会试试。",
+        "emotion": "happy"
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "therapy",
+        "phonetic": "/ˈθɛrəpi/",
+        "translation_zh": "疗法",
+        "example": "Cold plunge therapy is becoming popular.",
+        "audio": "",
+        "example_zh": "冷水疗法正变得流行。"
+      },
+      {
+        "word": "refreshing",
+        "phonetic": "/rɪˈfrɛʃɪŋ/",
+        "translation_zh": "提神的",
+        "example": "The cold water feels refreshing.",
+        "audio": "",
+        "example_zh": "冷水感觉很清爽。"
+      },
+      {
+        "word": "immerse",
+        "phonetic": "/ɪˈmɜrs/",
+        "translation_zh": "浸泡",
+        "example": "You immerse yourself in cold water.",
+        "audio": "",
+        "example_zh": "你把自己浸泡在冷水中。"
+      },
+      {
+        "word": "stress",
+        "phonetic": "/strɛs/",
+        "translation_zh": "压力",
+        "example": "This method helps reduce stress.",
+        "audio": "",
+        "example_zh": "这种方法有助于减轻压力。"
+      },
+      {
+        "word": "freezing",
+        "phonetic": "/ˈfrizɪŋ/",
+        "translation_zh": "极冷的",
+        "example": "Taking a freezing shower wakes you up.",
+        "audio": "",
+        "example_zh": "洗冷水澡能让你清醒。"
+      },
+      {
+        "word": "invigorating",
+        "phonetic": "/ɪnˈvɪɡəˌreɪtɪŋ/",
+        "translation_zh": "振奋的",
+        "example": "The cold water is invigorating.",
+        "audio": "",
+        "example_zh": "冷水令人振奋。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260328-medium-010_en",
+      "translation_zh": "bundle://ep-20260328-medium-010_zh"
+    },
+    "thumbnail": "bundle://ep-20260328-medium-010_cover"
+  },
+  {
+    "id": "ep-20260330-medium-001",
+    "title": "Bubble Tea Craze!",
+    "level": "medium",
+    "date": "2026-03-30",
+    "duration_seconds": 40,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "You know, I've been seeing bubble tea places everywhere lately.",
+        "translation_zh": "你知道吗，我最近到处都能看到珍珠奶茶店。",
+        "emotion": "happy",
+        "start": 0.0,
+        "end": 4.34
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yeah, it's become super trendy, especially among young people.",
+        "translation_zh": "是啊，它变得非常流行，尤其是在年轻人中。",
+        "emotion": "neutral",
+        "start": 5.14,
+        "end": 9.48
+      },
+      {
+        "speaker": "Alex",
+        "text": "But what's so special about it? It's just tea, right?",
+        "translation_zh": "但它有什么特别的呢？不就是茶吗？",
+        "emotion": "surprised",
+        "start": 10.28,
+        "end": 13.86
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Well, it's more than just tea. It's those chewy tapioca balls that make it unique.",
+        "translation_zh": "嗯，它不仅仅是茶。是那些有嚼劲的粉圆让它与众不同。",
+        "emotion": "happy",
+        "start": 14.66,
+        "end": 20.24
+      },
+      {
+        "speaker": "Alex",
+        "text": "Tapioca? Oh, those are the little black balls, right?",
+        "translation_zh": "粉圆？哦，那些是小黑球，对吗？",
+        "emotion": "neutral",
+        "start": 21.04,
+        "end": 25.43
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Exactly! They're kind of fun to eat, and the variety of flavors is amazing.",
+        "translation_zh": "没错！吃起来很有趣，而且口味的多样性也很惊人。",
+        "emotion": "happy",
+        "start": 26.23,
+        "end": 31.13
+      },
+      {
+        "speaker": "Alex",
+        "text": "I might have to try it. Do you have a favorite flavor?",
+        "translation_zh": "我可能要去尝试一下。你有最喜欢的口味吗？",
+        "emotion": "neutral",
+        "start": 31.93,
+        "end": 35.3
+      },
+      {
+        "speaker": "Lisa",
+        "text": "I love the classic milk tea, but the fruit teas are also refreshing.",
+        "translation_zh": "我喜欢经典的奶茶，但水果茶也很清爽。",
+        "emotion": "happy",
+        "start": 36.1,
+        "end": 40.49
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "trendy",
+        "phonetic": "/ˈtrendi/",
+        "translation_zh": "流行的",
+        "example": "Bubble tea has become very trendy.",
+        "example_zh": "珍珠奶茶变得非常流行。",
+        "audio": ""
+      },
+      {
+        "word": "unique",
+        "phonetic": "/juːˈniːk/",
+        "translation_zh": "独特的",
+        "example": "The drink is unique because of its chewy tapioca balls.",
+        "example_zh": "这种饮料因其有嚼劲的粉圆而独特。",
+        "audio": ""
+      },
+      {
+        "word": "tapioca",
+        "phonetic": "/ˌtæpiˈoʊkə/",
+        "translation_zh": "粉圆",
+        "example": "The tapioca balls add a fun texture to the drink.",
+        "example_zh": "粉圆给饮料增添了有趣的口感。",
+        "audio": ""
+      },
+      {
+        "word": "flavor",
+        "phonetic": "/ˈfleɪvər/",
+        "translation_zh": "口味",
+        "example": "There are many flavors to choose from.",
+        "example_zh": "有很多口味可以选择。",
+        "audio": ""
+      },
+      {
+        "word": "refreshing",
+        "phonetic": "/rɪˈfreʃɪŋ/",
+        "translation_zh": "清爽的",
+        "example": "Fruit teas are refreshing on a hot day.",
+        "example_zh": "水果茶在炎热的天气里很清爽。",
+        "audio": ""
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260330-medium-001_en",
+      "translation_zh": "bundle://ep-20260330-medium-001_zh"
+    },
+    "thumbnail": "bundle://ep-20260330-medium-001_cover"
+  },
+  {
+    "id": "ep-20260330-medium-002",
+    "title": "The Perks and Pitfalls of Working from Home",
+    "level": "medium",
+    "date": "2026-03-30",
+    "duration_seconds": 39,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "So, I've been thinking about working from home, you know? It sounds pretty amazing.",
+        "translation_zh": "所以，我一直在考虑在家工作，听起来很棒。",
+        "emotion": "happy",
+        "start": 0.0,
+        "end": 5.71
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Yeah, it can be great! You avoid the commute, and have more flexibility.",
+        "translation_zh": "是啊，这很棒！你可以避免通勤，并且有更多的灵活性。",
+        "emotion": "happy",
+        "start": 6.51,
+        "end": 10.98
+      },
+      {
+        "speaker": "Alex",
+        "text": "But I wonder, doesn't it get kind of lonely, like, without colleagues around?",
+        "translation_zh": "但我想知道，这样会不会有点孤单，没有同事在身边？",
+        "emotion": "neutral",
+        "start": 11.78,
+        "end": 16.81
+      },
+      {
+        "speaker": "Lisa",
+        "text": "True, social interaction is less, which can be isolating for some.",
+        "translation_zh": "确实，社交互动少了，对一些人来说可能会感到孤独。",
+        "emotion": "sad",
+        "start": 17.61,
+        "end": 23.07
+      },
+      {
+        "speaker": "Alex",
+        "text": "And what about staying productive? I mean, with all the distractions at home.",
+        "translation_zh": "那保持工作效率呢？我的意思是，家里有很多干扰因素。",
+        "emotion": "neutral",
+        "start": 23.87,
+        "end": 28.81
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Honestly, it takes discipline. Setting a routine helps, like having a dedicated workspace.",
+        "translation_zh": "说实话，这需要自律。制定一个日常安排有帮助，比如有一个专用工作区。",
+        "emotion": "neutral",
+        "start": 29.61,
+        "end": 35.2
+      },
+      {
+        "speaker": "Alex",
+        "text": "Makes sense. I guess it's all about balance, right?",
+        "translation_zh": "有道理。我想这就是一种平衡，对吧？",
+        "emotion": "neutral",
+        "start": 36.0,
+        "end": 39.36
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "commute",
+        "phonetic": "/kəˈmjuːt/",
+        "translation_zh": "通勤",
+        "example": "She has a long commute to work every day.",
+        "example_zh": "她每天上下班的路程很远。",
+        "audio": ""
+      },
+      {
+        "word": "flexibility",
+        "phonetic": "/ˌflɛksəˈbɪləti/",
+        "translation_zh": "灵活性",
+        "example": "Flexibility in working hours is a great advantage.",
+        "example_zh": "工作时间的灵活性是一个很大的优势。",
+        "audio": ""
+      },
+      {
+        "word": "lonely",
+        "phonetic": "/ˈloʊnli/",
+        "translation_zh": "孤单的",
+        "example": "He felt lonely after moving to a new city.",
+        "example_zh": "搬到新城市后，他感到孤单。",
+        "audio": ""
+      },
+      {
+        "word": "productive",
+        "phonetic": "/prəˈdʌktɪv/",
+        "translation_zh": "多产的，有效的",
+        "example": "She is most productive in the morning.",
+        "example_zh": "她在早上效率最高。",
+        "audio": ""
+      },
+      {
+        "word": "discipline",
+        "phonetic": "/ˈdɪsəplɪn/",
+        "translation_zh": "纪律，自律",
+        "example": "Self-discipline is key to success.",
+        "example_zh": "自律是成功的关键。",
+        "audio": ""
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260330-medium-002_en",
+      "translation_zh": "bundle://ep-20260330-medium-002_zh"
+    },
+    "thumbnail": "bundle://ep-20260330-medium-002_cover"
   }
 ]

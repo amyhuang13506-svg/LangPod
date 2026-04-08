@@ -21,6 +21,7 @@ class DataStore {
     var currentEpisode: Episode?
     var isLoadingEpisodes = false
 
+
     // Streak system
     var streakDays: Int {
         didSet { UserDefaults.standard.set(streakDays, forKey: "streakDays") }
@@ -48,7 +49,7 @@ class DataStore {
     init() {
         self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
         let levelRaw = UserDefaults.standard.string(forKey: "selectedLevel") ?? "easy"
-        self.userName = UserDefaults.standard.string(forKey: "userName") ?? "英语学习者"
+        self.userName = UserDefaults.standard.string(forKey: "userName") ?? "Explorer"
         self.selectedLevel = PodcastLevel(rawValue: levelRaw) ?? .easy
         self.listeningLevel = ListeningLevel(rawValue: UserDefaults.standard.integer(forKey: "listeningLevel")) ?? .lv1
         self.episodesCompleted = UserDefaults.standard.integer(forKey: "episodesCompleted")
@@ -64,10 +65,9 @@ class DataStore {
 
     func loadEpisodes() {
         episodes = MockDataLoader.loadEpisodes(for: selectedLevel)
-        currentEpisode = episodes.first
-        print("📋 DataStore: Loaded \(episodes.count) episodes, first audio: \(episodes.first?.audio.english ?? "nil")")
-        // TODO: Re-enable after OSS is set up
-        // fetchRemoteEpisodes()
+        let today = DateFormatter.episodeDate.string(from: Date())
+        currentEpisode = episodes.last(where: { $0.date == today }) ?? episodes.last
+        fetchRemoteEpisodes()
     }
 
     private func fetchRemoteEpisodes() {
@@ -77,31 +77,32 @@ class DataStore {
             await MainActor.run {
                 if !remoteEpisodes.isEmpty {
                     self.episodes = remoteEpisodes
-                    if self.currentEpisode == nil || self.currentEpisode?.level != self.selectedLevel.rawValue {
-                        self.currentEpisode = remoteEpisodes.first
-                    }
+                    // Default to latest today's episode
+                    let today = DateFormatter.episodeDate.string(from: Date())
+                    self.currentEpisode = remoteEpisodes.last(where: { $0.date == today }) ?? remoteEpisodes.last
                 }
                 self.isLoadingEpisodes = false
             }
+
         }
     }
 
     /// Call after completing an episode to check for level up
-    func completeEpisode(totalWords: Int) {
+    func completeEpisode(totalWords: Int, episode: Episode? = nil) {
         episodesCompleted += 1
         updateStreak()
 
-        // Record history
-        if let episode = currentEpisode {
+        // Record history — use passed episode or fallback to currentEpisode
+        if let ep = episode ?? currentEpisode {
             let record = ListenedEpisode(
-                episodeId: episode.id,
-                title: episode.title,
-                level: episode.level,
-                durationSeconds: episode.durationSeconds,
+                episodeId: ep.id,
+                title: ep.title,
+                level: ep.level,
+                durationSeconds: ep.durationSeconds,
                 listenedAt: Date()
             )
             listenHistory.insert(record, at: 0)
-            totalListeningSeconds += episode.durationSeconds
+            totalListeningSeconds += ep.durationSeconds
             saveListenHistory()
         }
         let newLevel = ListeningLevel.checkLevel(episodes: episodesCompleted, words: totalWords)
@@ -183,23 +184,13 @@ class DataStore {
             return
         }
         let cutoff = Date().addingTimeInterval(-Double(historyRetentionDays) * 86400)
-        listenHistory = history.filter { $0.listenedAt > cutoff }
+        listenHistory = history.filter { $0.isStarred || $0.listenedAt > cutoff }
         if listenHistory.count != history.count { saveListenHistory() }
     }
 
     private func loadMockHistory() {
-        let allEpisodes = MockDataLoader.loadAllEpisodes()
-        for (i, ep) in allEpisodes.enumerated() {
-            let daysAgo = Double(i) * 0.5
-            listenHistory.append(ListenedEpisode(
-                episodeId: ep.id,
-                title: ep.title,
-                level: ep.level,
-                durationSeconds: ep.durationSeconds,
-                listenedAt: Date().addingTimeInterval(-daysAgo * 86400)
-            ))
-            totalListeningSeconds += ep.durationSeconds
-        }
+        // Start with empty history — only real user data
+        listenHistory = []
         saveListenHistory()
     }
 

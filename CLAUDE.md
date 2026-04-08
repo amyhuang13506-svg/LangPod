@@ -256,27 +256,186 @@ iOS App
 - 隐私政策/用户协议改为 Link 跳转
 - 个人资料卡片去掉箭头
 
-### 明日待办（2026-03-28）
+### 2026-03-28 — Pipeline 完善 + 内容生成
 
-**优先级 1 — 内容生成：**
-- [ ] 拿到 MiniMax API key + GPT API key
-- [ ] pipeline/config.py 填入 key，改 generate_audio.py 为 MiniMax
-- [ ] 测试生成 1 集 Easy 内容（脚本+音频+上传）
-- [ ] 批量生成首批内容：每级 10 集
+**Pipeline 调通：**
+- [x] GPT API（api.v3.cm 代理）+ MiniMax API 接入并测试通过
+- [x] 修复 MiniMax 音频解码（hex 编码，非 base64）
+- [x] 逐句生成音频（男女声交替）+ 真实时间戳计算
+- [x] 修复长句触发 MiniMax 限制：自动拆分 >150 字符的句子
+- [x] emotion 标签：GPT 为每句标注情感 → MiniMax 用对应语调
+- [x] 非法 emotion 自动映射 + 失败后 neutral 重试
+- [x] DALL-E 封面生成（新闻摄影风格，URL 模式下载）
+
+**提示词优化：**
+- [x] 三级别详细提示词（初级简单短句 / 中级朋友聊天 / 高级新闻播客）
+- [x] 加入单人播报格式（Host）+ 双人对话混合
+- [x] 禁止政治/军事/宗教等敏感话题
+- [x] 限定 emotion 只能用 5 个合法值
+
+**音色选定：**
+- [x] 英语男声：English_DecentYoungMan
+- [x] 英语女声：English_Upbeat_Woman
+- [x] 中文男声翻译：male-qn-daxuesheng（大学生）
+- [x] 中文女声翻译：presenter_female（主持人女）+ emotion 跟随内容
+
+**UI 更新：**
+- [x] EpisodeThumbnail 组件：支持 AI 封面 / bundle 图片 / 渐变色 fallback
+- [x] 首页/播放页/历史所有列表统一缩略图排版
+- [x] 播放页大封面替换蓝色耳机
+- [x] 往期回顾区域 + 查看全部页面（搜索 + 按日期分组）
+- [x] 锁屏/通知栏媒体控制：封面 + 标题 + 进度 + 播放速度
+- [x] 正在播放卡片全局同步（跨级别显示当前播放内容）
+- [x] ScriptLine 的 start/end 改为 Optional，避免缺失时间戳导致解码失败
+- [x] 产品文档更新（封面缩略图 + 内容展示方案 + 页面清单）
+
+**首批内容生成：**
+- [x] batch_generate.py 批量生成脚本
+- [x] 30 集全部生成（Easy/Medium/Hard 各 10 集）
+- [x] 21 集完好，5 集部分可用，4 集因 MiniMax 限流不可用
+- [x] 代码提交 GitHub（私有仓库，API key 已排除）
+
+### 2026-03-29 — 词汇系统重构 + 记录页改版 + 音频修复
+
+**词汇系统重构：**
+- [x] 分类逻辑从时间衰减改为行为驱动（配对次数+造句次数）
+- [x] 新词=配对0次 / 复习中=配对1-2次 / 已掌握=配对≥3次或造句≥1次
+- [x] 30天不练习自动退回复习中
+- [x] SavedWord 新字段：matchCorrectCount、sentenceCorrectCount
+- [x] WordMatchView/FeynmanChallengeView 改用 recordMatchCorrect/recordSentenceCorrect
+- [x] "新词"颜色从红色改为蓝色
+
+**单词发音功能：**
+- [x] WordSpeaker 服务（AVSpeechSynthesizer，离线可用，美式英语慢速）
+- [x] 词汇本喇叭按钮点击发音
+- [x] 连词成句单词卡片加发音按钮
+- [x] 答对后显示英文句子（带播放）+ 中文翻译
+
+**例句翻译补全：**
+- [x] VocabularyItem/SavedWord 加 exampleZh 字段
+- [x] Pipeline 提示词加 example_zh
+- [x] 批量脚本用 GPT 翻译已有 30 集的 149 个例句
+- [x] VocabularyStore 启动时自动迁移补全旧数据的 exampleZh
+
+**词义配对优化：**
+- [x] 音效开关按钮（@AppStorage 记住选择）
+- [x] 点击英文单词自动播放发音
+- [x] 配对正确/错误震动反馈（UIImpactFeedbackGenerator）
+- [x] 优先抽新词 → 复习中 → 已掌握，每次随机
+
+**连词成句优化：**
+- [x] 优先抽复习中的词，每次随机
+- [x] 完成页庆祝动效（星星弹性放大+彩色粒子散射+双重震动）
+- [x] 每题答对/答错震动反馈
+- [x] 词块去掉标点
+- [x] 命名统一：词义配对 + 连词成句（全局一致）
+
+**记录页改版：**
+- [x] Streak 卡片替代旧三格统计（大火苗+连续天数+状态文案）
+- [x] 三种状态文案：已完成(绿)/还没听(橙)/即将清零(红)
+- [x] 连续5天没听显示降级警告
+- [x] 本周7天进度条替代35天日历（🟢完成/🟡进行中/⚫未来）
+- [x] 统计行改为：总时长/已听集数/已掌握词汇
+- [x] 清掉 mock 历史数据，只显示真实播放记录
+- [x] 播放历史去重（同一集只保留最近一次）
+- [x] "顺序播放"轻量按钮（收藏模式下只播收藏）
+- [x] completeEpisode 改为传入实际播放的 episode，修复历史不更新 bug
+
+**音频问题修复：**
+- [x] 重跑 Easy 3 集（全部修好）
+- [x] Medium/Hard 部分中文音频偏短（MiniMax 限流，需后续分批补）
+- [x] 音频时长显示修复（秒数 < 60 显示"X秒"，≥60 显示"X分X秒"）
+
+**播放流程修复：**
+- [x] 锁屏自动下一集（去掉 asyncAfter，直接在 AVAudioPlayer delegate 链里调用）
+- [x] 遍间延迟去掉（直接播放下一遍，后台不中断）
+- [x] 周精选播放传入队列，跳过按钮正常工作
+- [x] 空队列 fallback 为当前 episode
+
+### 2026-03-30 — Paywall 重构 + 内容生成 + 播放修复
+
+**今日新内容生成（6集）：**
+- [x] Easy 2 集（Our Favorite Foods / Doctor Visit）
+- [x] Medium 2 集（Bubble Tea Craze / Working from Home）
+- [x] Hard 2 集（AI in Education / Renewable Energy）
+- [x] 全部音频完整、封面生成、例句翻译补全
+- [x] 部署到 app，每级现有 12 集
+
+**播放流程修复：**
+- [x] 首页正在播放改为显示最新内容（episodes.last）
+- [x] Toast 进完成页保存词汇不再多跳一集
+- [x] 首页下一集按钮修复（queue 为空时自动初始化）
+- [x] 最后一集下一集循环回第一集
+
+**Paywall 完全重构（多轮迭代）：**
+- [x] 参考 Learna Pro 设计，全屏蓝色渐变背景
+- [x] 耳机图标浮动动效 + Castlingo Pro 深蓝标题
+- [x] 金字塔文案布局（Castlingo Pro / 坚持30天 / 坚持一整年）
+- [x] 功能竖排列表 + 逐行滑入荡漾动效
+- [x] 底部价格行：3天免费试用(绿) · 年付平均¥0.8/天(蓝)
+- [x] 年付/月付切换：选中变"开启免费试用"蓝框，未选中变灰框
+- [x] 试用详情跟随方案变化：今日¥0 + 具体日期后扣费
+- [x] CTA 呼吸光效固定底部
+- [x] 苹果订阅审核合规（条款+恢复购买+隐私链接）
+
+**我的页面优化：**
+- [x] 级别/语言/提醒改为 push 导航子页面（非弹窗）
+- [x] 右侧 > 箭头
+- [x] 级别选择页（带颜色圆点+勾选）
+- [x] 语言选择页（中文可选，日韩西法"即将推出"）
+- [x] 提醒时间页（滚轮选择器+保存按钮）
+
+**成就徽章系统：**
+- [x] 12 个徽章，3列网格
+- [x] 每个徽章独立配色（天蓝/橙/金/紫/绿/玫红/靛蓝/红/金色）
+- [x] 已解锁：渐变色底+金色边框+内圈白线+彩色投影
+- [x] 未解锁：灰色底+虚线边框+🔒
+- [x] 基于真实数据自动解锁（streak/词汇/配对/造句/集数）
+
+### 2026-03-31 — 上架准备 + 品牌改名
+
+**品牌改名 LangPod → Castlingo：**
+- [x] 全局文案替换（Onboarding/Profile/ShareCard/AudioPlayer/DataStore）
+- [x] 用户昵称"英语学习者" → "Explorer"
+- [x] Bundle ID: com.amyhuang.langpod → com.amyhuang.castlingo
+- [x] Display Name: LangPod → Castlingo（Info.plist + pbxproj）
+
+**上架配置：**
+- [x] App Icon 设置（Pencil V6 声波图标，1024x1024）
+- [x] 强制浅色模式（UIUserInterfaceStyle = Light）
+- [x] iPhone Only（TARGETED_DEVICE_FAMILY = 1）
+- [x] PrivacyInfo.xcprivacy 已声明 UserDefaults
+
+**隐私政策 + 用户协议（完整版）：**
+- [x] 隐私政策 14 节（数据收集清单/存储/安全/共享/第三方/Cookie/跨境/用户权利/儿童/订阅/法律）
+- [x] 用户协议 12 节（服务说明/订阅条款/试用/续费/取消/退款/行为规范/知识产权/免责/责任限制/争议）
+- [x] GitHub Pages 托管（仓库已公开）
+- [x] App 内链接指向 GitHub Pages URL
+
+### 明日待办（2026-04-01）
+
+**优先级 1 — 上架阻塞项：**
+- [ ] 等苹果开发者账号
+- [ ] StoreKit 2 接入真实订阅（账号到了立即做）
+- [ ] App Store 截图（5.5寸 + 6.7寸，至少 5 张）
+- [ ] App Store 描述文案（标题/副标题/关键词/描述）
 
 **优先级 2 — 服务器部署：**
-- [ ] 阿里云创建 OSS bucket "langpod"
-- [ ] Nginx 配置 /langpod/api/ 代理到 OSS
-- [ ] 部署 pipeline 到服务器，配置 cron
+- [ ] 阿里云 OSS 创建 bucket + 上传现有内容
+- [ ] Nginx 配置 API 代理
+- [ ] App 数据源从 bundle 切到 API
+- [ ] Pipeline 部署到服务器 + cron 每日自动生成
 
-**优先级 3 — 上架准备：**
-- [ ] App Icon 设计
-- [ ] 隐私政策 + 用户协议网页（放阿里云或 GitHub Pages）
-- [ ] App Store 截图（5 张关键页面）
-- [ ] App Store 描述文案
+**优先级 3 — 内容质量：**
+- [ ] 分批重跑 Hard 级别中文音频偏短的集
+- [ ] GPT 提示词更新（混合单人播报+双人对话+时事新闻）
+- [ ] MiniMax 长句自动拆分优化
 
-**优先级 4 — 后续优化（可延后）：**
+**优先级 4 — 后续迭代：**
+- [ ] Firebase Analytics 埋点（关键用户行为追踪）
 - [ ] iCloud 同步（CloudKit）
-- [ ] StoreKit 2 接入真实订阅
-- [ ] 单词配对/连词成句难度层级
-- [ ] 每日提醒通知
+- [ ] 每日提醒本地通知注册
+- [ ] 连词成句拖拽排序（自定义手势）
+- [ ] 单词配对/连词成句难度层级细化
+- [ ] NewsAPI 接入获取真实每日新闻标题
+- [ ] 多语言翻译（日韩西法）

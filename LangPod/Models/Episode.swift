@@ -20,6 +20,25 @@ struct Episode: Codable, Identifiable {
     var podcastLevel: PodcastLevel? {
         PodcastLevel(rawValue: level)
     }
+
+    var dateDisplay: String {
+        // "2026-04-02" → "4月2日"
+        if let d = DateFormatter.episodeDate.date(from: date) {
+            let f = DateFormatter()
+            f.dateFormat = "M月d日"
+            return f.string(from: d)
+        }
+        return date
+    }
+
+    var durationDisplay: String {
+        if durationSeconds >= 60 {
+            let min = durationSeconds / 60
+            let sec = durationSeconds % 60
+            return sec > 0 ? "\(min)分\(sec)秒" : "\(min)分钟"
+        }
+        return "\(durationSeconds)秒"
+    }
 }
 
 struct EpisodeAudio: Codable {
@@ -52,6 +71,7 @@ struct VocabularyItem: Codable, Identifiable {
     let phonetic: String
     let translationZh: String
     let example: String
+    var exampleZh: String?
     let audio: String
 
     var id: String { word }
@@ -59,5 +79,6 @@ struct VocabularyItem: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case word, phonetic, example, audio
         case translationZh = "translation_zh"
+        case exampleZh = "example_zh"
     }
 }

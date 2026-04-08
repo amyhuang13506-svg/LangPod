@@ -64,6 +64,13 @@ def upload_episode(bucket, json_path: str, level: str) -> bool:
     else:
         print(f"   ⚠️  Chinese audio not found: {zh_local}")
 
+    # Upload cover image
+    cover_local = os.path.join(episode_dir, "cover.jpg")
+    if os.path.exists(cover_local):
+        episode["thumbnail"] = upload_file(bucket, cover_local, f"{oss_prefix}/cover.jpg")
+    else:
+        print(f"   ⚠️  Cover not found: {cover_local}")
+
     # Upload episode JSON
     episode_json_key = f"{oss_prefix}/episode.json"
     episode_json_bytes = json.dumps(episode, ensure_ascii=False, indent=2).encode("utf-8")
@@ -79,27 +86,32 @@ def upload_episode(bucket, json_path: str, level: str) -> bool:
 
 
 def update_episode_list(bucket, level: str):
-    """Generate and upload the episode list index for a level."""
-    level_dir = os.path.join(OUTPUT_DIR, level)
-    json_files = sorted(Path(level_dir).glob("*.json"))
-
+    """Generate and upload the episode list index for a level.
+    Reads all episode.json files from OSS to build a complete index."""
+    prefix = f"episodes/{level}/"
     episodes = []
-    for json_file in json_files:
-        with open(json_file, "r", encoding="utf-8") as f:
-            ep = json.load(f)
-        # List only contains metadata, not full script
-        episodes.append({
-            "id": ep["id"],
-            "title": ep["title"],
-            "level": ep["level"],
-            "date": ep["date"],
-            "duration_seconds": ep["duration_seconds"],
-            "audio": ep["audio"],
-            "vocabulary_count": len(ep.get("vocabulary", [])),
-        })
 
+    for obj in oss2.ObjectIterator(bucket, prefix=prefix):
+        if obj.key.endswith("/episode.json"):
+            try:
+                data = bucket.get_object(obj.key).read()
+                ep = json.loads(data)
+                episodes.append({
+                    "id": ep["id"],
+                    "title": ep["title"],
+                    "level": ep["level"],
+                    "date": ep["date"],
+                    "duration_seconds": ep["duration_seconds"],
+                    "audio": ep["audio"],
+                    "thumbnail": ep.get("thumbnail", ""),
+                    "vocabulary_count": len(ep.get("vocabulary", [])),
+                })
+            except Exception as e:
+                print(f"   ⚠️  Error reading {obj.key}: {e}")
+
+    episodes.sort(key=lambda x: x["date"])
     index = {"level": level, "episodes": episodes, "total": len(episodes)}
-    index_key = f"episodes/{level}/index.json"
+    index_key = f"{prefix}index.json"
     bucket.put_object(index_key, json.dumps(index, ensure_ascii=False, indent=2).encode("utf-8"))
     print(f"\n📋 Updated index: {index_key} ({len(episodes)} episodes)")
 

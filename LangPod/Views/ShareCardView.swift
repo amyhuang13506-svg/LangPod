@@ -9,7 +9,7 @@ struct ShareCardView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 Spacer()
@@ -28,7 +28,7 @@ struct ShareCardView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
-                            .background(Color(hex: "3B82F6"), in: RoundedRectangle(cornerRadius: 14))
+                            .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
                     }
 
                     Button {
@@ -36,13 +36,13 @@ struct ShareCardView: View {
                     } label: {
                         Text("分享到朋友圈")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Color(hex: "1E293B"))
+                            .foregroundStyle(Color.textPrimary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
                             .background(.white, in: RoundedRectangle(cornerRadius: 14))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                                    .stroke(Color.border, lineWidth: 1)
                             )
                     }
                 }
@@ -55,7 +55,7 @@ struct ShareCardView: View {
                 Button { dismiss() } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(Color(hex: "94A3B8"))
+                        .foregroundStyle(Color.textTertiary)
                         .frame(width: 44, height: 44)
                 }
                 .padding(.bottom, 20)
@@ -72,7 +72,7 @@ struct ShareCardView: View {
                 // Quote
                 Text("\"每天 6 分钟\n不知不觉就坚持了 \(dataStore.streakDays) 天\"")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
 
@@ -82,7 +82,7 @@ struct ShareCardView: View {
                         .font(.system(size: 28))
                     Text("\(dataStore.streakDays)天")
                         .font(.system(size: 36, weight: .bold))
-                        .foregroundStyle(Color(hex: "1E293B"))
+                        .foregroundStyle(Color.textPrimary)
                         .tracking(-1)
                 }
 
@@ -98,23 +98,23 @@ struct ShareCardView: View {
             .frame(maxWidth: .infinity)
             .background(
                 LinearGradient(
-                    colors: [Color(hex: "DBEAFE"), .white],
+                    colors: [Color.primaryLighter, .white],
                     startPoint: .top,
                     endPoint: .bottom
                 )
             )
 
             // Brand footer
-            Text("LangPod · 听播客，学英语")
+            Text("Castlingo · 听播客，学英语")
                 .font(.system(size: 11))
-                .foregroundStyle(Color(hex: "CBD5E1"))
+                .foregroundStyle(Color.textQuaternary)
                 .padding(.vertical, 12)
         }
         .background(.white)
         .clipShape(RoundedRectangle(cornerRadius: 24))
         .overlay(
             RoundedRectangle(cornerRadius: 24)
-                .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                .stroke(Color.border, lineWidth: 1)
         )
     }
 

@@ -67,15 +67,15 @@ struct EpisodeThumbnail: View {
     private var gradientColors: [Color] {
         let title = episode.title.lowercased()
         if title.contains("coffee") || title.contains("food") || title.contains("milk") || title.contains("order") {
-            return [Color(hex: "F59E0B"), Color(hex: "D97706")]
+            return [Color.warning, Color(hex: "D97706")]
         } else if title.contains("ai") || title.contains("tech") || title.contains("regulation") {
             return [Color(hex: "6366F1"), Color(hex: "4F46E5")]
         } else if title.contains("travel") || title.contains("weather") || title.contains("nature") {
-            return [Color(hex: "22C55E"), Color(hex: "16A34A")]
+            return [Color.success, Color(hex: "16A34A")]
         } else if title.contains("health") || title.contains("sport") || title.contains("fitness") {
-            return [Color(hex: "EF4444"), Color(hex: "DC2626")]
+            return [Color.danger, Color(hex: "DC2626")]
         } else if title.contains("work") || title.contains("business") || title.contains("economy") {
-            return [Color(hex: "3B82F6"), Color(hex: "2563EB")]
+            return [Color.appPrimary, Color(hex: "2563EB")]
         } else if title.contains("store") || title.contains("shop") || title.contains("buy") {
             return [Color(hex: "EC4899"), Color(hex: "DB2777")]
         } else if title.contains("housing") || title.contains("home") || title.contains("city") {
@@ -84,9 +84,9 @@ struct EpisodeThumbnail: View {
             // Default based on level
             switch episode.level {
             case "easy": return [Color(hex: "34D399"), Color(hex: "10B981")]
-            case "medium": return [Color(hex: "60A5FA"), Color(hex: "3B82F6")]
-            case "hard": return [Color(hex: "F97316"), Color(hex: "EA580C")]
-            default: return [Color(hex: "94A3B8"), Color(hex: "64748B")]
+            case "medium": return [Color(hex: "60A5FA"), Color.appPrimary]
+            case "hard": return [Color.hardOrange, Color(hex: "EA580C")]
+            default: return [Color.textTertiary, Color.textSecondary]
             }
         }
     }

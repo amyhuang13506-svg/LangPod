@@ -4,10 +4,23 @@ Step 1: Generate dialogue script + translation + vocabulary using GPT API.
 
 import json
 import os
+import random
 import sys
 from datetime import datetime
 
 import requests
+
+# Name pairs: (male, female)
+NAME_PAIRS = [
+    ("Alex", "Lisa"),
+    ("Ryan", "Emma"),
+    ("James", "Sophie"),
+    ("Daniel", "Olivia"),
+    ("Michael", "Sarah"),
+    ("David", "Rachel"),
+    ("Kevin", "Amy"),
+    ("Tom", "Nina"),
+]
 
 from config import (
     GPT_API_ENDPOINT,
@@ -25,6 +38,9 @@ def generate_episode_script(level, episode_num, topic=None):
     date_str = datetime.now().strftime("%Y-%m-%d")
     ep_id = "ep-%s-%s-%03d" % (date_str.replace("-", ""), level, episode_num)
 
+    # Pick random name pair for this episode
+    male_name, female_name = random.choice(NAME_PAIRS)
+
     topic_line = ""
     if topic:
         topic_line = "TODAY'S TOPIC: %s\nBuild the entire conversation around this topic.\n\n" % topic
@@ -36,6 +52,8 @@ def generate_episode_script(level, episode_num, topic=None):
 
     prompt = """%s
 
+SPEAKERS: Use "%s" (male) and "%s" (female) as the speaker names. For solo format, use "Host".
+
 %sGenerate the dialogue as valid JSON ONLY (no markdown, no explanation):
 {
   "id": "%s",
@@ -45,7 +63,7 @@ def generate_episode_script(level, episode_num, topic=None):
   "duration_seconds": 0,
   "script": [
     {
-      "speaker": "Alex",
+      "speaker": "%s",
       "text": "English dialogue line",
       "translation_zh": "自然中文翻译",
       "emotion": "neutral"
@@ -56,7 +74,8 @@ def generate_episode_script(level, episode_num, topic=None):
       "word": "target_word",
       "phonetic": "/fəˈnetɪk/",
       "translation_zh": "中文释义",
-      "example": "Example sentence using the word"
+      "example": "Example sentence using the word",
+      "example_zh": "例句的中文翻译"
     }
   ]
 }
@@ -74,10 +93,13 @@ IMPORTANT: For each script line, set "emotion" to EXACTLY ONE of these 5 values 
 ONLY use these 5 exact strings. Do NOT invent other emotion values like "curious" or "excited".
 """ % (
         level_prompt,
+        male_name,
+        female_name,
         topic_line,
         ep_id,
         level,
         date_str,
+        male_name,
         level_config["vocab_count"],
     )
 

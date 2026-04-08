@@ -25,5 +25,9 @@
 	<array>
 		<string>audio</string>
 	</array>
+	<key>CFBundleDisplayName</key>
+	<string>Castlingo</string>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 </dict>
 </plist>

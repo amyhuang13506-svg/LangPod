@@ -1,271 +1,1066 @@
 [
   {
-    "id": "ep-2026-0325-easy-001",
-    "title": "AI Fitness App",
+    "id": "ep-20260319-easy-001",
+    "title": "Ordering Coffee at the Café",
     "level": "easy",
-    "date": "2026-03-29",
+    "date": "2026-03-19",
+    "duration_seconds": 18,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hi Lisa, can I order a coffee?",
+        "translation_zh": "嗨，丽莎，我可以点咖啡吗？",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 3.25
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Sure, Alex. What size do you want?",
+        "translation_zh": "当然，亚历克斯。你要什么大小的？",
+        "emotion": "neutral",
+        "start": 4.05,
+        "end": 7.51
+      },
+      {
+        "speaker": "Alex",
+        "text": "I want a medium coffee, please.",
+        "translation_zh": "我想要一个中杯咖啡，谢谢。",
+        "emotion": "neutral",
+        "start": 8.31,
+        "end": 10.7
+      },
+      {
+        "speaker": "Lisa",
+        "text": "OK. Do you want milk or sugar?",
+        "translation_zh": "好的。你要牛奶或糖吗？",
+        "emotion": "neutral",
+        "start": 11.5,
+        "end": 14.38
+      },
+      {
+        "speaker": "Alex",
+        "text": "Just milk, please. Thanks, Lisa.",
+        "translation_zh": "只要牛奶，谢谢，丽莎。",
+        "emotion": "happy",
+        "start": 15.18,
+        "end": 18.37
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "order",
+        "phonetic": "/ˈɔːrdər/",
+        "translation_zh": "点餐",
+        "example": "Can I order a coffee, please?",
+        "audio": "",
+        "example_zh": "请问我可以点一杯咖啡吗？"
+      },
+      {
+        "word": "medium",
+        "phonetic": "/ˈmiːdiəm/",
+        "translation_zh": "中杯",
+        "example": "I want a medium coffee, please.",
+        "audio": "",
+        "example_zh": "请给我一杯中杯咖啡。"
+      },
+      {
+        "word": "milk",
+        "phonetic": "/mɪlk/",
+        "translation_zh": "牛奶",
+        "example": "Do you want milk or sugar?",
+        "audio": "",
+        "example_zh": "你要牛奶还是糖？"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260319-easy-001_en",
+      "translation_zh": "bundle://ep-20260319-easy-001_zh"
+    },
+    "thumbnail": "bundle://ep-20260319-easy-001_cover"
+  },
+  {
+    "id": "ep-20260320-easy-002",
+    "title": "Directions to the Train Station",
+    "level": "easy",
+    "date": "2026-03-20",
+    "duration_seconds": 22,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hi Lisa, can you help me?",
+        "translation_zh": "嗨，丽莎，你能帮我吗？",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 2.45
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Sure, what do you need, Alex?",
+        "translation_zh": "好的，你需要什么，亚历克斯？",
+        "emotion": "happy",
+        "start": 3.25,
+        "end": 5.7
+      },
+      {
+        "speaker": "Alex",
+        "text": "I need directions to the train station.",
+        "translation_zh": "我需要去火车站的路线。",
+        "emotion": "neutral",
+        "start": 6.5,
+        "end": 9.11
+      },
+      {
+        "speaker": "Lisa",
+        "text": "OK, go straight and turn right at the corner.",
+        "translation_zh": "好的，直走然后在拐角处右转。",
+        "emotion": "neutral",
+        "start": 9.91,
+        "end": 13.11
+      },
+      {
+        "speaker": "Alex",
+        "text": "Thanks, Lisa. I hope I find it easily.",
+        "translation_zh": "谢谢，丽莎。我希望能轻松找到。",
+        "emotion": "happy",
+        "start": 13.9,
+        "end": 17.79
+      },
+      {
+        "speaker": "Lisa",
+        "text": "You will, Alex. Have a great day!",
+        "translation_zh": "你会的，亚历克斯。祝你今天愉快！",
+        "emotion": "happy",
+        "start": 18.59,
+        "end": 22.0
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "help",
+        "phonetic": "/hɛlp/",
+        "translation_zh": "帮助",
+        "example": "Can you help me with this?",
+        "audio": "",
+        "example_zh": "你能帮我一下吗？"
+      },
+      {
+        "word": "directions",
+        "phonetic": "/dəˈrɛkʃənz/",
+        "translation_zh": "方向",
+        "example": "She gave me directions to her house.",
+        "audio": "",
+        "example_zh": "她给了我去她家的路线。"
+      },
+      {
+        "word": "train",
+        "phonetic": "/treɪn/",
+        "translation_zh": "火车",
+        "example": "I took the train to work.",
+        "audio": "",
+        "example_zh": "我乘火车去上班。"
+      },
+      {
+        "word": "station",
+        "phonetic": "/ˈsteɪʃən/",
+        "translation_zh": "车站",
+        "example": "The bus station is nearby.",
+        "audio": "",
+        "example_zh": "公交车站就在附近。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260320-easy-002_en",
+      "translation_zh": "bundle://ep-20260320-easy-002_zh"
+    },
+    "thumbnail": "bundle://ep-20260320-easy-002_cover"
+  },
+  {
+    "id": "ep-20260321-easy-003",
+    "title": "Fruit at the Market",
+    "level": "easy",
+    "date": "2026-03-21",
+    "duration_seconds": 22,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hi Lisa! I am at the market.",
+        "translation_zh": "嗨丽莎！我在市场上。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 2.82
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Great! Are you buying fruit today?",
+        "translation_zh": "太好了！你今天买水果吗？",
+        "emotion": "happy",
+        "start": 3.62,
+        "end": 6.77
+      },
+      {
+        "speaker": "Alex",
+        "text": "Yes, I need some apples and oranges.",
+        "translation_zh": "是的，我需要一些苹果和橙子。",
+        "emotion": "neutral",
+        "start": 7.57,
+        "end": 10.71
+      },
+      {
+        "speaker": "Lisa",
+        "text": "OK, apples are very fresh now.",
+        "translation_zh": "好的，现在苹果非常新鲜。",
+        "emotion": "happy",
+        "start": 11.51,
+        "end": 14.6
+      },
+      {
+        "speaker": "Alex",
+        "text": "Thanks! I will get a few kilos.",
+        "translation_zh": "谢谢！我会买几公斤。",
+        "emotion": "neutral",
+        "start": 15.4,
+        "end": 18.8
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Sure, enjoy your shopping, Alex!",
+        "translation_zh": "当然，亚历克斯，购物愉快！",
+        "emotion": "happy",
+        "start": 19.6,
+        "end": 22.48
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "market",
+        "phonetic": "/ˈmɑːrkɪt/",
+        "translation_zh": "市场",
+        "example": "We buy food at the market.",
+        "audio": "",
+        "example_zh": "我们在市场买食物。"
+      },
+      {
+        "word": "fruit",
+        "phonetic": "/fruːt/",
+        "translation_zh": "水果",
+        "example": "She likes eating fresh fruit.",
+        "audio": "",
+        "example_zh": "她喜欢吃新鲜水果。"
+      },
+      {
+        "word": "apple",
+        "phonetic": "/ˈæpl/",
+        "translation_zh": "苹果",
+        "example": "I eat an apple every day.",
+        "audio": "",
+        "example_zh": "我每天吃一个苹果。"
+      },
+      {
+        "word": "orange",
+        "phonetic": "/ˈɔːrɪndʒ/",
+        "translation_zh": "橙子",
+        "example": "Oranges are full of vitamin C.",
+        "audio": "",
+        "example_zh": "橙子富含维生素C。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260321-easy-003_en",
+      "translation_zh": "bundle://ep-20260321-easy-003_zh"
+    },
+    "thumbnail": "bundle://ep-20260321-easy-003_cover"
+  },
+  {
+    "id": "ep-20260322-easy-004",
+    "title": "Meeting a Friend",
+    "level": "easy",
+    "date": "2026-03-22",
+    "duration_seconds": 16,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hi Lisa, do you want to meet tomorrow?",
+        "translation_zh": "嗨，莉萨，你想明天见面吗？",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 2.98
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Sure, what time is good for you?",
+        "translation_zh": "好啊，几点合适？",
+        "emotion": "neutral",
+        "start": 3.78,
+        "end": 6.61
+      },
+      {
+        "speaker": "Alex",
+        "text": "Around 3 PM works for me.",
+        "translation_zh": "下午三点左右对我来说合适。",
+        "emotion": "neutral",
+        "start": 7.41,
+        "end": 10.06
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Great, let's meet at the park.",
+        "translation_zh": "好的，我们在公园见面。",
+        "emotion": "happy",
+        "start": 10.86,
+        "end": 13.26
+      },
+      {
+        "speaker": "Alex",
+        "text": "OK, see you then!",
+        "translation_zh": "好的，到时见！",
+        "emotion": "happy",
+        "start": 14.05,
+        "end": 16.67
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "meet",
+        "phonetic": "/miːt/",
+        "translation_zh": "见面",
+        "example": "We will meet at the park.",
+        "audio": "",
+        "example_zh": "我们将在公园见面。"
+      },
+      {
+        "word": "tomorrow",
+        "phonetic": "/təˈmɔːroʊ/",
+        "translation_zh": "明天",
+        "example": "Tomorrow is a good day to meet.",
+        "audio": "",
+        "example_zh": "明天是见面的好日子。"
+      },
+      {
+        "word": "park",
+        "phonetic": "/pɑːrk/",
+        "translation_zh": "公园",
+        "example": "Let's meet at the park.",
+        "audio": "",
+        "example_zh": "我们在公园见吧。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260322-easy-004_en",
+      "translation_zh": "bundle://ep-20260322-easy-004_zh"
+    },
+    "thumbnail": "bundle://ep-20260322-easy-004_cover"
+  },
+  {
+    "id": "ep-20260323-easy-005",
+    "title": "Checking into a Hotel",
+    "level": "easy",
+    "date": "2026-03-23",
+    "duration_seconds": 25,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hello! I have a room reservation.",
+        "translation_zh": "你好！我有一个房间预订。",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 2.98
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Welcome! What is your name, please?",
+        "translation_zh": "欢迎！请问您的名字是什么？",
+        "emotion": "neutral",
+        "start": 3.78,
+        "end": 6.13
+      },
+      {
+        "speaker": "Alex",
+        "text": "My name is Alex Brown.",
+        "translation_zh": "我的名字是亚历克斯·布朗。",
+        "emotion": "neutral",
+        "start": 6.93,
+        "end": 8.68
+      },
+      {
+        "speaker": "Lisa",
+        "text": "OK, I found your booking. Here is your key.",
+        "translation_zh": "好的，我找到了您的预订。这是您的钥匙。",
+        "emotion": "happy",
+        "start": 9.48,
+        "end": 13.15
+      },
+      {
+        "speaker": "Alex",
+        "text": "Thank you! What time is breakfast?",
+        "translation_zh": "谢谢！请问早餐时间是几点？",
+        "emotion": "neutral",
+        "start": 13.95,
+        "end": 17.25
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Breakfast is from 7 to 10 AM.",
+        "translation_zh": "早餐时间是早上七点到十点。",
+        "emotion": "neutral",
+        "start": 18.05,
+        "end": 21.03
+      },
+      {
+        "speaker": "Alex",
+        "text": "Great, thanks! Have a nice day!",
+        "translation_zh": "太好了，谢谢！祝您今天愉快！",
+        "emotion": "happy",
+        "start": 21.83,
+        "end": 25.08
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "reservation",
+        "phonetic": "/ˌrɛzərˈveɪʃən/",
+        "translation_zh": "预订",
+        "example": "I have a reservation at the hotel.",
+        "audio": "",
+        "example_zh": "我在酒店有一个预订。"
+      },
+      {
+        "word": "breakfast",
+        "phonetic": "/ˈbrɛkfəst/",
+        "translation_zh": "早餐",
+        "example": "Breakfast is served from 7 AM.",
+        "audio": "",
+        "example_zh": "早餐从早上七点开始供应。"
+      },
+      {
+        "word": "booking",
+        "phonetic": "/ˈbʊkɪŋ/",
+        "translation_zh": "预订",
+        "example": "Your booking is confirmed.",
+        "audio": "",
+        "example_zh": "您的预订已确认。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260323-easy-005_en",
+      "translation_zh": "bundle://ep-20260323-easy-005_zh"
+    },
+    "thumbnail": "bundle://ep-20260323-easy-005_cover"
+  },
+  {
+    "id": "ep-20260324-easy-006",
+    "title": "Ordering Food at a Restaurant",
+    "level": "easy",
+    "date": "2026-03-24",
     "duration_seconds": 23,
     "script": [
       {
         "speaker": "Alex",
-        "text": "Hi Lisa! Have you heard about the new app?",
-        "translation_zh": "嗨 Lisa！你听说过这个新应用吗？",
+        "text": "Hi Lisa! Can we order food now?",
+        "translation_zh": "嗨，丽莎！我们可以现在点餐吗？",
         "emotion": "neutral",
         "start": 0.0,
-        "end": 3.67
+        "end": 2.88
       },
       {
         "speaker": "Lisa",
-        "text": "Yes, it is very popular now.",
-        "translation_zh": "是的，它现在非常受欢迎。",
-        "emotion": "happy",
-        "start": 4.47,
-        "end": 7.62
-      },
-      {
-        "speaker": "Alex",
-        "text": "It helps people exercise with AI.",
-        "translation_zh": "它帮助人们通过人工智能锻炼。",
+        "text": "Sure, Alex. What do you want to eat?",
+        "translation_zh": "好的，亚历克斯。你想吃什么？",
         "emotion": "neutral",
-        "start": 8.41,
-        "end": 11.34
-      },
-      {
-        "speaker": "Lisa",
-        "text": "That's great! I want to try it.",
-        "translation_zh": "太好了！我想试试。",
-        "emotion": "happy",
-        "start": 12.14,
-        "end": 15.29
+        "start": 3.68,
+        "end": 7.14
       },
       {
         "speaker": "Alex",
-        "text": "OK, let's download it together later.",
-        "translation_zh": "好的，我们稍后一起下载。",
+        "text": "I want a pizza. Is it good here?",
+        "translation_zh": "我想要一个披萨。这里的好吗？",
         "emotion": "happy",
-        "start": 16.09,
-        "end": 19.65
+        "start": 7.94,
+        "end": 11.61
       },
       {
         "speaker": "Lisa",
-        "text": "Sure! Thanks for telling me.",
-        "translation_zh": "当然！谢谢你告诉我。",
+        "text": "Yes, the pizza is very good here.",
+        "translation_zh": "是的，这里的披萨很好。",
         "emotion": "happy",
-        "start": 20.45,
+        "start": 12.41,
+        "end": 15.66
+      },
+      {
+        "speaker": "Alex",
+        "text": "Great! Let's order two pizzas, please.",
+        "translation_zh": "太好了！请点两个披萨。",
+        "emotion": "happy",
+        "start": 16.46,
+        "end": 20.51
+      },
+      {
+        "speaker": "Lisa",
+        "text": "OK, I will tell the waiter now.",
+        "translation_zh": "好的，我现在告诉服务员。",
+        "emotion": "neutral",
+        "start": 21.31,
+        "end": 23.6
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "order",
+        "phonetic": "/ˈɔːrdər/",
+        "translation_zh": "点餐",
+        "example": "I want to order some food.",
+        "audio": "",
+        "example_zh": "我想点一些食物。"
+      },
+      {
+        "word": "pizza",
+        "phonetic": "/ˈpiːtsə/",
+        "translation_zh": "披萨",
+        "example": "She ordered a large pizza.",
+        "audio": "",
+        "example_zh": "她点了一份大披萨。"
+      },
+      {
+        "word": "waiter",
+        "phonetic": "/ˈweɪtər/",
+        "translation_zh": "服务员",
+        "example": "The waiter brings our food.",
+        "audio": "",
+        "example_zh": "服务员把我们的食物端上来了。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260324-easy-006_en",
+      "translation_zh": "bundle://ep-20260324-easy-006_zh"
+    },
+    "thumbnail": "bundle://ep-20260324-easy-006_cover"
+  },
+  {
+    "id": "ep-20260325-easy-007",
+    "title": "Weather Talk",
+    "level": "easy",
+    "date": "2026-03-25",
+    "duration_seconds": 21,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hi Lisa, how is the weather today?",
+        "translation_zh": "嗨 Lisa，今天的天气怎么样？",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 2.98
+      },
+      {
+        "speaker": "Lisa",
+        "text": "It is sunny and warm outside.",
+        "translation_zh": "外面阳光明媚，天气温暖。",
+        "emotion": "happy",
+        "start": 3.78,
+        "end": 6.87
+      },
+      {
+        "speaker": "Alex",
+        "text": "Great! I love sunny days.",
+        "translation_zh": "太好了！我喜欢阳光明媚的日子。",
+        "emotion": "happy",
+        "start": 7.67,
+        "end": 11.19
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Tomorrow may be cloudy and cool.",
+        "translation_zh": "明天可能会多云和凉爽。",
+        "emotion": "neutral",
+        "start": 11.99,
+        "end": 14.22
+      },
+      {
+        "speaker": "Alex",
+        "text": "OK, I will take a jacket.",
+        "translation_zh": "好的，我会带一件夹克。",
+        "emotion": "neutral",
+        "start": 15.02,
+        "end": 18.37
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Sounds like a good idea.",
+        "translation_zh": "听起来是个好主意。",
+        "emotion": "happy",
+        "start": 19.17,
+        "end": 21.3
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "sunny",
+        "phonetic": "/ˈsʌni/",
+        "translation_zh": "阳光明媚",
+        "example": "It is sunny and warm outside.",
+        "audio": "",
+        "example_zh": "外面阳光明媚，天气温暖。"
+      },
+      {
+        "word": "warm",
+        "phonetic": "/wɔːrm/",
+        "translation_zh": "温暖",
+        "example": "The weather is sunny and warm.",
+        "audio": "",
+        "example_zh": "天气阳光明媚，温暖宜人。"
+      },
+      {
+        "word": "cloudy",
+        "phonetic": "/ˈklaʊdi/",
+        "translation_zh": "多云",
+        "example": "Tomorrow may be cloudy and cool.",
+        "audio": "",
+        "example_zh": "明天可能会多云，天气凉爽。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260325-easy-007_en",
+      "translation_zh": "bundle://ep-20260325-easy-007_zh"
+    },
+    "thumbnail": "bundle://ep-20260325-easy-007_cover"
+  },
+  {
+    "id": "ep-20260326-easy-008",
+    "title": "Meeting the New Neighbor",
+    "level": "easy",
+    "date": "2026-03-26",
+    "duration_seconds": 19,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hi, I am Alex. I live next door.",
+        "translation_zh": "嗨，我是Alex。我住隔壁。",
+        "emotion": "happy",
+        "start": 0.0,
+        "end": 4.74
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Hello Alex! Nice to meet you.",
+        "translation_zh": "你好Alex！很高兴认识你。",
+        "emotion": "happy",
+        "start": 5.54,
+        "end": 8.89
+      },
+      {
+        "speaker": "Alex",
+        "text": "Do you need any help with moving?",
+        "translation_zh": "你需要帮忙搬东西吗？",
+        "emotion": "neutral",
+        "start": 9.69,
+        "end": 11.77
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Thanks! I would love some help.",
+        "translation_zh": "谢谢！我很需要一些帮助。",
+        "emotion": "happy",
+        "start": 12.57,
+        "end": 15.6
+      },
+      {
+        "speaker": "Alex",
+        "text": "OK, I will come over soon.",
+        "translation_zh": "好的，我马上过来。",
+        "emotion": "neutral",
+        "start": 16.4,
+        "end": 19.43
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "neighbor",
+        "phonetic": "/ˈneɪbər/",
+        "translation_zh": "邻居",
+        "example": "My neighbor is very friendly.",
+        "audio": "",
+        "example_zh": "我的邻居非常友好。"
+      },
+      {
+        "word": "door",
+        "phonetic": "/dɔːr/",
+        "translation_zh": "门",
+        "example": "Please close the door when you leave.",
+        "audio": "",
+        "example_zh": "请在离开时关上门。"
+      },
+      {
+        "word": "help",
+        "phonetic": "/hɛlp/",
+        "translation_zh": "帮助",
+        "example": "Can you help me with my homework?",
+        "audio": "",
+        "example_zh": "你能帮我做作业吗？"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260326-easy-008_en",
+      "translation_zh": "bundle://ep-20260326-easy-008_zh"
+    },
+    "thumbnail": "bundle://ep-20260326-easy-008_cover"
+  },
+  {
+    "id": "ep-20260327-easy-009",
+    "title": "Buying a Train Ticket",
+    "level": "easy",
+    "date": "2026-03-27",
+    "duration_seconds": 21,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hi Lisa, can you help me buy a train ticket?",
+        "translation_zh": "嗨 Lisa，你能帮我买火车票吗？",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 3.56
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Sure, Alex. Where do you want to go?",
+        "translation_zh": "当然可以，Alex。你想去哪儿？",
+        "emotion": "neutral",
+        "start": 4.37,
+        "end": 6.98
+      },
+      {
+        "speaker": "Alex",
+        "text": "I want to go to London tomorrow.",
+        "translation_zh": "我明天想去伦敦。",
+        "emotion": "neutral",
+        "start": 7.78,
+        "end": 10.01
+      },
+      {
+        "speaker": "Lisa",
+        "text": "OK, let me check the train times.",
+        "translation_zh": "好的，我来查一下火车时间。",
+        "emotion": "neutral",
+        "start": 10.81,
+        "end": 13.79
+      },
+      {
+        "speaker": "Lisa",
+        "text": "There is a train at 9 AM.",
+        "translation_zh": "有一班火车是早上9点。",
+        "emotion": "neutral",
+        "start": 14.59,
+        "end": 16.45
+      },
+      {
+        "speaker": "Alex",
+        "text": "Great, I will take that one. Thanks!",
+        "translation_zh": "太好了，我就坐那班车。谢谢！",
+        "emotion": "happy",
+        "start": 17.25,
+        "end": 21.14
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "ticket",
+        "phonetic": "/ˈtɪkɪt/",
+        "translation_zh": "票",
+        "example": "I buy a train ticket.",
+        "audio": "",
+        "example_zh": "我买了一张火车票。"
+      },
+      {
+        "word": "train",
+        "phonetic": "/treɪn/",
+        "translation_zh": "火车",
+        "example": "The train is fast.",
+        "audio": "",
+        "example_zh": "火车很快。"
+      },
+      {
+        "word": "times",
+        "phonetic": "/taɪmz/",
+        "translation_zh": "时间",
+        "example": "Check the train times.",
+        "audio": "",
+        "example_zh": "查看火车时刻表。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260327-easy-009_en",
+      "translation_zh": "bundle://ep-20260327-easy-009_zh"
+    },
+    "thumbnail": "bundle://ep-20260327-easy-009_cover"
+  },
+  {
+    "id": "ep-20260328-easy-010",
+    "title": "Shopping for New Clothes",
+    "level": "easy",
+    "date": "2026-03-28",
+    "duration_seconds": 23,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hi Lisa! Do you want to shop today?",
+        "translation_zh": "嗨丽莎！你今天想去购物吗？",
+        "emotion": "happy",
+        "start": 0.0,
+        "end": 3.46
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Sure, I need some new clothes.",
+        "translation_zh": "好的，我需要一些新衣服。",
+        "emotion": "neutral",
+        "start": 4.26,
+        "end": 6.81
+      },
+      {
+        "speaker": "Alex",
+        "text": "Great! Do you like shirts or dresses?",
+        "translation_zh": "好极了！你喜欢衬衫还是裙子？",
+        "emotion": "happy",
+        "start": 7.61,
+        "end": 11.5
+      },
+      {
+        "speaker": "Lisa",
+        "text": "I like both, but I need a dress.",
+        "translation_zh": "我两种都喜欢，但我需要一件裙子。",
+        "emotion": "neutral",
+        "start": 12.3,
+        "end": 15.07
+      },
+      {
+        "speaker": "Alex",
+        "text": "OK, let's find a nice blue dress.",
+        "translation_zh": "好的，我们找一件漂亮的蓝色裙子吧。",
+        "emotion": "happy",
+        "start": 15.87,
+        "end": 19.8
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Thanks, I hope we find one soon.",
+        "translation_zh": "谢谢，希望我们能很快找到。",
+        "emotion": "happy",
+        "start": 20.6,
+        "end": 23.36
+      }
+    ],
+    "vocabulary": [
+      {
+        "word": "shop",
+        "phonetic": "/ʃɒp/",
+        "translation_zh": "购物",
+        "example": "I like to shop on weekends.",
+        "audio": "",
+        "example_zh": "我喜欢在周末购物。"
+      },
+      {
+        "word": "clothes",
+        "phonetic": "/kloʊðz/",
+        "translation_zh": "衣服",
+        "example": "She buys new clothes every month.",
+        "audio": "",
+        "example_zh": "她每个月都买新衣服。"
+      },
+      {
+        "word": "dress",
+        "phonetic": "/drɛs/",
+        "translation_zh": "裙子",
+        "example": "This dress is very beautiful.",
+        "audio": "",
+        "example_zh": "这件裙子非常漂亮。"
+      },
+      {
+        "word": "blue",
+        "phonetic": "/bluː/",
+        "translation_zh": "蓝色",
+        "example": "The sky is blue today.",
+        "audio": "",
+        "example_zh": "今天的天空是蓝色的。"
+      }
+    ],
+    "audio": {
+      "english": "bundle://ep-20260328-easy-010_en",
+      "translation_zh": "bundle://ep-20260328-easy-010_zh"
+    },
+    "thumbnail": "bundle://ep-20260328-easy-010_cover"
+  },
+  {
+    "id": "ep-20260330-easy-001",
+    "title": "Our Favorite Foods",
+    "level": "easy",
+    "date": "2026-03-30",
+    "duration_seconds": 23,
+    "script": [
+      {
+        "speaker": "Alex",
+        "text": "Hi Lisa, what is your favorite food?",
+        "translation_zh": "嗨，丽莎，你最喜欢的食物是什么？",
+        "emotion": "neutral",
+        "start": 0.0,
+        "end": 3.46
+      },
+      {
+        "speaker": "Lisa",
+        "text": "I love pizza. It is very tasty.",
+        "translation_zh": "我喜欢披萨。它非常美味。",
+        "emotion": "happy",
+        "start": 4.26,
+        "end": 7.72
+      },
+      {
+        "speaker": "Alex",
+        "text": "I also like pizza. Do you make it?",
+        "translation_zh": "我也喜欢披萨。你会做吗？",
+        "emotion": "neutral",
+        "start": 8.52,
+        "end": 11.82
+      },
+      {
+        "speaker": "Lisa",
+        "text": "No, I buy it from a shop.",
+        "translation_zh": "不，我从商店买。",
+        "emotion": "neutral",
+        "start": 12.62,
+        "end": 14.7
+      },
+      {
+        "speaker": "Alex",
+        "text": "OK, I sometimes make it at home.",
+        "translation_zh": "好的，我有时在家做。",
+        "emotion": "happy",
+        "start": 15.49,
+        "end": 19.43
+      },
+      {
+        "speaker": "Lisa",
+        "text": "Great! I want to try your pizza.",
+        "translation_zh": "太好了！我想尝尝你的披萨。",
+        "emotion": "happy",
+        "start": 20.23,
         "end": 23.21
       }
     ],
     "vocabulary": [
       {
-        "word": "popular",
-        "phonetic": "/ˈpɒpjʊlər/",
-        "translation_zh": "受欢迎的",
-        "example": "The app is very popular now.",
+        "word": "favorite",
+        "phonetic": "/ˈfeɪvərɪt/",
+        "translation_zh": "最喜欢的",
+        "example": "Pizza is my favorite food.",
+        "example_zh": "披萨是我最喜欢的食物。",
         "audio": ""
       },
       {
-        "word": "exercise",
-        "phonetic": "/ˈɛksəsaɪz/",
-        "translation_zh": "锻炼",
-        "example": "It helps people exercise with AI.",
+        "word": "tasty",
+        "phonetic": "/ˈteɪsti/",
+        "translation_zh": "美味的",
+        "example": "This pizza is very tasty.",
+        "example_zh": "这个披萨非常美味。",
         "audio": ""
       },
       {
-        "word": "download",
-        "phonetic": "/ˈdaʊnloʊd/",
-        "translation_zh": "下载",
-        "example": "Let's download it together later.",
+        "word": "shop",
+        "phonetic": "/ʃɒp/",
+        "translation_zh": "商店",
+        "example": "I buy food from the shop.",
+        "example_zh": "我从商店买食物。",
         "audio": ""
       }
     ],
     "audio": {
-      "english": "bundle://test_en",
-      "translation_zh": "bundle://test_zh"
+      "english": "bundle://ep-20260330-easy-001_en",
+      "translation_zh": "bundle://ep-20260330-easy-001_zh"
     },
-    "thumbnail": "bundle://cover_easy"
+    "thumbnail": "bundle://ep-20260330-easy-001_cover"
   },
   {
-    "id": "ep-2026-0326-easy-002",
-    "title": "At the Store",
+    "id": "ep-20260330-easy-002",
+    "title": "Doctor Visit",
     "level": "easy",
-    "date": "2026-03-26",
-    "duration_seconds": 200,
-    "audio": {
-      "english": "https://oss.langpod.com/episodes/easy-002/en.mp3",
-      "translation_zh": "https://oss.langpod.com/episodes/easy-002/zh.mp3"
-    },
+    "date": "2026-03-30",
+    "duration_seconds": 23,
     "script": [
       {
         "speaker": "Alex",
-        "text": "Excuse me, how much is this?",
+        "text": "Hi Lisa, I went to the doctor today.",
+        "translation_zh": "嗨，丽莎，我今天去看医生了。",
+        "emotion": "neutral",
         "start": 0.0,
-        "end": 2.2,
-        "translation_zh": "不好意思，这个多少钱？"
+        "end": 3.46
       },
       {
         "speaker": "Lisa",
-        "text": "That one is five dollars.",
-        "start": 2.5,
-        "end": 4.5,
-        "translation_zh": "那个五美元。"
+        "text": "Oh, really? Are you feeling OK now?",
+        "translation_zh": "哦，真的吗？你现在感觉好吗？",
+        "emotion": "concerned",
+        "start": 4.26,
+        "end": 7.99
       },
       {
         "speaker": "Alex",
-        "text": "Do you have a smaller size?",
-        "start": 4.8,
-        "end": 6.8,
-        "translation_zh": "有小一点的尺码吗？"
+        "text": "Yes, I feel better after seeing the doctor.",
+        "translation_zh": "是的，看过医生后我感觉好多了。",
+        "emotion": "neutral",
+        "start": 8.79,
+        "end": 12.99
       },
       {
         "speaker": "Lisa",
-        "text": "Let me check. Yes, we have small and medium.",
-        "start": 7.0,
-        "end": 10.5,
-        "translation_zh": "我查一下。有的，我们有小号和中号。"
+        "text": "Great! Did you get any medicine?",
+        "translation_zh": "太好了！你拿药了吗？",
+        "emotion": "neutral",
+        "start": 13.79,
+        "end": 16.08
       },
       {
         "speaker": "Alex",
-        "text": "I'll take the small one, please.",
-        "start": 10.8,
-        "end": 13.0,
-        "translation_zh": "请给我小号的。"
+        "text": "Yes, I got some pills for my cough.",
+        "translation_zh": "是的，我拿了一些药丸治咳嗽。",
+        "emotion": "neutral",
+        "start": 16.88,
+        "end": 19.96
       },
       {
         "speaker": "Lisa",
-        "text": "Sure. Would you like a bag?",
-        "start": 13.3,
-        "end": 15.5,
-        "translation_zh": "好的。需要袋子吗？"
+        "text": "That's good news. Take care, Alex.",
+        "translation_zh": "这是个好消息。保重，亚历克斯。",
+        "emotion": "happy",
+        "start": 20.77,
+        "end": 23.64
       }
     ],
     "vocabulary": [
       {
-        "word": "excuse me",
-        "phonetic": "/ɪkˈskjuːz miː/",
-        "translation_zh": "不好意思，打扰一下",
-        "example": "Excuse me, where is the station?",
-        "audio": "https://oss.langpod.com/words/excuse-me.mp3"
+        "word": "doctor",
+        "phonetic": "/ˈdɒktər/",
+        "translation_zh": "医生",
+        "example": "She is a good doctor.",
+        "example_zh": "她是个好医生。",
+        "audio": ""
       },
       {
-        "word": "size",
-        "phonetic": "/saɪz/",
-        "translation_zh": "尺码，大小",
-        "example": "What size do you wear?",
-        "audio": "https://oss.langpod.com/words/size.mp3"
+        "word": "medicine",
+        "phonetic": "/ˈmedɪsn/",
+        "translation_zh": "药",
+        "example": "He takes medicine for his cold.",
+        "example_zh": "他吃药治感冒。",
+        "audio": ""
       },
       {
-        "word": "check",
-        "phonetic": "/tʃek/",
-        "translation_zh": "查看，检查",
-        "example": "Let me check the price.",
-        "audio": "https://oss.langpod.com/words/check.mp3"
-      },
-      {
-        "word": "medium",
-        "phonetic": "/ˈmiːdiəm/",
-        "translation_zh": "中号的，中等的",
-        "example": "I'd like a medium coffee.",
-        "audio": "https://oss.langpod.com/words/medium.mp3"
-      },
-      {
-        "word": "bag",
-        "phonetic": "/bæɡ/",
-        "translation_zh": "袋子，包",
-        "example": "Can I have a paper bag?",
-        "audio": "https://oss.langpod.com/words/bag.mp3"
-      }
-    ]
-  },
-  {
-    "id": "ep-2026-0327-easy-003",
-    "title": "The Weather",
-    "level": "easy",
-    "date": "2026-03-27",
-    "duration_seconds": 190,
-    "audio": {
-      "english": "https://oss.langpod.com/episodes/easy-003/en.mp3",
-      "translation_zh": "https://oss.langpod.com/episodes/easy-003/zh.mp3"
-    },
-    "script": [
-      {
-        "speaker": "Alex",
-        "text": "It's really cold today, isn't it?",
-        "start": 0.0,
-        "end": 2.5,
-        "translation_zh": "今天真的很冷，对吧？"
-      },
-      {
-        "speaker": "Lisa",
-        "text": "Yes! I think it might rain later.",
-        "start": 2.8,
-        "end": 5.5,
-        "translation_zh": "是啊！我觉得一会儿可能会下雨。"
-      },
-      {
-        "speaker": "Alex",
-        "text": "Did you bring an umbrella?",
-        "start": 5.8,
-        "end": 7.8,
-        "translation_zh": "你带伞了吗？"
-      },
-      {
-        "speaker": "Lisa",
-        "text": "No, I forgot. I hope it doesn't rain too hard.",
-        "start": 8.0,
-        "end": 11.5,
-        "translation_zh": "没有，我忘了。希望不会下太大。"
-      },
-      {
-        "speaker": "Alex",
-        "text": "The forecast says it will be sunny tomorrow.",
-        "start": 11.8,
-        "end": 14.8,
-        "translation_zh": "天气预报说明天会是晴天。"
-      },
-      {
-        "speaker": "Lisa",
-        "text": "That's great. I want to go to the park.",
-        "start": 15.0,
-        "end": 17.5,
-        "translation_zh": "太好了。我想去公园。"
+        "word": "cough",
+        "phonetic": "/kɒf/",
+        "translation_zh": "咳嗽",
+        "example": "He has a bad cough.",
+        "example_zh": "他咳嗽得很厉害。",
+        "audio": ""
       }
     ],
-    "vocabulary": [
-      {
-        "word": "weather",
-        "phonetic": "/ˈweðər/",
-        "translation_zh": "天气",
-        "example": "The weather is nice today.",
-        "audio": "https://oss.langpod.com/words/weather.mp3"
-      },
-      {
-        "word": "umbrella",
-        "phonetic": "/ʌmˈbrelə/",
-        "translation_zh": "雨伞",
-        "example": "Take an umbrella with you.",
-        "audio": "https://oss.langpod.com/words/umbrella.mp3"
-      },
-      {
-        "word": "forecast",
-        "phonetic": "/ˈfɔːrkæst/",
-        "translation_zh": "预报",
-        "example": "Check the weather forecast.",
-        "audio": "https://oss.langpod.com/words/forecast.mp3"
-      },
-      {
-        "word": "sunny",
-        "phonetic": "/ˈsʌni/",
-        "translation_zh": "晴朗的",
-        "example": "It's a sunny day.",
-        "audio": "https://oss.langpod.com/words/sunny.mp3"
-      },
-      {
-        "word": "forgot",
-        "phonetic": "/fərˈɡɑːt/",
-        "translation_zh": "忘记了（forget的过去式）",
-        "example": "I forgot my keys.",
-        "audio": "https://oss.langpod.com/words/forgot.mp3"
-      }
-    ]
+    "audio": {
+      "english": "bundle://ep-20260330-easy-002_en",
+      "translation_zh": "bundle://ep-20260330-easy-002_zh"
+    },
+    "thumbnail": "bundle://ep-20260330-easy-002_cover"
   }
 ]

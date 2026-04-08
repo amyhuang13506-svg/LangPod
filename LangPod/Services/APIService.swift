@@ -5,38 +5,60 @@ import Foundation
 actor APIService {
     static let shared = APIService()
 
-    // Server base URL (Nginx proxy on Aliyun → OSS)
-    private let baseURL = "http://47.84.141.119/langpod/api"
+    // OSS direct URL (public read)
+    private let baseURL = "https://castlingo.oss-ap-southeast-1.aliyuncs.com"
 
     // MARK: - Episode List
 
     /// Fetch episode index for a level. Falls back to mock data on failure.
     func fetchEpisodes(for level: PodcastLevel) async -> [Episode] {
-        let url = URL(string: "\(baseURL)/episodes/\(level.rawValue)/index.json")!
+        guard let url = URL(string: "\(baseURL)/episodes/\(level.rawValue)/index.json") else {
+            print("[API] ❌ Invalid URL for \(level.rawValue)")
+            return MockDataLoader.loadEpisodes(for: level)
+        }
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            print("[API] 📡 Fetching index: \(url)")
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
-                return MockDataLoader.loadEpisodes(for: level)
+                let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+                print("[API] ❌ Index HTTP \(code)")
+                return loadCachedEpisodes(for: level) ?? MockDataLoader.loadEpisodes(for: level)
             }
 
             let index = try JSONDecoder().decode(EpisodeIndex.self, from: data)
+            print("[API] ✅ Index loaded: \(index.total) episodes")
 
-            // Fetch full episode details for each
+            // Fetch full episode details concurrently
             var episodes: [Episode] = []
-            for item in index.episodes {
-                if let episode = await fetchEpisodeDetail(id: item.id, level: level) {
-                    episodes.append(episode)
+            await withTaskGroup(of: Episode?.self) { group in
+                for item in index.episodes {
+                    group.addTask {
+                        await self.fetchEpisodeDetail(id: item.id, level: level)
+                    }
+                }
+                for await episode in group {
+                    if let ep = episode {
+                        episodes.append(ep)
+                    }
                 }
             }
+            // Sort by date
+            episodes.sort { $0.date < $1.date }
+
+            print("[API] ✅ Loaded \(episodes.count)/\(index.total) episode details")
 
             // Cache for offline use
-            cacheEpisodes(episodes, for: level)
+            if !episodes.isEmpty {
+                cacheEpisodes(episodes, for: level)
+            }
 
-            return episodes.isEmpty ? MockDataLoader.loadEpisodes(for: level) : episodes
+            return episodes.isEmpty ? (loadCachedEpisodes(for: level) ?? MockDataLoader.loadEpisodes(for: level)) : episodes
         } catch {
-            // Try cached data first, then fall back to mock
+            print("[API] ❌ Fetch error: \(error.localizedDescription)")
             if let cached = loadCachedEpisodes(for: level) {
                 return cached
             }
@@ -46,16 +68,20 @@ actor APIService {
 
     /// Fetch full episode detail by ID
     private func fetchEpisodeDetail(id: String, level: PodcastLevel) async -> Episode? {
-        let url = URL(string: "\(baseURL)/episodes/\(level.rawValue)/\(id)/episode.json")!
+        guard let url = URL(string: "\(baseURL)/episodes/\(level.rawValue)/\(id)/episode.json") else { return nil }
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
+                print("[API] ⚠️ Detail \(id): HTTP \((response as? HTTPURLResponse)?.statusCode ?? -1)")
                 return nil
             }
             return try JSONDecoder().decode(Episode.self, from: data)
         } catch {
+            print("[API] ⚠️ Detail \(id) decode error: \(error.localizedDescription)")
             return nil
         }
     }
@@ -64,7 +90,7 @@ actor APIService {
 
     private var cacheDirectory: URL {
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("LangPodEpisodes", isDirectory: true)
+            .appendingPathComponent("CastlingoEpisodes", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }

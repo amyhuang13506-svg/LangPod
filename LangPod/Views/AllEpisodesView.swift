@@ -10,7 +10,7 @@ struct AllEpisodesView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Header
@@ -18,11 +18,11 @@ struct AllEpisodesView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                     }
                     Text("往期回顾")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(Color(hex: "1E293B"))
+                        .foregroundStyle(Color.textPrimary)
                     Spacer()
                 }
                 .padding(.horizontal, 24)
@@ -33,13 +33,13 @@ struct AllEpisodesView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 16))
-                        .foregroundStyle(Color(hex: "94A3B8"))
+                        .foregroundStyle(Color.textTertiary)
                     TextField("搜索话题...", text: $searchText)
                         .font(.system(size: 15))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color(hex: "F1F5F9"), in: RoundedRectangle(cornerRadius: 12))
+                .background(Color.divider, in: RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal, 24)
                 .padding(.bottom, 12)
 
@@ -49,7 +49,7 @@ struct AllEpisodesView: View {
                         ForEach(groupedEpisodes, id: \.0) { dateLabel, episodes in
                             Text(dateLabel)
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color(hex: "94A3B8"))
+                                .foregroundStyle(Color.textTertiary)
                                 .padding(.top, 8)
 
                             ForEach(episodes) { episode in
@@ -60,7 +60,7 @@ struct AllEpisodesView: View {
                         if filteredEpisodes.isEmpty {
                             Text("没有找到相关内容")
                                 .font(.system(size: 14))
-                                .foregroundStyle(Color(hex: "94A3B8"))
+                                .foregroundStyle(Color.textTertiary)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding(.vertical, 40)
                         }
@@ -78,7 +78,7 @@ struct AllEpisodesView: View {
     // MARK: - Data
 
     private var allEpisodes: [Episode] {
-        MockDataLoader.loadAllEpisodes()
+        MockDataLoader.loadEpisodes(for: dataStore.selectedLevel)
     }
 
     private var filteredEpisodes: [Episode] {
@@ -121,7 +121,7 @@ struct AllEpisodesView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(episode.title)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Color(hex: "1E293B"))
+                        .foregroundStyle(Color.textPrimary)
                     HStack(spacing: 6) {
                         Text(episode.podcastLevel?.tabName ?? "")
                             .font(.system(size: 11, weight: .semibold))
@@ -129,9 +129,9 @@ struct AllEpisodesView: View {
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(levelBgColor(episode.level), in: RoundedRectangle(cornerRadius: 4))
-                        Text("\(episode.durationSeconds / 60) 分钟 · \(episode.vocabulary.count) 个生词")
+                        Text("\(episode.dateDisplay) · \(episode.durationDisplay) · \(episode.vocabulary.count) 个生词")
                             .font(.system(size: 12))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                     }
                 }
 
@@ -139,14 +139,14 @@ struct AllEpisodesView: View {
 
                 Image(systemName: "play.fill")
                     .font(.system(size: 16))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .background(.white, in: RoundedRectangle(cornerRadius: 14))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                    .stroke(Color.border, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -154,19 +154,19 @@ struct AllEpisodesView: View {
 
     private func levelColor(_ level: String) -> Color {
         switch level {
-        case "easy": Color(hex: "22C55E")
-        case "medium": Color(hex: "3B82F6")
-        case "hard": Color(hex: "F97316")
-        default: Color(hex: "94A3B8")
+        case "easy": Color.success
+        case "medium": Color.appPrimary
+        case "hard": Color.hardOrange
+        default: Color.textTertiary
         }
     }
 
     private func levelBgColor(_ level: String) -> Color {
         switch level {
-        case "easy": Color(hex: "DCFCE7")
-        case "medium": Color(hex: "EFF6FF")
-        case "hard": Color(hex: "FEF3C7")
-        default: Color(hex: "F1F5F9")
+        case "easy": Color.successLight
+        case "medium": Color.primaryLight
+        case "hard": Color.warningLight
+        default: Color.divider
         }
     }
 }

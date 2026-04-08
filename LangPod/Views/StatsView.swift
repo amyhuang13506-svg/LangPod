@@ -3,18 +3,20 @@ import SwiftUI
 struct StatsView: View {
     @Environment(DataStore.self) private var dataStore
     @Environment(AudioPlayer.self) private var audioPlayer
+    @Environment(VocabularyStore.self) private var vocabularyStore
     @State private var showPlayer = false
     @State private var showPaywall = false
 
     var body: some View {
         ZStack {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
                     header
+                    streakCard
                     statsRow
-                    streakCalendar
+                    weekProgress
                     historyList
                 }
                 .padding(.horizontal, 24)
@@ -36,21 +38,98 @@ struct StatsView: View {
         HStack {
             Text("记录")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(Color(hex: "1E293B"))
+                .foregroundStyle(Color.textPrimary)
                 .tracking(-0.5)
             Spacer()
             HStack(spacing: 4) {
                 Text("Lv.\(dataStore.listeningLevel.rawValue)")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
                 Text(dataStore.listeningLevel.name)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Color(hex: "EFF6FF"), in: RoundedRectangle(cornerRadius: 12))
+            .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 12))
         }
+    }
+
+    // MARK: - Streak Card
+
+    private var streakCard: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Text("🔥")
+                    .font(.system(size: 28))
+                Text("连续 \(dataStore.streakDays) 天")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                Spacer()
+            }
+
+            HStack {
+                Text(streakMessage)
+                    .font(.system(size: 14))
+                    .foregroundStyle(streakColor)
+                Spacer()
+            }
+
+            // Degradation warning
+            if daysSinceLastListen >= 5 {
+                HStack {
+                    Text("再不回来等级要降了")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Color.danger)
+                    Spacer()
+                }
+                .padding(.top, 2)
+            }
+        }
+        .padding(18)
+        .background(.white, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(streakBorderColor, lineWidth: 1)
+        )
+    }
+
+    private var daysSinceLastListen: Int {
+        guard let last = dataStore.lastListenDate else { return 999 }
+        return Calendar.current.dateComponents([.day], from: last, to: Date()).day ?? 999
+    }
+
+    private var listenedToday: Bool {
+        guard let last = dataStore.lastListenDate else { return false }
+        return Calendar.current.isDateInToday(last)
+    }
+
+    private var hoursUntilReset: Int {
+        let calendar = Calendar.current
+        guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: Date())) else { return 0 }
+        return max(0, Int(tomorrow.timeIntervalSinceNow / 3600))
+    }
+
+    private var streakMessage: String {
+        if listenedToday {
+            return "今日已完成！继续保持"
+        }
+        if hoursUntilReset <= 3 {
+            return "即将清零！还有 \(hoursUntilReset)h"
+        }
+        return "今天还没听！\(hoursUntilReset)h 后记录清零"
+    }
+
+    private var streakColor: Color {
+        if listenedToday { return Color.success }
+        if hoursUntilReset <= 3 { return Color.danger }
+        return Color.warning
+    }
+
+    private var streakBorderColor: Color {
+        if listenedToday { return Color.success.opacity(0.3) }
+        if hoursUntilReset <= 3 { return Color.danger.opacity(0.3) }
+        return Color.border
     }
 
     // MARK: - Stats Row
@@ -59,48 +138,64 @@ struct StatsView: View {
         HStack(spacing: 10) {
             statCard(value: dataStore.totalListeningTimeDisplay, label: "总时长")
             statCard(value: "\(dataStore.episodesCompleted)", label: "已听集数")
-            statCard(value: "\(dataStore.streakDays)", label: "连续天数", accent: true)
+            statCard(value: "\(vocabularyStore.strongWords.count)", label: "已掌握词汇")
         }
     }
 
-    private func statCard(value: String, label: String, accent: Bool = false) -> some View {
+    private func statCard(value: String, label: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
                 .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(accent ? Color(hex: "F59E0B") : Color(hex: "1E293B"))
+                .foregroundStyle(Color.textPrimary)
             Text(label)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Color(hex: "94A3B8"))
+                .foregroundStyle(Color.textTertiary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
         .background(.white, in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                .stroke(Color.border, lineWidth: 1)
         )
     }
 
-    // MARK: - Streak Calendar (last 5 weeks)
+    // MARK: - Week Progress
 
-    private var streakCalendar: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("学习日历")
+    private var weekProgress: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("本周进度")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(Color(hex: "1E293B"))
+                .foregroundStyle(Color.textPrimary)
 
-            let days = last35Days
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
-                ForEach(days, id: \.self) { date in
-                    let hasActivity = hasListenedOn(date)
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(hasActivity ? Color(hex: "3B82F6") : Color(hex: "E2E8F0"))
-                        .frame(height: 28)
-                        .overlay(
-                            Text(dayNumber(date))
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundStyle(hasActivity ? .white : Color(hex: "94A3B8"))
-                        )
+            HStack(spacing: 0) {
+                ForEach(weekDays, id: \.date) { day in
+                    VStack(spacing: 6) {
+                        Text(day.label)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color.textTertiary)
+
+                        Circle()
+                            .fill(day.color)
+                            .frame(width: 28, height: 28)
+                            .overlay(
+                                day.count > 0 ?
+                                    Text("\(day.count)")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(.white)
+                                    : nil
+                            )
+
+                        if day.count > 0 {
+                            Text("\(day.count)集")
+                                .font(.system(size: 10))
+                                .foregroundStyle(Color.textSecondary)
+                        } else {
+                            Text(" ")
+                                .font(.system(size: 10))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
                 }
             }
         }
@@ -108,36 +203,57 @@ struct StatsView: View {
         .background(.white, in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                .stroke(Color.border, lineWidth: 1)
         )
     }
 
-    private var last35Days: [Date] {
+    struct WeekDay {
+        let date: Date
+        let label: String
+        let count: Int
+        let isToday: Bool
+        let isFuture: Bool
+
+        var color: Color {
+            if count > 0 { return Color.success }
+            if isToday { return Color.warning }
+            if isFuture { return Color.border }
+            return Color.textQuaternary
+        }
+    }
+
+    private var weekDays: [WeekDay] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        // Start from the most recent Monday
         let weekday = calendar.component(.weekday, from: today)
-        let daysFromMonday = (weekday + 5) % 7 // Monday = 0
-        let startOfWeek = calendar.date(byAdding: .day, value: -daysFromMonday, to: today)!
-        let startDate = calendar.date(byAdding: .day, value: -28, to: startOfWeek)!
+        let mondayOffset = (weekday + 5) % 7
+        guard let monday = calendar.date(byAdding: .day, value: -mondayOffset, to: today) else { return [] }
 
-        return (0..<35).compactMap { calendar.date(byAdding: .day, value: $0, to: startDate) }
-    }
+        let labels = ["一", "二", "三", "四", "五", "六", "日"]
 
-    private func hasListenedOn(_ date: Date) -> Bool {
-        let calendar = Calendar.current
-        return dataStore.listenHistory.contains { calendar.isDate($0.listenedAt, inSameDayAs: date) }
-    }
+        return (0..<7).compactMap { i in
+            guard let date = calendar.date(byAdding: .day, value: i, to: monday) else { return nil }
+            let isToday = calendar.isDate(date, inSameDayAs: today)
+            let isFuture = date > today
+            let count = dataStore.listenHistory.filter {
+                calendar.isDate($0.listenedAt, inSameDayAs: date)
+            }.count
 
-    private func dayNumber(_ date: Date) -> String {
-        let day = Calendar.current.component(.day, from: date)
-        return "\(day)"
+            return WeekDay(date: date, label: labels[i], count: count, isToday: isToday, isFuture: isFuture)
+        }
     }
 
     // MARK: - History List
 
     private var displayHistory: [ListenedEpisode] {
-        dataStore.starredOnly ? dataStore.starredHistory : dataStore.listenHistory
+        let source = dataStore.starredOnly ? dataStore.starredHistory : dataStore.listenHistory
+        // Deduplicate: keep only the most recent record per episode
+        var seen = Set<String>()
+        return source.filter { ep in
+            if seen.contains(ep.episodeId) { return false }
+            seen.insert(ep.episodeId)
+            return true
+        }
     }
 
     private var displayHistoryByDay: [(String, [ListenedEpisode])] {
@@ -153,32 +269,24 @@ struct StatsView: View {
 
     private var historyList: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header with play all + star filter
             HStack(spacing: 8) {
-                // Play all with Pro badge
-                if !displayHistory.isEmpty {
-                    Button { showPaywall = true } label: {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: "play.circle.fill")
-                                .font(.system(size: 18))
-                                .foregroundStyle(Color(hex: "3B82F6"))
-
-                            Text("Pro")
-                                .font(.system(size: 7, weight: .bold))
-                                .foregroundStyle(Color(hex: "92400E"))
-                                .padding(.horizontal, 3)
-                                .padding(.vertical, 1)
-                                .background(Color(hex: "FEF3C7"), in: Capsule())
-                                .offset(x: 5, y: -3)
-                        }
-                    }
-                }
-
                 Text("播放历史")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
 
                 Spacer()
+
+                if displayHistory.count >= 2 {
+                    Button { playHistoryQueue() } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 9))
+                            Text("顺序播放")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundStyle(Color.appPrimary)
+                    }
+                }
 
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -191,21 +299,21 @@ struct StatsView: View {
                         Text(dataStore.starredOnly ? "收藏" : "全部")
                             .font(.system(size: 13, weight: .medium))
                     }
-                    .foregroundStyle(dataStore.starredOnly ? Color(hex: "F59E0B") : Color(hex: "94A3B8"))
+                    .foregroundStyle(dataStore.starredOnly ? Color.warning : Color.textTertiary)
                 }
             }
 
             if displayHistory.isEmpty {
                 Text(dataStore.starredOnly ? "还没有收藏的播客" : "还没有播放记录")
                     .font(.system(size: 14))
-                    .foregroundStyle(Color(hex: "94A3B8"))
+                    .foregroundStyle(Color.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
                 ForEach(displayHistoryByDay, id: \.0) { dayLabel, episodes in
                     Text(dayLabel)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color(hex: "94A3B8"))
+                        .foregroundStyle(Color.textTertiary)
                         .padding(.top, 4)
 
                     ForEach(episodes) { episode in
@@ -225,32 +333,30 @@ struct StatsView: View {
             }
         } label: {
             HStack(spacing: 12) {
-                // Thumbnail from mock data lookup
                 historyThumbnail(record)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(record.title)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Color(hex: "1E293B"))
+                        .foregroundStyle(Color.textPrimary)
                     HStack(spacing: 6) {
                         Text(PodcastLevel(rawValue: record.level)?.tabName ?? "")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(levelColor(record.level))
                         Text("·")
-                            .foregroundStyle(Color(hex: "CBD5E1"))
-                        Text("\(record.durationSeconds / 60) 分钟")
+                            .foregroundStyle(Color.textQuaternary)
+                        Text("\(record.durationSeconds)秒")
                             .font(.system(size: 11))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                     }
                 }
 
                 Spacer()
 
-                // Star button (stops propagation)
                 Button { dataStore.toggleStar(record) } label: {
                     Image(systemName: record.isStarred ? "star.fill" : "star")
                         .font(.system(size: 18))
-                        .foregroundStyle(record.isStarred ? Color(hex: "F59E0B") : Color(hex: "CBD5E1"))
+                        .foregroundStyle(record.isStarred ? Color.warning : Color.textQuaternary)
                         .frame(width: 36, height: 36)
                         .contentShape(Rectangle())
                 }
@@ -261,7 +367,7 @@ struct StatsView: View {
             .background(.white, in: RoundedRectangle(cornerRadius: 14))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                    .stroke(Color.border, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -270,7 +376,6 @@ struct StatsView: View {
     private func historyThumbnail(_ record: ListenedEpisode) -> some View {
         let allEpisodes = MockDataLoader.loadAllEpisodes()
         let episode = allEpisodes.first(where: { $0.id == record.episodeId })
-        // Create a minimal episode for thumbnail if not found
         let ep = episode ?? Episode(
             id: record.episodeId, title: record.title, level: record.level,
             date: "", durationSeconds: record.durationSeconds,
@@ -280,12 +385,22 @@ struct StatsView: View {
         return EpisodeThumbnail(episode: ep, size: 40)
     }
 
+    private func playHistoryQueue() {
+        let allEpisodes = MockDataLoader.loadAllEpisodes()
+        let queue = displayHistory.compactMap { record in
+            allEpisodes.first(where: { $0.id == record.episodeId })
+        }
+        guard let first = queue.first else { return }
+        audioPlayer.playEpisode(first, in: queue)
+        showPlayer = true
+    }
+
     private func levelColor(_ level: String) -> Color {
         switch level {
-        case "easy": Color(hex: "22C55E")
-        case "medium": Color(hex: "3B82F6")
-        case "hard": Color(hex: "F97316")
-        default: Color(hex: "94A3B8")
+        case "easy": Color.success
+        case "medium": Color.appPrimary
+        case "hard": Color.hardOrange
+        default: Color.textTertiary
         }
     }
 }
@@ -294,4 +409,5 @@ struct StatsView: View {
     StatsView()
         .environment(DataStore())
         .environment(AudioPlayer())
+        .environment(VocabularyStore())
 }

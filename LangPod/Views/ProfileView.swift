@@ -6,17 +6,25 @@ struct ProfileView: View {
     @State private var showPaywall = false
     @State private var showShareCard = false
     @State private var showClearAlert = false
+    @State private var reminderTime = {
+        let saved = UserDefaults.standard.integer(forKey: "reminderHour")
+        var components = DateComponents()
+        components.hour = saved > 0 ? saved : 8
+        components.minute = UserDefaults.standard.integer(forKey: "reminderMinute")
+        return Calendar.current.date(from: components) ?? Date()
+    }()
 
     var body: some View {
+        NavigationStack {
         ZStack {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
                     // Title
                     Text("我的")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundStyle(Color(hex: "1E293B"))
+                        .foregroundStyle(Color.textPrimary)
                         .tracking(-0.5)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -33,9 +41,9 @@ struct ProfileView: View {
                     legalSection
 
                     // Version
-                    Text("LangPod v1.0.0")
+                    Text("Castlingo v1.0.0")
                         .font(.system(size: 12))
-                        .foregroundStyle(Color(hex: "CBD5E1"))
+                        .foregroundStyle(Color.textQuaternary)
                         .frame(maxWidth: .infinity)
                 }
                 .padding(.horizontal, 24)
@@ -55,6 +63,8 @@ struct ProfileView: View {
         } message: {
             Text("这将清除所有学习记录、词汇和设置。此操作不可撤销。")
         }
+        .navigationBarHidden(true)
+        } // NavigationStack
     }
 
     // MARK: - Profile Card
@@ -66,7 +76,7 @@ struct ProfileView: View {
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [Color(hex: "DBEAFE"), Color(hex: "EFF6FF")],
+                            colors: [Color.primaryLighter, Color.primaryLight],
                             center: .center,
                             startRadius: 0,
                             endRadius: 26
@@ -75,28 +85,28 @@ struct ProfileView: View {
                     .frame(width: 52, height: 52)
                 Image(systemName: "headphones")
                     .font(.system(size: 24))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("英语学习者")
+                Text("Explorer")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
 
                 HStack(spacing: 6) {
                     Text("Lv.\(dataStore.listeningLevel.rawValue) \(dataStore.listeningLevel.name)")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color(hex: "3B82F6"))
+                        .foregroundStyle(Color.appPrimary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
-                        .background(Color(hex: "EFF6FF"), in: RoundedRectangle(cornerRadius: 6))
+                        .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 6))
 
                     Text("Pro")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color(hex: "92400E"))
+                        .foregroundStyle(Color.gold)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
-                        .background(Color(hex: "FEF3C7"), in: RoundedRectangle(cornerRadius: 6))
+                        .background(Color.warningLight, in: RoundedRectangle(cornerRadius: 6))
                 }
             }
 
@@ -106,29 +116,48 @@ struct ProfileView: View {
         .background(.white, in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                .stroke(Color.border, lineWidth: 1)
         )
     }
 
     // MARK: - Learning Settings
 
+    private var reminderTimeString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: reminderTime)
+    }
+
     private var settingsSection: some View {
         VStack(spacing: 0) {
-            settingsRow(icon: "antenna.radiowaves.left.and.right", iconColor: "3B82F6",
-                        title: "当前级别", value: dataStore.selectedLevel.tabName)
+            NavigationLink {
+                LevelSelectPage(dataStore: dataStore)
+            } label: {
+                settingsRow(icon: "antenna.radiowaves.left.and.right", iconColor: "3B82F6",
+                            title: "当前级别", value: dataStore.selectedLevel.tabName)
+            }
             divider
-            settingsRow(icon: "globe", iconColor: "3B82F6",
-                        title: "翻译语言", value: "中文")
+            NavigationLink {
+                LanguageSelectPage()
+            } label: {
+                settingsRow(icon: "globe", iconColor: "3B82F6",
+                            title: "翻译语言", value: "中文")
+            }
             divider
-            settingsRow(icon: "bell", iconColor: "3B82F6",
-                        title: "每日提醒", value: "08:30")
+            NavigationLink {
+                ReminderTimePage(reminderTime: $reminderTime)
+            } label: {
+                settingsRow(icon: "bell", iconColor: "3B82F6",
+                            title: "每日提醒", value: reminderTimeString)
+            }
         }
         .background(.white, in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                .stroke(Color.border, lineWidth: 1)
         )
     }
+
 
     // MARK: - Other Section
 
@@ -138,7 +167,13 @@ struct ProfileView: View {
                 menuRow(icon: "crown", iconColor: "F59E0B", title: "升级 Pro")
             }
             divider
-            menuRow(icon: "trophy", iconColor: "94A3B8", title: "成就徽章")
+            NavigationLink {
+                AchievementsPage()
+                    .environment(dataStore)
+                    .environment(vocabularyStore)
+            } label: {
+                menuRow(icon: "trophy", iconColor: "94A3B8", title: "成就徽章")
+            }
             divider
             Button { showShareCard = true } label: {
                 menuRow(icon: "square.and.arrow.up", iconColor: "94A3B8", title: "分享给朋友")
@@ -147,7 +182,7 @@ struct ProfileView: View {
         .background(.white, in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                .stroke(Color.border, lineWidth: 1)
         )
     }
 
@@ -155,22 +190,26 @@ struct ProfileView: View {
 
     private var legalSection: some View {
         VStack(spacing: 0) {
-            Link(destination: URL(string: "https://langpod.com/privacy")!) {
-                menuRow(icon: "shield", iconColor: "94A3B8", title: "隐私政策")
+            if let privacyURL = URL(string: "https://amyhuang13506-svg.github.io/Castlingo/docs/privacy.html") {
+                Link(destination: privacyURL) {
+                    menuRow(icon: "shield", iconColor: "94A3B8", title: "隐私政策")
+                }
             }
             divider
-            Link(destination: URL(string: "https://langpod.com/terms")!) {
-                menuRow(icon: "doc.text", iconColor: "94A3B8", title: "用户协议")
+            if let termsURL = URL(string: "https://amyhuang13506-svg.github.io/Castlingo/docs/terms.html") {
+                Link(destination: termsURL) {
+                    menuRow(icon: "doc.text", iconColor: "94A3B8", title: "用户协议")
+                }
             }
             divider
             Button { showClearAlert = true } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "trash")
                         .font(.system(size: 18))
-                        .foregroundStyle(Color(hex: "EF4444"))
+                        .foregroundStyle(Color.danger)
                     Text("清除所有数据")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Color(hex: "EF4444"))
+                        .foregroundStyle(Color.danger)
                     Spacer()
                 }
                 .padding(.horizontal, 18)
@@ -181,7 +220,7 @@ struct ProfileView: View {
         .background(.white, in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                .stroke(Color.border, lineWidth: 1)
         )
     }
 
@@ -195,12 +234,17 @@ struct ProfileView: View {
                     .foregroundStyle(Color(hex: iconColor))
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
             }
             Spacer()
-            Text(value)
-                .font(.system(size: 14))
-                .foregroundStyle(Color(hex: "94A3B8"))
+            HStack(spacing: 4) {
+                Text(value)
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.textTertiary)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color.textQuaternary)
+            }
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
@@ -214,12 +258,12 @@ struct ProfileView: View {
                     .foregroundStyle(Color(hex: iconColor))
                 Text(title)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
             }
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
-                .foregroundStyle(Color(hex: "CBD5E1"))
+                .foregroundStyle(Color.textQuaternary)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
@@ -227,16 +271,123 @@ struct ProfileView: View {
 
     private var divider: some View {
         Rectangle()
-            .fill(Color(hex: "F1F5F9"))
+            .fill(Color.divider)
             .frame(height: 1)
     }
 
     // MARK: - Actions
 
     private func clearAllData() {
-        let domain = Bundle.main.bundleIdentifier!
+        guard let domain = Bundle.main.bundleIdentifier else { return }
         UserDefaults.standard.removePersistentDomain(forName: domain)
         dataStore.hasCompletedOnboarding = false
+    }
+}
+
+// MARK: - Level Select Page
+
+struct LevelSelectPage: View {
+    @Environment(\.dismiss) private var dismiss
+    var dataStore: DataStore
+
+    var body: some View {
+        List {
+            ForEach([PodcastLevel.easy, .medium, .hard], id: \.self) { level in
+                Button {
+                    dataStore.selectedLevel = level
+                    dataStore.loadEpisodes()
+                    dismiss()
+                } label: {
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(Color(hex: level == .easy ? "22C55E" : level == .medium ? "3B82F6" : "EF4444"))
+                            .frame(width: 10, height: 10)
+                        Text(level.tabName)
+                            .font(.system(size: 16))
+                            .foregroundStyle(Color.textPrimary)
+                        Spacer()
+                        if dataStore.selectedLevel == level {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Color.appPrimary)
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("选择级别")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Language Select Page
+
+struct LanguageSelectPage: View {
+    var body: some View {
+        List {
+            HStack(spacing: 12) {
+                Text("中文")
+                    .font(.system(size: 16))
+                    .foregroundStyle(Color.textPrimary)
+                Spacer()
+                Image(systemName: "checkmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.appPrimary)
+            }
+
+            languageRow("日本語")
+            languageRow("한국어")
+            languageRow("Español")
+            languageRow("Français")
+        }
+        .navigationTitle("翻译语言")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func languageRow(_ name: String) -> some View {
+        HStack(spacing: 12) {
+            Text(name)
+                .font(.system(size: 16))
+                .foregroundStyle(Color.textQuaternary)
+            Spacer()
+            Text("即将推出")
+                .font(.system(size: 13))
+                .foregroundStyle(Color.textTertiary)
+        }
+    }
+}
+
+// MARK: - Reminder Time Page
+
+struct ReminderTimePage: View {
+    @Binding var reminderTime: Date
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 24) {
+            DatePicker("", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+
+            Button {
+                let components = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
+                UserDefaults.standard.set(components.hour ?? 8, forKey: "reminderHour")
+                UserDefaults.standard.set(components.minute ?? 30, forKey: "reminderMinute")
+                dismiss()
+            } label: {
+                Text("保存")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.horizontal, 24)
+
+            Spacer()
+        }
+        .navigationTitle("每日提醒")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

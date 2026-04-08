@@ -9,6 +9,7 @@ enum VocabFilter: String, CaseIterable {
 
 struct VocabularyView: View {
     @Environment(VocabularyStore.self) private var store
+    @Environment(AudioPlayer.self) private var audioPlayer
     @State private var showWordMatch = false
     @State private var showFeynman = false
     @State private var filter: VocabFilter = .all
@@ -16,7 +17,7 @@ struct VocabularyView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
@@ -31,7 +32,7 @@ struct VocabularyView: View {
             // Fixed bottom CTAs
             VStack(spacing: 0) {
                 LinearGradient(
-                    colors: [Color(hex: "F7F8FC").opacity(0), Color(hex: "F7F8FC")],
+                    colors: [Color.appBackground.opacity(0), Color.appBackground],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -39,14 +40,16 @@ struct VocabularyView: View {
 
                 practiceCTAs
                     .padding(.bottom, 16)
-                    .background(Color(hex: "F7F8FC"))
+                    .background(Color.appBackground)
             }
         }
         .fullScreenCover(isPresented: $showWordMatch) {
             WordMatchView()
+                .onAppear { if audioPlayer.isPlaying { audioPlayer.togglePlayPause() } }
         }
         .fullScreenCover(isPresented: $showFeynman) {
             FeynmanChallengeView()
+                .onAppear { if audioPlayer.isPlaying { audioPlayer.togglePlayPause() } }
         }
         .alert("清除已掌握词汇", isPresented: $showClearAlert) {
             Button("取消", role: .cancel) {}
@@ -66,17 +69,17 @@ struct VocabularyView: View {
         HStack {
             Text("我的词汇")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(Color(hex: "1E293B"))
+                .foregroundStyle(Color.textPrimary)
                 .tracking(-0.5)
 
             Spacer()
 
             Text("\(store.totalCount) 个词")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color(hex: "3B82F6"))
+                .foregroundStyle(Color.appPrimary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color(hex: "EFF6FF"), in: RoundedRectangle(cornerRadius: 12))
+                .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 12))
         }
         .padding(.horizontal, 24)
     }
@@ -90,24 +93,24 @@ struct VocabularyView: View {
                 count: store.strongWords.count,
                 label: "已掌握",
                 textColor: Color(hex: "16A34A"),
-                bgColor: Color(hex: "DCFCE7"),
-                activeBorder: Color(hex: "22C55E")
+                bgColor: Color.successLight,
+                activeBorder: Color.success
             )
             filterCard(
                 filter: .fading,
                 count: store.fadingWords.count,
                 label: "复习中",
                 textColor: Color(hex: "D97706"),
-                bgColor: Color(hex: "FEF3C7"),
-                activeBorder: Color(hex: "F59E0B")
+                bgColor: Color.warningLight,
+                activeBorder: Color.warning
             )
             filterCard(
                 filter: .new,
                 count: newWords.count,
                 label: "新词",
-                textColor: Color(hex: "3B82F6"),
-                bgColor: Color(hex: "EFF6FF"),
-                activeBorder: Color(hex: "3B82F6")
+                textColor: Color.appPrimary,
+                bgColor: Color.primaryLight,
+                activeBorder: Color.appPrimary
             )
         }
         .padding(.horizontal, 24)
@@ -152,7 +155,7 @@ struct VocabularyView: View {
     }
 
     private var newWords: [SavedWord] {
-        store.forgettingWords + store.words.filter { $0.reviewCount == 0 && $0.memoryState != .forgetting }
+        store.forgettingWords  // 配对 0 次的词
     }
 
     private var sectionTitle: String {
@@ -169,19 +172,19 @@ struct VocabularyView: View {
             HStack {
                 Text(sectionTitle)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
 
                 Spacer()
                 if filter == .strong && !filteredWords.isEmpty {
                     Button { showClearAlert = true } label: {
                         HStack(spacing: 4) {
                             Circle()
-                                .fill(Color(hex: "EF4444"))
+                                .fill(Color.danger)
                                 .frame(width: 6, height: 6)
                             Text("清零")
                                 .font(.system(size: 13, weight: .medium))
                         }
-                        .foregroundStyle(Color(hex: "EF4444"))
+                        .foregroundStyle(Color.danger)
                     }
                 } else if filter == .strong && filteredWords.isEmpty {
                     HStack(spacing: 4) {
@@ -190,14 +193,14 @@ struct VocabularyView: View {
                         Text("已清零")
                             .font(.system(size: 13, weight: .medium))
                     }
-                    .foregroundStyle(Color(hex: "22C55E"))
+                    .foregroundStyle(Color.success)
                 } else if filter != .all {
                     Button {
                         withAnimation { filter = .all }
                     } label: {
                         Text("查看全部")
                             .font(.system(size: 13))
-                            .foregroundStyle(Color(hex: "3B82F6"))
+                            .foregroundStyle(Color.appPrimary)
                     }
                 }
             }
@@ -205,7 +208,7 @@ struct VocabularyView: View {
             if filteredWords.isEmpty {
                 Text("暂无词汇")
                     .font(.system(size: 14))
-                    .foregroundStyle(Color(hex: "94A3B8"))
+                    .foregroundStyle(Color.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
@@ -219,35 +222,35 @@ struct VocabularyView: View {
 
     private func wordRow(_ word: SavedWord) -> some View {
         HStack(spacing: 12) {
-            // Play button
-            Button { } label: {
+            // Play pronunciation
+            Button { WordSpeaker.shared.speak(word.word) } label: {
                 Image(systemName: "speaker.wave.2.fill")
                     .font(.system(size: 16))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
             }
 
             // Word + phonetic
             VStack(alignment: .leading, spacing: 2) {
                 Text(word.word)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
                 Text(word.phonetic)
                     .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: "94A3B8"))
+                    .foregroundStyle(Color.textTertiary)
             }
 
             Spacer()
 
             Text(word.translationZh)
                 .font(.system(size: 14))
-                .foregroundStyle(Color(hex: "64748B"))
+                .foregroundStyle(Color.textSecondary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(.white, in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                .stroke(Color.border, lineWidth: 1)
         )
     }
 
@@ -259,13 +262,13 @@ struct VocabularyView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "rectangle.on.rectangle")
                         .font(.system(size: 15))
-                    Text("单词配对")
+                    Text("词义配对")
                         .font(.system(size: 15, weight: .semibold))
                 }
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(Color(hex: "3B82F6"), in: RoundedRectangle(cornerRadius: 14))
+                .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
             }
 
             Button { showFeynman = true } label: {
@@ -278,7 +281,7 @@ struct VocabularyView: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(Color(hex: "F59E0B"), in: RoundedRectangle(cornerRadius: 14))
+                .background(Color.warning, in: RoundedRectangle(cornerRadius: 14))
             }
         }
         .padding(.horizontal, 24)

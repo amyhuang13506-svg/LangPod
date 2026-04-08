@@ -7,7 +7,7 @@ struct MasteryDetailView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             VStack(spacing: 20) {
                 // Header
@@ -15,11 +15,11 @@ struct MasteryDetailView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                     }
                     Text("掌握深度")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(Color(hex: "1E293B"))
+                        .foregroundStyle(Color.textPrimary)
                     Spacer()
                 }
 
@@ -35,11 +35,11 @@ struct MasteryDetailView: View {
                 // Description
                 Text(descriptionFor(selectedLevel))
                     .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
                     .lineSpacing(4)
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(hex: "EFF6FF"), in: RoundedRectangle(cornerRadius: 12))
+                    .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 12))
 
                 // Word list
                 ScrollView(showsIndicators: false) {
@@ -51,7 +51,7 @@ struct MasteryDetailView: View {
                         if store.wordsByMastery(selectedLevel).isEmpty {
                             Text("暂无词汇")
                                 .font(.system(size: 14))
-                                .foregroundStyle(Color(hex: "94A3B8"))
+                                .foregroundStyle(Color.textTertiary)
                                 .padding(.top, 40)
                         }
                     }
@@ -72,11 +72,11 @@ struct MasteryDetailView: View {
         } label: {
             Text("\(level.icon) \(level.label) \(count)")
                 .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
-                .foregroundStyle(isSelected ? .white : Color(hex: "64748B"))
+                .foregroundStyle(isSelected ? .white : Color.textSecondary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
-                    isSelected ? Color(hex: "3B82F6") : Color(hex: "F1F5F9"),
+                    isSelected ? Color.appPrimary : Color.divider,
                     in: Capsule()
                 )
         }
@@ -88,22 +88,22 @@ struct MasteryDetailView: View {
             HStack(spacing: 10) {
                 Image(systemName: "speaker.wave.2.fill")
                     .font(.system(size: 16))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
                 Text(word.word)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
             }
             Spacer()
             Text(word.translationZh)
                 .font(.system(size: 13))
-                .foregroundStyle(Color(hex: "94A3B8"))
+                .foregroundStyle(Color.textTertiary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .background(.white, in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                .stroke(Color.border, lineWidth: 1)
         )
     }
 

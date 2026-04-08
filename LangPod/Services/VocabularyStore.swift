@@ -14,18 +14,14 @@ class VocabularyStore {
 
     var totalCount: Int { words.count }
 
+    /// 已掌握: 配对 >= 3 或 造句 >= 1 (且 30 天内有练习)
     var strongWords: [SavedWord] { words.filter { $0.memoryState == .strong } }
+
+    /// 复习中: 配对 1-2 次
     var fadingWords: [SavedWord] { words.filter { $0.memoryState == .fading } }
+
+    /// 新词: 配对 0 次
     var forgettingWords: [SavedWord] { words.filter { $0.memoryState == .forgetting } }
-
-    var todayWords: [SavedWord] {
-        let calendar = Calendar.current
-        return words.filter { calendar.isDateInToday($0.lastReviewDate) }
-    }
-
-    var wordsNeedingReview: [SavedWord] {
-        words.filter { $0.nextReviewDate <= Date() }
-    }
 
     func wordsByMastery(_ level: MasteryLevel) -> [SavedWord] {
         words.filter { $0.masteryLevel == level }
@@ -41,10 +37,21 @@ class VocabularyStore {
         persist()
     }
 
-    func markReviewed(_ word: String) {
+    func recordMatchCorrect(_ word: String) {
         guard let idx = words.firstIndex(where: { $0.word == word }) else { return }
-        words[idx].markReviewed()
+        words[idx].recordMatchCorrect()
         persist()
+    }
+
+    func recordSentenceCorrect(_ word: String) {
+        guard let idx = words.firstIndex(where: { $0.word == word }) else { return }
+        words[idx].recordSentenceCorrect()
+        persist()
+    }
+
+    // Legacy compatibility
+    func markReviewed(_ word: String) {
+        recordMatchCorrect(word)
     }
 
     func upgradeMastery(_ word: String, to level: MasteryLevel) {
@@ -72,19 +79,38 @@ class VocabularyStore {
             return
         }
         words = saved
+        migrateExampleTranslations()
     }
 
-    /// Pre-populate with some mock words for UI development
+    /// Fill in missing exampleZh from latest episode data
+    private func migrateExampleTranslations() {
+        let allVocab = MockDataLoader.loadAllEpisodes().flatMap(\.vocabulary)
+        var updated = false
+        for i in words.indices {
+            if words[i].exampleZh == nil || words[i].exampleZh?.isEmpty == true {
+                if let match = allVocab.first(where: { $0.word == words[i].word }) {
+                    if let zh = match.exampleZh, !zh.isEmpty {
+                        words[i].exampleZh = zh
+                        updated = true
+                    }
+                }
+            }
+        }
+        if updated { persist() }
+    }
+
     private func loadMockData() {
         let allEpisodes = MockDataLoader.loadAllEpisodes()
         for episode in allEpisodes.prefix(3) {
             for vocab in episode.vocabulary {
                 var saved = SavedWord(from: vocab)
-                // Vary the review dates for visual variety
-                let daysAgo = Double.random(in: 0...14)
-                saved.lastReviewDate = Date().addingTimeInterval(-daysAgo * 86400)
-                saved.reviewCount = Int.random(in: 0...5)
-                saved.masteryLevel = MasteryLevel.allCases.randomElement() ?? .heard
+                // Vary for visual variety
+                let matchCount = Int.random(in: 0...4)
+                saved.matchCorrectCount = matchCount
+                saved.sentenceCorrectCount = matchCount > 2 ? Int.random(in: 0...1) : 0
+                saved.lastPracticeDate = Date().addingTimeInterval(-Double.random(in: 0...14) * 86400)
+                if matchCount >= 1 { saved.masteryLevel = .recognized }
+                if saved.sentenceCorrectCount >= 1 { saved.masteryLevel = .canUse }
                 words.append(saved)
             }
         }

@@ -1,16 +1,16 @@
 import Foundation
 
-/// Memory state based on forgetting curve
+/// Word status based on user actions (not time decay)
 enum MemoryState: String, Codable, CaseIterable {
-    case strong    // > 80% retention
-    case fading    // 40-80%
-    case forgetting // < 40%
+    case strong     // 已掌握: 配对 >= 3 次 或 造句 >= 1 次
+    case fading     // 复习中: 配对 1-2 次
+    case forgetting // 新词: 配对 0 次
 
     var label: String {
         switch self {
         case .strong: "已掌握"
         case .fading: "复习中"
-        case .forgetting: "即将遗忘"
+        case .forgetting: "新词"
         }
     }
 
@@ -18,7 +18,7 @@ enum MemoryState: String, Codable, CaseIterable {
         switch self {
         case .strong: "16A34A"
         case .fading: "D97706"
-        case .forgetting: "EF4444"
+        case .forgetting: "3B82F6"
         }
     }
 
@@ -26,17 +26,17 @@ enum MemoryState: String, Codable, CaseIterable {
         switch self {
         case .strong: "DCFCE7"
         case .fading: "FEF3C7"
-        case .forgetting: "FEE2E2"
+        case .forgetting: "EFF6FF"
         }
     }
 }
 
-/// Mastery depth (Feynman 4 levels)
+/// Mastery depth (Feynman levels - simplified)
 enum MasteryLevel: Int, Codable, CaseIterable, Comparable {
-    case heard = 0     // 听懂
-    case recognized = 1 // 认出
-    case canUse = 2    // 会用
-    case canTeach = 3  // 能教
+    case heard = 0      // 听懂 — 播客里听到
+    case recognized = 1 // 认出 — 配对答对
+    case canUse = 2     // 会用 — 造句答对
+    case canTeach = 3   // 能教 — 保留备用
 
     var label: String {
         switch self {
@@ -66,38 +66,37 @@ struct SavedWord: Codable, Identifiable {
     let phonetic: String
     let translationZh: String
     let example: String
+    var exampleZh: String?
     var masteryLevel: MasteryLevel
-    var lastReviewDate: Date
-    var reviewCount: Int
-    var nextReviewDate: Date
+    var lastPracticeDate: Date
+    var matchCorrectCount: Int      // 配对答对次数
+    var sentenceCorrectCount: Int   // 造句答对次数
+    var savedDate: Date             // 保存时间
 
     var id: String { word }
 
-    /// Compute memory state based on time since last review
+    // Legacy compatibility
+    var reviewCount: Int { matchCorrectCount + sentenceCorrectCount }
+    var lastReviewDate: Date { lastPracticeDate }
+
+    /// Status based on user actions
     var memoryState: MemoryState {
-        let hoursSinceReview = Date().timeIntervalSince(lastReviewDate) / 3600
-        let retentionHours = retentionWindow
-        let ratio = max(0, 1.0 - hoursSinceReview / retentionHours)
-
-        if ratio > 0.8 { return .strong }
-        if ratio > 0.4 { return .fading }
-        return .forgetting
-    }
-
-    /// Retention window grows with review count (spaced repetition)
-    private var retentionHours: Double {
-        switch reviewCount {
-        case 0: 4        // 4 hours
-        case 1: 24       // 1 day
-        case 2: 72       // 3 days
-        case 3: 168      // 1 week
-        case 4: 336      // 2 weeks
-        default: 720     // 1 month
+        // 已掌握 but 30 days no practice → 退回复习中
+        if matchCorrectCount >= 3 || sentenceCorrectCount >= 1 {
+            let daysSincePractice = Date().timeIntervalSince(lastPracticeDate) / 86400
+            if daysSincePractice > 30 {
+                return .fading
+            }
+            return .strong
         }
-    }
 
-    private var retentionWindow: Double {
-        retentionHours * 1.5  // buffer for gradual decay
+        // 复习中: 做过配对但还不够
+        if matchCorrectCount >= 1 {
+            return .fading
+        }
+
+        // 新词: 从未做过配对
+        return .forgetting
     }
 
     init(from vocab: VocabularyItem) {
@@ -105,16 +104,32 @@ struct SavedWord: Codable, Identifiable {
         self.phonetic = vocab.phonetic
         self.translationZh = vocab.translationZh
         self.example = vocab.example
+        self.exampleZh = vocab.exampleZh
         self.masteryLevel = .heard
-        self.lastReviewDate = Date()
-        self.reviewCount = 0
-        self.nextReviewDate = Date().addingTimeInterval(4 * 3600)
+        self.lastPracticeDate = Date()
+        self.matchCorrectCount = 0
+        self.sentenceCorrectCount = 0
+        self.savedDate = Date()
     }
 
+    mutating func recordMatchCorrect() {
+        matchCorrectCount += 1
+        lastPracticeDate = Date()
+        if matchCorrectCount >= 1 && masteryLevel < .recognized {
+            masteryLevel = .recognized
+        }
+    }
+
+    mutating func recordSentenceCorrect() {
+        sentenceCorrectCount += 1
+        lastPracticeDate = Date()
+        if masteryLevel < .canUse {
+            masteryLevel = .canUse
+        }
+    }
+
+    // Keep backward compatibility
     mutating func markReviewed() {
-        reviewCount += 1
-        lastReviewDate = Date()
-        let hours = retentionHours
-        nextReviewDate = Date().addingTimeInterval(hours * 3600)
+        recordMatchCorrect()
     }
 }

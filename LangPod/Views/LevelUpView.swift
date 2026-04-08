@@ -12,7 +12,7 @@ struct LevelUpView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             VStack(spacing: 24) {
                 Spacer()
@@ -22,7 +22,7 @@ struct LevelUpView: View {
                     Circle()
                         .fill(
                             RadialGradient(
-                                colors: [Color(hex: "DBEAFE"), Color(hex: "EFF6FF")],
+                                colors: [Color.primaryLighter, Color.primaryLight],
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: 60
@@ -32,29 +32,29 @@ struct LevelUpView: View {
 
                     Text("Lv.\(level.rawValue)")
                         .font(.system(size: 36, weight: .bold))
-                        .foregroundStyle(Color(hex: "3B82F6"))
+                        .foregroundStyle(Color.appPrimary)
                 }
                 .scaleEffect(badgeScale)
 
                 // Title
                 Text("恭喜升级！")
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
                     .opacity(contentOpacity)
 
                 // Level name
                 Text("🎉 \(level.name)")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 8)
-                    .background(Color(hex: "EFF6FF"), in: Capsule())
+                    .background(Color.primaryLight, in: Capsule())
                     .opacity(contentOpacity)
 
                 // Description
                 Text("你已经听完 \(episodesCompleted) 集播客\n掌握了 \(wordsLearned) 个单词")
                     .font(.system(size: 15))
-                    .foregroundStyle(Color(hex: "64748B"))
+                    .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
                     .opacity(contentOpacity)
@@ -74,7 +74,7 @@ struct LevelUpView: View {
                     .background(Color(hex: "F0FDF4"), in: RoundedRectangle(cornerRadius: 16))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color(hex: "22C55E").opacity(0.27), lineWidth: 1)
+                            .stroke(Color.success.opacity(0.27), lineWidth: 1)
                     )
                     .padding(.horizontal, 32)
                     .opacity(contentOpacity)
@@ -90,13 +90,13 @@ struct LevelUpView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
-                            .background(Color(hex: "3B82F6"), in: RoundedRectangle(cornerRadius: 14))
+                            .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
                     }
 
                     Button(action: onContinue) {
                         Text("继续学习")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Color(hex: "3B82F6"))
+                            .foregroundStyle(Color.appPrimary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
                     }

@@ -7,7 +7,7 @@ struct MemoryDetailView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             VStack(spacing: 20) {
                 // Header
@@ -15,11 +15,11 @@ struct MemoryDetailView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 20, weight: .medium))
-                            .foregroundStyle(Color(hex: "94A3B8"))
+                            .foregroundStyle(Color.textTertiary)
                     }
                     Text("记忆状态")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(Color(hex: "1E293B"))
+                        .foregroundStyle(Color.textPrimary)
                     Spacer()
                 }
 
@@ -41,7 +41,7 @@ struct MemoryDetailView: View {
                         if wordsForState.isEmpty {
                             Text("暂无词汇")
                                 .font(.system(size: 14))
-                                .foregroundStyle(Color(hex: "94A3B8"))
+                                .foregroundStyle(Color.textTertiary)
                                 .padding(.top, 40)
                         }
                     }
@@ -74,11 +74,11 @@ struct MemoryDetailView: View {
         } label: {
             Text("\(state.label) \(count)")
                 .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
-                .foregroundStyle(isSelected ? .white : Color(hex: "64748B"))
+                .foregroundStyle(isSelected ? .white : Color.textSecondary)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(
-                    isSelected ? Color(hex: state.color) : Color(hex: "F1F5F9"),
+                    isSelected ? Color(hex: state.color) : Color.divider,
                     in: Capsule()
                 )
         }
@@ -90,17 +90,17 @@ struct MemoryDetailView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(word.word)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
                 Text(word.translationZh)
                     .font(.system(size: 12))
-                    .foregroundStyle(Color(hex: "94A3B8"))
+                    .foregroundStyle(Color.textTertiary)
             }
             Spacer()
             HStack(spacing: 6) {
                 // Mini progress bar
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(Color(hex: "E2E8F0"))
+                        .fill(Color.border)
                         .frame(width: 60, height: 4)
                     RoundedRectangle(cornerRadius: 2)
                         .fill(Color(hex: word.memoryState.color))
@@ -116,7 +116,7 @@ struct MemoryDetailView: View {
         .background(.white, in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                .stroke(Color.border, lineWidth: 1)
         )
     }
 

@@ -11,7 +11,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             switch currentPage {
             case .welcome:
@@ -33,7 +33,7 @@ struct OnboardingView: View {
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [Color(hex: "E0F2FE"), Color(hex: "DBEAFE")],
+                            colors: [Color(hex: "E0F2FE"), Color.primaryLighter],
                             center: .center,
                             startRadius: 0,
                             endRadius: 100
@@ -43,23 +43,23 @@ struct OnboardingView: View {
 
                 Image(systemName: "headphones")
                     .font(.system(size: 80))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
             }
 
             // Content
             VStack(spacing: 12) {
-                Text("LangPod")
+                Text("Castlingo")
                     .font(.system(size: 32, weight: .bold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
                     .tracking(-0.5)
 
-                Text("听播客，学英语")
+                Text("600小时，听会一门语言")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Color(hex: "475569"))
+                    .foregroundStyle(Color.bodyText)
 
-                Text("AI 每天生成英语播客，适配你的水平。\n听 3 遍原音，再听中文翻译，最后再听一遍。\n不用动脑 — 按下播放就好。")
+                Text("源于FSI外交官训练，重复即本能")
                     .font(.system(size: 14))
-                    .foregroundStyle(Color(hex: "94A3B8"))
+                    .foregroundStyle(Color.textTertiary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
             }
@@ -80,7 +80,7 @@ struct OnboardingView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(Color(hex: "3B82F6"), in: RoundedRectangle(cornerRadius: 16))
+                        .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 16))
                 }
 
 
@@ -101,11 +101,11 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("选择你的英语水平")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
 
                 Text("我们会根据你的水平推荐合适的播客")
                     .font(.system(size: 14))
-                    .foregroundStyle(Color(hex: "94A3B8"))
+                    .foregroundStyle(Color.textTertiary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -113,24 +113,24 @@ struct OnboardingView: View {
             VStack(spacing: 12) {
                 levelCard(
                     level: .easy,
-                    dotFill: Color(hex: "22C55E"),
+                    dotFill: Color.success,
                     name: "初级",
                     desc: "简单日常对话，慢速播放",
-                    dotColor: Color(hex: "DCFCE7")
+                    dotColor: Color.successLight
                 )
                 levelCard(
                     level: .medium,
-                    dotFill: Color(hex: "3B82F6"),
+                    dotFill: Color.appPrimary,
                     name: "中级",
                     desc: "生活、文化、旅行话题",
-                    dotColor: Color(hex: "DBEAFE")
+                    dotColor: Color.primaryLighter
                 )
                 levelCard(
                     level: .hard,
-                    dotFill: Color(hex: "F97316"),
+                    dotFill: Color.hardOrange,
                     name: "高级",
                     desc: "新闻、商务、深度话题",
-                    dotColor: Color(hex: "FEF3C7")
+                    dotColor: Color.warningLight
                 )
             }
 
@@ -146,7 +146,7 @@ struct OnboardingView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
-                    .background(Color(hex: "3B82F6"), in: RoundedRectangle(cornerRadius: 14))
+                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
             }
         }
         .padding(.top, 62)
@@ -176,10 +176,10 @@ struct OnboardingView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(name)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(hex: "1E293B"))
+                        .foregroundStyle(Color.textPrimary)
                     Text(desc)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color(hex: "94A3B8"))
+                        .foregroundStyle(Color.textTertiary)
                 }
 
                 Spacer()
@@ -188,7 +188,7 @@ struct OnboardingView: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 22))
-                        .foregroundStyle(Color(hex: "3B82F6"))
+                        .foregroundStyle(Color.appPrimary)
                 }
             }
             .padding(18)
@@ -196,7 +196,7 @@ struct OnboardingView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
-                        isSelected ? Color(hex: "3B82F6") : Color(hex: "E2E8F0"),
+                        isSelected ? Color.appPrimary : Color.border,
                         lineWidth: isSelected ? 2 : 1
                     )
             )

@@ -8,7 +8,7 @@ struct HomeView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Color(hex: "F7F8FC").ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
@@ -39,11 +39,11 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(greetingText)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color(hex: "94A3B8"))
+                    .foregroundStyle(Color.textTertiary)
 
                 Text(dataStore.userName)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
                     .tracking(-0.5)
             }
 
@@ -55,11 +55,11 @@ struct HomeView: View {
                     .font(.system(size: 14))
                 Text("\(dataStore.streakDays)")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color(hex: "92400E"))
+                    .foregroundStyle(Color.gold)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(Color(hex: "FEF3C7"), in: Capsule())
+            .background(Color.warningLight, in: Capsule())
         }
     }
 
@@ -77,9 +77,9 @@ struct HomeView: View {
     private func levelTab(_ level: PodcastLevel) -> some View {
         let isSelected = dataStore.selectedLevel == level
         let dotColor: Color = switch level {
-        case .easy: Color(hex: "22C55E")
-        case .medium: Color(hex: "3B82F6")
-        case .hard: Color(hex: "F97316")
+        case .easy: Color.success
+        case .medium: Color.appPrimary
+        case .hard: Color.hardOrange
         }
 
         return Button {
@@ -93,12 +93,12 @@ struct HomeView: View {
                     .frame(width: 8, height: 8)
                 Text(level.tabName)
                     .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
-                    .foregroundStyle(isSelected ? .white : Color(hex: "64748B"))
+                    .foregroundStyle(isSelected ? .white : Color.textSecondary)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(
-                isSelected ? Color(hex: "3B82F6") : Color(hex: "F1F5F9"),
+                isSelected ? Color.appPrimary : Color.divider,
                 in: Capsule()
             )
         }
@@ -134,28 +134,28 @@ struct HomeView: View {
                                     .frame(width: 8, height: 8)
                                 Text(isActuallyPlaying ? "正在播放" : "即将播放")
                                     .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(Color(hex: "3B82F6"))
+                                    .foregroundStyle(Color.appPrimary)
                                     .tracking(1)
                             }
                             Spacer()
                             Text(audioPlayer.currentEpisode?.id == episode.id ? audioPlayer.phase.roundDisplay : "第 1/5 遍")
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(Color(hex: "3B82F6"))
+                                .foregroundStyle(Color.appPrimary)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
-                                .background(Color(hex: "EFF6FF"), in: RoundedRectangle(cornerRadius: 8))
+                                .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 8))
                         }
 
                         // Title
                         VStack(alignment: .leading, spacing: 4) {
                             Text(episode.title)
                                 .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(Color(hex: "1E293B"))
+                                .foregroundStyle(Color.textPrimary)
                                 .tracking(-0.3)
 
-                            Text("第 \(episodeNumber(episode)) 集 · \(episode.durationSeconds / 60) 分钟")
+                            Text("\(episode.dateDisplay) · \(episode.durationDisplay)")
                                 .font(.system(size: 13))
-                                .foregroundStyle(Color(hex: "94A3B8"))
+                                .foregroundStyle(Color.textTertiary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -163,10 +163,10 @@ struct HomeView: View {
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
                                 RoundedRectangle(cornerRadius: 3)
-                                    .fill(Color(hex: "F1F5F9"))
+                                    .fill(Color.divider)
                                     .frame(height: 6)
                                 RoundedRectangle(cornerRadius: 3)
-                                    .fill(Color(hex: "3B82F6"))
+                                    .fill(Color.appPrimary)
                                     .frame(width: progressWidth(episode, in: geo.size.width), height: 6)
                             }
                             .gesture(
@@ -187,19 +187,31 @@ struct HomeView: View {
                             Button { audioPlayer.skipToPreviousEpisode() } label: {
                                 Image(systemName: "backward.fill")
                                     .font(.system(size: 22))
-                                    .foregroundStyle(Color(hex: "94A3B8"))
+                                    .foregroundStyle(Color.textTertiary)
                             }
                             Button { playOrToggle(episode) } label: {
                                 Image(systemName: isCurrentAndPlaying(episode) ? "pause.fill" : "play.fill")
                                     .font(.system(size: 22))
                                     .foregroundStyle(.white)
                                     .frame(width: 52, height: 52)
-                                    .background(Color(hex: "3B82F6"), in: Circle())
+                                    .background(Color.appPrimary, in: Circle())
                             }
-                            Button { audioPlayer.skipToNextEpisode() } label: {
+                            Button {
+                                if audioPlayer.currentEpisode == nil {
+                                    // Not playing yet — start playing this episode first, then skip
+                                    audioPlayer.playEpisode(episode, in: dataStore.episodes)
+                                    audioPlayer.skipToNextEpisode()
+                                } else if audioPlayer.episodeQueue.isEmpty {
+                                    // Playing but no queue — set queue then skip
+                                    audioPlayer.episodeQueue = dataStore.episodes
+                                    audioPlayer.skipToNextEpisode()
+                                } else {
+                                    audioPlayer.skipToNextEpisode()
+                                }
+                            } label: {
                                 Image(systemName: "forward.fill")
                                     .font(.system(size: 22))
-                                    .foregroundStyle(Color(hex: "94A3B8"))
+                                    .foregroundStyle(Color.textTertiary)
                             }
                         }
                         .padding(.top, 4)
@@ -208,7 +220,7 @@ struct HomeView: View {
                     .background(.white, in: RoundedRectangle(cornerRadius: 20))
                     .overlay(
                         RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                            .stroke(Color.border, lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -218,14 +230,39 @@ struct HomeView: View {
 
     // MARK: - Today's Episodes
 
+    private func playAll(_ episodes: [Episode]) {
+        guard let first = episodes.first else { return }
+        audioPlayer.playEpisode(first, in: episodes)
+        showPlayer = true
+    }
+
+    private var todayEpisodes: [Episode] {
+        let today = DateFormatter.episodeDate.string(from: Date())
+        return dataStore.episodes.filter { $0.date == today }
+    }
+
     private var todayList: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("今日播客")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(Color(hex: "1E293B"))
+            if !todayEpisodes.isEmpty {
+                HStack {
+                    Text("今日播客")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Spacer()
+                    Button { playAll(todayEpisodes) } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 10))
+                            Text("全部播放")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundStyle(Color.appPrimary)
+                    }
+                }
 
-            ForEach(dataStore.episodes.dropFirst()) { episode in
-                episodeRow(episode)
+                ForEach(todayEpisodes) { episode in
+                    episodeRow(episode)
+                }
             }
         }
     }
@@ -241,24 +278,32 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(episode.title)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Color(hex: "1E293B"))
-                    Text("第 \(episodeNumber(episode)) 集 · \(episode.durationSeconds / 60) 分钟")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color(hex: "94A3B8"))
+                        .foregroundStyle(Color.textPrimary)
+                    HStack(spacing: 6) {
+                        Text(episode.podcastLevel?.tabName ?? "")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(levelDotColor(episode.level))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(levelBgColor(episode.level), in: RoundedRectangle(cornerRadius: 4))
+                        Text("\(episode.dateDisplay) · \(episode.durationDisplay)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textTertiary)
+                    }
                 }
 
                 Spacer()
 
                 Image(systemName: "play.fill")
                     .font(.system(size: 18))
-                    .foregroundStyle(Color(hex: "3B82F6"))
+                    .foregroundStyle(Color.appPrimary)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .background(.white, in: RoundedRectangle(cornerRadius: 14))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
+                    .stroke(Color.border, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -268,90 +313,70 @@ struct HomeView: View {
 
     private var weeklyPicksList: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("本周播客精选")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(Color(hex: "1E293B"))
+            if !weeklyPicks.isEmpty {
+                HStack {
+                    Text("本周精选")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Spacer()
+                    Button { playAll(weeklyPicks) } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 10))
+                            Text("全部播放")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundStyle(Color.appPrimary)
+                    }
+                }
 
-            ForEach(weeklyPicks) { episode in
-                weeklyPickRow(episode)
+                ForEach(weeklyPicks) { episode in
+                    episodeRow(episode)
+                }
             }
         }
     }
 
     private var weeklyPicks: [Episode] {
-        // Show episodes from other levels as "picks"
-        let otherLevels = PodcastLevel.allCases.filter { $0 != dataStore.selectedLevel }
-        return otherLevels.flatMap { MockDataLoader.loadEpisodes(for: $0).prefix(2) }
-    }
-
-    private func weeklyPickRow(_ episode: Episode) -> some View {
-        Button {
-            audioPlayer.playEpisode(episode)
-            showPlayer = true
-        } label: {
-            HStack(spacing: 14) {
-                EpisodeThumbnail(episode: episode, size: 44)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(episode.title)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Color(hex: "1E293B"))
-                    HStack(spacing: 6) {
-                        Text(episode.podcastLevel?.tabName ?? "")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(levelDotColor(episode.level))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(levelBgColor(episode.level), in: RoundedRectangle(cornerRadius: 4))
-                        Text("\(episode.durationSeconds / 60) 分钟 · \(episode.vocabulary.count) 个生词")
-                            .font(.system(size: 12))
-                            .foregroundStyle(Color(hex: "94A3B8"))
-                    }
-                }
-
-                Spacer()
-
-                Image(systemName: "play.fill")
-                    .font(.system(size: 16))
-                    .foregroundStyle(Color(hex: "3B82F6"))
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(.white, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color(hex: "E2E8F0"), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
+        // Same level, last 7 days excluding today
+        let today = DateFormatter.episodeDate.string(from: Date())
+        guard let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) else { return [] }
+        let cutoff = DateFormatter.episodeDate.string(from: weekAgo)
+        return dataStore.episodes.filter {
+            $0.date != today && $0.date >= cutoff
+        }.reversed() // newest first
     }
 
     private func levelDotColor(_ level: String) -> Color {
         switch level {
-        case "easy": Color(hex: "22C55E")
-        case "medium": Color(hex: "3B82F6")
-        case "hard": Color(hex: "F97316")
-        default: Color(hex: "94A3B8")
+        case "easy": Color.success
+        case "medium": Color.appPrimary
+        case "hard": Color.hardOrange
+        default: Color.textTertiary
         }
     }
 
     private func levelBgColor(_ level: String) -> Color {
         switch level {
-        case "easy": Color(hex: "DCFCE7")
-        case "medium": Color(hex: "EFF6FF")
-        case "hard": Color(hex: "FEF3C7")
-        default: Color(hex: "F1F5F9")
+        case "easy": Color.successLight
+        case "medium": Color.primaryLight
+        case "hard": Color.warningLight
+        default: Color.divider
         }
     }
 
     // MARK: - Past Episodes
 
     private var pastEpisodes: [Episode] {
-        // All episodes from all levels, simulating accumulated content
-        let all = MockDataLoader.loadAllEpisodes()
-        // Exclude episodes already shown in today list
-        let todayIds = Set(dataStore.episodes.map(\.id))
-        return all.filter { !todayIds.contains($0.id) }
+        let today = DateFormatter.episodeDate.string(from: Date())
+        // Only show current level, within last 15 days
+        guard let cutoffDate = Calendar.current.date(byAdding: .day, value: -15, to: Date()) else {
+            return []
+        }
+        let cutoff = DateFormatter.episodeDate.string(from: cutoffDate)
+        return dataStore.episodes.filter {
+            $0.date != today && $0.date >= cutoff
+        }.reversed() // newest first
     }
 
     private var pastEpisodesList: some View {
@@ -359,7 +384,20 @@ struct HomeView: View {
             HStack {
                 Text("往期回顾")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(Color(hex: "1E293B"))
+                    .foregroundStyle(Color.textPrimary)
+
+                if !pastEpisodes.isEmpty {
+                    Button { playAll(pastEpisodes) } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 10))
+                            Text("全部播放")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundStyle(Color.appPrimary)
+                    }
+                }
+
                 Spacer()
                 if pastEpisodes.count > 5 {
                     Button { showAllEpisodes = true } label: {
@@ -369,7 +407,7 @@ struct HomeView: View {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 11))
                         }
-                        .foregroundStyle(Color(hex: "3B82F6"))
+                        .foregroundStyle(Color.appPrimary)
                     }
                 }
             }
@@ -377,15 +415,57 @@ struct HomeView: View {
             if pastEpisodes.isEmpty {
                 Text("暂无往期内容")
                     .font(.system(size: 14))
-                    .foregroundStyle(Color(hex: "94A3B8"))
+                    .foregroundStyle(Color.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 16)
             } else {
                 ForEach(pastEpisodes.prefix(5)) { episode in
-                    episodeRow(episode)
+                    pastEpisodeRow(episode)
                 }
             }
         }
+    }
+
+    private func pastEpisodeRow(_ episode: Episode) -> some View {
+        Button {
+            audioPlayer.playEpisode(episode, in: Array(pastEpisodes))
+            showPlayer = true
+        } label: {
+            HStack(spacing: 14) {
+                EpisodeThumbnail(episode: episode, size: 44)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(episode.title)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.textPrimary)
+                    HStack(spacing: 6) {
+                        Text(episode.podcastLevel?.tabName ?? "")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(levelDotColor(episode.level))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(levelBgColor(episode.level), in: RoundedRectangle(cornerRadius: 4))
+                        Text("\(episode.dateDisplay) · \(episode.durationDisplay)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "play.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(Color.appPrimary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(.white, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.border, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Helpers
