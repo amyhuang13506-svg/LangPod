@@ -152,6 +152,11 @@
 		C10016 /* ep-20260330-medium-002_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C20016; };
 		C10017 /* ep-20260330-medium-002_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C20017; };
 		C10018 /* ep-20260330-medium-002_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C20018; };
+		C10019 /* onboarding_demo_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C20019; };
+		C10020 /* onboarding_demo_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C20020; };
+		C10021 /* onboarding_trial_easy_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C20021; };
+		C10022 /* onboarding_trial_medium_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C20022; };
+		C10023 /* onboarding_trial_hard_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C20023; };
 		D10001 /* AchievementsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20001; };
 /* End PBXBuildFile section */
 
@@ -304,6 +309,11 @@
 		C20016 /* ep-20260330-medium-002_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260330-medium-002_cover.jpg; sourceTree = "<group>"; };
 		C20017 /* ep-20260330-medium-002_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260330-medium-002_en.mp3; sourceTree = "<group>"; };
 		C20018 /* ep-20260330-medium-002_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260330-medium-002_zh.mp3; sourceTree = "<group>"; };
+		C20019 /* onboarding_demo_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = onboarding_demo_en.mp3; sourceTree = "<group>"; };
+		C20020 /* onboarding_demo_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = onboarding_demo_zh.mp3; sourceTree = "<group>"; };
+		C20021 /* onboarding_trial_easy_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = onboarding_trial_easy_en.mp3; sourceTree = "<group>"; };
+		C20022 /* onboarding_trial_medium_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = onboarding_trial_medium_en.mp3; sourceTree = "<group>"; };
+		C20023 /* onboarding_trial_hard_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = onboarding_trial_hard_en.mp3; sourceTree = "<group>"; };
 		D20001 /* AchievementsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsPage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -517,6 +527,11 @@
 				C20016 /* ep-20260330-medium-002_cover.jpg */,
 				C20017 /* ep-20260330-medium-002_en.mp3 */,
 				C20018 /* ep-20260330-medium-002_zh.mp3 */,
+				C20019 /* onboarding_demo_en.mp3 */,
+				C20020 /* onboarding_demo_zh.mp3 */,
+				C20021 /* onboarding_trial_easy_en.mp3 */,
+				C20022 /* onboarding_trial_medium_en.mp3 */,
+				C20023 /* onboarding_trial_hard_en.mp3 */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -694,6 +709,11 @@
 				C10016 /* ep-20260330-medium-002_cover.jpg in Resources */,
 				C10017 /* ep-20260330-medium-002_en.mp3 in Resources */,
 				C10018 /* ep-20260330-medium-002_zh.mp3 in Resources */,
+				C10019 /* onboarding_demo_en.mp3 in Resources */,
+				C10020 /* onboarding_demo_zh.mp3 in Resources */,
+				C10021 /* onboarding_trial_easy_en.mp3 in Resources */,
+				C10022 /* onboarding_trial_medium_en.mp3 in Resources */,
+				C10023 /* onboarding_trial_hard_en.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

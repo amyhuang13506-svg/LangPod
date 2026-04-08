@@ -64,42 +64,13 @@ struct LangPodApp: App {
                 setupBackgroundCompletion()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                // When app comes back, check if we need to auto-play next
-                if audioPlayer.pendingAutoNext && audioPlayer.phase == .finished {
-                    audioPlayer.pendingAutoNext = false
-                    audioPlayer.skipToNextEpisode()
-                }
+                // Reserved for future foreground resume logic
             }
         }
     }
 
     private func setupBackgroundCompletion() {
-        audioPlayer.onEpisodeFinishedBackground = {
-            guard let episode = audioPlayer.currentEpisode else { return }
-
-            // Auto-save vocabulary
-            vocabularyStore.saveWords(from: episode)
-
-            // Record completion
-            dataStore.completeEpisode(totalWords: vocabularyStore.totalCount, episode: episode)
-
-            // Store for potential complete page view
-            appState.completedEpisode = episode
-
-            // Show toast
-            appState.toastTitle = episode.title
-            appState.toastWordCount = episode.vocabulary.count
-            withAnimation(.easeInOut(duration: 0.3)) {
-                appState.showToast = true
-            }
-
-            // Hide toast after 3 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    appState.showToast = false
-                }
-            }
-            // Note: auto play next is handled directly by AudioPlayer.advancePhase()
-        }
+        // Background completion is handled by AudioPlayer.onEpisodeFinished callback
+        // set in PlayerView. This method is reserved for future background-specific logic.
     }
 }
