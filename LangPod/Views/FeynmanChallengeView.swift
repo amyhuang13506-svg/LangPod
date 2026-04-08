@@ -244,7 +244,7 @@ struct FeynmanChallengeView: View {
                     }
 
                     // Play correct sentence
-                    Button { WordSpeaker.shared.speak(correctSentence) } label: {
+                    Button { WordSpeaker.shared.speakSentence(correctSentence) } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "speaker.wave.2.fill")
                                 .font(.system(size: 16))
@@ -572,7 +572,7 @@ struct FeynmanChallengeView: View {
                 answerState = .correct
             }
             // Auto-play the complete sentence
-            WordSpeaker.shared.speak(correctSentence)
+            WordSpeaker.shared.speakSentence(correctSentence)
             store.recordSentenceCorrect(challengeWords[currentIndex].word)
             sessionPracticedWords.insert(challengeWords[currentIndex].word)
         } else {

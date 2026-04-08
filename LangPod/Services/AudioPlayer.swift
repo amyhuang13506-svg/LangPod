@@ -143,12 +143,10 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             }
         }
 
-        // Then try cached file, then stream from URL
+        // Then try cached file, then download from URL
         if let cachedURL = cachedFileURL(for: urlString) {
             playAudioFile(cachedURL)
         } else if let url = URL(string: urlString) {
-            // For MVP with mock data, use a placeholder silent approach
-            // In production, this would stream from the URL
             playFromRemote(url)
         }
 
@@ -197,11 +195,11 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     private func playAudioFile(_ url: URL) {
         stopTimer()
         player?.stop()
-        print("🎵 AudioPlayer: Playing file: \(url.lastPathComponent)")
 
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default, options: [])
+            try session.setActive(true, options: .notifyOthersOnDeactivation)
             player = try AVAudioPlayer(contentsOf: url)
             player?.delegate = self
             player?.enableRate = true
@@ -219,9 +217,13 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
     private func playFromRemote(_ url: URL) {
-        // Check if this is a placeholder mock URL
-        if url.absoluteString.contains("oss.langpod.com") && !url.absoluteString.hasPrefix("http://47.") {
-            // Try to download and play real audio
+        // Try to download and play any real HTTP(S) URL
+        if url.scheme == "http" || url.scheme == "https" {
+            // Show loading state immediately so UI doesn't feel stuck
+            isPlaying = true
+            progress = 0
+            duration = 0
+
             Task {
                 do {
                     let (data, response) = try await URLSession.shared.data(from: url)
@@ -230,7 +232,6 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                         await MainActor.run { simulatePlayback() }
                         return
                     }
-                    // Cache the downloaded audio
                     let key = cacheKey(for: url.absoluteString)
                     let cachedFile = cacheDirectory.appendingPathComponent(key)
                     try data.write(to: cachedFile)
@@ -240,7 +241,6 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                 }
             }
         } else {
-            // Placeholder URL, simulate playback
             simulatePlayback()
         }
     }
@@ -271,7 +271,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     // MARK: - AVAudioPlayerDelegate
 
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        guard flag, !userPaused else { return }
+        guard !userPaused else { return }
         DispatchQueue.main.async {
             self.cacheIfNeeded()
             self.advancePhase()

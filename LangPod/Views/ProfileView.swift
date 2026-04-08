@@ -427,7 +427,6 @@ struct SleepTimerPage: View {
                     } else {
                         audioPlayer.cancelSleepTimer()
                     }
-                    dismiss()
                 } label: {
                     HStack {
                         Text(option.label)
@@ -442,6 +441,7 @@ struct SleepTimerPage: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 16)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
