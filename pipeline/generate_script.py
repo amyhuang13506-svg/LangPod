@@ -50,22 +50,33 @@ def generate_episode_script(level, episode_num, topic=None):
     if "%s" in level_prompt:
         level_prompt = level_prompt % BANNED_TOPICS
 
+    max_words = level_config.get("max_words_per_sentence")
+    max_words_warning = ""
+    if max_words:
+        max_words_warning = (
+            "SENTENCE LENGTH LIMIT: Every English sentence MUST be under %d words. "
+            "Count carefully. Sentences exceeding this limit will cause garbled TTS audio. "
+            "If a thought is too long, split it into 2 sentences.\n\n" % max_words
+        )
+
     prompt = """%s
 
-SPEAKERS: Use "%s" (male) and "%s" (female) as the speaker names. For solo format, use "Host".
+SPEAKERS: For two-person formats, use "%s" (male) and "%s" (female). For solo formats, use "Host".
 
-%sGenerate the dialogue as valid JSON ONLY (no markdown, no explanation):
+%s%s=== OUTPUT FORMAT ===
+Generate valid JSON ONLY. No markdown, no explanation, no text outside the JSON.
+
 {
   "id": "%s",
-  "title": "Short Catchy English Title",
+  "title": "Short Catchy English Title (2-5 words)",
   "level": "%s",
   "date": "%s",
   "duration_seconds": 0,
   "script": [
     {
-      "speaker": "%s",
-      "text": "English dialogue line",
-      "translation_zh": "自然中文翻译",
+      "speaker": "%s or Host",
+      "text": "English line",
+      "translation_zh": "完整的中文翻译（必须覆盖英文的全部内容）",
       "emotion": "neutral"
     }
   ],
@@ -80,22 +91,33 @@ SPEAKERS: Use "%s" (male) and "%s" (female) as the speaker names. For solo forma
   ]
 }
 
-Pick %s vocabulary words that appear in the dialogue.
+=== VOCABULARY ===
+Pick %s vocabulary words that appear in the script.
+Each word must actually be used in one of the script lines.
+
+=== TIMESTAMPS ===
 Do NOT include start/end timestamps — they will be calculated from audio.
 Do NOT set duration_seconds — it will be calculated from audio.
 
-IMPORTANT: For each script line, set "emotion" to EXACTLY ONE of these 5 values (no other values allowed):
+=== EMOTION VALUES (STRICT — only these 5 strings allowed) ===
 - "happy" — excited, agreeing, positive, curious, interested, enthusiastic
 - "sad" — serious, concerned, empathetic, worried
 - "angry" — frustrated, critical, disappointed
 - "surprised" — shocked, amazed, intrigued, disbelief
 - "neutral" — normal statement, explaining facts, calm narration, asking questions
-ONLY use these 5 exact strings. Do NOT invent other emotion values like "curious" or "excited".
+
+=== FINAL CHECKLIST (verify before outputting) ===
+1. Every script line has a non-empty "translation_zh" that fully covers the English
+2. Every sentence is within the word limit for this level
+3. No parentheses or special punctuation that could confuse TTS
+4. Vocabulary words actually appear in the script text
+5. The JSON is valid and parseable
 """ % (
         level_prompt,
         male_name,
         female_name,
         topic_line,
+        max_words_warning,
         ep_id,
         level,
         date_str,
