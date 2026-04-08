@@ -125,6 +125,7 @@
 		B10089 /* ep-20260328-hard-010_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20089; };
 		B30001 /* EpisodeToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30002; };
 		B40001 /* WordSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40002; };
+		NM0001 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = NM0002; };
 		C10001 /* ep-20260330-easy-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C20001; };
 		C10002 /* ep-20260330-easy-001_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C20002; };
 		C10003 /* ep-20260330-easy-001_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C20003; };
@@ -273,6 +274,7 @@
 		B20089 /* ep-20260328-hard-010_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260328-hard-010_cover.jpg; sourceTree = "<group>"; };
 		B30002 /* EpisodeToast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeToast.swift; sourceTree = "<group>"; };
 		B40002 /* WordSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSpeaker.swift; sourceTree = "<group>"; };
+		NM0002 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		C20001 /* ep-20260330-easy-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260330-easy-001_cover.jpg; sourceTree = "<group>"; };
 		C20002 /* ep-20260330-easy-001_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260330-easy-001_en.mp3; sourceTree = "<group>"; };
 		C20003 /* ep-20260330-easy-001_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260330-easy-001_zh.mp3; sourceTree = "<group>"; };
@@ -357,6 +359,7 @@
 				A20025 /* VocabularyStore.swift */,
 				A20034 /* APIService.swift */,
 				B40002 /* WordSpeaker.swift */,
+				NM0002 /* NotificationManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -720,6 +723,7 @@
 				A10044 /* AllEpisodesView.swift in Sources */,
 				B30001 /* EpisodeToast.swift in Sources */,
 				B40001 /* WordSpeaker.swift in Sources */,
+				NM0001 /* NotificationManager.swift in Sources */,
 				D10001 /* AchievementsPage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

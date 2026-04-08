@@ -7,6 +7,7 @@ struct EpisodeCompleteView: View {
 
     @Environment(DataStore.self) private var dataStore
     @Environment(VocabularyStore.self) private var vocabularyStore
+    @State private var encounteredWords: [SavedWord] = []
 
     var body: some View {
         ZStack {
@@ -31,6 +32,35 @@ struct EpisodeCompleteView: View {
 
                     // Stats row
                     statsRow
+
+                    // Encountered words (recycled from previous episodes)
+                    if !encounteredWords.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(Color(hex: "8B5CF6"))
+                                Text("你的旧词又出现了")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundStyle(Color.textPrimary)
+                            }
+
+                            ForEach(encounteredWords) { word in
+                                HStack(spacing: 10) {
+                                    Text(word.word)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(Color(hex: "8B5CF6"))
+                                    Spacer()
+                                    Text("已听到 \(word.encounterCount) 次")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.textTertiary)
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(Color(hex: "F5F3FF"), in: RoundedRectangle(cornerRadius: 10))
+                            }
+                        }
+                    }
 
                     // Vocabulary section
                     Text("本集重点生词")
@@ -70,6 +100,20 @@ struct EpisodeCompleteView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 62)
                 .padding(.bottom, 24)
+            }
+        }
+        .onAppear {
+            // Detect words from user's vocabulary that appeared in this episode
+            let newVocabWords = Set(episode.vocabulary.map { $0.word.lowercased() })
+            encounteredWords = vocabularyStore.detectEncounteredWords(in: episode)
+                .filter { !newVocabWords.contains($0.word.lowercased()) } // exclude this episode's own vocab
+                .filter { $0.encounterCount > 1 }
+
+            // Schedule local notification for encountered words
+            if !encounteredWords.isEmpty {
+                NotificationManager().scheduleEncounterReminder(
+                    words: encounteredWords.map(\.word)
+                )
             }
         }
     }

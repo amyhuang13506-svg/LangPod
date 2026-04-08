@@ -60,6 +60,30 @@ class VocabularyStore {
         persist()
     }
 
+    /// Detect words from user's vocabulary that appear in this episode's script
+    func detectEncounteredWords(in episode: Episode) -> [SavedWord] {
+        // Extract all words from the episode script
+        let scriptText = episode.script.map(\.text).joined(separator: " ").lowercased()
+        let scriptWords = Set(scriptText.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty })
+
+        // Also include explicitly marked recycled words
+        let recycled = Set((episode.recycledWords ?? []).map { $0.lowercased() })
+
+        var encountered: [SavedWord] = []
+        for i in words.indices {
+            let wordLower = words[i].word.lowercased()
+            if scriptWords.contains(wordLower) || recycled.contains(wordLower) {
+                // Only count if this word was saved before this episode
+                words[i].encounterCount += 1
+                words[i].lastEncounterDate = Date()
+                encountered.append(words[i])
+            }
+        }
+
+        if !encountered.isEmpty { persist() }
+        return encountered
+    }
+
     func clearMasteredWords() {
         words.removeAll { $0.memoryState == .strong }
         persist()

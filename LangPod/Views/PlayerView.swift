@@ -273,6 +273,21 @@ struct PlayerView: View {
                                 .foregroundStyle(isCurrentEpisodeStarred ? Color.warning : Color.textTertiary)
                         }
                     }
+
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            player.playOrder = player.playOrder.next
+                        }
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: player.playOrder.icon)
+                                .font(.system(size: 22))
+                                .foregroundStyle(player.playOrder == .sequential ? Color.textTertiary : Color.appPrimary)
+                            Text(player.playOrder.label)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(player.playOrder == .sequential ? Color.textTertiary : Color.appPrimary)
+                        }
+                    }
                 }
                 .padding(.top, 28)
 

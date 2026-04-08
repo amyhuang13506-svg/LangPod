@@ -72,6 +72,8 @@ struct SavedWord: Codable, Identifiable {
     var matchCorrectCount: Int      // 配对答对次数
     var sentenceCorrectCount: Int   // 造句答对次数
     var savedDate: Date             // 保存时间
+    var encounterCount: Int         // 在不同集中听到的总次数
+    var lastEncounterDate: Date?    // 最近一次在新集中碰到的日期
 
     var id: String { word }
 
@@ -99,6 +101,23 @@ struct SavedWord: Codable, Identifiable {
         return .forgetting
     }
 
+    // Custom decoder for backward compatibility (old data without encounterCount)
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        word = try container.decode(String.self, forKey: .word)
+        phonetic = try container.decode(String.self, forKey: .phonetic)
+        translationZh = try container.decode(String.self, forKey: .translationZh)
+        example = try container.decode(String.self, forKey: .example)
+        exampleZh = try container.decodeIfPresent(String.self, forKey: .exampleZh)
+        masteryLevel = try container.decode(MasteryLevel.self, forKey: .masteryLevel)
+        lastPracticeDate = try container.decode(Date.self, forKey: .lastPracticeDate)
+        matchCorrectCount = try container.decode(Int.self, forKey: .matchCorrectCount)
+        sentenceCorrectCount = try container.decode(Int.self, forKey: .sentenceCorrectCount)
+        savedDate = try container.decode(Date.self, forKey: .savedDate)
+        encounterCount = try container.decodeIfPresent(Int.self, forKey: .encounterCount) ?? 1
+        lastEncounterDate = try container.decodeIfPresent(Date.self, forKey: .lastEncounterDate)
+    }
+
     init(from vocab: VocabularyItem) {
         self.word = vocab.word
         self.phonetic = vocab.phonetic
@@ -110,6 +129,8 @@ struct SavedWord: Codable, Identifiable {
         self.matchCorrectCount = 0
         self.sentenceCorrectCount = 0
         self.savedDate = Date()
+        self.encounterCount = 1
+        self.lastEncounterDate = nil
     }
 
     mutating func recordMatchCorrect() {

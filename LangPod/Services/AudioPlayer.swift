@@ -42,6 +42,37 @@ enum PlaybackPhase: Equatable {
     }
 }
 
+/// Play order mode
+enum PlayOrder: String, CaseIterable {
+    case sequential  // 列表循环
+    case shuffle     // 随机播放
+    case repeatOne   // 单集循环
+
+    var icon: String {
+        switch self {
+        case .sequential: return "repeat"
+        case .shuffle: return "shuffle"
+        case .repeatOne: return "repeat.1"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .sequential: return "列表循环"
+        case .shuffle: return "随机播放"
+        case .repeatOne: return "单集循环"
+        }
+    }
+
+    var next: PlayOrder {
+        switch self {
+        case .sequential: return .shuffle
+        case .shuffle: return .repeatOne
+        case .repeatOne: return .sequential
+        }
+    }
+}
+
 @Observable
 class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     var isPlaying = false
@@ -51,12 +82,22 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     var duration: Double = 0
     var showSubtitles = false
     var playbackRate: Float = 1.0
+    var playOrder: PlayOrder = PlayOrder(rawValue: UserDefaults.standard.string(forKey: "playOrder") ?? "") ?? .sequential {
+        didSet { UserDefaults.standard.set(playOrder.rawValue, forKey: "playOrder") }
+    }
+
+    // Sleep timer
+    var sleepTimerMinutes: Int? = nil
+    var sleepTimerEndDate: Date? = nil
+    private var sleepTimer: Timer?
 
     static let availableRates: [Float] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
+    static let sleepTimerOptions: [Int] = [15, 30, 60]
 
     private var player: AVAudioPlayer?
     private var timer: Timer?
     private var userPaused = false
+    private var recentlyPlayed: [String] = []  // track last 3 episode IDs for shuffle
 
     // Queue of episodes
     var episodeQueue: [Episode] = []
@@ -69,6 +110,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     func playEpisode(_ episode: Episode, in queue: [Episode] = []) {
         currentEpisode = episode
         if !queue.isEmpty { episodeQueue = queue }
+        if episodeQueue.isEmpty { episodeQueue = [episode] }
         phase = .englishRound(1)
         startCurrentPhase()
     }
@@ -128,6 +170,12 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             phase = .englishRound(5)
             startAfterDelay(1.0)
         case .englishRound:
+            // Single episode repeat: restart from round 1 instead of finishing
+            if playOrder == .repeatOne {
+                phase = .englishRound(1)
+                startAfterDelay(1.0)
+                return
+            }
             phase = .finished
             isPlaying = false
             stopTimer()
@@ -257,10 +305,30 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
     func skipToNextEpisode() {
-        guard let current = currentEpisode else { return }
-        guard let idx = episodeQueue.firstIndex(where: { $0.id == current.id }),
-              idx + 1 < episodeQueue.count else { return }
-        playEpisode(episodeQueue[idx + 1])
+        guard let current = currentEpisode, !episodeQueue.isEmpty else { return }
+
+        // Track recently played for shuffle dedup
+        if !recentlyPlayed.contains(current.id) {
+            recentlyPlayed.append(current.id)
+            if recentlyPlayed.count > 3 { recentlyPlayed.removeFirst() }
+        }
+
+        let nextEpisode: Episode?
+        switch playOrder {
+        case .sequential:
+            guard let idx = episodeQueue.firstIndex(where: { $0.id == current.id }) else { return }
+            let nextIdx = (idx + 1) % episodeQueue.count
+            nextEpisode = episodeQueue[nextIdx]
+        case .shuffle:
+            let candidates = episodeQueue.filter { !recentlyPlayed.contains($0.id) }
+            nextEpisode = candidates.randomElement() ?? episodeQueue.randomElement()
+        case .repeatOne:
+            nextEpisode = current
+        }
+
+        if let next = nextEpisode {
+            playEpisode(next)
+        }
     }
 
     func skipToPreviousEpisode() {
@@ -294,6 +362,35 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         userPaused = false
         progress = 0
         duration = 0
+    }
+
+    // MARK: - Sleep Timer
+
+    func setSleepTimer(_ minutes: Int) {
+        cancelSleepTimer()
+        sleepTimerMinutes = minutes
+        sleepTimerEndDate = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        sleepTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self, let endDate = self.sleepTimerEndDate else { return }
+            if Date() >= endDate {
+                self.stop()
+                self.cancelSleepTimer()
+            }
+        }
+    }
+
+    func cancelSleepTimer() {
+        sleepTimer?.invalidate()
+        sleepTimer = nil
+        sleepTimerMinutes = nil
+        sleepTimerEndDate = nil
+    }
+
+    var sleepTimerRemainingText: String? {
+        guard let endDate = sleepTimerEndDate else { return nil }
+        let remaining = Int(endDate.timeIntervalSinceNow)
+        guard remaining > 0 else { return nil }
+        return "\(remaining / 60):\(String(format: "%02d", remaining % 60))"
     }
 
     // MARK: - Cache

@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(DataStore.self) private var dataStore
     @Environment(VocabularyStore.self) private var vocabularyStore
+    @Environment(AudioPlayer.self) private var audioPlayer
     @State private var showPaywall = false
     @State private var showShareCard = false
     @State private var showClearAlert = false
@@ -128,6 +129,13 @@ struct ProfileView: View {
         return formatter.string(from: reminderTime)
     }
 
+    private var sleepTimerDisplayValue: String {
+        if let minutes = audioPlayer.sleepTimerMinutes {
+            return "\(minutes)分钟"
+        }
+        return "关闭"
+    }
+
     private var settingsSection: some View {
         VStack(spacing: 0) {
             NavigationLink {
@@ -149,6 +157,13 @@ struct ProfileView: View {
             } label: {
                 settingsRow(icon: "bell", iconColor: "3B82F6",
                             title: "每日提醒", value: reminderTimeString)
+            }
+            divider
+            NavigationLink {
+                SleepTimerPage(audioPlayer: audioPlayer)
+            } label: {
+                settingsRow(icon: "moon.zzz", iconColor: "8B5CF6",
+                            title: "定时停止", value: sleepTimerDisplayValue)
             }
         }
         .background(.white, in: RoundedRectangle(cornerRadius: 16))
@@ -391,8 +406,68 @@ struct ReminderTimePage: View {
     }
 }
 
+struct SleepTimerPage: View {
+    var audioPlayer: AudioPlayer
+    @Environment(\.dismiss) private var dismiss
+
+    private let options: [(label: String, minutes: Int?)] = [
+        ("15 分钟", 15),
+        ("30 分钟", 30),
+        ("60 分钟", 60),
+        ("关闭", nil),
+    ]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(options, id: \.label) { option in
+                let isSelected = audioPlayer.sleepTimerMinutes == option.minutes
+                Button {
+                    if let minutes = option.minutes {
+                        audioPlayer.setSleepTimer(minutes)
+                    } else {
+                        audioPlayer.cancelSleepTimer()
+                    }
+                    dismiss()
+                } label: {
+                    HStack {
+                        Text(option.label)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(Color.textPrimary)
+                        Spacer()
+                        if isSelected {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color.appPrimary)
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 16)
+                }
+                .buttonStyle(.plain)
+
+                if option.label != options.last?.label {
+                    Divider().padding(.leading, 24)
+                }
+            }
+
+            if let remaining = audioPlayer.sleepTimerRemainingText {
+                Text("剩余 \(remaining)")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.textTertiary)
+                    .padding(.top, 20)
+            }
+
+            Spacer()
+        }
+        .padding(.top, 16)
+        .navigationTitle("定时停止")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 #Preview {
     ProfileView()
         .environment(DataStore())
         .environment(VocabularyStore())
+        .environment(AudioPlayer())
 }

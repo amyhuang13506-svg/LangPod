@@ -15,6 +15,7 @@ struct LangPodApp: App {
     @State private var audioPlayer = AudioPlayer()
     @State private var vocabularyStore = VocabularyStore()
     @State private var appState = AppState()
+    @State private var notificationManager = NotificationManager()
 
     var body: some Scene {
         WindowGroup {
@@ -62,6 +63,10 @@ struct LangPodApp: App {
             }
             .task {
                 setupBackgroundCompletion()
+                // Request notification permission after first launch
+                if dataStore.hasCompletedOnboarding {
+                    notificationManager.requestPermission()
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 // Reserved for future foreground resume logic

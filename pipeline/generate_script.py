@@ -29,10 +29,73 @@ from config import (
     BANNED_TOPICS,
     LEVELS,
     OUTPUT_DIR,
+    RECYCLE_WORD_COUNT,
+    RECYCLE_WINDOW_DAYS,
+    RECYCLE_MAX_TIMES,
 )
 
+MANIFEST_PATH = os.path.join(OUTPUT_DIR, "vocabulary_manifest.json")
 
-def generate_episode_script(level, episode_num, topic=None):
+
+def load_vocabulary_manifest():
+    """Load the vocabulary manifest tracking all generated words."""
+    if os.path.exists(MANIFEST_PATH):
+        with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {"easy": [], "medium": [], "hard": []}
+
+
+def save_vocabulary_manifest(manifest):
+    """Save the vocabulary manifest."""
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+
+
+def select_recycle_words(manifest, level, count=RECYCLE_WORD_COUNT):
+    """Pick words from recent episodes to recycle in new content."""
+    words = manifest.get(level, [])
+    if not words:
+        return []
+
+    today = datetime.now()
+    candidates = []
+    for w in words:
+        try:
+            word_date = datetime.strptime(w["date"], "%Y-%m-%d")
+        except (ValueError, KeyError):
+            continue
+        days_ago = (today - word_date).days
+        if 3 <= days_ago <= RECYCLE_WINDOW_DAYS and w.get("recycle_count", 0) < RECYCLE_MAX_TIMES:
+            candidates.append((w, days_ago))
+
+    # Prefer words from 3-7 days ago
+    candidates.sort(key=lambda x: abs(x[1] - 5))
+    selected = [c[0]["word"] for c in candidates[:count * 2]]
+    random.shuffle(selected)
+    return selected[:count]
+
+
+def update_vocabulary_manifest(manifest, level, episode):
+    """Add new vocabulary words from an episode to the manifest."""
+    for vocab in episode.get("vocabulary", []):
+        manifest.setdefault(level, []).append({
+            "word": vocab["word"],
+            "episode_id": episode["id"],
+            "date": episode["date"],
+            "recycle_count": 0,
+        })
+
+    # Mark recycled words
+    recycled = episode.get("recycled_words", [])
+    for entry in manifest.get(level, []):
+        if entry["word"] in recycled:
+            entry["recycle_count"] = entry.get("recycle_count", 0) + 1
+
+    save_vocabulary_manifest(manifest)
+
+
+def generate_episode_script(level, episode_num, topic=None, recycle_words=None):
     """Generate a complete episode script using GPT API."""
     level_config = LEVELS[level]
     date_str = datetime.now().strftime("%Y-%m-%d")
@@ -44,6 +107,14 @@ def generate_episode_script(level, episode_num, topic=None):
     topic_line = ""
     if topic:
         topic_line = "TODAY'S TOPIC: %s\nBuild the entire conversation around this topic.\n\n" % topic
+
+    recycle_line = ""
+    if recycle_words:
+        recycle_line = (
+            "WORD RECYCLING: Naturally weave these previously taught words into the dialogue: %s.\n"
+            "These should appear organically in conversation. Do NOT add them to the vocabulary list.\n"
+            "If a word doesn't fit the topic naturally, skip it. Topic takes priority.\n\n"
+        ) % ", ".join(recycle_words)
 
     # Format the level prompt with BANNED_TOPICS
     level_prompt = level_config["prompt"]
@@ -63,7 +134,7 @@ def generate_episode_script(level, episode_num, topic=None):
 
 SPEAKERS: For two-person formats, use "%s" (male) and "%s" (female). For solo formats, use "Host".
 
-%s%s=== OUTPUT FORMAT ===
+%s%s%s=== OUTPUT FORMAT ===
 Generate valid JSON ONLY. No markdown, no explanation, no text outside the JSON.
 
 {
@@ -117,6 +188,7 @@ Do NOT set duration_seconds — it will be calculated from audio.
         male_name,
         female_name,
         topic_line,
+        recycle_line,
         max_words_warning,
         ep_id,
         level,
@@ -158,6 +230,8 @@ Do NOT set duration_seconds — it will be calculated from audio.
 
     episode["audio"] = {"english": "", "translation_zh": ""}
     episode["duration_seconds"] = 0
+    if recycle_words:
+        episode["recycled_words"] = recycle_words
 
     for word in episode.get("vocabulary", []):
         word["audio"] = ""
@@ -181,18 +255,27 @@ def main():
     topic = sys.argv[2] if len(sys.argv) > 2 else None
 
     levels_to_generate = {target_level: LEVELS[target_level]} if target_level else LEVELS
+    manifest = load_vocabulary_manifest()
 
     for level, config in levels_to_generate.items():
         count = config["daily_episodes"]
         print("\n📝 Generating %d episode(s) for [%s]..." % (count, level))
 
+        # Select recycle words for this level
+        recycle = select_recycle_words(manifest, level)
+        if recycle:
+            print("   🔄 Recycling words: %s" % ", ".join(recycle))
+
         for i in range(1, count + 1):
             try:
-                episode = generate_episode_script(level, i, topic)
+                episode = generate_episode_script(level, i, topic, recycle_words=recycle)
                 save_episode(episode, level)
+                update_vocabulary_manifest(manifest, level, episode)
                 print("   Title: %s" % episode["title"])
                 print("   Lines: %d" % len(episode["script"]))
                 print("   Vocabulary: %d words" % len(episode["vocabulary"]))
+                if recycle:
+                    print("   Recycled: %s" % ", ".join(recycle))
             except Exception as e:
                 print("❌ Error: %s" % e)
 

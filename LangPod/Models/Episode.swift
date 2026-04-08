@@ -10,11 +10,13 @@ struct Episode: Codable, Identifiable {
     let script: [ScriptLine]
     let vocabulary: [VocabularyItem]
     var thumbnail: String?
+    var recycledWords: [String]?
 
     enum CodingKeys: String, CodingKey {
         case id, title, level, date, thumbnail
         case durationSeconds = "duration_seconds"
         case audio, script, vocabulary
+        case recycledWords = "recycled_words"
     }
 
     var podcastLevel: PodcastLevel? {
