@@ -158,6 +158,7 @@ struct FeynmanChallengeView: View {
                 ForEach(selectedTokens) { token in
                     Button {
                         if answerState == .building {
+                            WordSpeaker.shared.speak(token.text)
                             removeToken(token)
                         }
                     } label: {
@@ -195,6 +196,7 @@ struct FeynmanChallengeView: View {
             ForEach(availableTokens) { token in
                 Button {
                     if answerState == .building {
+                        WordSpeaker.shared.speak(token.text)
                         addToken(token)
                     }
                 } label: {
@@ -296,15 +298,28 @@ struct FeynmanChallengeView: View {
                             .foregroundStyle(Color.textTertiary)
                     }
 
-                    Button {
-                        resetCurrentQuestion()
-                    } label: {
-                        Text("重试")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 52)
-                            .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+                    HStack(spacing: 12) {
+                        Button {
+                            resetCurrentQuestion()
+                        } label: {
+                            Text("重试")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+                        }
+
+                        Button {
+                            advanceWord()
+                        } label: {
+                            Text("跳过")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color.textSecondary)
+                                .frame(width: 80)
+                                .frame(height: 52)
+                                .background(Color.divider, in: RoundedRectangle(cornerRadius: 14))
+                        }
                     }
                 }
             }
@@ -556,6 +571,8 @@ struct FeynmanChallengeView: View {
             withAnimation(.easeInOut(duration: 0.3)) {
                 answerState = .correct
             }
+            // Auto-play the complete sentence
+            WordSpeaker.shared.speak(correctSentence)
             store.recordSentenceCorrect(challengeWords[currentIndex].word)
             sessionPracticedWords.insert(challengeWords[currentIndex].word)
         } else {

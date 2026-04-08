@@ -62,8 +62,6 @@
 		B10018 /* ep-20260321-medium-003_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20018; };
 		B10019 /* ep-20260322-easy-004_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20019; };
 		B10020 /* ep-20260322-easy-004_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20020; };
-		B10021 /* ep-20260322-hard-004_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20021; };
-		B10022 /* ep-20260322-hard-004_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20022; };
 		B10023 /* ep-20260322-medium-004_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20023; };
 		B10024 /* ep-20260322-medium-004_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20024; };
 		B10025 /* ep-20260323-easy-005_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20025; };
@@ -88,8 +86,6 @@
 		B10044 /* ep-20260326-easy-008_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20044; };
 		B10045 /* ep-20260326-hard-008_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20045; };
 		B10046 /* ep-20260326-hard-008_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20046; };
-		B10047 /* ep-20260326-medium-008_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20047; };
-		B10048 /* ep-20260326-medium-008_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20048; };
 		B10049 /* ep-20260327-easy-009_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20049; };
 		B10050 /* ep-20260327-easy-009_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20050; };
 		B10051 /* ep-20260327-hard-009_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20051; };
@@ -100,8 +96,6 @@
 		B10056 /* ep-20260328-easy-010_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20056; };
 		B10057 /* ep-20260328-hard-010_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20057; };
 		B10058 /* ep-20260328-hard-010_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20058; };
-		B10059 /* ep-20260328-medium-010_en.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20059; };
-		B10060 /* ep-20260328-medium-010_zh.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B20060; };
 		B10061 /* ep-20260319-easy-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20061; };
 		B10062 /* ep-20260319-hard-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20062; };
 		B10063 /* ep-20260319-medium-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20063; };
@@ -112,7 +106,6 @@
 		B10068 /* ep-20260321-hard-003_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20068; };
 		B10069 /* ep-20260321-medium-003_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20069; };
 		B10070 /* ep-20260322-easy-004_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20070; };
-		B10071 /* ep-20260322-hard-004_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20071; };
 		B10072 /* ep-20260322-medium-004_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20072; };
 		B10073 /* ep-20260323-easy-005_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20073; };
 		B10074 /* ep-20260323-hard-005_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20074; };
@@ -125,13 +118,11 @@
 		B10081 /* ep-20260325-medium-007_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20081; };
 		B10082 /* ep-20260326-easy-008_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20082; };
 		B10083 /* ep-20260326-hard-008_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20083; };
-		B10084 /* ep-20260326-medium-008_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20084; };
 		B10085 /* ep-20260327-easy-009_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20085; };
 		B10086 /* ep-20260327-hard-009_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20086; };
 		B10087 /* ep-20260327-medium-009_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20087; };
 		B10088 /* ep-20260328-easy-010_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20088; };
 		B10089 /* ep-20260328-hard-010_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20089; };
-		B10090 /* ep-20260328-medium-010_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20090; };
 		B30001 /* EpisodeToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30002; };
 		B40001 /* WordSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40002; };
 		C10001 /* ep-20260330-easy-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C20001; };
@@ -219,8 +210,6 @@
 		B20018 /* ep-20260321-medium-003_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260321-medium-003_zh.mp3; sourceTree = "<group>"; };
 		B20019 /* ep-20260322-easy-004_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260322-easy-004_en.mp3; sourceTree = "<group>"; };
 		B20020 /* ep-20260322-easy-004_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260322-easy-004_zh.mp3; sourceTree = "<group>"; };
-		B20021 /* ep-20260322-hard-004_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260322-hard-004_en.mp3; sourceTree = "<group>"; };
-		B20022 /* ep-20260322-hard-004_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260322-hard-004_zh.mp3; sourceTree = "<group>"; };
 		B20023 /* ep-20260322-medium-004_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260322-medium-004_en.mp3; sourceTree = "<group>"; };
 		B20024 /* ep-20260322-medium-004_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260322-medium-004_zh.mp3; sourceTree = "<group>"; };
 		B20025 /* ep-20260323-easy-005_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260323-easy-005_en.mp3; sourceTree = "<group>"; };
@@ -245,8 +234,6 @@
 		B20044 /* ep-20260326-easy-008_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260326-easy-008_zh.mp3; sourceTree = "<group>"; };
 		B20045 /* ep-20260326-hard-008_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260326-hard-008_en.mp3; sourceTree = "<group>"; };
 		B20046 /* ep-20260326-hard-008_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260326-hard-008_zh.mp3; sourceTree = "<group>"; };
-		B20047 /* ep-20260326-medium-008_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260326-medium-008_en.mp3; sourceTree = "<group>"; };
-		B20048 /* ep-20260326-medium-008_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260326-medium-008_zh.mp3; sourceTree = "<group>"; };
 		B20049 /* ep-20260327-easy-009_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260327-easy-009_en.mp3; sourceTree = "<group>"; };
 		B20050 /* ep-20260327-easy-009_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260327-easy-009_zh.mp3; sourceTree = "<group>"; };
 		B20051 /* ep-20260327-hard-009_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260327-hard-009_en.mp3; sourceTree = "<group>"; };
@@ -257,8 +244,6 @@
 		B20056 /* ep-20260328-easy-010_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260328-easy-010_zh.mp3; sourceTree = "<group>"; };
 		B20057 /* ep-20260328-hard-010_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260328-hard-010_en.mp3; sourceTree = "<group>"; };
 		B20058 /* ep-20260328-hard-010_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260328-hard-010_zh.mp3; sourceTree = "<group>"; };
-		B20059 /* ep-20260328-medium-010_en.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260328-medium-010_en.mp3; sourceTree = "<group>"; };
-		B20060 /* ep-20260328-medium-010_zh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = ep-20260328-medium-010_zh.mp3; sourceTree = "<group>"; };
 		B20061 /* ep-20260319-easy-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260319-easy-001_cover.jpg; sourceTree = "<group>"; };
 		B20062 /* ep-20260319-hard-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260319-hard-001_cover.jpg; sourceTree = "<group>"; };
 		B20063 /* ep-20260319-medium-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260319-medium-001_cover.jpg; sourceTree = "<group>"; };
@@ -269,7 +254,6 @@
 		B20068 /* ep-20260321-hard-003_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260321-hard-003_cover.jpg; sourceTree = "<group>"; };
 		B20069 /* ep-20260321-medium-003_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260321-medium-003_cover.jpg; sourceTree = "<group>"; };
 		B20070 /* ep-20260322-easy-004_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260322-easy-004_cover.jpg; sourceTree = "<group>"; };
-		B20071 /* ep-20260322-hard-004_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260322-hard-004_cover.jpg; sourceTree = "<group>"; };
 		B20072 /* ep-20260322-medium-004_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260322-medium-004_cover.jpg; sourceTree = "<group>"; };
 		B20073 /* ep-20260323-easy-005_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260323-easy-005_cover.jpg; sourceTree = "<group>"; };
 		B20074 /* ep-20260323-hard-005_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260323-hard-005_cover.jpg; sourceTree = "<group>"; };
@@ -282,13 +266,11 @@
 		B20081 /* ep-20260325-medium-007_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260325-medium-007_cover.jpg; sourceTree = "<group>"; };
 		B20082 /* ep-20260326-easy-008_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260326-easy-008_cover.jpg; sourceTree = "<group>"; };
 		B20083 /* ep-20260326-hard-008_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260326-hard-008_cover.jpg; sourceTree = "<group>"; };
-		B20084 /* ep-20260326-medium-008_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260326-medium-008_cover.jpg; sourceTree = "<group>"; };
 		B20085 /* ep-20260327-easy-009_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260327-easy-009_cover.jpg; sourceTree = "<group>"; };
 		B20086 /* ep-20260327-hard-009_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260327-hard-009_cover.jpg; sourceTree = "<group>"; };
 		B20087 /* ep-20260327-medium-009_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260327-medium-009_cover.jpg; sourceTree = "<group>"; };
 		B20088 /* ep-20260328-easy-010_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260328-easy-010_cover.jpg; sourceTree = "<group>"; };
 		B20089 /* ep-20260328-hard-010_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260328-hard-010_cover.jpg; sourceTree = "<group>"; };
-		B20090 /* ep-20260328-medium-010_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260328-medium-010_cover.jpg; sourceTree = "<group>"; };
 		B30002 /* EpisodeToast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeToast.swift; sourceTree = "<group>"; };
 		B40002 /* WordSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSpeaker.swift; sourceTree = "<group>"; };
 		C20001 /* ep-20260330-easy-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ep-20260330-easy-001_cover.jpg; sourceTree = "<group>"; };
@@ -439,8 +421,6 @@
 				B20018 /* ep-20260321-medium-003_zh.mp3 */,
 				B20019 /* ep-20260322-easy-004_en.mp3 */,
 				B20020 /* ep-20260322-easy-004_zh.mp3 */,
-				B20021 /* ep-20260322-hard-004_en.mp3 */,
-				B20022 /* ep-20260322-hard-004_zh.mp3 */,
 				B20023 /* ep-20260322-medium-004_en.mp3 */,
 				B20024 /* ep-20260322-medium-004_zh.mp3 */,
 				B20025 /* ep-20260323-easy-005_en.mp3 */,
@@ -465,8 +445,6 @@
 				B20044 /* ep-20260326-easy-008_zh.mp3 */,
 				B20045 /* ep-20260326-hard-008_en.mp3 */,
 				B20046 /* ep-20260326-hard-008_zh.mp3 */,
-				B20047 /* ep-20260326-medium-008_en.mp3 */,
-				B20048 /* ep-20260326-medium-008_zh.mp3 */,
 				B20049 /* ep-20260327-easy-009_en.mp3 */,
 				B20050 /* ep-20260327-easy-009_zh.mp3 */,
 				B20051 /* ep-20260327-hard-009_en.mp3 */,
@@ -477,8 +455,6 @@
 				B20056 /* ep-20260328-easy-010_zh.mp3 */,
 				B20057 /* ep-20260328-hard-010_en.mp3 */,
 				B20058 /* ep-20260328-hard-010_zh.mp3 */,
-				B20059 /* ep-20260328-medium-010_en.mp3 */,
-				B20060 /* ep-20260328-medium-010_zh.mp3 */,
 				B20061 /* ep-20260319-easy-001_cover.jpg */,
 				B20062 /* ep-20260319-hard-001_cover.jpg */,
 				B20063 /* ep-20260319-medium-001_cover.jpg */,
@@ -489,7 +465,6 @@
 				B20068 /* ep-20260321-hard-003_cover.jpg */,
 				B20069 /* ep-20260321-medium-003_cover.jpg */,
 				B20070 /* ep-20260322-easy-004_cover.jpg */,
-				B20071 /* ep-20260322-hard-004_cover.jpg */,
 				B20072 /* ep-20260322-medium-004_cover.jpg */,
 				B20073 /* ep-20260323-easy-005_cover.jpg */,
 				B20074 /* ep-20260323-hard-005_cover.jpg */,
@@ -502,13 +477,11 @@
 				B20081 /* ep-20260325-medium-007_cover.jpg */,
 				B20082 /* ep-20260326-easy-008_cover.jpg */,
 				B20083 /* ep-20260326-hard-008_cover.jpg */,
-				B20084 /* ep-20260326-medium-008_cover.jpg */,
 				B20085 /* ep-20260327-easy-009_cover.jpg */,
 				B20086 /* ep-20260327-hard-009_cover.jpg */,
 				B20087 /* ep-20260327-medium-009_cover.jpg */,
 				B20088 /* ep-20260328-easy-010_cover.jpg */,
 				B20089 /* ep-20260328-hard-010_cover.jpg */,
-				B20090 /* ep-20260328-medium-010_cover.jpg */,
 				C20001 /* ep-20260330-easy-001_cover.jpg */,
 				C20002 /* ep-20260330-easy-001_en.mp3 */,
 				C20003 /* ep-20260330-easy-001_zh.mp3 */,
@@ -621,8 +594,6 @@
 				B10018 /* ep-20260321-medium-003_zh.mp3 in Resources */,
 				B10019 /* ep-20260322-easy-004_en.mp3 in Resources */,
 				B10020 /* ep-20260322-easy-004_zh.mp3 in Resources */,
-				B10021 /* ep-20260322-hard-004_en.mp3 in Resources */,
-				B10022 /* ep-20260322-hard-004_zh.mp3 in Resources */,
 				B10023 /* ep-20260322-medium-004_en.mp3 in Resources */,
 				B10024 /* ep-20260322-medium-004_zh.mp3 in Resources */,
 				B10025 /* ep-20260323-easy-005_en.mp3 in Resources */,
@@ -647,8 +618,6 @@
 				B10044 /* ep-20260326-easy-008_zh.mp3 in Resources */,
 				B10045 /* ep-20260326-hard-008_en.mp3 in Resources */,
 				B10046 /* ep-20260326-hard-008_zh.mp3 in Resources */,
-				B10047 /* ep-20260326-medium-008_en.mp3 in Resources */,
-				B10048 /* ep-20260326-medium-008_zh.mp3 in Resources */,
 				B10049 /* ep-20260327-easy-009_en.mp3 in Resources */,
 				B10050 /* ep-20260327-easy-009_zh.mp3 in Resources */,
 				B10051 /* ep-20260327-hard-009_en.mp3 in Resources */,
@@ -659,8 +628,6 @@
 				B10056 /* ep-20260328-easy-010_zh.mp3 in Resources */,
 				B10057 /* ep-20260328-hard-010_en.mp3 in Resources */,
 				B10058 /* ep-20260328-hard-010_zh.mp3 in Resources */,
-				B10059 /* ep-20260328-medium-010_en.mp3 in Resources */,
-				B10060 /* ep-20260328-medium-010_zh.mp3 in Resources */,
 				B10061 /* ep-20260319-easy-001_cover.jpg in Resources */,
 				B10062 /* ep-20260319-hard-001_cover.jpg in Resources */,
 				B10063 /* ep-20260319-medium-001_cover.jpg in Resources */,
@@ -671,7 +638,6 @@
 				B10068 /* ep-20260321-hard-003_cover.jpg in Resources */,
 				B10069 /* ep-20260321-medium-003_cover.jpg in Resources */,
 				B10070 /* ep-20260322-easy-004_cover.jpg in Resources */,
-				B10071 /* ep-20260322-hard-004_cover.jpg in Resources */,
 				B10072 /* ep-20260322-medium-004_cover.jpg in Resources */,
 				B10073 /* ep-20260323-easy-005_cover.jpg in Resources */,
 				B10074 /* ep-20260323-hard-005_cover.jpg in Resources */,
@@ -684,13 +650,11 @@
 				B10081 /* ep-20260325-medium-007_cover.jpg in Resources */,
 				B10082 /* ep-20260326-easy-008_cover.jpg in Resources */,
 				B10083 /* ep-20260326-hard-008_cover.jpg in Resources */,
-				B10084 /* ep-20260326-medium-008_cover.jpg in Resources */,
 				B10085 /* ep-20260327-easy-009_cover.jpg in Resources */,
 				B10086 /* ep-20260327-hard-009_cover.jpg in Resources */,
 				B10087 /* ep-20260327-medium-009_cover.jpg in Resources */,
 				B10088 /* ep-20260328-easy-010_cover.jpg in Resources */,
 				B10089 /* ep-20260328-hard-010_cover.jpg in Resources */,
-				B10090 /* ep-20260328-medium-010_cover.jpg in Resources */,
 				C10001 /* ep-20260330-easy-001_cover.jpg in Resources */,
 				C10002 /* ep-20260330-easy-001_en.mp3 in Resources */,
 				C10003 /* ep-20260330-easy-001_zh.mp3 in Resources */,
