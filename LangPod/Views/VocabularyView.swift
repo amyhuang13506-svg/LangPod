@@ -10,8 +10,10 @@ enum VocabFilter: String, CaseIterable {
 struct VocabularyView: View {
     @Environment(VocabularyStore.self) private var store
     @Environment(AudioPlayer.self) private var audioPlayer
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var showWordMatch = false
     @State private var showFeynman = false
+    @State private var showPaywall = false
     @State private var filter: VocabFilter = .all
     @State private var showClearAlert = false
 
@@ -42,6 +44,10 @@ struct VocabularyView: View {
                     .padding(.bottom, 16)
                     .background(Color.appBackground)
             }
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+                .environment(subscriptionManager)
         }
         .fullScreenCover(isPresented: $showWordMatch) {
             WordMatchView()
@@ -258,30 +264,56 @@ struct VocabularyView: View {
 
     private var practiceCTAs: some View {
         HStack(spacing: 12) {
-            Button { showWordMatch = true } label: {
+            Button {
+                if subscriptionManager.isProUser || !store.dailyMatchPlayed {
+                    showWordMatch = true
+                } else {
+                    showPaywall = true
+                }
+            } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "rectangle.on.rectangle")
                         .font(.system(size: 15))
                     Text("词义配对")
                         .font(.system(size: 15, weight: .semibold))
+                    if !subscriptionManager.isProUser && store.dailyMatchPlayed {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 11))
+                    }
                 }
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+                .background(
+                    (!subscriptionManager.isProUser && store.dailyMatchPlayed) ? Color.textTertiary : Color.appPrimary,
+                    in: RoundedRectangle(cornerRadius: 14)
+                )
             }
 
-            Button { showFeynman = true } label: {
+            Button {
+                if subscriptionManager.isProUser || !store.dailySentencePlayed {
+                    showFeynman = true
+                } else {
+                    showPaywall = true
+                }
+            } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "text.word.spacing")
                         .font(.system(size: 15))
                     Text("连词成句")
                         .font(.system(size: 15, weight: .semibold))
+                    if !subscriptionManager.isProUser && store.dailySentencePlayed {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 11))
+                    }
                 }
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(Color.warning, in: RoundedRectangle(cornerRadius: 14))
+                .background(
+                    (!subscriptionManager.isProUser && store.dailySentencePlayed) ? Color.textTertiary : Color.warning,
+                    in: RoundedRectangle(cornerRadius: 14)
+                )
             }
         }
         .padding(.horizontal, 24)
@@ -291,4 +323,6 @@ struct VocabularyView: View {
 #Preview {
     VocabularyView()
         .environment(VocabularyStore())
+        .environment(AudioPlayer())
+        .environment(SubscriptionManager())
 }

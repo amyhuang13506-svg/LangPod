@@ -23,6 +23,11 @@ struct Episode: Codable, Identifiable {
         PodcastLevel(rawValue: level)
     }
 
+    /// True if this episode only has index data (no script/vocabulary loaded yet)
+    var isLightweight: Bool {
+        script.isEmpty && vocabulary.isEmpty
+    }
+
     var dateDisplay: String {
         // "2026-04-02" → "4月2日"
         if let d = DateFormatter.episodeDate.date(from: date) {
@@ -40,6 +45,22 @@ struct Episode: Codable, Identifiable {
             return sec > 0 ? "\(min)分\(sec)秒" : "\(min)分钟"
         }
         return "\(durationSeconds)秒"
+    }
+}
+
+extension Episode {
+    /// Build a lightweight Episode from an index item (no script/vocabulary).
+    init(from item: EpisodeIndexItem) {
+        self.id = item.id
+        self.title = item.title
+        self.level = item.level
+        self.date = item.date
+        self.durationSeconds = item.durationSeconds
+        self.audio = item.audio
+        self.script = []
+        self.vocabulary = []
+        self.thumbnail = item.thumbnail
+        self.recycledWords = nil
     }
 }
 

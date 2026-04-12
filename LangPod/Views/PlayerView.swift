@@ -9,6 +9,8 @@ struct PlayerView: View {
     @State private var showLevelUp = false
     @State private var showShareCard = false
     @State private var showSpeedPicker = false
+    @State private var showPaywall = false
+    @Environment(SubscriptionManager.self) private var subscriptionManager
 
     var body: some View {
         ZStack {
@@ -36,14 +38,18 @@ struct PlayerView: View {
                     episode: episode,
                     onNextEpisode: {
                         showComplete = false
-                        player.skipToNextEpisode()
+                        if !player.skipToNextEpisode() {
+                            showPaywall = true
+                        }
                     },
                     onSaveVocabulary: {
                         vocabularyStore.saveWords(from: episode)
                         checkLevelUp()
                         if !showLevelUp {
                             showComplete = false
-                            player.skipToNextEpisode()
+                            if !player.skipToNextEpisode() {
+                                showPaywall = true
+                            }
                         }
                     }
                 )
@@ -60,10 +66,20 @@ struct PlayerView: View {
             }
         }
         .onDisappear {
-            player.onEpisodeFinished = nil
+            // Restore default handler: record history even when PlayerView is not visible
+            player.onEpisodeFinished = { [dataStore, vocabularyStore, player] in
+                dataStore.completeEpisode(
+                    totalWords: vocabularyStore.totalCount,
+                    episode: player.currentEpisode
+                )
+            }
         }
         .fullScreenCover(isPresented: $showShareCard) {
             ShareCardView()
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+                .environment(subscriptionManager)
         }
 
 
@@ -124,7 +140,7 @@ struct PlayerView: View {
                         Circle()
                             .fill(Color.appPrimary)
                             .frame(width: 8, height: 8)
-                        Text(player.phase.label)
+                        Text(player.phase.label(isPro: subscriptionManager.isProUser))
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(Color.appPrimary)
                     }
@@ -134,6 +150,41 @@ struct PlayerView: View {
                 }
                 .padding(.top, 28)
                 .padding(.horizontal, 24)
+
+                // Pro upsell card (free users, after 4th round)
+                if player.phase == .proUpsell {
+                    HStack(spacing: 10) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(Color.warning)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Pro 专属：第 5 遍英语原音")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(Color.textPrimary)
+                            Text("再听一遍加深记忆")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                        Spacer()
+                        Button { showPaywall = true } label: {
+                            Text("升级 Pro")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                    .padding(14)
+                    .background(Color.warningLight, in: RoundedRectangle(cornerRadius: 14))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.warning.opacity(0.3), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 24)
+                    .padding(.top, 12)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
 
                 // Progress bar (draggable)
                 VStack(spacing: 8) {
@@ -230,12 +281,26 @@ struct PlayerView: View {
                 // Bottom actions
                 HStack(spacing: 32) {
                     Button {
-                        player.showSubtitles.toggle()
+                        if subscriptionManager.isProUser {
+                            player.showSubtitles.toggle()
+                        } else {
+                            showPaywall = true
+                        }
                     } label: {
                         VStack(spacing: 4) {
-                            Image(systemName: "captions.bubble")
-                                .font(.system(size: 22))
-                                .foregroundStyle(player.showSubtitles ? Color.appPrimary : Color.textTertiary)
+                            ZStack(alignment: .topTrailing) {
+                                Image(systemName: "captions.bubble")
+                                    .font(.system(size: 22))
+                                    .foregroundStyle(player.showSubtitles ? Color.appPrimary : Color.textTertiary)
+                                if !subscriptionManager.isProUser {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 8))
+                                        .foregroundStyle(.white)
+                                        .padding(2)
+                                        .background(Color.warning, in: Circle())
+                                        .offset(x: 4, y: -4)
+                                }
+                            }
                             Text("字幕")
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundStyle(player.showSubtitles ? Color.appPrimary : Color.textTertiary)
@@ -294,8 +359,8 @@ struct PlayerView: View {
                 Spacer()
             }
 
-            // Subtitle overlay
-            if player.showSubtitles, let episode = player.currentEpisode {
+            // Subtitle overlay (Pro only)
+            if player.showSubtitles, subscriptionManager.isProUser, let episode = player.currentEpisode {
                 SubtitleOverlay(
                     script: episode.script,
                     currentTime: player.progress,
@@ -360,4 +425,5 @@ struct PlayerView: View {
     PlayerView()
         .environment(AudioPlayer())
         .environment(DataStore())
+        .environment(SubscriptionManager())
 }

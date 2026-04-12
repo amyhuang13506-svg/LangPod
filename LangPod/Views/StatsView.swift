@@ -324,11 +324,32 @@ struct StatsView: View {
         }
     }
 
+    /// Find the full Episode object for a history record — checks DataStore first,
+    /// then constructs an Episode with proper OSS URLs from the record's metadata.
+    private func episodeForRecord(_ record: ListenedEpisode) -> Episode {
+        if let ep = dataStore.episodes.first(where: { $0.id == record.episodeId }) {
+            return ep
+        }
+        // Construct with real OSS URLs derived from episode ID + level
+        let base = "https://castlingo.oss-ap-southeast-1.aliyuncs.com/episodes"
+        let path = "\(base)/\(record.level)/\(record.episodeId)"
+        return Episode(
+            id: record.episodeId, title: record.title, level: record.level,
+            date: "", durationSeconds: record.durationSeconds,
+            audio: EpisodeAudio(
+                english: "\(path)/en.mp3",
+                translationZh: "\(path)/zh.mp3"
+            ),
+            script: [], vocabulary: [],
+            thumbnail: "\(path)/cover.jpg"
+        )
+    }
+
     private func historyRow(_ record: ListenedEpisode) -> some View {
         Button {
-            let allEpisodes = MockDataLoader.loadAllEpisodes()
-            if let episode = allEpisodes.first(where: { $0.id == record.episodeId }) {
-                audioPlayer.playEpisode(episode)
+            let episode = episodeForRecord(record)
+            let queue = displayHistory.map { episodeForRecord($0) }
+            if audioPlayer.playEpisode(episode, in: queue) {
                 showPlayer = true
             }
         } label: {
@@ -374,22 +395,11 @@ struct StatsView: View {
     }
 
     private func historyThumbnail(_ record: ListenedEpisode) -> some View {
-        let allEpisodes = MockDataLoader.loadAllEpisodes()
-        let episode = allEpisodes.first(where: { $0.id == record.episodeId })
-        let ep = episode ?? Episode(
-            id: record.episodeId, title: record.title, level: record.level,
-            date: "", durationSeconds: record.durationSeconds,
-            audio: EpisodeAudio(english: "", translationZh: ""),
-            script: [], vocabulary: []
-        )
-        return EpisodeThumbnail(episode: ep, size: 40)
+        EpisodeThumbnail(episode: episodeForRecord(record), size: 40)
     }
 
     private func playHistoryQueue() {
-        let allEpisodes = MockDataLoader.loadAllEpisodes()
-        let queue = displayHistory.compactMap { record in
-            allEpisodes.first(where: { $0.id == record.episodeId })
-        }
+        let queue = displayHistory.map { episodeForRecord($0) }
         guard let first = queue.first else { return }
         audioPlayer.playEpisode(first, in: queue)
         showPlayer = true

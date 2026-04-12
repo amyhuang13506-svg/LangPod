@@ -12,17 +12,17 @@ class NotificationManager {
     // MARK: - Permission
 
     func requestPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
             DispatchQueue.main.async {
-                self.isAuthorized = granted
+                self?.isAuthorized = granted
             }
         }
     }
 
     private func checkAuthorization() {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
             DispatchQueue.main.async {
-                self.isAuthorized = settings.authorizationStatus == .authorized
+                self?.isAuthorized = settings.authorizationStatus == .authorized
             }
         }
     }

@@ -4,10 +4,44 @@ import Foundation
 class VocabularyStore {
     var words: [SavedWord] = []
 
+    // Daily practice limits (free tier: 1 round per day each)
+    var dailyMatchPlayed: Bool {
+        didSet { UserDefaults.standard.set(dailyMatchPlayed, forKey: "dailyMatchPlayed") }
+    }
+    var dailySentencePlayed: Bool {
+        didSet { UserDefaults.standard.set(dailySentencePlayed, forKey: "dailySentencePlayed") }
+    }
+    private var dailyPracticeDate: String {
+        didSet { UserDefaults.standard.set(dailyPracticeDate, forKey: "dailyPracticeDate") }
+    }
+
     private let storageKey = "savedWords"
 
     init() {
+        self.dailyMatchPlayed = UserDefaults.standard.bool(forKey: "dailyMatchPlayed")
+        self.dailySentencePlayed = UserDefaults.standard.bool(forKey: "dailySentencePlayed")
+        self.dailyPracticeDate = UserDefaults.standard.string(forKey: "dailyPracticeDate") ?? ""
         load()
+        refreshDailyPracticeIfNeeded()
+    }
+
+    func refreshDailyPracticeIfNeeded() {
+        let today = DateFormatter.episodeDate.string(from: Date())
+        if dailyPracticeDate != today {
+            dailyMatchPlayed = false
+            dailySentencePlayed = false
+            dailyPracticeDate = today
+        }
+    }
+
+    func markDailyMatchPlayed() {
+        refreshDailyPracticeIfNeeded()
+        dailyMatchPlayed = true
+    }
+
+    func markDailySentencePlayed() {
+        refreshDailyPracticeIfNeeded()
+        dailySentencePlayed = true
     }
 
     // MARK: - Computed

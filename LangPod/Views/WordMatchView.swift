@@ -3,7 +3,9 @@ import UIKit
 
 struct WordMatchView: View {
     @Environment(VocabularyStore.self) private var store
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(\.dismiss) private var dismiss
+    @State private var showPaywall = false
 
     @State private var round = 1
     @State private var totalRounds = 1
@@ -38,6 +40,10 @@ struct WordMatchView: View {
             }
         }
         .onAppear { startGame() }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+                .environment(subscriptionManager)
+        }
     }
 
     // MARK: - Game Content
@@ -229,26 +235,39 @@ struct WordMatchView: View {
 
             VStack(spacing: 12) {
                 let hasMore = hasMoreWords
+                let dailyLocked = !subscriptionManager.isProUser && store.dailyMatchPlayed
                 Button {
-                    startNextSet()
+                    if dailyLocked {
+                        showPaywall = true
+                    } else {
+                        startNextSet()
+                    }
                 } label: {
                     HStack(spacing: 8) {
+                        if dailyLocked {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 14))
+                        }
                         Text("🔥")
-                        Text("再来一组")
+                        Text(dailyLocked ? "升级 Pro 继续练习" : "再来一组")
                             .font(.system(size: 16, weight: .semibold))
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
                     .background(
-                        hasMore ? Color.appPrimary : Color.textQuaternary,
+                        dailyLocked ? Color.warning : (hasMore ? Color.appPrimary : Color.textQuaternary),
                         in: RoundedRectangle(cornerRadius: 14)
                     )
                 }
-                .disabled(!hasMore)
+                .disabled(!hasMore && !dailyLocked)
 
-                if !hasMore {
+                if !hasMore && !dailyLocked {
                     Text("所有词汇都练过了")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.textTertiary)
+                } else if dailyLocked {
+                    Text("免费用户每日 1 轮")
                         .font(.system(size: 13))
                         .foregroundStyle(Color.textTertiary)
                 }
@@ -400,6 +419,7 @@ struct WordMatchView: View {
     private func advanceRound() {
         if round >= totalRounds {
             timerRunning = false
+            store.markDailyMatchPlayed()
             withAnimation { gameComplete = true }
         } else {
             round += 1
@@ -417,4 +437,5 @@ struct WordMatchView: View {
 #Preview {
     WordMatchView()
         .environment(VocabularyStore())
+        .environment(SubscriptionManager())
 }

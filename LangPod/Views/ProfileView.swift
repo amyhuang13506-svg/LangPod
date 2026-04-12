@@ -4,6 +4,7 @@ struct ProfileView: View {
     @Environment(DataStore.self) private var dataStore
     @Environment(VocabularyStore.self) private var vocabularyStore
     @Environment(AudioPlayer.self) private var audioPlayer
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var showPaywall = false
     @State private var showShareCard = false
     @State private var showClearAlert = false
@@ -54,6 +55,7 @@ struct ProfileView: View {
         }
         .fullScreenCover(isPresented: $showPaywall) {
             PaywallView()
+                .environment(subscriptionManager)
         }
         .fullScreenCover(isPresented: $showShareCard) {
             ShareCardView()
@@ -102,12 +104,14 @@ struct ProfileView: View {
                         .padding(.vertical, 2)
                         .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 6))
 
-                    Text("Pro")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.gold)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(Color.warningLight, in: RoundedRectangle(cornerRadius: 6))
+                    if subscriptionManager.isProUser {
+                        Text("Pro")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color.gold)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(Color.warningLight, in: RoundedRectangle(cornerRadius: 6))
+                    }
                 }
             }
 
@@ -178,8 +182,12 @@ struct ProfileView: View {
 
     private var otherSection: some View {
         VStack(spacing: 0) {
-            Button { showPaywall = true } label: {
-                menuRow(icon: "crown", iconColor: "F59E0B", title: "升级 Pro")
+            if subscriptionManager.isProUser {
+                menuRow(icon: "crown.fill", iconColor: "F59E0B", title: "已订阅 Pro")
+            } else {
+                Button { showPaywall = true } label: {
+                    menuRow(icon: "crown", iconColor: "F59E0B", title: "升级 Pro")
+                }
             }
             divider
             NavigationLink {
@@ -204,39 +212,87 @@ struct ProfileView: View {
     // MARK: - Legal Section
 
     private var legalSection: some View {
-        VStack(spacing: 0) {
-            if let privacyURL = URL(string: "https://amyhuang13506-svg.github.io/Castlingo/docs/privacy.html") {
-                Link(destination: privacyURL) {
-                    menuRow(icon: "shield", iconColor: "94A3B8", title: "隐私政策")
+        VStack(spacing: 20) {
+            VStack(spacing: 0) {
+                if let privacyURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/privacy.html") {
+                    Link(destination: privacyURL) {
+                        menuRow(icon: "shield", iconColor: "94A3B8", title: "隐私政策")
+                    }
                 }
+                divider
+                if let termsURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/terms.html") {
+                    Link(destination: termsURL) {
+                        menuRow(icon: "doc.text", iconColor: "94A3B8", title: "用户协议")
+                    }
+                }
+                divider
+                Button { showClearAlert = true } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color.danger)
+                        Text("清除所有数据")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.danger)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 14)
+                }
+                .buttonStyle(.plain)
             }
-            divider
-            if let termsURL = URL(string: "https://amyhuang13506-svg.github.io/Castlingo/docs/terms.html") {
-                Link(destination: termsURL) {
-                    menuRow(icon: "doc.text", iconColor: "94A3B8", title: "用户协议")
+            .background(.white, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.border, lineWidth: 1)
+            )
+
+            #if DEBUG
+            // Dev toggles for Paywall state testing
+            VStack(spacing: 0) {
+                Toggle(isOn: Binding(
+                    get: { subscriptionManager.mockProEnabled },
+                    set: { subscriptionManager.mockProEnabled = $0 }
+                )) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "hammer.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color(hex: "8B5CF6"))
+                        Text("[DEV] Mock Pro")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color(hex: "8B5CF6"))
+                    }
                 }
-            }
-            divider
-            Button { showClearAlert = true } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 18))
-                        .foregroundStyle(Color.danger)
-                    Text("清除所有数据")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Color.danger)
-                    Spacer()
+                .tint(Color(hex: "8B5CF6"))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+
+                divider
+
+                Toggle(isOn: Binding(
+                    get: { subscriptionManager.mockHasTrialEnabled },
+                    set: { subscriptionManager.mockHasTrialEnabled = $0 }
+                )) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "hammer.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color(hex: "8B5CF6"))
+                        Text("[DEV] Mock Trial (Paywall)")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color(hex: "8B5CF6"))
+                    }
                 }
+                .tint(Color(hex: "8B5CF6"))
                 .padding(.horizontal, 18)
                 .padding(.vertical, 14)
             }
-            .buttonStyle(.plain)
+            .background(.white, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color(hex: "8B5CF6").opacity(0.3), lineWidth: 1)
+            )
+            #endif
         }
-        .background(.white, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.border, lineWidth: 1)
-        )
     }
 
     // MARK: - Row Helpers
@@ -349,26 +405,9 @@ struct LanguageSelectPage: View {
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Color.appPrimary)
             }
-
-            languageRow("日本語")
-            languageRow("한국어")
-            languageRow("Español")
-            languageRow("Français")
         }
         .navigationTitle("翻译语言")
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func languageRow(_ name: String) -> some View {
-        HStack(spacing: 12) {
-            Text(name)
-                .font(.system(size: 16))
-                .foregroundStyle(Color.textQuaternary)
-            Spacer()
-            Text("即将推出")
-                .font(.system(size: 13))
-                .foregroundStyle(Color.textTertiary)
-        }
     }
 }
 
@@ -470,4 +509,5 @@ struct SleepTimerPage: View {
         .environment(DataStore())
         .environment(VocabularyStore())
         .environment(AudioPlayer())
+        .environment(SubscriptionManager())
 }

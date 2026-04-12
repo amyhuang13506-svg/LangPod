@@ -17,17 +17,13 @@ struct EpisodeThumbnail: View {
                 } else {
                     fallbackView
                 }
-            } else if let url = URL(string: thumbnail) {
-                // Remote thumbnail
-                AsyncImage(url: url) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
+            } else {
+                // Remote thumbnail with persistent cache
+                CachedAsyncImage(url: thumbnail) {
                     fallbackView
                 }
                 .frame(width: size, height: size)
                 .clipShape(RoundedRectangle(cornerRadius: size > 60 ? 20 : 10))
-            } else {
-                fallbackView
             }
         } else {
             fallbackView

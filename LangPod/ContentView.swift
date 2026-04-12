@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(DataStore.self) private var dataStore
+    @Environment(AudioPlayer.self) private var audioPlayer
+    @Environment(SubscriptionManager.self) private var subscriptionManager
 
     var body: some View {
         if dataStore.hasCompletedOnboarding {
@@ -24,6 +26,9 @@ struct ContentView: View {
                     }
             }
             .tint(.accent)
+            .onChange(of: subscriptionManager.isProUser, initial: true) {
+                audioPlayer.isProUser = subscriptionManager.isProUser
+            }
         } else {
             OnboardingView()
         }
@@ -33,4 +38,6 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(DataStore())
+        .environment(AudioPlayer())
+        .environment(SubscriptionManager())
 }

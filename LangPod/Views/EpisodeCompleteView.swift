@@ -7,7 +7,9 @@ struct EpisodeCompleteView: View {
 
     @Environment(DataStore.self) private var dataStore
     @Environment(VocabularyStore.self) private var vocabularyStore
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var encounteredWords: [SavedWord] = []
+    @State private var showPaywall = false
 
     var body: some View {
         ZStack {
@@ -68,8 +70,33 @@ struct EpisodeCompleteView: View {
                         .foregroundStyle(Color.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                    ForEach(episode.vocabulary) { word in
+                    let visibleVocab = subscriptionManager.isProUser
+                        ? episode.vocabulary
+                        : Array(episode.vocabulary.prefix(SubscriptionManager.freeMaxVocabPerEpisode))
+
+                    ForEach(visibleVocab) { word in
                         vocabularyCard(word)
+                    }
+
+                    // Locked vocab hint for free users
+                    if !subscriptionManager.isProUser && episode.vocabulary.count > SubscriptionManager.freeMaxVocabPerEpisode {
+                        Button { showPaywall = true } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(Color.warning)
+                                Text("解锁 Pro 查看全部 \(episode.vocabulary.count) 个生词")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Color.appPrimary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 14))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.appPrimary.opacity(0.3), lineWidth: 1)
+                            )
+                        }
                     }
 
                     // Action buttons
@@ -101,6 +128,10 @@ struct EpisodeCompleteView: View {
                 .padding(.top, 62)
                 .padding(.bottom, 24)
             }
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+                .environment(subscriptionManager)
         }
         .onAppear {
             // Detect words from user's vocabulary that appeared in this episode
@@ -212,4 +243,5 @@ struct EpisodeCompleteView: View {
         onSaveVocabulary: {}
     )
     .environment(DataStore())
+    .environment(SubscriptionManager())
 }

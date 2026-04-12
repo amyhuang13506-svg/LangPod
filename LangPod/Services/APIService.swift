@@ -10,80 +10,71 @@ actor APIService {
 
     // MARK: - Episode List
 
-    /// Fetch episode index for a level. Falls back to mock data on failure.
+    /// Fetch episode index for a level. Returns lightweight Episodes (no script/vocabulary).
+    /// Caller should lazy-load full details via fetchEpisodeDetail when needed.
     func fetchEpisodes(for level: PodcastLevel) async -> [Episode] {
         guard let url = URL(string: "\(baseURL)/episodes/\(level.rawValue)/index.json") else {
-            print("[API] ❌ Invalid URL for \(level.rawValue)")
-            return MockDataLoader.loadEpisodes(for: level)
+            debugLog("❌ Invalid URL for \(level.rawValue)")
+            return []
         }
 
         do {
-            print("[API] 📡 Fetching index: \(url)")
-            var request = URLRequest(url: url)
-            request.cachePolicy = .reloadIgnoringLocalCacheData
-            let (data, response) = try await URLSession.shared.data(for: request)
+            debugLog("📡 Fetching index: \(url)")
+            let (data, response) = try await URLSession.shared.data(from: url)
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
                 let code = (response as? HTTPURLResponse)?.statusCode ?? -1
-                print("[API] ❌ Index HTTP \(code)")
-                return loadCachedEpisodes(for: level) ?? MockDataLoader.loadEpisodes(for: level)
+                debugLog("❌ Index HTTP \(code)")
+                return []
             }
 
             let index = try JSONDecoder().decode(EpisodeIndex.self, from: data)
-            print("[API] ✅ Index loaded: \(index.total) episodes")
+            debugLog("✅ Index loaded: \(index.total) episodes")
 
-            // Fetch full episode details concurrently
-            var episodes: [Episode] = []
-            await withTaskGroup(of: Episode?.self) { group in
-                for item in index.episodes {
-                    group.addTask {
-                        await self.fetchEpisodeDetail(id: item.id, level: level)
-                    }
-                }
-                for await episode in group {
-                    if let ep = episode {
-                        episodes.append(ep)
-                    }
-                }
-            }
-            // Sort by date
+            // Convert index items to lightweight Episodes (no script/vocabulary yet)
+            var episodes = index.episodes.map { Episode(from: $0) }
             episodes.sort { $0.date < $1.date }
-
-            print("[API] ✅ Loaded \(episodes.count)/\(index.total) episode details")
 
             // Cache for offline use
             if !episodes.isEmpty {
                 cacheEpisodes(episodes, for: level)
             }
-
-            return episodes.isEmpty ? (loadCachedEpisodes(for: level) ?? MockDataLoader.loadEpisodes(for: level)) : episodes
+            return episodes
         } catch {
-            print("[API] ❌ Fetch error: \(error.localizedDescription)")
-            if let cached = loadCachedEpisodes(for: level) {
-                return cached
-            }
-            return MockDataLoader.loadEpisodes(for: level)
+            debugLog("❌ Fetch error: \(error.localizedDescription)")
+            return []
         }
     }
 
-    /// Fetch full episode detail by ID
-    private func fetchEpisodeDetail(id: String, level: PodcastLevel) async -> Episode? {
+    /// Fetch full episode detail by ID. Used for lazy loading script/vocabulary on play.
+    func fetchEpisodeDetail(id: String, level: PodcastLevel) async -> Episode? {
         guard let url = URL(string: "\(baseURL)/episodes/\(level.rawValue)/\(id)/episode.json") else { return nil }
 
         do {
-            var request = URLRequest(url: url)
-            request.cachePolicy = .reloadIgnoringLocalCacheData
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(from: url)
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
-                print("[API] ⚠️ Detail \(id): HTTP \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                debugLog("⚠️ Detail \(id): HTTP \((response as? HTTPURLResponse)?.statusCode ?? -1)")
                 return nil
             }
             return try JSONDecoder().decode(Episode.self, from: data)
         } catch {
-            print("[API] ⚠️ Detail \(id) decode error: \(error.localizedDescription)")
+            debugLog("⚠️ Detail \(id) decode error: \(error.localizedDescription)")
             return nil
         }
+    }
+
+    /// Public access to disk cache (used by DataStore for instant startup display)
+    nonisolated func loadCachedEpisodesSync(for level: PodcastLevel) -> [Episode]? {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CastlingoEpisodes", isDirectory: true)
+        let file = dir.appendingPathComponent("episodes_\(level.rawValue).json")
+        guard let data = try? Data(contentsOf: file),
+              let episodes = try? JSONDecoder().decode([Episode].self, from: data),
+              !episodes.isEmpty else {
+            return nil
+        }
+        return episodes
     }
 
     // MARK: - Caching
@@ -101,14 +92,10 @@ actor APIService {
         try? data.write(to: file)
     }
 
-    private func loadCachedEpisodes(for level: PodcastLevel) -> [Episode]? {
-        let file = cacheDirectory.appendingPathComponent("episodes_\(level.rawValue).json")
-        guard let data = try? Data(contentsOf: file),
-              let episodes = try? JSONDecoder().decode([Episode].self, from: data),
-              !episodes.isEmpty else {
-            return nil
-        }
-        return episodes
+    private func debugLog(_ message: String) {
+        #if DEBUG
+        print("[API] \(message)")
+        #endif
     }
 }
 
@@ -128,10 +115,11 @@ struct EpisodeIndexItem: Codable {
     let date: String
     let durationSeconds: Int
     let audio: EpisodeAudio
+    let thumbnail: String?
     let vocabularyCount: Int
 
     enum CodingKeys: String, CodingKey {
-        case id, title, level, date, audio
+        case id, title, level, date, audio, thumbnail
         case durationSeconds = "duration_seconds"
         case vocabularyCount = "vocabulary_count"
     }

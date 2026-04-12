@@ -40,6 +40,14 @@ class DataStore {
     }
     var pendingLevelUp: ListeningLevel?
 
+    // Daily episode count (for free tier limit)
+    var dailyEpisodesPlayed: Int {
+        didSet { UserDefaults.standard.set(dailyEpisodesPlayed, forKey: "dailyEpisodesPlayed") }
+    }
+    private(set) var dailyEpisodesDate: String {
+        didSet { UserDefaults.standard.set(dailyEpisodesDate, forKey: "dailyEpisodesDate") }
+    }
+
     // Listening history
     var listenHistory: [ListenedEpisode] = []
     var totalListeningSeconds: Int {
@@ -57,14 +65,22 @@ class DataStore {
         let lastTs = UserDefaults.standard.double(forKey: "lastListenDate")
         self.lastListenDate = lastTs > 0 ? Date(timeIntervalSince1970: lastTs) : nil
         self.totalListeningSeconds = UserDefaults.standard.integer(forKey: "totalListeningSeconds")
+        self.dailyEpisodesPlayed = UserDefaults.standard.integer(forKey: "dailyEpisodesPlayed")
+        self.dailyEpisodesDate = UserDefaults.standard.string(forKey: "dailyEpisodesDate") ?? ""
         if self.streakDays == 0 { self.streakDays = 1 }
+        refreshDailyCountIfNeeded()
         checkStreakContinuity()
         loadListenHistory()
         loadEpisodes()
     }
 
     func loadEpisodes() {
-        episodes = MockDataLoader.loadEpisodes(for: selectedLevel)
+        // Instant display: prefer disk cache, fall back to bundled mock data
+        if let cached = APIService.shared.loadCachedEpisodesSync(for: selectedLevel) {
+            episodes = cached
+        } else {
+            episodes = MockDataLoader.loadEpisodes(for: selectedLevel)
+        }
         let today = DateFormatter.episodeDate.string(from: Date())
         currentEpisode = episodes.last(where: { $0.date == today }) ?? episodes.last
         fetchRemoteEpisodes()
@@ -77,33 +93,75 @@ class DataStore {
             await MainActor.run {
                 if !remoteEpisodes.isEmpty {
                     self.episodes = remoteEpisodes
-                    // Default to latest today's episode
                     let today = DateFormatter.episodeDate.string(from: Date())
                     self.currentEpisode = remoteEpisodes.last(where: { $0.date == today }) ?? remoteEpisodes.last
                 }
                 self.isLoadingEpisodes = false
             }
-
         }
     }
 
+    /// Lazy-load full episode detail (script + vocabulary) and update the episodes array.
+    /// Called when user starts playing a lightweight episode.
+    func fetchEpisodeDetail(id: String) async -> Episode? {
+        guard let idx = episodes.firstIndex(where: { $0.id == id }) else { return nil }
+        let level = episodes[idx].podcastLevel ?? selectedLevel
+        guard let detail = await APIService.shared.fetchEpisodeDetail(id: id, level: level) else {
+            return nil
+        }
+        await MainActor.run {
+            if let i = self.episodes.firstIndex(where: { $0.id == id }) {
+                self.episodes[i] = detail
+            }
+        }
+        return detail
+    }
+
     /// Call after completing an episode to check for level up
-    func completeEpisode(totalWords: Int, episode: Episode? = nil) {
-        episodesCompleted += 1
+    func refreshDailyCountIfNeeded() {
+        let today = DateFormatter.episodeDate.string(from: Date())
+        if dailyEpisodesDate != today {
+            dailyEpisodesPlayed = 0
+            dailyEpisodesDate = today
+        }
+    }
+
+    func recordDailyPlay() {
+        refreshDailyCountIfNeeded()
+        dailyEpisodesPlayed += 1
+    }
+
+    /// Record a history entry as soon as the user starts playing a new episode.
+    /// Also updates streak immediately so "今天已完成" shows without waiting for completion.
+    /// Deduplicates: same episode on the same day won't create a second entry.
+    func recordPlayStart(episode: Episode) {
+        // Update streak on play start (not just on episode completion)
         updateStreak()
 
-        // Record history — use passed episode or fallback to currentEpisode
+        let dominated = listenHistory.contains {
+            $0.episodeId == episode.id &&
+            Calendar.current.isDateInToday($0.listenedAt)
+        }
+        guard !dominated else { return }
+
+        let record = ListenedEpisode(
+            episodeId: episode.id,
+            title: episode.title,
+            level: episode.level,
+            durationSeconds: episode.durationSeconds,
+            listenedAt: Date()
+        )
+        listenHistory.insert(record, at: 0)
+        saveListenHistory()
+    }
+
+    /// Called when all rounds finish. Updates listening time and level progress.
+    /// History + streak were already recorded in recordPlayStart.
+    func completeEpisode(totalWords: Int, episode: Episode? = nil) {
+        episodesCompleted += 1
+
         if let ep = episode ?? currentEpisode {
-            let record = ListenedEpisode(
-                episodeId: ep.id,
-                title: ep.title,
-                level: ep.level,
-                durationSeconds: ep.durationSeconds,
-                listenedAt: Date()
-            )
-            listenHistory.insert(record, at: 0)
             totalListeningSeconds += ep.durationSeconds
-            saveListenHistory()
         }
         let newLevel = ListeningLevel.checkLevel(episodes: episodesCompleted, words: totalWords)
         if newLevel.rawValue > listeningLevel.rawValue {

@@ -81,7 +81,9 @@ struct OnboardingView: View {
         stopAllAudio()
 
         guard let url = Bundle.main.url(forResource: name, withExtension: "mp3") else {
+            #if DEBUG
             print("⚠️ Missing bundle audio: \(name).mp3")
+            #endif
             onFinish?()
             return
         }
@@ -123,7 +125,9 @@ struct OnboardingView: View {
                 }
             }
         } catch {
+            #if DEBUG
             print("⚠️ Audio play error: \(error)")
+            #endif
             onFinish?()
         }
     }

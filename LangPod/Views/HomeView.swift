@@ -3,8 +3,10 @@ import SwiftUI
 struct HomeView: View {
     @Environment(DataStore.self) private var dataStore
     @Environment(AudioPlayer.self) private var audioPlayer
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var showPlayer = false
     @State private var showAllEpisodes = false
+    @State private var showPaywall = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -29,6 +31,48 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showAllEpisodes) {
             AllEpisodesView()
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+                .environment(subscriptionManager)
+        }
+        .task {
+            // Preload today's episode thumbnails + now-playing cover so they appear instantly
+            await preloadVisibleThumbnails()
+        }
+    }
+
+    /// Preload thumbnails for the most important episodes (today's + now playing)
+    /// so they're in ImageCache before the user scrolls to them.
+    private func preloadVisibleThumbnails() async {
+        var urls: [String] = []
+
+        // Now-playing episode cover (most visible)
+        if let thumb = nowPlayingEpisode?.thumbnail {
+            urls.append(thumb)
+        }
+
+        // Today's episodes
+        for ep in todayEpisodes.reversed() { // newest first
+            if let thumb = ep.thumbnail {
+                urls.append(thumb)
+            }
+        }
+
+        // Weekly picks (next priority)
+        for ep in weeklyPicks.prefix(3) {
+            if let thumb = ep.thumbnail {
+                urls.append(thumb)
+            }
+        }
+
+        // Fire all preloads concurrently
+        await withTaskGroup(of: Void.self) { group in
+            for url in urls.prefix(8) { // cap at 8 to avoid overwhelming
+                group.addTask {
+                    _ = await ImageCache.shared.image(for: url)
+                }
+            }
         }
     }
 
@@ -121,7 +165,10 @@ struct HomeView: View {
             if let episode = nowPlayingEpisode {
                 Button {
                     if audioPlayer.currentEpisode == nil {
-                        audioPlayer.playEpisode(episode, in: dataStore.episodes)
+                        if !audioPlayer.playEpisode(episode, in: dataStore.episodes) {
+                            showPaywall = true
+                            return
+                        }
                     }
                     showPlayer = true
                 } label: {
@@ -138,7 +185,7 @@ struct HomeView: View {
                                     .tracking(1)
                             }
                             Spacer()
-                            Text(audioPlayer.currentEpisode?.id == episode.id ? audioPlayer.phase.roundDisplay : "第 1/5 遍")
+                            Text(audioPlayer.currentEpisode?.id == episode.id ? audioPlayer.phase.roundDisplay(isPro: subscriptionManager.isProUser) : "第 1/\(subscriptionManager.isProUser ? 5 : 4) 遍")
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(Color.appPrimary)
                                 .padding(.horizontal, 10)
@@ -232,8 +279,11 @@ struct HomeView: View {
 
     private func playAll(_ episodes: [Episode]) {
         guard let first = episodes.first else { return }
-        audioPlayer.playEpisode(first, in: episodes)
-        showPlayer = true
+        if audioPlayer.playEpisode(first, in: episodes) {
+            showPlayer = true
+        } else {
+            showPaywall = true
+        }
     }
 
     private var todayEpisodes: [Episode] {
@@ -269,8 +319,11 @@ struct HomeView: View {
 
     private func episodeRow(_ episode: Episode) -> some View {
         Button {
-            audioPlayer.playEpisode(episode, in: dataStore.episodes)
-            showPlayer = true
+            if audioPlayer.playEpisode(episode, in: dataStore.episodes) {
+                showPlayer = true
+            } else {
+                showPaywall = true
+            }
         } label: {
             HStack(spacing: 14) {
                 EpisodeThumbnail(episode: episode, size: 44)
@@ -428,8 +481,11 @@ struct HomeView: View {
 
     private func pastEpisodeRow(_ episode: Episode) -> some View {
         Button {
-            audioPlayer.playEpisode(episode, in: Array(pastEpisodes))
-            showPlayer = true
+            if audioPlayer.playEpisode(episode, in: Array(pastEpisodes)) {
+                showPlayer = true
+            } else {
+                showPaywall = true
+            }
         } label: {
             HStack(spacing: 14) {
                 EpisodeThumbnail(episode: episode, size: 44)
@@ -503,4 +559,5 @@ struct HomeView: View {
     HomeView()
         .environment(DataStore())
         .environment(AudioPlayer())
+        .environment(SubscriptionManager())
 }

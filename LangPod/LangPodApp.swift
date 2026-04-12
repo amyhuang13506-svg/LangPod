@@ -16,6 +16,7 @@ struct LangPodApp: App {
     @State private var vocabularyStore = VocabularyStore()
     @State private var appState = AppState()
     @State private var notificationManager = NotificationManager()
+    @State private var subscriptionManager = SubscriptionManager()
 
     var body: some Scene {
         WindowGroup {
@@ -25,6 +26,7 @@ struct LangPodApp: App {
                     .environment(audioPlayer)
                     .environment(vocabularyStore)
                     .environment(appState)
+                    .environment(subscriptionManager)
 
                 // Toast notification
                 if appState.showToast {
@@ -59,23 +61,59 @@ struct LangPodApp: App {
                     )
                     .environment(dataStore)
                     .environment(vocabularyStore)
+                    .environment(subscriptionManager)
                 }
             }
             .task {
-                setupBackgroundCompletion()
+                setupPlayGate()
                 // Request notification permission after first launch
                 if dataStore.hasCompletedOnboarding {
                     notificationManager.requestPermission()
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                // Reserved for future foreground resume logic
+                dataStore.loadEpisodes()
             }
         }
     }
 
-    private func setupBackgroundCompletion() {
-        // Background completion is handled by AudioPlayer.onEpisodeFinished callback
-        // set in PlayerView. This method is reserved for future background-specific logic.
+    private func setupPlayGate() {
+        audioPlayer.playGate = { [self] episode in
+            dataStore.recordPlayStart(episode: episode)
+
+            if subscriptionManager.isProUser { return true }
+
+            // Already played today? Allow replay without consuming a new daily slot.
+            let alreadyPlayedToday = dataStore.listenHistory.contains {
+                $0.episodeId == episode.id &&
+                Calendar.current.isDateInToday($0.listenedAt)
+            }
+            if alreadyPlayedToday { return true }
+
+            dataStore.refreshDailyCountIfNeeded()
+            if dataStore.dailyEpisodesPlayed >= SubscriptionManager.freeMaxDailyEpisodes {
+                return false
+            }
+            dataStore.recordDailyPlay()
+            return true
+        }
+        audioPlayer.episodeEnricher = { [self] id in
+            await dataStore.fetchEpisodeDetail(id: id)
+        }
+
+        // Default episode-finished handler: always record play history.
+        // PlayerView overrides this with its own (adds completion page UI),
+        // and restores it in onDisappear. This ensures history is recorded
+        // even when PlayerView is not visible (e.g. background playback).
+        setupDefaultFinishedHandler()
+    }
+
+    func setupDefaultFinishedHandler() {
+        audioPlayer.onEpisodeFinished = { [self] in
+            dataStore.completeEpisode(
+                totalWords: vocabularyStore.totalCount,
+                episode: audioPlayer.currentEpisode
+            )
+        }
     }
 }
