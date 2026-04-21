@@ -34,6 +34,7 @@ from config import (
     RECYCLE_WINDOW_DAYS,
     RECYCLE_MAX_TIMES,
 )
+from news_fetcher import fetch_headlines_for_level
 
 MANIFEST_PATH = os.path.join(OUTPUT_DIR, "vocabulary_manifest.json")
 
@@ -96,6 +97,76 @@ def update_vocabulary_manifest(manifest, level, episode):
     save_vocabulary_manifest(manifest)
 
 
+def _build_name_gender_lookup():
+    """Reverse-lookup: {name: gender} built from NAME_PAIRS. Covers all standard names."""
+    result = {}
+    for m, f in NAME_PAIRS:
+        result[m] = "male"
+        result[f] = "female"
+    return result
+
+
+NAME_GENDER_LOOKUP = _build_name_gender_lookup()
+
+
+def _finalize_speakers(episode, is_solo, male_name, female_name, host_gender):
+    """Resolve a {speaker_name: "male"|"female"} map covering every speaker in the script.
+
+    Priority: (1) code-level known names — most authoritative; (2) GPT-provided
+    `speakers` dict — catches variants like Mike/Sara that GPT chose itself;
+    (3) NAME_PAIRS reverse lookup — catches GPT drifting to other pair members.
+    Raises ValueError if any speaker can't be resolved — triggers outer retry.
+    """
+    script_speakers = []
+    seen = set()
+    for line in episode.get("script", []):
+        name = (line.get("speaker") or "").strip()
+        if name and name not in seen:
+            seen.add(name)
+            script_speakers.append(name)
+    if not script_speakers:
+        raise ValueError("script has no speakers")
+
+    gpt_raw = episode.get("speakers") or {}
+    gpt_map = {}
+    if isinstance(gpt_raw, dict):
+        for k, v in gpt_raw.items():
+            if isinstance(k, str) and isinstance(v, str):
+                gv = v.strip().lower()
+                if gv in ("male", "female"):
+                    gpt_map[k.strip()] = gv
+
+    known = {}
+    if is_solo:
+        known["Host"] = host_gender
+    else:
+        known[male_name] = "male"
+        known[female_name] = "female"
+
+    resolved = {}
+    unresolved = []
+    for name in script_speakers:
+        g = known.get(name) or gpt_map.get(name) or NAME_GENDER_LOOKUP.get(name)
+        if g in ("male", "female"):
+            resolved[name] = g
+        else:
+            unresolved.append(name)
+
+    if unresolved:
+        raise ValueError(
+            "cannot resolve gender for speaker(s): %s (GPT speakers=%s)"
+            % (", ".join(unresolved), gpt_map)
+        )
+
+    # Enforce solo contract: only "Host" allowed.
+    if is_solo and set(resolved.keys()) != {"Host"}:
+        raise ValueError(
+            "solo format must use only 'Host', got: %s" % list(resolved.keys())
+        )
+
+    episode["speakers"] = resolved
+
+
 def pick_format(level):
     """Weighted-random pick a format block for this episode."""
     pool = FORMAT_POOL.get(level, [])
@@ -117,6 +188,11 @@ def generate_episode_script(level, episode_num, topic=None, recycle_words=None, 
     # Pick random name pair for this episode
     male_name, female_name = random.choice(NAME_PAIRS)
 
+    # Host gender for solo formats — stable from ep_id so reruns keep the same voice.
+    # Must match generate_audio.py's fallback formula exactly.
+    ep_seed = sum(ord(c) for c in ep_id)
+    host_gender = "male" if (ep_seed % 2 == 0) else "female"
+
     # Pick a format (weighted) — strongly biased toward solo for Hard
     if format_override:
         format_name = format_override
@@ -129,6 +205,29 @@ def generate_episode_script(level, episode_num, topic=None, recycle_words=None, 
     topic_line = ""
     if topic:
         topic_line = "TODAY'S TOPIC: %s\nBuild the entire conversation around this topic.\n\n" % topic
+    else:
+        # Inject today's real headlines (filtered) as inspiration. GPT picks one
+        # and builds the episode around it. Falls back silently to TOPIC_POOL if
+        # NewsAPI is down or all headlines were filtered.
+        headlines = []
+        try:
+            headlines = fetch_headlines_for_level(level, max_count=5)
+        except Exception as e:
+            print("   ⚠️  News fetch errored (%s) — falling back to TOPIC_POOL" % e)
+        if headlines:
+            bullet_list = "\n".join("- %s" % h for h in headlines)
+            topic_line = (
+                "=== TODAY'S REAL-WORLD HEADLINES (inspiration — pick ONE) ===\n"
+                "%s\n\n"
+                "HOW TO USE:\n"
+                "- Pick ONE headline that fits this level's audience and build the "
+                "episode around it. Give your own angle, don't just paraphrase.\n"
+                "- If a headline is too complex for this level, pick a simpler one OR "
+                "generalize its topic (e.g. a specific EV launch → 'the rise of electric cars').\n"
+                "- If NONE of the headlines fit (too niche, too sensitive, too hard to adapt), "
+                "IGNORE this block and pick a topic from the TOPIC DOMAINS list below — that's fine.\n"
+                "- Never mention the headline source or reporter. Never quote a headline verbatim in the script.\n\n"
+            ) % bullet_list
 
     recycle_line = ""
     if recycle_words:
@@ -166,14 +265,19 @@ def generate_episode_script(level, episode_num, topic=None, recycle_words=None, 
     if is_solo:
         speaker_hint = (
             "SPEAKERS: This is a SOLO broadcast. Every single line's `speaker` field MUST be exactly \"Host\". "
-            "Do NOT use %s, %s, or any other name. No back-and-forth dialogue.\n\n"
-            % (male_name, female_name)
+            "Do NOT use %s, %s, or any other name. No back-and-forth dialogue.\n"
+            "The top-level `speakers` field MUST be exactly {\"Host\": \"%s\"}.\n\n"
+            % (male_name, female_name, host_gender)
         )
     else:
         speaker_hint = (
             "SPEAKERS: Two-person dialogue. Use \"%s\" (male) and \"%s\" (female) alternating turns. "
-            "Do NOT use \"Host\".\n\n"
-            % (male_name, female_name)
+            "Do NOT use \"Host\".\n"
+            "The top-level `speakers` field MUST list every unique speaker name you use in `script`, "
+            "mapped to \"male\" or \"female\". If you shorten or vary a name (e.g. Michael→Mike, Sarah→Sara), "
+            "list the exact shortened form you used, with the correct gender. "
+            "Required for THIS episode: {\"%s\": \"male\", \"%s\": \"female\"}.\n\n"
+            % (male_name, female_name, male_name, female_name)
         )
 
     format_block = (
@@ -192,6 +296,7 @@ Generate valid JSON ONLY. No markdown, no explanation, no text outside the JSON.
   "level": "%s",
   "date": "%s",
   "duration_seconds": 0,
+  "speakers": { "SpeakerName": "male" | "female", "...": "..." },
   "script": [
     {
       "speaker": "%s",
@@ -239,7 +344,10 @@ Do NOT set duration_seconds — it will be calculated from audio.
    across multiple script lines — don't cram 2-3 sentences into one line.
 6. No parentheses or special punctuation that could confuse TTS
 7. Vocabulary words actually appear in the script text
-8. The JSON is valid and parseable
+8. The top-level `speakers` field is present, covers every unique `speaker` used in
+   `script`, and every value is exactly "male" or "female" (lowercase). For solo
+   format, `speakers` is exactly {"Host": "<given_gender>"}. Mismatches are REJECTED.
+9. The JSON is valid and parseable
 """ % (
         level_prompt,
         length_header,
@@ -315,6 +423,10 @@ Do NOT set duration_seconds — it will be calculated from audio.
     for line in episode.get("script", []):
         line.pop("start", None)
         line.pop("end", None)
+
+    # Resolve authoritative speakers map. Raises on unresolvable speakers —
+    # generate_daily.py catches and skips the episode.
+    _finalize_speakers(episode, is_solo, male_name, female_name, host_gender)
 
     episode["audio"] = {"english": "", "translation_zh": ""}
     episode["duration_seconds"] = 0
