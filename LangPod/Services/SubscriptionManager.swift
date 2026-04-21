@@ -120,6 +120,7 @@ class SubscriptionManager {
     // MARK: - Free Tier Limits
 
     static let freeMaxDailyEpisodes = 2
+    static let freeMaxDailyPatterns = 2
     static let freeMaxVocabPerEpisode = 3
     // Free users: 3 English + 1 Translation = 4 rounds (skip 5th)
     // Pro users: full 5 rounds

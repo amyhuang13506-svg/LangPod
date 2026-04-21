@@ -17,3 +17,12 @@ Thumbs.db
 # pipeline/config.py is tracked but keys should be rotated before open-sourcing
 pipeline/config.py
 pipeline/config.py.local
+
+# Umeng SDK (vendored binaries, linked via FRAMEWORK_SEARCH_PATHS, not committed)
+iOS/
+
+# App Store submission materials (local only)
+审核截图/
+描述截图/
+docs/douyin_batch/
+docs/douyin_cards_preview.html

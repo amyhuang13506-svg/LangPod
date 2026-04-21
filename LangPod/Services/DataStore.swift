@@ -48,6 +48,17 @@ class DataStore {
         didSet { UserDefaults.standard.set(dailyEpisodesDate, forKey: "dailyEpisodesDate") }
     }
 
+    // Daily pattern plays (free tier: up to freeMaxDailyPatterns unique pattern IDs/day).
+    // Replaying a pattern already in this set does NOT consume additional quota.
+    var dailyPatternIDsPlayedToday: Set<String> {
+        didSet {
+            UserDefaults.standard.set(Array(dailyPatternIDsPlayedToday), forKey: "dailyPatternIDsPlayedToday")
+        }
+    }
+    private(set) var dailyPatternsDate: String {
+        didSet { UserDefaults.standard.set(dailyPatternsDate, forKey: "dailyPatternsDate") }
+    }
+
     // Listening history
     var listenHistory: [ListenedEpisode] = []
     var totalListeningSeconds: Int {
@@ -67,6 +78,9 @@ class DataStore {
         self.totalListeningSeconds = UserDefaults.standard.integer(forKey: "totalListeningSeconds")
         self.dailyEpisodesPlayed = UserDefaults.standard.integer(forKey: "dailyEpisodesPlayed")
         self.dailyEpisodesDate = UserDefaults.standard.string(forKey: "dailyEpisodesDate") ?? ""
+        let savedPatternIds = UserDefaults.standard.array(forKey: "dailyPatternIDsPlayedToday") as? [String] ?? []
+        self.dailyPatternIDsPlayedToday = Set(savedPatternIds)
+        self.dailyPatternsDate = UserDefaults.standard.string(forKey: "dailyPatternsDate") ?? ""
         if self.streakDays == 0 { self.streakDays = 1 }
         refreshDailyCountIfNeeded()
         checkStreakContinuity()
@@ -124,11 +138,23 @@ class DataStore {
             dailyEpisodesPlayed = 0
             dailyEpisodesDate = today
         }
+        if dailyPatternsDate != today {
+            dailyPatternIDsPlayedToday = []
+            dailyPatternsDate = today
+        }
     }
 
     func recordDailyPlay() {
         refreshDailyCountIfNeeded()
         dailyEpisodesPlayed += 1
+    }
+
+    /// Record a pattern play. Idempotent: replays of the same pattern ID don't
+    /// consume additional quota. Call this when a free user actually begins
+    /// playing a pattern (Pro users are uncapped so this is a no-op for them).
+    func recordPatternPlayed(_ patternId: String) {
+        refreshDailyCountIfNeeded()
+        dailyPatternIDsPlayedToday.insert(patternId)
     }
 
     /// Record a history entry as soon as the user starts playing a new episode.

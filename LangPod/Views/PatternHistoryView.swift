@@ -66,8 +66,9 @@ struct PatternHistoryView: View {
         .padding(.bottom, 12)
     }
 
-    /// Play all Pro-accessible patterns in chronological order (oldest first).
-    /// Free users only get today's patterns. Button is hidden when there's nothing to play.
+    /// Play all accessible patterns in chronological order (oldest first).
+    /// For free users this is today's already-played + today's unplayed up to
+    /// the remaining daily quota. Button is hidden when there's nothing to play.
     private var playAllButton: some View {
         let accessible = collectAccessiblePatterns()
         return Button {
@@ -99,10 +100,15 @@ struct PatternHistoryView: View {
     private func collectAccessiblePatterns() -> [PlayItem] {
         var items: [PlayItem] = []
         for group in groupedByDate.reversed() {
-            let locked = !PatternAccessGate.isToday(group.date) && !subscriptionManager.isProUser
-            if locked { continue }
             for pair in group.items {
-                items.append(.pattern(pair.pattern, parentEpisode: pair.parent))
+                if PatternAccessGate.canAccess(
+                    pattern: pair.pattern,
+                    parentEpisode: pair.parent,
+                    isPro: subscriptionManager.isProUser,
+                    playedTodayIds: dataStore.dailyPatternIDsPlayedToday
+                ) {
+                    items.append(.pattern(pair.pattern, parentEpisode: pair.parent))
+                }
             }
         }
         return items
@@ -142,7 +148,17 @@ struct PatternHistoryView: View {
 
     @ViewBuilder
     private func section(for group: PatternGroup) -> some View {
-        let locked = !PatternAccessGate.isToday(group.date) && !subscriptionManager.isProUser
+        let anyAccessible = group.items.contains { pair in
+            PatternAccessGate.canAccess(
+                pattern: pair.pattern,
+                parentEpisode: pair.parent,
+                isPro: subscriptionManager.isProUser,
+                playedTodayIds: dataStore.dailyPatternIDsPlayedToday
+            )
+        }
+        // Show the header lock only when nothing in the group is playable —
+        // otherwise the per-row lock icons carry the information per-pattern.
+        let groupLocked = !anyAccessible
 
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
@@ -158,7 +174,7 @@ struct PatternHistoryView: View {
                         .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 4))
                 }
                 Spacer()
-                if locked {
+                if groupLocked {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 11))
                         .foregroundStyle(Color.warning)
@@ -166,7 +182,13 @@ struct PatternHistoryView: View {
             }
 
             ForEach(group.items, id: \.pattern.id) { item in
-                patternRow(pattern: item.pattern, parent: item.parent, locked: locked)
+                let rowLocked = !PatternAccessGate.canAccess(
+                    pattern: item.pattern,
+                    parentEpisode: item.parent,
+                    isPro: subscriptionManager.isProUser,
+                    playedTodayIds: dataStore.dailyPatternIDsPlayedToday
+                )
+                patternRow(pattern: item.pattern, parent: item.parent, locked: rowLocked)
             }
         }
     }
@@ -268,15 +290,21 @@ struct PatternHistoryView: View {
 
     // MARK: - Helpers
 
-    /// Build a PlayItem queue of all Pro-accessible patterns in history order,
-    /// starting from the given pattern. For free users this is just today's patterns.
+    /// Build a PlayItem queue of all accessible patterns in history order,
+    /// starting from the given pattern. For free users this honours the daily
+    /// quota — patterns beyond the quota are filtered out.
     private func allAccessibleItems(startFrom startingPattern: Pattern) -> [PlayItem] {
         var all: [PlayItem] = []
         for group in groupedByDate.reversed() {  // oldest first for sequential play
-            let parentLocked = !PatternAccessGate.isToday(group.date) && !subscriptionManager.isProUser
-            if parentLocked { continue }
             for item in group.items {
-                all.append(.pattern(item.pattern, parentEpisode: item.parent))
+                if PatternAccessGate.canAccess(
+                    pattern: item.pattern,
+                    parentEpisode: item.parent,
+                    isPro: subscriptionManager.isProUser,
+                    playedTodayIds: dataStore.dailyPatternIDsPlayedToday
+                ) {
+                    all.append(.pattern(item.pattern, parentEpisode: item.parent))
+                }
             }
         }
         // Rotate so the chosen pattern is first

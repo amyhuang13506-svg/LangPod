@@ -188,13 +188,35 @@ struct EpisodeCompleteView: View {
                 HStack(spacing: 10) {
                     if let patterns = episode.patterns, !patterns.isEmpty,
                        let onPlayPatterns = onPlayPatterns {
-                        Button(action: onPlayPatterns) {
-                            Text("播放句型")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 48)
-                                .background(Color(hex: "14B8A6"), in: RoundedRectangle(cornerRadius: 14))
+                        let firstPatternAccessible = PatternAccessGate.canAccess(
+                            pattern: patterns[0],
+                            parentEpisode: episode,
+                            isPro: subscriptionManager.isProUser,
+                            playedTodayIds: dataStore.dailyPatternIDsPlayedToday
+                        )
+                        Button {
+                            if firstPatternAccessible {
+                                onPlayPatterns()
+                            } else {
+                                Analytics.track(.patternPaywallView, params: [
+                                    "pattern_id": patterns[0].id,
+                                    "source": "complete_cta",
+                                ])
+                                showPaywall = true
+                            }
+                        } label: {
+                            HStack(spacing: 6) {
+                                if !firstPatternAccessible {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 12, weight: .semibold))
+                                }
+                                Text("播放句型")
+                                    .font(.system(size: 15, weight: .semibold))
+                            }
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(Color(hex: "14B8A6"), in: RoundedRectangle(cornerRadius: 14))
                         }
                     }
 

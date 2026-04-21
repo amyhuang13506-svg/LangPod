@@ -103,6 +103,15 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     /// Set by the view layer based on SubscriptionManager.isProUser
     var isProUser = false
 
+    /// Set by the view layer from DataStore.dailyPatternIDsPlayedToday so the
+    /// auto-advance logic can skip patterns a free user is no longer entitled to.
+    var dailyPatternIDsPlayedToday: Set<String> = []
+
+    /// Called when a pattern actually begins playing. View layer wires this to
+    /// DataStore.recordPatternPlayed so the daily-quota counter advances and
+    /// persists across app launches.
+    var onPatternStarted: ((String) -> Void)?
+
     // Sleep timer
     var sleepTimerMinutes: Int? = nil
     var sleepTimerEndDate: Date? = nil
@@ -227,7 +236,10 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
     /// Play a pattern (single-pass; no 5-round loop).
-    /// Pattern access gating (free/Pro) is enforced by the caller via PatternAccessGate.
+    /// Access gating (free/Pro + daily quota) is the CALLER's responsibility —
+    /// check PatternAccessGate.canAccess before invoking, surface the paywall
+    /// when it returns false. This method always starts playback if invoked.
+    /// Fires `onPatternStarted` so DataStore can record the play for quota.
     @discardableResult
     func playPattern(_ pattern: Pattern, parentEpisode: Episode, in queue: [PlayItem] = []) -> Bool {
         currentPlayItem = .pattern(pattern, parentEpisode: parentEpisode)
@@ -237,6 +249,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             playQueue = [.pattern(pattern, parentEpisode: parentEpisode)]
         }
         startPatternPlayback(pattern)
+        onPatternStarted?(pattern.id)
         return true
     }
 
@@ -585,6 +598,25 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         }
     }
 
+    /// True if this user is entitled to play a given queue item right now.
+    /// Episodes are always "accessible" here (episode-level quota is gated
+    /// separately, before the queue is built). Patterns go through
+    /// PatternAccessGate so historical + over-quota ones are skipped during
+    /// sequential auto-advance.
+    private func isItemAccessible(_ item: PlayItem) -> Bool {
+        switch item {
+        case .episode:
+            return true
+        case .pattern(let p, let parent):
+            return PatternAccessGate.canAccess(
+                pattern: p,
+                parentEpisode: parent,
+                isPro: isProUser,
+                playedTodayIds: dailyPatternIDsPlayedToday
+            )
+        }
+    }
+
     /// Skip to next item in playQueue (works for both episodes and patterns).
     /// shuffle treats "episode + its patterns" as a unit.
     @discardableResult
@@ -603,8 +635,17 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         switch playOrder {
         case .sequential:
             guard let idx = playQueue.firstIndex(where: { $0.id == current.id }) else { return false }
-            let nextIdx = (idx + 1) % playQueue.count
-            nextItem = playQueue[nextIdx]
+            // Walk forward until we hit an item this user can access. Patterns a
+            // free user can't play (historical, or over daily quota) are silently
+            // skipped so mixed playback doesn't stall on a locked item.
+            var step = 1
+            var candidate: PlayItem?
+            while step <= playQueue.count {
+                let probe = playQueue[(idx + step) % playQueue.count]
+                if isItemAccessible(probe) { candidate = probe; break }
+                step += 1
+            }
+            nextItem = candidate
         case .shuffle:
             // Pick a different episode at random; jump to its first occurrence in playQueue
             // (patterns ride along because they're inserted right after their parent).

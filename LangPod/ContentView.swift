@@ -29,6 +29,17 @@ struct ContentView: View {
             .onChange(of: subscriptionManager.isProUser, initial: true) {
                 audioPlayer.isProUser = subscriptionManager.isProUser
             }
+            .onChange(of: dataStore.dailyPatternIDsPlayedToday, initial: true) {
+                audioPlayer.dailyPatternIDsPlayedToday = dataStore.dailyPatternIDsPlayedToday
+            }
+            .task {
+                // Bridge pattern play events from AudioPlayer back into DataStore
+                // so the daily quota counter advances and persists.
+                let store = dataStore
+                audioPlayer.onPatternStarted = { id in
+                    store.recordPatternPlayed(id)
+                }
+            }
         } else {
             OnboardingView()
         }

@@ -407,9 +407,13 @@ struct HomeView: View {
 
                 Spacer()
 
-                Image(systemName: "play.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(Color.appPrimary)
+                if audioPlayer.currentEpisode?.id == episode.id {
+                    NowPlayingBars(isAnimating: audioPlayer.isPlaying, barHeight: 16)
+                } else {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Color.appPrimary)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
@@ -569,9 +573,13 @@ struct HomeView: View {
 
                 Spacer()
 
-                Image(systemName: "play.fill")
-                    .font(.system(size: 16))
-                    .foregroundStyle(Color.appPrimary)
+                if audioPlayer.currentEpisode?.id == episode.id {
+                    NowPlayingBars(isAnimating: audioPlayer.isPlaying, barHeight: 14)
+                } else {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(Color.appPrimary)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
@@ -713,51 +721,77 @@ struct HomeView: View {
     }
 
     private func patternCard(pattern: Pattern, parent: Episode) -> some View {
-        Button {
-            // Today's patterns are free for all users (no gate needed).
-            // Queue = all today's patterns interleaved from parent episodes for seamless browse.
-            let items: [PlayItem] = todayPatterns.map { .pattern($0.pattern, parentEpisode: $0.parent) }
-            audioPlayer.playPattern(pattern, parentEpisode: parent, in: items)
-            showPlayer = true
-            Analytics.track(.patternOpen, params: [
-                "pattern_id": pattern.id,
-                "episode_id": parent.id,
-                "source": "home_today",
-            ])
-        } label: {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(pattern.template)
-                    .font(.system(size: 15, weight: .semibold, design: .serif))
-                    .foregroundStyle(Color(white: 0.15))
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(3)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Spacer(minLength: 0)
-
-                Text(pattern.translationZh)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color(white: 0.32))
-                    .lineLimit(1)
-
-                HStack(spacing: 4) {
-                    Image(systemName: "play.circle.fill")
-                        .font(.system(size: 12))
-                    Text(pattern.durationDisplay)
-                        .font(.system(size: 11, weight: .medium))
-                    Spacer(minLength: 6)
-                    Text(pattern.scene)
-                        .font(.system(size: 10))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
-                .foregroundStyle(Color(white: 0.35))
+        let accessible = PatternAccessGate.canAccess(
+            pattern: pattern,
+            parentEpisode: parent,
+            isPro: subscriptionManager.isProUser,
+            playedTodayIds: dataStore.dailyPatternIDsPlayedToday
+        )
+        return Button {
+            if accessible {
+                // Queue = all today's ACCESSIBLE patterns interleaved from parent
+                // episodes, so mixed browsing doesn't hit a wall mid-sequence.
+                let items: [PlayItem] = todayPatterns
+                    .filter {
+                        PatternAccessGate.canAccess(
+                            pattern: $0.pattern,
+                            parentEpisode: $0.parent,
+                            isPro: subscriptionManager.isProUser,
+                            playedTodayIds: dataStore.dailyPatternIDsPlayedToday
+                        )
+                    }
+                    .map { .pattern($0.pattern, parentEpisode: $0.parent) }
+                audioPlayer.playPattern(pattern, parentEpisode: parent, in: items)
+                showPlayer = true
+                Analytics.track(.patternOpen, params: [
+                    "pattern_id": pattern.id,
+                    "episode_id": parent.id,
+                    "source": "home_today",
+                ])
+            } else {
+                Analytics.track(.patternPaywallView, params: [
+                    "pattern_id": pattern.id,
+                    "source": "home_today_quota",
+                ])
+                showPaywall = true
             }
-            .padding(14)
-            .frame(width: 158, height: 158)
-            .background(cardColor(pattern: pattern))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(pattern.template)
+                        .font(.system(size: 15, weight: .semibold, design: .serif))
+                        .foregroundStyle(Color(white: 0.15))
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Spacer(minLength: 0)
+
+                    Text(pattern.translationZh)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color(white: 0.32))
+                        .lineLimit(1)
+
+                    HStack(spacing: 4) {
+                        Image(systemName: accessible ? "play.circle.fill" : "lock.fill")
+                            .font(.system(size: 12))
+                        Text(pattern.durationDisplay)
+                            .font(.system(size: 11, weight: .medium))
+                        Spacer(minLength: 6)
+                        Text(pattern.scene)
+                            .font(.system(size: 10))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    .foregroundStyle(Color(white: 0.35))
+                }
+                .padding(14)
+                .frame(width: 158, height: 158)
+                .background(cardColor(pattern: pattern))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
+                .opacity(accessible ? 1 : 0.55)
+            }
         }
         .buttonStyle(.plain)
     }
@@ -778,6 +812,46 @@ struct HomeView: View {
             green: Double((v >> 8) & 0xFF) / 255.0,
             blue: Double(v & 0xFF) / 255.0
         )
+    }
+}
+
+/// Animated 3-bar "now playing" indicator. Pauses cleanly when `isAnimating`
+/// is false (the bars drop to a short static state to keep showing which row
+/// is current without distracting motion).
+struct NowPlayingBars: View {
+    var isAnimating: Bool
+    var color: Color = .appPrimary
+    var barHeight: CGFloat = 16
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !isAnimating)) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            HStack(alignment: .bottom, spacing: 2.5) {
+                bar(index: 0, t: t)
+                bar(index: 1, t: t)
+                bar(index: 2, t: t)
+            }
+            .frame(width: 20, height: barHeight, alignment: .bottom)
+        }
+    }
+
+    private func bar(index: Int, t: TimeInterval) -> some View {
+        let maxH = barHeight
+        let minH = maxH * 0.6
+        // Per-bar irregular motion: sum of 2 sines at coprime-ish frequencies,
+        // each bar gets its own pair + phase so they never sync up.
+        let params: [(f1: Double, f2: Double, phase: Double)] = [
+            (2.3, 3.7, 0.6),
+            (2.9, 1.8, 2.4),
+            (3.4, 2.1, 4.7),
+        ]
+        let p = params[index % params.count]
+        let s = (sin(t * p.f1 + p.phase) + sin(t * p.f2 + p.phase * 1.7)) / 2
+        let normalized = (s + 1) / 2
+        let h: CGFloat = isAnimating ? minH + CGFloat(normalized) * (maxH - minH) : minH
+        return RoundedRectangle(cornerRadius: 1.5)
+            .fill(color)
+            .frame(width: 3, height: h)
     }
 }
 
