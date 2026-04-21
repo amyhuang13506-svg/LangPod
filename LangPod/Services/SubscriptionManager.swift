@@ -20,9 +20,17 @@ class SubscriptionManager {
     var isPurchasing = false
     var products: [Product] = []
 
+    /// Last user-visible error from purchase flow. nil when no error / after dismiss.
+    /// PaywallView binds to this to surface silent StoreKit failures as an alert.
+    var lastPurchaseError: String?
+
     // Trial info fetched from products (nil = backend didn't configure OR user not eligible)
     var yearlyTrialInfo: TrialInfo?
     var monthlyTrialInfo: TrialInfo?
+
+    /// Raw debug snapshot of what refreshTrialInfo() saw — for DEBUG overlay on PaywallView.
+    /// Not used in release logic, purely diagnostic.
+    var trialDebugLines: [String] = []
 
     // Mock toggles for development
     var mockProEnabled: Bool {
@@ -32,20 +40,31 @@ class SubscriptionManager {
         didSet { UserDefaults.standard.set(mockHasTrialEnabled, forKey: "mockHasTrialEnabled") }
     }
 
-    // Computed: real subscription OR mock
+    // Computed: real subscription OR mock (DEBUG only).
+    // CRITICAL: the DEBUG gate here prevents `mockProEnabled` — which lives in
+    // UserDefaults — from leaking Pro access into Release builds. Without the
+    // gate, any device that had [DEV] Mock Pro toggled on during testing
+    // would retain that flag after app updates and get Pro for free.
     var isProUser: Bool {
-        isPro || mockProEnabled
+        #if DEBUG
+        return isPro || mockProEnabled
+        #else
+        return isPro
+        #endif
     }
 
-    /// Yearly trial info preferring real data, falling back to dev mock (DEBUG only).
+    /// Yearly trial info. In RELEASE: returns real App Store Connect data as-is.
+    /// In DEBUG: the `mockHasTrialEnabled` toggle is the single source of truth —
+    /// OFF forces the no-trial UI even when ASC has an introductory offer, so you
+    /// can visually verify both paywall branches without touching App Store Connect.
     var effectiveYearlyTrial: TrialInfo? {
-        if let real = yearlyTrialInfo { return real }
         #if DEBUG
-        if mockHasTrialEnabled {
-            return TrialInfo(productID: Self.yearlyID, durationDisplay: "7 天", durationDays: 7, isEligible: true)
-        }
+        guard mockHasTrialEnabled else { return nil }
+        if let real = yearlyTrialInfo { return real }
+        return TrialInfo(productID: Self.yearlyID, durationDisplay: "7 天", durationDays: 7, isEligible: true)
+        #else
+        return yearlyTrialInfo
         #endif
-        return nil
     }
 
     var effectiveMonthlyTrial: TrialInfo? {
@@ -93,8 +112,8 @@ class SubscriptionManager {
 
     // MARK: - Product IDs
 
-    static let yearlyID = "com.amyhuang.castlingo.pro.yearly"
-    static let monthlyID = "com.amyhuang.castlingo.pro.monthly"
+    static let yearlyID = "com.amyhuang.castlingo.pro.yearly.v2"
+    static let monthlyID = "com.amyhuang.castlingo.pro.monthly.v2"
 
     private var transactionListener: Task<Void, Error>?
 
@@ -147,12 +166,28 @@ class SubscriptionManager {
         var yearly: TrialInfo? = nil
         var monthly: TrialInfo? = nil
 
+        var lines: [String] = []
+        lines.append("products=\(products.count)")
+
         for product in products {
-            guard let sub = product.subscription,
-                  let offer = sub.introductoryOffer,
-                  offer.paymentMode == .freeTrial else { continue }
+            lines.append("─ \(product.id)")
+            guard let sub = product.subscription else {
+                lines.append("  × no .subscription")
+                continue
+            }
+            guard let offer = sub.introductoryOffer else {
+                lines.append("  × no introductoryOffer")
+                continue
+            }
+            lines.append("  offer.paymentMode=\(offer.paymentMode)")
+            lines.append("  offer.period=\(offer.period.value) \(offer.period.unit)")
+            guard offer.paymentMode == .freeTrial else {
+                lines.append("  × skipped: not .freeTrial")
+                continue
+            }
 
             let eligible = await sub.isEligibleForIntroOffer
+            lines.append("  isEligible=\(eligible)")
             let info = TrialInfo(
                 productID: product.id,
                 durationDisplay: Self.displayFromPeriod(offer.period),
@@ -160,18 +195,26 @@ class SubscriptionManager {
                 isEligible: eligible
             )
 
-            // Only surface the trial if the user is actually eligible
-            guard info.isEligible else { continue }
+            guard info.isEligible else {
+                lines.append("  × skipped: not eligible")
+                continue
+            }
 
             if product.id == Self.yearlyID {
                 yearly = info
+                lines.append("  ✅ yearly trial")
             } else if product.id == Self.monthlyID {
                 monthly = info
+                lines.append("  ✅ monthly trial")
             }
         }
 
+        lines.append("final: yearly=\(yearly != nil ? "Y" : "nil") monthly=\(monthly != nil ? "Y" : "nil")")
+
         yearlyTrialInfo = yearly
         monthlyTrialInfo = monthly
+        trialDebugLines = lines
+        for line in lines { print("🔍 [TrialDebug] \(line)") }
     }
 
     private static func daysFromPeriod(_ period: Product.SubscriptionPeriod) -> Int {
@@ -199,6 +242,7 @@ class SubscriptionManager {
     @MainActor
     func purchase(_ productID: String) async -> Bool {
         guard let product = products.first(where: { $0.id == productID }) else {
+            lastPurchaseError = "商品未加载（products 空），请稍后重试。ID: \(productID)"
             return false
         }
 
@@ -209,20 +253,23 @@ class SubscriptionManager {
             let result = try await product.purchase()
             switch result {
             case .success(let verification):
-                if let transaction = try? checkVerified(verification) {
+                switch verification {
+                case .verified(let transaction):
                     await transaction.finish()
                     isPro = true
                     return true
+                case .unverified(_, let error):
+                    lastPurchaseError = "交易验证失败：\(error.localizedDescription)"
                 }
             case .userCancelled:
-                break
+                break  // user intentionally closed the sheet — no error
             case .pending:
-                break
+                lastPurchaseError = "购买待处理：可能需要家长批准或账号验证，请去 设置 → Apple ID 完成验证后重试。"
             @unknown default:
-                break
+                lastPurchaseError = "未知购买结果类型。"
             }
         } catch {
-            // Purchase failed
+            lastPurchaseError = "购买失败：\(error.localizedDescription)"
         }
         return false
     }

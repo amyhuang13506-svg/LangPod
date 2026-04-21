@@ -468,20 +468,46 @@ struct FeynmanChallengeView: View {
     // MARK: - Empty
 
     private var emptyContent: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 0) {
+            HStack {
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(Color.textTertiary)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+
             Spacer()
+
+            Image(systemName: "text.quote")
+                .font(.system(size: 48))
+                .foregroundStyle(Color.textQuaternary)
+                .padding(.bottom, 16)
+
             Text("还没有可以练习的词汇")
-                .font(.system(size: 16))
-                .foregroundStyle(Color.textTertiary)
-            Text("先听一些播客，积累词汇")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.textPrimary)
+
+            Text("听一集播客，词汇会自动收藏到这里")
                 .font(.system(size: 14))
                 .foregroundStyle(Color.textTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
+
             Spacer()
+
             Button { dismiss() } label: {
-                Text("返回")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.appPrimary)
+                Text("去听一集")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 12))
             }
+            .padding(.horizontal, 40)
             .padding(.bottom, 40)
         }
     }
@@ -613,6 +639,9 @@ struct FeynmanChallengeView: View {
             setupQuestion()
         } else {
             store.markDailySentencePlayed()
+            Analytics.track(.feynmanComplete, params: [
+                "words_practiced": "\(sessionPracticedWords.count)"
+            ])
             withAnimation { completed = true }
         }
     }

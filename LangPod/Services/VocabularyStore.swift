@@ -64,11 +64,21 @@ class VocabularyStore {
     // MARK: - Actions
 
     func saveWords(from episode: Episode) {
+        let before = words.count
         for vocab in episode.vocabulary {
             guard !words.contains(where: { $0.word == vocab.word }) else { continue }
             words.append(SavedWord(from: vocab))
         }
         persist()
+
+        let added = words.count - before
+        if added > 0 {
+            Analytics.track(.vocabularySave, params: [
+                "episode_id": episode.id,
+                "added": "\(added)",
+                "total": "\(words.count)"
+            ])
+        }
     }
 
     func recordMatchCorrect(_ word: String) {
@@ -133,7 +143,9 @@ class VocabularyStore {
     private func load() {
         guard let data = UserDefaults.standard.data(forKey: storageKey),
               let saved = try? JSONDecoder().decode([SavedWord].self, from: data) else {
-            loadMockData()
+            // Fresh install: empty vocabulary. Words are auto-saved when the
+            // user completes an episode (see LangPodApp + PlayerView).
+            words = []
             return
         }
         words = saved
@@ -157,21 +169,4 @@ class VocabularyStore {
         if updated { persist() }
     }
 
-    private func loadMockData() {
-        let allEpisodes = MockDataLoader.loadAllEpisodes()
-        for episode in allEpisodes.prefix(3) {
-            for vocab in episode.vocabulary {
-                var saved = SavedWord(from: vocab)
-                // Vary for visual variety
-                let matchCount = Int.random(in: 0...4)
-                saved.matchCorrectCount = matchCount
-                saved.sentenceCorrectCount = matchCount > 2 ? Int.random(in: 0...1) : 0
-                saved.lastPracticeDate = Date().addingTimeInterval(-Double.random(in: 0...14) * 86400)
-                if matchCount >= 1 { saved.masteryLevel = .recognized }
-                if saved.sentenceCorrectCount >= 1 { saved.masteryLevel = .canUse }
-                words.append(saved)
-            }
-        }
-        persist()
-    }
 }

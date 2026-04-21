@@ -4,6 +4,7 @@ struct EpisodeCompleteView: View {
     let episode: Episode
     var onNextEpisode: () -> Void
     var onSaveVocabulary: () -> Void
+    var onPlayPatterns: (() -> Void)? = nil
 
     @Environment(DataStore.self) private var dataStore
     @Environment(VocabularyStore.self) private var vocabularyStore
@@ -12,7 +13,7 @@ struct EpisodeCompleteView: View {
     @State private var showPaywall = false
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Color.appBackground.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
@@ -64,6 +65,11 @@ struct EpisodeCompleteView: View {
                         }
                     }
 
+                    // Today's patterns (if any) — list rows (same style as vocab rows)
+                    if let patterns = episode.patterns, !patterns.isEmpty {
+                        patternsSection(patterns: patterns)
+                    }
+
                     // Vocabulary section
                     Text("本集重点生词")
                         .font(.system(size: 15, weight: .bold))
@@ -98,54 +104,127 @@ struct EpisodeCompleteView: View {
                             )
                         }
                     }
-
-                    // Action buttons
-                    VStack(spacing: 10) {
-                        Button(action: onNextEpisode) {
-                            Text("下一集")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 48)
-                                .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
-                        }
-
-                        Button(action: onSaveVocabulary) {
-                            Text("保存到我的词汇")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(Color.appPrimary)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 48)
-                                .background(.white, in: RoundedRectangle(cornerRadius: 14))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.border, lineWidth: 1)
-                                )
-                        }
-                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 62)
-                .padding(.bottom, 24)
+                .padding(.bottom, 180)  // leave room for fixed CTA bar
             }
+
+            // Fixed bottom CTAs (don't scroll with content)
+            fixedBottomCTAs
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
                 .environment(subscriptionManager)
         }
         .onAppear {
-            // Detect words from user's vocabulary that appeared in this episode
+            // Detect words from user's vocabulary that appeared in this episode.
+            // This updates encounterCount + lastEncounterDate on the words, which
+            // the daily notification arbiter reads on next app background.
             let newVocabWords = Set(episode.vocabulary.map { $0.word.lowercased() })
             encounteredWords = vocabularyStore.detectEncounteredWords(in: episode)
                 .filter { !newVocabWords.contains($0.word.lowercased()) } // exclude this episode's own vocab
                 .filter { $0.encounterCount > 1 }
+        }
+    }
 
-            // Schedule local notification for encountered words
-            if !encounteredWords.isEmpty {
-                NotificationManager().scheduleEncounterReminder(
-                    words: encounteredWords.map(\.word)
-                )
+    // MARK: - Patterns Section (list rows, same style as vocab rows)
+
+    private func patternsSection(patterns: [Pattern]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Text("今日句型")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                Text("· \(patterns.count) 个")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.textTertiary)
             }
+
+            ForEach(patterns) { pattern in
+                patternRow(pattern)
+            }
+        }
+    }
+
+    private func patternRow(_ pattern: Pattern) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(pattern.template)
+                .font(.system(size: 15, weight: .bold, design: .serif))
+                .foregroundStyle(Color.textPrimary)
+                .lineLimit(1)
+
+            Text(pattern.translationZh)
+                .font(.system(size: 13))
+                .foregroundStyle(Color(hex: "14B8A6"))
+
+            Text(pattern.scene)
+                .font(.system(size: 12).italic())
+                .foregroundStyle(Color.textSecondary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.white, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.border, lineWidth: 1)
+        )
+    }
+
+    // MARK: - Fixed Bottom CTAs
+
+    private var fixedBottomCTAs: some View {
+        VStack(spacing: 0) {
+            LinearGradient(
+                colors: [Color.appBackground.opacity(0), Color.appBackground],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 16)
+
+            VStack(spacing: 10) {
+                // Row 1: 播放句型讲解 | 下一集
+                HStack(spacing: 10) {
+                    if let patterns = episode.patterns, !patterns.isEmpty,
+                       let onPlayPatterns = onPlayPatterns {
+                        Button(action: onPlayPatterns) {
+                            Text("播放句型")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 48)
+                                .background(Color(hex: "14B8A6"), in: RoundedRectangle(cornerRadius: 14))
+                        }
+                    }
+
+                    Button(action: onNextEpisode) {
+                        Text("下一集")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+                    }
+                }
+
+                // Row 2: 保存词汇 (大按钮, full width)
+                Button(action: onSaveVocabulary) {
+                    Text("保存到我的词汇")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.appPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.border, lineWidth: 1)
+                        )
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
+            .background(Color.appBackground)
         }
     }
 

@@ -17,18 +17,23 @@ struct SubtitleOverlay: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color.appPrimary)
 
-                    // English text
+                    // English text — cap at 3 lines so it doesn't dominate the card
                     Text(line.text)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(Color.textPrimary)
                         .multilineTextAlignment(.center)
+                        .lineLimit(3)
+                        .truncationMode(.tail)
 
                     // Chinese translation (only during translation round or if toggled)
+                    // — cap at 2 lines. Combined with EN: ≤ 5 lines total.
                     if showTranslation || phase == .translationRound {
                         Text(line.translationZh)
                             .font(.system(size: 14))
                             .foregroundStyle(Color.textSecondary)
                             .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .truncationMode(.tail)
                     }
                 }
                 .padding(.horizontal, 24)

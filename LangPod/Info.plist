@@ -20,5 +20,11 @@
 	<string>Castlingo</string>
 	<key>UIUserInterfaceStyle</key>
 	<string>Light</string>
+	<key>UMAppKey</key>
+	<string>69e359319a7f376488c57f94</string>
+	<key>OSSBaseURL</key>
+	<string>https://castlingo.oss-accelerate.aliyuncs.com</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

@@ -7,12 +7,19 @@ Step 2: Generate TTS audio per dialogue line using MiniMax API.
 
 import json
 import os
+import random
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 import requests
 from pydub import AudioSegment
+
+# Rate-limiting + retry config for MiniMax TTS
+INTER_CALL_SLEEP_S = 0.4       # pause between each TTS call to respect rate limits
+TTS_MAX_ATTEMPTS = 4           # retry up to this many times
+TTS_BACKOFF_BASE_S = 2.0       # exponential backoff base
 
 from config import (
     MINIMAX_API_KEY,
@@ -123,54 +130,79 @@ def synthesize_long_text(text, voice_id, speed=1.0, emotion=None):
 
 
 def synthesize_line(text, voice_id, speed=1.0, emotion=None):
-    """Call MiniMax TTS for a single line. Returns AudioSegment or None."""
+    """Call MiniMax TTS for a single line with retry + backoff. Returns AudioSegment or None."""
     voice_setting = {"voice_id": voice_id, "speed": speed}
     if emotion and emotion != "neutral":
         voice_setting["emotion"] = emotion
 
-    response = requests.post(
-        MINIMAX_API_ENDPOINT,
-        headers={
-            "Authorization": "Bearer %s" % MINIMAX_API_KEY,
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": MINIMAX_MODEL,
-            "text": text,
-            "voice_setting": voice_setting,
-            "audio_setting": {"format": "mp3", "sample_rate": 32000},
-        },
-        timeout=60,
-    )
+    last_error = None
+    for attempt in range(TTS_MAX_ATTEMPTS):
+        try:
+            response = requests.post(
+                MINIMAX_API_ENDPOINT,
+                headers={
+                    "Authorization": "Bearer %s" % MINIMAX_API_KEY,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": MINIMAX_MODEL,
+                    "text": text,
+                    "voice_setting": voice_setting,
+                    "audio_setting": {"format": "mp3", "sample_rate": 32000},
+                },
+                timeout=60,
+            )
+        except requests.RequestException as e:
+            last_error = "network: %s" % e
+            time.sleep(TTS_BACKOFF_BASE_S * (2 ** attempt))
+            continue
 
-    if response.status_code != 200:
-        print("   ❌ TTS error %d: %s" % (response.status_code, response.text[:200]))
-        return None
+        # Always rate-limit between calls
+        time.sleep(INTER_CALL_SLEEP_S)
 
-    result = response.json()
-    audio_hex = None
-    if "data" in result and "audio" in result["data"]:
-        audio_hex = result["data"]["audio"]
-    elif "audio" in result:
-        audio_hex = result["audio"]
+        if response.status_code == 429 or response.status_code >= 500:
+            last_error = "HTTP %d" % response.status_code
+            time.sleep(TTS_BACKOFF_BASE_S * (2 ** attempt))
+            continue
 
-    if not audio_hex:
-        print("   ❌ No audio in response")
-        return None
+        if response.status_code != 200:
+            print("   ❌ TTS error %d: %s" % (response.status_code, response.text[:200]))
+            return None
 
-    # MiniMax returns hex-encoded audio
-    audio_bytes = bytes.fromhex(audio_hex)
+        try:
+            result = response.json()
+        except ValueError:
+            last_error = "invalid json"
+            time.sleep(TTS_BACKOFF_BASE_S * (2 ** attempt))
+            continue
 
-    # Write to temp file and load as AudioSegment
-    tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
-    tmp.write(audio_bytes)
-    tmp.close()
+        audio_hex = None
+        if "data" in result and "audio" in result["data"]:
+            audio_hex = result["data"]["audio"]
+        elif "audio" in result:
+            audio_hex = result["audio"]
 
-    try:
-        segment = AudioSegment.from_mp3(tmp.name)
-        return segment
-    finally:
-        os.unlink(tmp.name)
+        if not audio_hex:
+            last_error = "empty audio"
+            time.sleep(TTS_BACKOFF_BASE_S * (2 ** attempt))
+            continue
+
+        try:
+            audio_bytes = bytes.fromhex(audio_hex)
+            tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+            tmp.write(audio_bytes)
+            tmp.close()
+            try:
+                return AudioSegment.from_mp3(tmp.name)
+            finally:
+                os.unlink(tmp.name)
+        except Exception as e:
+            last_error = "decode: %s" % e
+            time.sleep(TTS_BACKOFF_BASE_S * (2 ** attempt))
+            continue
+
+    print("   ❌ TTS failed after %d attempts (%s)" % (TTS_MAX_ATTEMPTS, last_error))
+    return None
 
 
 def generate_english_audio(episode, output_dir):
@@ -211,21 +243,25 @@ def generate_english_audio(episode, output_dir):
 
 
 def generate_chinese_audio(episode, output_dir):
-    """Generate Chinese translation audio with matching male/female voices."""
+    """Generate Chinese translation audio with matching male/female voices.
+    Returns (audio_path, skipped_count)."""
     combined = AudioSegment.empty()
     pause = AudioSegment.silent(duration=PAUSE_BETWEEN_LINES_MS)
+    skipped = 0
+    total = 0
 
     for i, line in enumerate(episode["script"]):
-        # Match voice gender to speaker
         voice = MINIMAX_VOICE_ZH_MALE if speakers.get(line["speaker"], "male") == "male" else MINIMAX_VOICE_ZH_FEMALE
         text = line.get("translation_zh", "")
         if not text:
             continue
+        total += 1
 
         emotion = line.get("emotion", "neutral")
         print("   🎤 [%s 中文] (%s) %s..." % (line["speaker"], emotion, text[:25]))
         segment = synthesize_long_text(text, voice, emotion=emotion)
         if segment is None:
+            skipped += 1
             continue
 
         combined += segment
@@ -234,20 +270,26 @@ def generate_chinese_audio(episode, output_dir):
 
     audio_path = os.path.join(output_dir, "zh.mp3")
     combined.export(audio_path, format="mp3", bitrate="128k")
-    print("   🔊 Chinese audio: %s (%.1fs)" % (audio_path, len(combined) / 1000.0))
-    return audio_path
+    print("   🔊 Chinese audio: %s (%.1fs, %d/%d lines skipped)" % (audio_path, len(combined) / 1000.0, skipped, total))
+    return audio_path, skipped, total
 
 
 def detect_speakers(episode):
-    """Auto-detect speaker genders. First unique speaker = male, second = female, Host = male."""
+    """Auto-detect speaker genders.
+    - Two-person dialogue: first unique speaker = male, second = female.
+    - Solo (Host): randomize gender per episode (seeded by episode id) so solo eps alternate voices.
+    """
     global speakers
     speakers = {}
     seen = []
+    # Seed from episode id so the same episode always gets the same voice on reruns.
+    ep_seed = sum(ord(c) for c in episode.get("id", ""))
+    host_gender = "male" if (ep_seed % 2 == 0) else "female"
     for line in episode.get("script", []):
         name = line["speaker"]
         if name not in speakers:
             if name == "Host":
-                speakers[name] = "male"
+                speakers[name] = host_gender
             elif len(seen) == 0:
                 speakers[name] = "male"
                 seen.append(name)
@@ -282,7 +324,15 @@ def process_episode(json_path):
     episode["duration_seconds"] = int(timestamps[-1]["end"]) if timestamps else episode.get("duration_seconds", 180)
 
     # Generate Chinese audio
-    zh_path = generate_chinese_audio(episode, episode_dir)
+    zh_path, zh_skipped, zh_total = generate_chinese_audio(episode, episode_dir)
+
+    # Quality gate: reject if too many Chinese lines failed (>10% missing = broken playback)
+    if zh_total > 0 and zh_skipped / zh_total > 0.10:
+        raise RuntimeError(
+            "Chinese audio degraded: %d/%d lines missing (%.0f%%). "
+            "Episode rejected — rerun when MiniMax is healthier."
+            % (zh_skipped, zh_total, 100.0 * zh_skipped / zh_total)
+        )
 
     if en_path and zh_path:
         episode["audio"]["english"] = en_path

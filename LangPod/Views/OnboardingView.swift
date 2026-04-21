@@ -673,6 +673,10 @@ struct OnboardingView: View {
                 }
                 dataStore.selectedLevel = selectedLevel
                 dataStore.hasCompletedOnboarding = true
+                Analytics.track(.onboardingComplete, params: [
+                    "level": selectedLevel.rawValue,
+                    "source": selectedSource ?? "unknown"
+                ])
             } label: {
                 Text("进入 Castlingo")
                     .font(.system(size: 16, weight: .semibold))

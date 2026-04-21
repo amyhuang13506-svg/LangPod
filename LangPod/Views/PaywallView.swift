@@ -20,8 +20,12 @@ struct PaywallView: View {
 
     var body: some View {
         GeometryReader { outerGeo in
-            ZStack {
+            ZStack(alignment: .top) {
                 background
+                #if DEBUG
+                trialDebugOverlay
+                    .zIndex(1000)
+                #endif
                 VStack(spacing: 0) {
                     topBar
                         .background(
@@ -85,8 +89,62 @@ struct PaywallView: View {
             .onPreferenceChange(TopBarHeightKey.self) { if $0 > 0 { topBarHeight = $0 } }
             .onPreferenceChange(FixedBottomHeightKey.self) { if $0 > 0 { fixedBottomHeight = $0 } }
         }
-        .onAppear { startAnimations() }
+        .onAppear {
+            startAnimations()
+            Analytics.track(.paywallView)
+        }
+        .alert(
+            "购买未完成",
+            isPresented: Binding(
+                get: { subscriptionManager.lastPurchaseError != nil },
+                set: { if !$0 { subscriptionManager.lastPurchaseError = nil } }
+            ),
+            presenting: subscriptionManager.lastPurchaseError
+        ) { _ in
+            Button("好") { subscriptionManager.lastPurchaseError = nil }
+        } message: { msg in
+            Text(msg)
+        }
     }
+
+    #if DEBUG
+    // MARK: - Trial Debug Overlay (DEBUG only)
+    @State private var showDebugOverlay = false
+
+    private var trialDebugOverlay: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Button {
+                    withAnimation { showDebugOverlay.toggle() }
+                } label: {
+                    Text(showDebugOverlay ? "隐藏诊断" : "🔍 诊断")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.black.opacity(0.6), in: Capsule())
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 60)
+            .padding(.top, 50)
+
+            if showDebugOverlay {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(Array(subscriptionManager.trialDebugLines.enumerated()), id: \.offset) { _, line in
+                        Text(line)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.white)
+                    }
+                }
+                .padding(8)
+                .background(Color.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 8))
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+            }
+        }
+    }
+    #endif
 
     // MARK: - Background
 
@@ -493,8 +551,10 @@ struct PaywallView: View {
                 let productID = selectedPlan == .yearly
                     ? SubscriptionManager.yearlyID
                     : SubscriptionManager.monthlyID
+                Analytics.track(.purchaseAttempt, params: ["product": productID])
                 Task {
                     let success = await subscriptionManager.purchase(productID)
+                    Analytics.track(success ? .purchaseSuccess : .purchaseFail, params: ["product": productID])
                     if success { dismiss() }
                 }
             } label: {

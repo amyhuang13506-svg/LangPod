@@ -153,6 +153,12 @@ class DataStore {
         )
         listenHistory.insert(record, at: 0)
         saveListenHistory()
+
+        Analytics.track(.episodePlayStart, params: [
+            "episode_id": episode.id,
+            "level": episode.level,
+            "streak_day": "\(streakDays)"
+        ])
     }
 
     /// Called when all rounds finish. Updates listening time and level progress.
@@ -164,10 +170,18 @@ class DataStore {
             totalListeningSeconds += ep.durationSeconds
         }
         let newLevel = ListeningLevel.checkLevel(episodes: episodesCompleted, words: totalWords)
-        if newLevel.rawValue > listeningLevel.rawValue {
+        let didLevelUp = newLevel.rawValue > listeningLevel.rawValue
+        if didLevelUp {
             pendingLevelUp = newLevel
             listeningLevel = newLevel
         }
+
+        Analytics.track(.episodeComplete, params: [
+            "episode_id": (episode ?? currentEpisode)?.id ?? "unknown",
+            "level": (episode ?? currentEpisode)?.level ?? "unknown",
+            "total_completed": "\(episodesCompleted)",
+            "level_up": didLevelUp ? "1" : "0"
+        ])
     }
 
     func isChannelUnlocked(_ channel: PodcastLevel) -> Bool {

@@ -7,6 +7,7 @@ struct HomeView: View {
     @State private var showPlayer = false
     @State private var showAllEpisodes = false
     @State private var showPaywall = false
+    @State private var showPatternHistory = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -18,6 +19,7 @@ struct HomeView: View {
                     levelTabs
                     nowPlayingCard
                     todayList
+                    todayPatternsSection
                     weeklyPicksList
                     pastEpisodesList
                 }
@@ -35,6 +37,9 @@ struct HomeView: View {
         .sheet(isPresented: $showPaywall) {
             PaywallView()
                 .environment(subscriptionManager)
+        }
+        .fullScreenCover(isPresented: $showPatternHistory) {
+            PatternHistoryView()
         }
         .task {
             // Preload today's episode thumbnails + now-playing cover so they appear instantly
@@ -160,10 +165,38 @@ struct HomeView: View {
         audioPlayer.currentEpisode != nil
     }
 
+    private func nowPlayingBadge(for episode: Episode) -> String {
+        // When a pattern is playing, show a different badge instead of "第 X/5 遍"
+        if case .pattern = audioPlayer.currentPlayItem {
+            return "句型讲解"
+        }
+        if audioPlayer.currentEpisode?.id == episode.id {
+            return audioPlayer.phase.roundDisplay(isPro: subscriptionManager.isProUser)
+        }
+        return "第 1/\(subscriptionManager.isProUser ? 5 : 4) 遍"
+    }
+
     private var nowPlayingCard: some View {
         Group {
             if let episode = nowPlayingEpisode {
                 Button {
+                    // Quota gate: if a free user has exhausted the day's quota
+                    // and this card's episode is NEW (not in today's history),
+                    // block entry to the player and show paywall. Replaying
+                    // an already-played episode stays free.
+                    if !subscriptionManager.isProUser {
+                        dataStore.refreshDailyCountIfNeeded()
+                        let alreadyPlayedToday = dataStore.listenHistory.contains {
+                            $0.episodeId == episode.id &&
+                            Calendar.current.isDateInToday($0.listenedAt)
+                        }
+                        if dataStore.dailyEpisodesPlayed >= SubscriptionManager.freeMaxDailyEpisodes
+                            && !alreadyPlayedToday {
+                            showPaywall = true
+                            return
+                        }
+                    }
+
                     if audioPlayer.currentEpisode == nil {
                         if !audioPlayer.playEpisode(episode, in: dataStore.episodes) {
                             showPaywall = true
@@ -185,7 +218,7 @@ struct HomeView: View {
                                     .tracking(1)
                             }
                             Spacer()
-                            Text(audioPlayer.currentEpisode?.id == episode.id ? audioPlayer.phase.roundDisplay(isPro: subscriptionManager.isProUser) : "第 1/\(subscriptionManager.isProUser ? 5 : 4) 遍")
+                            Text(nowPlayingBadge(for: episode))
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(Color.appPrimary)
                                 .padding(.horizontal, 10)
@@ -193,16 +226,28 @@ struct HomeView: View {
                                 .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 8))
                         }
 
-                        // Title
+                        // Title — shows current pattern when a pattern is playing,
+                        // falls back to the parent/now-playing episode otherwise.
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(episode.title)
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(Color.textPrimary)
-                                .tracking(-0.3)
-
-                            Text("\(episode.dateDisplay) · \(episode.durationDisplay)")
-                                .font(.system(size: 13))
-                                .foregroundStyle(Color.textTertiary)
+                            if case .pattern(let pattern, _) = audioPlayer.currentPlayItem {
+                                Text(pattern.template)
+                                    .font(.system(size: 20, weight: .bold, design: .serif))
+                                    .foregroundStyle(Color.textPrimary)
+                                    .tracking(-0.3)
+                                    .lineLimit(2)
+                                Text("今日句型讲解 · \(pattern.scene)")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.textTertiary)
+                                    .lineLimit(1)
+                            } else {
+                                Text(episode.title)
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundStyle(Color.textPrimary)
+                                    .tracking(-0.3)
+                                Text("\(episode.dateDisplay) · \(episode.durationDisplay)")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.textTertiary)
+                            }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -231,7 +276,16 @@ struct HomeView: View {
 
                         // Playback controls
                         HStack(spacing: 32) {
-                            Button { audioPlayer.skipToPreviousEpisode() } label: {
+                            Button {
+                                if audioPlayer.currentEpisode == nil {
+                                    // Nothing playing yet — prev = start the card episode
+                                    if !audioPlayer.playEpisode(episode, in: dataStore.episodes) {
+                                        showPaywall = true
+                                    }
+                                } else if !audioPlayer.skipToPreviousEpisode() {
+                                    showPaywall = true
+                                }
+                            } label: {
                                 Image(systemName: "backward.fill")
                                     .font(.system(size: 22))
                                     .foregroundStyle(Color.textTertiary)
@@ -245,15 +299,21 @@ struct HomeView: View {
                             }
                             Button {
                                 if audioPlayer.currentEpisode == nil {
-                                    // Not playing yet — start playing this episode first, then skip
-                                    audioPlayer.playEpisode(episode, in: dataStore.episodes)
-                                    audioPlayer.skipToNextEpisode()
-                                } else if audioPlayer.episodeQueue.isEmpty {
-                                    // Playing but no queue — set queue then skip
-                                    audioPlayer.episodeQueue = dataStore.episodes
-                                    audioPlayer.skipToNextEpisode()
+                                    // Not playing yet — start card episode first, then skip
+                                    if !audioPlayer.playEpisode(episode, in: dataStore.episodes) {
+                                        showPaywall = true
+                                        return
+                                    }
+                                    if !audioPlayer.skipToNextEpisode() {
+                                        showPaywall = true
+                                    }
                                 } else {
-                                    audioPlayer.skipToNextEpisode()
+                                    if audioPlayer.episodeQueue.isEmpty {
+                                        audioPlayer.episodeQueue = dataStore.episodes
+                                    }
+                                    if !audioPlayer.skipToNextEpisode() {
+                                        showPaywall = true
+                                    }
                                 }
                             } label: {
                                 Image(systemName: "forward.fill")
@@ -545,13 +605,179 @@ struct HomeView: View {
         if audioPlayer.currentEpisode?.id == episode.id {
             audioPlayer.togglePlayPause()
         } else {
-            audioPlayer.playEpisode(episode, in: dataStore.episodes)
+            // Starting a new episode — if gate blocks, surface paywall
+            // instead of silently no-op'ing.
+            if !audioPlayer.playEpisode(episode, in: dataStore.episodes) {
+                showPaywall = true
+            }
         }
     }
 
     private func progressWidth(_ episode: Episode, in totalWidth: CGFloat) -> CGFloat {
         guard audioPlayer.currentEpisode?.id == episode.id, audioPlayer.duration > 0 else { return 0 }
         return totalWidth * CGFloat(audioPlayer.progress / audioPlayer.duration)
+    }
+
+    // MARK: - Today's Patterns
+
+    /// Patterns extracted from today's episodes across all levels.
+    /// Flat list so the user sees all today's explainers regardless of current level tab.
+    private var todayPatterns: [(pattern: Pattern, parent: Episode)] {
+        let today = DateFormatter.episodeDate.string(from: Date())
+        var results: [(Pattern, Episode)] = []
+        for ep in dataStore.episodes where ep.date == today {
+            if let patterns = ep.patterns {
+                for p in patterns { results.append((p, ep)) }
+            }
+        }
+        return results
+    }
+
+    private var hasAnyPattern: Bool {
+        dataStore.episodes.contains { ($0.patterns?.isEmpty == false) }
+    }
+
+    @ViewBuilder
+    private var todayPatternsSection: some View {
+        let items = todayPatterns
+        if !items.isEmpty {
+            // Today has patterns — horizontal small cards (158×158), scrolls through all levels' patterns.
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("今日句型讲解")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Text("· \(items.count) 个")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textTertiary)
+                    Spacer()
+                    historyLink
+                }
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(items, id: \.pattern.id) { item in
+                            patternCard(pattern: item.pattern, parent: item.parent)
+                        }
+                    }
+                }
+                .scrollClipDisabled()
+            }
+        } else if hasAnyPattern {
+            // No today patterns, but history exists — compact link row
+            Button { showPatternHistory = true } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "quote.bubble.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(Color(hex: "E8B800"))
+                        .frame(width: 36, height: 36)
+                        .background(Color(hex: "FFF4D6"), in: RoundedRectangle(cornerRadius: 10))
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("句型讲解")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Color.textPrimary)
+                        Text("查看往期句型回顾")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color.textTertiary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(.white, in: RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.border, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var historyLink: some View {
+        Button { showPatternHistory = true } label: {
+            HStack(spacing: 2) {
+                Text("往期回顾")
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+            }
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(Color.appPrimary)
+        }
+    }
+
+    private func patternCard(pattern: Pattern, parent: Episode) -> some View {
+        Button {
+            // Today's patterns are free for all users (no gate needed).
+            // Queue = all today's patterns interleaved from parent episodes for seamless browse.
+            let items: [PlayItem] = todayPatterns.map { .pattern($0.pattern, parentEpisode: $0.parent) }
+            audioPlayer.playPattern(pattern, parentEpisode: parent, in: items)
+            showPlayer = true
+            Analytics.track(.patternOpen, params: [
+                "pattern_id": pattern.id,
+                "episode_id": parent.id,
+                "source": "home_today",
+            ])
+        } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(pattern.template)
+                    .font(.system(size: 15, weight: .semibold, design: .serif))
+                    .foregroundStyle(Color(white: 0.15))
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer(minLength: 0)
+
+                Text(pattern.translationZh)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color(white: 0.32))
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "play.circle.fill")
+                        .font(.system(size: 12))
+                    Text(pattern.durationDisplay)
+                        .font(.system(size: 11, weight: .medium))
+                    Spacer(minLength: 6)
+                    Text(pattern.scene)
+                        .font(.system(size: 10))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                .foregroundStyle(Color(white: 0.35))
+            }
+            .padding(14)
+            .frame(width: 158, height: 158)
+            .background(cardColor(pattern: pattern))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func cardColor(pattern: Pattern) -> Color {
+        if let hex = pattern.thumbnailColor, let c = colorFromHex(hex) {
+            return c
+        }
+        return colorFromHex("#E8DCC4") ?? Color(hex: "E8DCC4")
+    }
+
+    private func colorFromHex(_ hex: String) -> Color? {
+        var s = hex
+        if s.hasPrefix("#") { s.removeFirst() }
+        guard s.count == 6, let v = UInt64(s, radix: 16) else { return nil }
+        return Color(
+            red: Double((v >> 16) & 0xFF) / 255.0,
+            green: Double((v >> 8) & 0xFF) / 255.0,
+            blue: Double(v & 0xFF) / 255.0
+        )
     }
 }
 

@@ -119,8 +119,29 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     private var userPaused = false
     private var recentlyPlayed: [String] = []  // track last 3 episode IDs for shuffle
 
-    // Queue of episodes
+    // Queue of episodes (legacy view; mirrors `playQueue` filtered to episodes only)
     var episodeQueue: [Episode] = []
+
+    /// Unified play queue — episodes interleaved with their patterns when `playPatternsAlongside` is on.
+    /// Drives skipToNext / skipToPrevious / shuffle. `episodeQueue` is kept in sync for legacy reads.
+    var playQueue: [PlayItem] = []
+
+    /// The currently-playing item (episode or pattern). Setting this also syncs `currentEpisode`
+    /// for back-compat reads from view layer (HomeView, PlayerView).
+    var currentPlayItem: PlayItem? {
+        didSet {
+            if let item = currentPlayItem {
+                currentEpisode = item.parentEpisode
+            }
+        }
+    }
+
+    /// Whether to interleave a parent episode's patterns into the queue after its 5 rounds.
+    /// Persisted; read by `buildPlayQueue()`. User can flip in Profile → 学习设置.
+    var playPatternsAlongside: Bool {
+        get { UserDefaults.standard.object(forKey: "playPatternsAlongside") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "playPatternsAlongside") }
+    }
 
     // Completion callback — more reliable than onChange for enum
     var onEpisodeFinished: (() -> Void)?
@@ -132,7 +153,38 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     /// Called when playing a lightweight episode.
     var episodeEnricher: ((String) async -> Episode?)?
 
-    // MARK: - Play Episode
+    private var interruptionObserver: NSObjectProtocol?
+
+    private func handleInterruption(_ notification: Notification) {
+        guard let info = notification.userInfo,
+              let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
+
+        switch type {
+        case .began:
+            // System paused audio (phone call, alarm, etc.) — sync UI
+            isPlaying = false
+            userPaused = true
+        case .ended:
+            if let optionsValue = info[AVAudioSessionInterruptionOptionKey] as? UInt {
+                let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+                if options.contains(.shouldResume) {
+                    // System says we can resume — do so automatically
+                    if let sp = streamPlayer {
+                        sp.rate = playbackRate
+                    } else {
+                        player?.play()
+                    }
+                    isPlaying = true
+                    userPaused = false
+                }
+            }
+        @unknown default:
+            break
+        }
+    }
+
+    // MARK: - Play Episode / Pattern / Item
 
     /// Returns true if playback started, false if blocked by gate.
     @discardableResult
@@ -143,9 +195,14 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                 return false
             }
         }
-        currentEpisode = episode
-        if !queue.isEmpty { episodeQueue = queue }
-        if episodeQueue.isEmpty { episodeQueue = [episode] }
+        currentPlayItem = .episode(episode)  // syncs currentEpisode via didSet
+        if !queue.isEmpty {
+            episodeQueue = queue
+            playQueue = .build(from: queue, includePatterns: playPatternsAlongside)
+        } else if episodeQueue.isEmpty {
+            episodeQueue = [episode]
+            playQueue = .build(from: [episode], includePatterns: playPatternsAlongside)
+        }
         phase = .englishRound(1)
         startCurrentPhase()
 
@@ -156,12 +213,74 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                 if let enriched = await enricher(episodeId) {
                     guard let self else { return }
                     if self.currentEpisode?.id == enriched.id {
-                        self.currentEpisode = enriched
+                        self.currentPlayItem = .episode(enriched)
+                        // Rebuild queue if needed so newly-loaded patterns join
+                        if let idx = self.episodeQueue.firstIndex(where: { $0.id == enriched.id }) {
+                            self.episodeQueue[idx] = enriched
+                            self.playQueue = .build(from: self.episodeQueue, includePatterns: self.playPatternsAlongside)
+                        }
                     }
                 }
             }
         }
         return true
+    }
+
+    /// Play a pattern (single-pass; no 5-round loop).
+    /// Pattern access gating (free/Pro) is enforced by the caller via PatternAccessGate.
+    @discardableResult
+    func playPattern(_ pattern: Pattern, parentEpisode: Episode, in queue: [PlayItem] = []) -> Bool {
+        currentPlayItem = .pattern(pattern, parentEpisode: parentEpisode)
+        if !queue.isEmpty {
+            playQueue = queue
+        } else if playQueue.isEmpty {
+            playQueue = [.pattern(pattern, parentEpisode: parentEpisode)]
+        }
+        startPatternPlayback(pattern)
+        return true
+    }
+
+    /// Unified entry — dispatches to playEpisode / playPattern based on item type.
+    @discardableResult
+    func playItem(_ item: PlayItem) -> Bool {
+        switch item {
+        case .episode(let ep):
+            return playEpisode(ep)
+        case .pattern(let p, let parent):
+            return playPattern(p, parentEpisode: parent)
+        }
+    }
+
+    /// Rebuild playQueue from current episodeQueue, respecting current `playPatternsAlongside`.
+    /// Call after toggling the setting.
+    func rebuildQueueAfterSettingChange() {
+        if !episodeQueue.isEmpty {
+            playQueue = .build(from: episodeQueue, includePatterns: playPatternsAlongside)
+        }
+    }
+
+    private func startPatternPlayback(_ pattern: Pattern) {
+        let urlString = pattern.audioUrl
+
+        if urlString.hasPrefix("bundle://") {
+            let filename = String(urlString.dropFirst("bundle://".count))
+            if let bundleURL = Bundle.main.url(forResource: filename, withExtension: "mp3") {
+                playAudioFile(bundleURL)
+                updateNowPlayingInfo()
+                return
+            }
+        }
+
+        if let cachedURL = cachedFileURL(for: urlString) {
+            playAudioFile(cachedURL)
+        } else if let url = URL(string: urlString), url.scheme == "http" || url.scheme == "https" {
+            playFromRemote(url)
+        } else {
+            // No valid URL — skip to next item
+            skipToNext()
+        }
+
+        updateNowPlayingInfo()
     }
 
     // MARK: - Phase Flow
@@ -329,7 +448,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             queue: .main
         ) { [weak self] _ in
             self?.cacheIfNeeded()
-            self?.advancePhase()
+            self?.handleItemFinished()
         }
 
         // Observe time progress
@@ -402,8 +521,28 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.cacheIfNeeded()
-            self.advancePhase()
+            self.handleItemFinished()
         }
+    }
+
+    /// Routing from low-level audio finish → either advance the 5-round phase
+    /// (episodes) or skip to the next queue item (patterns).
+    private func handleItemFinished() {
+        if case .pattern(let pattern, let parent) = currentPlayItem {
+            Analytics.track(.patternListenComplete, params: [
+                "pattern_id": pattern.id,
+                "episode_id": parent.id,
+            ])
+            // Patterns are single-pass: just go to the next queue item.
+            // repeatOne is honored by replaying the same pattern.
+            if playOrder == .repeatOne {
+                startPatternPlayback(pattern)
+                return
+            }
+            skipToNext()
+            return
+        }
+        advancePhase()
     }
 
     // MARK: - Controls
@@ -446,47 +585,79 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         }
     }
 
-    /// Returns true if next episode started, false if blocked by gate.
+    /// Skip to next item in playQueue (works for both episodes and patterns).
+    /// shuffle treats "episode + its patterns" as a unit.
     @discardableResult
-    func skipToNextEpisode() -> Bool {
-        guard let current = currentEpisode, !episodeQueue.isEmpty else { return false }
+    func skipToNext() -> Bool {
+        guard let current = currentPlayItem else { return false }
+        if playQueue.isEmpty { playQueue = [current] }
 
-        // Track recently played for shuffle dedup
-        if !recentlyPlayed.contains(current.id) {
-            recentlyPlayed.append(current.id)
+        // Track recently-played PARENT episode (not pattern) for shuffle dedup
+        let currentParentId = current.parentEpisode.id
+        if !recentlyPlayed.contains(currentParentId) {
+            recentlyPlayed.append(currentParentId)
             if recentlyPlayed.count > 3 { recentlyPlayed.removeFirst() }
         }
 
-        let nextEpisode: Episode?
+        let nextItem: PlayItem?
         switch playOrder {
         case .sequential:
-            guard let idx = episodeQueue.firstIndex(where: { $0.id == current.id }) else { return false }
-            let nextIdx = (idx + 1) % episodeQueue.count
-            nextEpisode = episodeQueue[nextIdx]
+            guard let idx = playQueue.firstIndex(where: { $0.id == current.id }) else { return false }
+            let nextIdx = (idx + 1) % playQueue.count
+            nextItem = playQueue[nextIdx]
         case .shuffle:
-            let candidates = episodeQueue.filter { !recentlyPlayed.contains($0.id) }
-            nextEpisode = candidates.randomElement() ?? episodeQueue.randomElement()
+            // Pick a different episode at random; jump to its first occurrence in playQueue
+            // (patterns ride along because they're inserted right after their parent).
+            let allEpisodeIds = playQueue.compactMap { item -> String? in
+                if case .episode(let ep) = item { return ep.id }
+                return nil
+            }
+            let uniqueIds = Array(Set(allEpisodeIds))
+            let candidates = uniqueIds.filter { !recentlyPlayed.contains($0) }
+            let chosenId = candidates.randomElement() ?? uniqueIds.randomElement()
+            if let chosenId,
+               let idx = playQueue.firstIndex(where: {
+                   if case .episode(let ep) = $0 { return ep.id == chosenId }
+                   return false
+               }) {
+                nextItem = playQueue[idx]
+            } else {
+                nextItem = nil
+            }
         case .repeatOne:
-            nextEpisode = current
+            nextItem = current  // includes patterns: same item replays
         }
 
-        if let next = nextEpisode {
-            return playEpisode(next)
+        if let next = nextItem {
+            return playItem(next)
         }
         return false
     }
 
-    func skipToPreviousEpisode() {
-        guard let current = currentEpisode else { return }
-        guard let idx = episodeQueue.firstIndex(where: { $0.id == current.id }),
-              idx > 0 else {
-            // Restart current episode
-            phase = .englishRound(1)
-            startCurrentPhase()
-            return
+    /// Restart current item, or step back one in playQueue.
+    @discardableResult
+    func skipToPrevious() -> Bool {
+        guard let current = currentPlayItem else { return false }
+        guard let idx = playQueue.firstIndex(where: { $0.id == current.id }), idx > 0 else {
+            // Restart current item
+            switch current {
+            case .episode:
+                phase = .englishRound(1)
+                startCurrentPhase()
+            case .pattern(let p, _):
+                startPatternPlayback(p)
+            }
+            return true
         }
-        playEpisode(episodeQueue[idx - 1])
+        return playItem(playQueue[idx - 1])
     }
+
+    /// Back-compat aliases — call sites in PlayerView/HomeView use the *Episode names.
+    @discardableResult
+    func skipToNextEpisode() -> Bool { skipToNext() }
+
+    @discardableResult
+    func skipToPreviousEpisode() -> Bool { skipToPrevious() }
 
     func skipCurrentRound() {
         stopTimer()
@@ -592,21 +763,78 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
     private func updateNowPlayingInfo() {
-        guard let episode = currentEpisode else { return }
+        guard let item = currentPlayItem else { return }
         var info = [String: Any]()
-        info[MPMediaItemPropertyTitle] = episode.title
-        info[MPMediaItemPropertyArtist] = "LangPod · \(phase.label)"
-        info[MPMediaItemPropertyAlbumTitle] = episode.podcastLevel?.tabName ?? ""
+
+        switch item {
+        case .episode(let episode):
+            info[MPMediaItemPropertyTitle] = episode.title
+            info[MPMediaItemPropertyArtist] = "Castlingo · \(phase.label)"
+            info[MPMediaItemPropertyAlbumTitle] = episode.podcastLevel?.tabName ?? ""
+            if let artwork = loadArtwork(for: episode) {
+                info[MPMediaItemPropertyArtwork] = artwork
+            }
+        case .pattern(let pattern, _):
+            info[MPMediaItemPropertyTitle] = pattern.template
+            info[MPMediaItemPropertyArtist] = "Castlingo · 今日句型讲解"
+            info[MPMediaItemPropertyAlbumTitle] = pattern.scene
+            if let artwork = patternArtwork(for: pattern) {
+                info[MPMediaItemPropertyArtwork] = artwork
+            }
+        }
+
         info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = progress
         info[MPMediaItemPropertyPlaybackDuration] = duration
         info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? Double(playbackRate) : 0.0
 
-        // Artwork from thumbnail
-        if let artwork = loadArtwork(for: episode) {
-            info[MPMediaItemPropertyArtwork] = artwork
-        }
-
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    private var cachedPatternArtwork: MPMediaItemArtwork?
+    private var cachedPatternArtworkId: String?
+
+    /// Generate a beige card artwork for a pattern (no album cover; pattern is text content).
+    private func patternArtwork(for pattern: Pattern) -> MPMediaItemArtwork? {
+        if cachedPatternArtworkId == pattern.id, let cached = cachedPatternArtwork {
+            return cached
+        }
+        let size = CGSize(width: 600, height: 600)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let img = renderer.image { ctx in
+            // Background — beige / scene-tinted
+            let hex = pattern.thumbnailColor ?? "#E8DCC4"
+            let bg = uiColor(hex: hex)
+            bg.setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+
+            // Template text — large, centered
+            let para = NSMutableParagraphStyle()
+            para.alignment = .center
+            para.lineBreakMode = .byWordWrapping
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 56, weight: .semibold),
+                .foregroundColor: UIColor(white: 0.15, alpha: 1),
+                .paragraphStyle: para,
+            ]
+            let textRect = CGRect(x: 32, y: 200, width: size.width - 64, height: 240)
+            (pattern.template as NSString).draw(in: textRect, withAttributes: attrs)
+        }
+        let artwork = MPMediaItemArtwork(boundsSize: img.size) { _ in img }
+        cachedPatternArtwork = artwork
+        cachedPatternArtworkId = pattern.id
+        return artwork
+    }
+
+    private func uiColor(hex: String) -> UIColor {
+        var s = hex
+        if s.hasPrefix("#") { s.removeFirst() }
+        guard s.count == 6, let v = Int(s, radix: 16) else {
+            return UIColor(red: 0.91, green: 0.86, blue: 0.77, alpha: 1)  // default beige
+        }
+        let r = CGFloat((v >> 16) & 0xFF) / 255.0
+        let g = CGFloat((v >> 8) & 0xFF) / 255.0
+        let b = CGFloat(v & 0xFF) / 255.0
+        return UIColor(red: r, green: g, blue: b, alpha: 1)
     }
 
     private var cachedArtwork: MPMediaItemArtwork?
@@ -720,5 +948,18 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     override init() {
         super.init()
         setupRemoteCommands()
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: .main
+        ) { [weak self] notification in
+            self?.handleInterruption(notification)
+        }
+    }
+
+    deinit {
+        if let obs = interruptionObserver {
+            NotificationCenter.default.removeObserver(obs)
+        }
     }
 }

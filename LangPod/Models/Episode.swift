@@ -11,11 +11,12 @@ struct Episode: Codable, Identifiable {
     let vocabulary: [VocabularyItem]
     var thumbnail: String?
     var recycledWords: [String]?
+    var patterns: [Pattern]?
 
     enum CodingKeys: String, CodingKey {
         case id, title, level, date, thumbnail
         case durationSeconds = "duration_seconds"
-        case audio, script, vocabulary
+        case audio, script, vocabulary, patterns
         case recycledWords = "recycled_words"
     }
 
@@ -50,6 +51,8 @@ struct Episode: Codable, Identifiable {
 
 extension Episode {
     /// Build a lightweight Episode from an index item (no script/vocabulary).
+    /// Patterns come through eagerly so HomeView / PatternHistoryView / mixed
+    /// playback queue don't need a second network round-trip.
     init(from item: EpisodeIndexItem) {
         self.id = item.id
         self.title = item.title
@@ -61,6 +64,7 @@ extension Episode {
         self.vocabulary = []
         self.thumbnail = item.thumbnail
         self.recycledWords = nil
+        self.patterns = item.patterns
     }
 }
 

@@ -54,7 +54,7 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.amyhuang.castlingo.pro.yearly",
+          "productID" : "com.amyhuang.castlingo.pro.yearly.v2",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Castlingo Pro Yearly",
           "subscriptionGroupID" : "21000001",
@@ -80,7 +80,7 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.amyhuang.castlingo.pro.monthly",
+          "productID" : "com.amyhuang.castlingo.pro.monthly.v2",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Castlingo Pro Monthly",
           "subscriptionGroupID" : "21000001",

@@ -71,6 +71,19 @@ def upload_episode(bucket, json_path: str, level: str) -> bool:
     else:
         print(f"   ⚠️  Cover not found: {cover_local}")
 
+    # Upload pattern explainer audios (if any) and rewrite audio_url to OSS URL.
+    # Idempotent: skips patterns whose audio_url is already an http(s) URL.
+    patterns = episode.get("patterns") or []
+    for p in patterns:
+        local = p.get("audio_url", "")
+        if not local or local.startswith("http://") or local.startswith("https://"):
+            continue
+        if not os.path.exists(local):
+            print(f"   ⚠️  Pattern audio missing: {local}")
+            continue
+        pattern_key = f"{oss_prefix}/patterns/{p['id']}.mp3"
+        p["audio_url"] = upload_file(bucket, local, pattern_key)
+
     # Upload episode JSON
     episode_json_key = f"{oss_prefix}/episode.json"
     episode_json_bytes = json.dumps(episode, ensure_ascii=False, indent=2).encode("utf-8")
@@ -105,6 +118,9 @@ def update_episode_list(bucket, level: str):
                     "audio": ep["audio"],
                     "thumbnail": ep.get("thumbnail", ""),
                     "vocabulary_count": len(ep.get("vocabulary", [])),
+                    # Include full patterns so HomeView/PatternHistoryView/混播 have them
+                    # without a second fetch. Adds ~5KB per episode — acceptable for 51 eps.
+                    "patterns": ep.get("patterns", []),
                 })
             except Exception as e:
                 print(f"   ⚠️  Error reading {obj.key}: {e}")

@@ -11,14 +11,16 @@ Full pipeline:
 """
 
 import logging
+import random
 import sys
 from datetime import datetime
 
 from generate_script import generate_episode_script, save_episode
 from generate_audio import process_episode as process_audio
 from generate_cover import process_episode as process_cover
+from extract_patterns import process_episode as process_patterns, load_pattern_manifest, save_pattern_manifest
 from upload_oss import get_bucket, upload_episode, update_episode_list
-from config import LEVELS, OUTPUT_DIR
+from config import LEVELS, OUTPUT_DIR, TOPIC_POOL
 
 # Setup logging
 logging.basicConfig(
@@ -32,20 +34,14 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def fetch_trending_topics():
-    """Fetch trending topics for Hard level episodes.
-    MVP: return hardcoded topics. Replace with NewsAPI later.
-    """
-    return [
-        "AI regulation debate",
-        "Remote work trends",
-        "Climate change solutions",
-        "Space exploration milestones",
-        "Global supply chain challenges",
-        "Mental health in the workplace",
-        "Electric vehicle market growth",
-        "Social media impact on youth",
-    ]
+def pick_topics_for_level(level, count):
+    """Sample `count` distinct topics from the level's pool, no repeats within a run."""
+    pool = list(TOPIC_POOL.get(level, []))
+    random.shuffle(pool)
+    if len(pool) < count:
+        # Pool smaller than needed — allow cycling
+        return (pool * ((count // len(pool)) + 1))[:count] if pool else [None] * count
+    return pool[:count]
 
 
 def run_pipeline(target_level=None):
@@ -55,21 +51,22 @@ def run_pipeline(target_level=None):
     log.info(f"🚀 LangPod Pipeline started at {start_time}")
     log.info("=" * 50)
 
-    topics = fetch_trending_topics()
     levels = {target_level: LEVELS[target_level]} if target_level else LEVELS
     bucket = None
     generated = 0
     errors = 0
+    pattern_manifest = load_pattern_manifest()
 
     for level, config in levels.items():
         count = config["daily_episodes"]
+        topics = pick_topics_for_level(level, count)
         log.info(f"\n📝 Level [{level}]: generating {count} episode(s)")
+        log.info(f"   Topics: {topics}")
 
         for i in range(1, count + 1):
             try:
-                # Step 1: Generate script
-                topic = topics.pop(0) if level == "hard" and topics else None
-                log.info(f"   Step 1/3: Generating script...")
+                topic = topics[i - 1] if i - 1 < len(topics) else None
+                log.info(f"   Step 1/4: Generating script (topic: {topic})...")
                 episode = generate_episode_script(level, i, topic)
                 json_path = save_episode(episode, level)
                 log.info(f"   → {episode['title']}")
@@ -79,14 +76,21 @@ def run_pipeline(target_level=None):
                 process_audio(json_path)
 
                 # Step 3: Generate cover
-                log.info(f"   Step 3/4: Generating cover...")
+                log.info(f"   Step 3/5: Generating cover...")
                 try:
                     process_cover(json_path)
                 except Exception as e:
                     log.warning(f"   ⚠️ Cover generation failed (non-fatal): {e}")
 
-                # Step 4: Upload to OSS
-                log.info(f"   Step 4/4: Uploading to OSS...")
+                # Step 4: Extract patterns + synthesize explainer audio
+                log.info(f"   Step 4/5: Extracting patterns...")
+                try:
+                    process_patterns(json_path, pattern_manifest)
+                except Exception as e:
+                    log.warning(f"   ⚠️ Pattern extraction failed (non-fatal): {e}")
+
+                # Step 5: Upload to OSS
+                log.info(f"   Step 5/5: Uploading to OSS...")
                 if bucket is None:
                     bucket = get_bucket()
                 upload_episode(bucket, json_path, level)

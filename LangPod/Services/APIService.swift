@@ -5,8 +5,34 @@ import Foundation
 actor APIService {
     static let shared = APIService()
 
-    // OSS direct URL (public read)
-    private let baseURL = "https://castlingo.oss-ap-southeast-1.aliyuncs.com"
+    /// Origin OSS host — what the pipeline bakes into index.json URLs.
+    /// Used to rewrite embedded audio/thumbnail URLs to the configured host.
+    private static let originOSSHost = "castlingo.oss-ap-southeast-1.aliyuncs.com"
+
+    /// Base URL for fetching index + detail. Reads `OSSBaseURL` from Info.plist
+    /// (set this to the CDN/accelerate host once provisioned), falls back to
+    /// direct OSS. Swap = one Info.plist edit, no code recompile semantics.
+    private var baseURL: String {
+        Bundle.main.object(forInfoDictionaryKey: "OSSBaseURL") as? String
+            ?? "https://\(Self.originOSSHost)"
+    }
+
+    /// Extracted host from configured base URL — used for URL rewriting.
+    private var configuredHost: String {
+        URL(string: baseURL)?.host ?? Self.originOSSHost
+    }
+
+    /// Rewrite any origin-OSS hosts inside a JSON blob to the configured host
+    /// (CDN/accelerate). No-op when host is unchanged. Operates on the raw
+    /// UTF-8 blob so it catches embedded audio + thumbnail + vocab audio URLs
+    /// in one pass without needing to walk the decoded model.
+    private func rewriteURLs(_ data: Data) -> Data {
+        let newHost = configuredHost
+        guard newHost != Self.originOSSHost else { return data }
+        guard var text = String(data: data, encoding: .utf8) else { return data }
+        text = text.replacingOccurrences(of: Self.originOSSHost, with: newHost)
+        return Data(text.utf8)
+    }
 
     // MARK: - Episode List
 
@@ -20,7 +46,9 @@ actor APIService {
 
         do {
             debugLog("📡 Fetching index: \(url)")
-            let (data, response) = try await URLSession.shared.data(from: url)
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
                 let code = (response as? HTTPURLResponse)?.statusCode ?? -1
@@ -28,7 +56,8 @@ actor APIService {
                 return []
             }
 
-            let index = try JSONDecoder().decode(EpisodeIndex.self, from: data)
+            let rewritten = rewriteURLs(data)
+            let index = try JSONDecoder().decode(EpisodeIndex.self, from: rewritten)
             debugLog("✅ Index loaded: \(index.total) episodes")
 
             // Convert index items to lightweight Episodes (no script/vocabulary yet)
@@ -51,13 +80,16 @@ actor APIService {
         guard let url = URL(string: "\(baseURL)/episodes/\(level.rawValue)/\(id)/episode.json") else { return nil }
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
                 debugLog("⚠️ Detail \(id): HTTP \((response as? HTTPURLResponse)?.statusCode ?? -1)")
                 return nil
             }
-            return try JSONDecoder().decode(Episode.self, from: data)
+            let rewritten = rewriteURLs(data)
+            return try JSONDecoder().decode(Episode.self, from: rewritten)
         } catch {
             debugLog("⚠️ Detail \(id) decode error: \(error.localizedDescription)")
             return nil
@@ -117,9 +149,10 @@ struct EpisodeIndexItem: Codable {
     let audio: EpisodeAudio
     let thumbnail: String?
     let vocabularyCount: Int
+    let patterns: [Pattern]?
 
     enum CodingKeys: String, CodingKey {
-        case id, title, level, date, audio, thumbnail
+        case id, title, level, date, audio, thumbnail, patterns
         case durationSeconds = "duration_seconds"
         case vocabularyCount = "vocabulary_count"
     }

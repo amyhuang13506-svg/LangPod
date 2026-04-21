@@ -35,14 +35,67 @@ struct WordMatchView: View {
 
             if gameComplete {
                 gameCompleteContent
+            } else if store.words.count < wordsPerRound {
+                emptyContent
             } else {
                 gameContent
             }
         }
-        .onAppear { startGame() }
+        .onAppear {
+            if store.words.count >= wordsPerRound {
+                startGame()
+            }
+        }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
                 .environment(subscriptionManager)
+        }
+    }
+
+    // MARK: - Empty
+
+    private var emptyContent: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(Color.textTertiary)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+
+            Spacer()
+
+            Image(systemName: "character.book.closed")
+                .font(.system(size: 48))
+                .foregroundStyle(Color.textQuaternary)
+                .padding(.bottom, 16)
+
+            Text("还没有可以练习的词汇")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.textPrimary)
+
+            Text("听一集播客，词汇会自动收藏到这里")
+                .font(.system(size: 14))
+                .foregroundStyle(Color.textTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
+
+            Spacer()
+
+            Button { dismiss() } label: {
+                Text("去听一集")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.horizontal, 40)
+            .padding(.bottom, 40)
         }
     }
 
@@ -420,6 +473,10 @@ struct WordMatchView: View {
         if round >= totalRounds {
             timerRunning = false
             store.markDailyMatchPlayed()
+            Analytics.track(.wordMatchComplete, params: [
+                "words_practiced": "\(sessionPracticedWords.count)",
+                "duration_sec": "\(Int(timer))"
+            ])
             withAnimation { gameComplete = true }
         } else {
             round += 1

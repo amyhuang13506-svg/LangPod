@@ -28,6 +28,7 @@ from config import (
     GPT_MODEL,
     BANNED_TOPICS,
     LEVELS,
+    FORMAT_POOL,
     OUTPUT_DIR,
     RECYCLE_WORD_COUNT,
     RECYCLE_WINDOW_DAYS,
@@ -95,7 +96,19 @@ def update_vocabulary_manifest(manifest, level, episode):
     save_vocabulary_manifest(manifest)
 
 
-def generate_episode_script(level, episode_num, topic=None, recycle_words=None):
+def pick_format(level):
+    """Weighted-random pick a format block for this episode."""
+    pool = FORMAT_POOL.get(level, [])
+    if not pool:
+        return None, ""
+    names = [item[0] for item in pool]
+    weights = [item[1] for item in pool]
+    descriptions = {item[0]: item[2] for item in pool}
+    chosen = random.choices(names, weights=weights, k=1)[0]
+    return chosen, descriptions[chosen]
+
+
+def generate_episode_script(level, episode_num, topic=None, recycle_words=None, format_override=None):
     """Generate a complete episode script using GPT API."""
     level_config = LEVELS[level]
     date_str = datetime.now().strftime("%Y-%m-%d")
@@ -103,6 +116,15 @@ def generate_episode_script(level, episode_num, topic=None, recycle_words=None):
 
     # Pick random name pair for this episode
     male_name, female_name = random.choice(NAME_PAIRS)
+
+    # Pick a format (weighted) — strongly biased toward solo for Hard
+    if format_override:
+        format_name = format_override
+        format_desc = dict((n, d) for n, _, d in FORMAT_POOL.get(level, [])).get(format_override, "")
+    else:
+        format_name, format_desc = pick_format(level)
+    format_desc_filled = format_desc.replace("%(male)s", male_name).replace("%(female)s", female_name) if format_desc else ""
+    is_solo = "SINGLE host" in format_desc or "Use 'Host' as the only speaker" in format_desc
 
     topic_line = ""
     if topic:
@@ -121,19 +143,46 @@ def generate_episode_script(level, episode_num, topic=None, recycle_words=None):
     if "%s" in level_prompt:
         level_prompt = level_prompt % BANNED_TOPICS
 
-    max_words = level_config.get("max_words_per_sentence")
-    max_words_warning = ""
-    if max_words:
-        max_words_warning = (
-            "SENTENCE LENGTH LIMIT: Every English sentence MUST be under %d words. "
-            "Count carefully. Sentences exceeding this limit will cause garbled TTS audio. "
-            "If a thought is too long, split it into 2 sentences.\n\n" % max_words
+    words_min = level_config.get("target_total_words_min")
+    words_max = level_config.get("target_total_words_max")
+    turns_min = level_config.get("turns_min")
+    turns_max = level_config.get("turns_max")
+
+    # Pick a specific target inside the range — GPT follows concrete numbers far better than ranges.
+    target_words = random.randint(words_min, words_max)
+    target_lines = random.randint(turns_min, turns_max)
+
+    length_header = (
+        "### HARD LENGTH TARGET (READ FIRST — THIS IS THE PRIMARY SUCCESS CRITERION) ###\n"
+        "Produce EXACTLY %d script lines. Total English word count across all `text` fields "
+        "must be AT LEAST %d words (ideal: around %d).\n"
+        "A script with fewer than %d lines or fewer than %d total words will be REJECTED as a failure.\n"
+        "Before outputting, count your lines and your total words. If either is below target, "
+        "KEEP GOING — extend with follow-up questions, examples, tangents, reactions, deeper detail. "
+        "Do NOT stop early.\n\n"
+        % (target_lines, int(target_words * 0.95), target_words, target_lines - 3, int(target_words * 0.9))
+    )
+
+    if is_solo:
+        speaker_hint = (
+            "SPEAKERS: This is a SOLO broadcast. Every single line's `speaker` field MUST be exactly \"Host\". "
+            "Do NOT use %s, %s, or any other name. No back-and-forth dialogue.\n\n"
+            % (male_name, female_name)
+        )
+    else:
+        speaker_hint = (
+            "SPEAKERS: Two-person dialogue. Use \"%s\" (male) and \"%s\" (female) alternating turns. "
+            "Do NOT use \"Host\".\n\n"
+            % (male_name, female_name)
         )
 
-    prompt = """%s
+    format_block = (
+        "### FORMAT FOR THIS EPISODE (mandatory — do NOT switch format) ###\n"
+        "Format: %s\n%s\n\n"
+        % (format_name, format_desc_filled)
+    )
 
-SPEAKERS: For two-person formats, use "%s" (male) and "%s" (female). For solo formats, use "Host".
-
+    prompt = """%s%s%s
 %s%s%s=== OUTPUT FORMAT ===
 Generate valid JSON ONLY. No markdown, no explanation, no text outside the JSON.
 
@@ -145,10 +194,16 @@ Generate valid JSON ONLY. No markdown, no explanation, no text outside the JSON.
   "duration_seconds": 0,
   "script": [
     {
-      "speaker": "%s or Host",
-      "text": "English line",
-      "translation_zh": "完整的中文翻译（必须覆盖英文的全部内容）",
+      "speaker": "%s",
+      "text": "EXACTLY ONE English sentence — max 20 words; if the idea needs more, split into multiple script lines.",
+      "translation_zh": "对应的单句中文翻译（≤30 个汉字；长内容拆成下一条 script line）",
       "emotion": "neutral"
+    },
+    {
+      "speaker": "%s",
+      "text": "Another single sentence — don't pack 2-3 sentences into one script line.",
+      "translation_zh": "对应的单句中文翻译",
+      "emotion": "happy"
     }
   ],
   "vocabulary": [
@@ -162,10 +217,6 @@ Generate valid JSON ONLY. No markdown, no explanation, no text outside the JSON.
   ]
 }
 
-=== VOCABULARY ===
-Pick %s vocabulary words that appear in the script.
-Each word must actually be used in one of the script lines.
-
 === TIMESTAMPS ===
 Do NOT include start/end timestamps — they will be calculated from audio.
 Do NOT set duration_seconds — it will be calculated from audio.
@@ -178,50 +229,87 @@ Do NOT set duration_seconds — it will be calculated from audio.
 - "neutral" — normal statement, explaining facts, calm narration, asking questions
 
 === FINAL CHECKLIST (verify before outputting) ===
-1. Every script line has a non-empty "translation_zh" that fully covers the English
-2. Every sentence is within the word limit for this level
-3. No parentheses or special punctuation that could confuse TTS
-4. Vocabulary words actually appear in the script text
-5. The JSON is valid and parseable
+1. Total English word count is within the target range above
+2. Line count is within the target range above
+3. Every script line has a non-empty "translation_zh" covering the full English
+4. Every sentence is within the word-per-sentence limit for this level
+5. **SUBTITLE RULE**: Each script line's `text` is ONE sentence (≤20 words) and
+   `translation_zh` is ONE sentence (≤30 Chinese chars). On phone screen this
+   caps subtitles at ≤5 lines (3 EN + 2 ZH). If a thought is longer, SPLIT it
+   across multiple script lines — don't cram 2-3 sentences into one line.
+6. No parentheses or special punctuation that could confuse TTS
+7. Vocabulary words actually appear in the script text
+8. The JSON is valid and parseable
 """ % (
         level_prompt,
-        male_name,
-        female_name,
+        length_header,
+        format_block,
+        speaker_hint,
         topic_line,
         recycle_line,
-        max_words_warning,
         ep_id,
         level,
         date_str,
-        male_name,
-        level_config["vocab_count"],
+        "Host" if is_solo else male_name,
+        "Host" if is_solo else female_name,
     )
 
-    response = requests.post(
-        GPT_API_ENDPOINT,
-        headers={
-            "Authorization": "Bearer %s" % GPT_API_KEY,
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": GPT_MODEL,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.85,
-            "max_tokens": 4000,
-        },
-        timeout=60,
-    )
-    response.raise_for_status()
+    messages = [{"role": "user", "content": prompt}]
+    episode = _call_gpt(messages)
 
-    content = response.json()["choices"][0]["message"]["content"]
-    content = content.strip()
-    if content.startswith("```"):
-        content = content.split("\n", 1)[1]
-    if content.endswith("```"):
-        content = content.rsplit("```", 1)[0]
-    content = content.strip()
-
-    episode = json.loads(content)
+    # Length-enforcement loop: GPT-4o often undershoots. Ask it to extend up to 3 times.
+    # Key: keep the PREVIOUS full episode cached so we can restore vocab/title if GPT drops them.
+    min_words = int(target_words * 0.88)
+    min_lines = int(target_lines * 0.85)
+    max_extensions = 3
+    for attempt in range(max_extensions):
+        current_words = sum(len(l.get("text", "").split()) for l in episode.get("script", []))
+        current_lines = len(episode.get("script", []))
+        if current_words >= min_words and current_lines >= min_lines:
+            break
+        # If words already exceed the max target, stop — don't over-extend
+        if current_words >= int(words_max * 1.1):
+            break
+        print(
+            "   ⚠️  Script too short (%d lines, %d words). Target: %d lines, %d words. Extending (attempt %d)..."
+            % (current_lines, current_words, target_lines, target_words, attempt + 1)
+        )
+        prev_episode = episode
+        messages.append({"role": "assistant", "content": json.dumps(episode, ensure_ascii=False)})
+        needed_words = target_words - current_words
+        needed_lines = target_lines - current_lines
+        messages.append({
+            "role": "user",
+            "content": (
+                "Your previous response has %d lines and %d words. That is too short.\n"
+                "You must ADD approximately %d more lines (~%d more words) to the SAME script.\n\n"
+                "RULES FOR THE EXTENDED VERSION:\n"
+                "1. Keep ALL existing lines exactly as they were. Do NOT rewrite, summarize, or shorten them.\n"
+                "2. APPEND new lines in the middle and near the end — deeper analysis, examples, counterpoints, anecdotes.\n"
+                "3. Keep the SAME format, same speakers, same style.\n"
+                "4. PRESERVE the `vocabulary` array from your previous response. Add 1-2 more words if natural, "
+                "but do NOT remove any.\n"
+                "5. PRESERVE `id`, `title`, `level`, `date` fields exactly.\n\n"
+                "Return the FULL extended episode as a single valid JSON object. No markdown, no explanation."
+            ) % (current_lines, current_words, needed_lines, needed_words),
+        })
+        try:
+            new_episode = _call_gpt(messages)
+            # Sanity check: if GPT returned something shorter, discard and keep previous.
+            new_words = sum(len(l.get("text", "").split()) for l in new_episode.get("script", []))
+            if new_words < current_words:
+                print("   ⚠️  Extension returned SHORTER (%d words). Keeping previous version." % new_words)
+                episode = prev_episode
+                break
+            # Merge missing fields back if GPT dropped them
+            for key in ("id", "title", "level", "date", "vocabulary"):
+                if key not in new_episode and key in prev_episode:
+                    new_episode[key] = prev_episode[key]
+            episode = new_episode
+        except Exception as e:
+            print("   ⚠️  Extension failed (%s). Keeping previous version." % e)
+            episode = prev_episode
+            break
 
     # Clean up — remove any GPT-added timestamps
     for line in episode.get("script", []):
@@ -230,6 +318,7 @@ Do NOT set duration_seconds — it will be calculated from audio.
 
     episode["audio"] = {"english": "", "translation_zh": ""}
     episode["duration_seconds"] = 0
+    episode["format"] = format_name
     if recycle_words:
         episode["recycled_words"] = recycle_words
 
@@ -237,6 +326,42 @@ Do NOT set duration_seconds — it will be calculated from audio.
         word["audio"] = ""
 
     return episode
+
+
+def _call_gpt(messages):
+    """Single GPT call with retry for transient errors (403/429/5xx). Parses JSON out of the response."""
+    import time as _time
+    max_retries = 3
+    for attempt in range(max_retries):
+        response = requests.post(
+            GPT_API_ENDPOINT,
+            headers={
+                "Authorization": "Bearer %s" % GPT_API_KEY,
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": GPT_MODEL,
+                "messages": messages,
+                "temperature": 0.9,
+                "max_tokens": 16000,
+            },
+            timeout=300,
+        )
+        if response.status_code in (403, 429, 500, 502, 503):
+            wait = 30 * (2 ** attempt)
+            print("   ⟳ GPT %d, retrying in %ds (attempt %d/%d)..." % (response.status_code, wait, attempt + 1, max_retries))
+            _time.sleep(wait)
+            continue
+        response.raise_for_status()
+        break
+    else:
+        response.raise_for_status()  # final failure
+    content = response.json()["choices"][0]["message"]["content"].strip()
+    if content.startswith("```"):
+        content = content.split("\n", 1)[1]
+    if content.endswith("```"):
+        content = content.rsplit("```", 1)[0]
+    return json.loads(content.strip())
 
 
 def save_episode(episode, level):

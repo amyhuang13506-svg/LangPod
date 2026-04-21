@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct PlayerView: View {
     @Environment(AudioPlayer.self) private var player
@@ -33,7 +34,8 @@ struct PlayerView: View {
                         player.skipToNextEpisode()
                     }
                 )
-            } else if showComplete, let episode = player.currentEpisode {
+            } else if showComplete,
+                      case .episode(let episode) = player.currentPlayItem {
                 EpisodeCompleteView(
                     episode: episode,
                     onNextEpisode: {
@@ -51,6 +53,11 @@ struct PlayerView: View {
                                 showPaywall = true
                             }
                         }
+                    },
+                    onPlayPatterns: {
+                        guard let first = episode.patterns?.first else { return }
+                        showComplete = false
+                        player.playPattern(first, parentEpisode: episode, in: player.playQueue)
                     }
                 )
             } else {
@@ -59,19 +66,34 @@ struct PlayerView: View {
         }
         .onAppear {
             player.onEpisodeFinished = {
+                if let ep = player.currentEpisode {
+                    vocabularyStore.saveWords(from: ep)
+                }
                 dataStore.completeEpisode(totalWords: vocabularyStore.totalCount, episode: player.currentEpisode)
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    showComplete = true
+                // Lock screen / background: auto-advance like a podcast.
+                // Foreground: show completion page for vocab + stats review.
+                if UIApplication.shared.applicationState == .active {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showComplete = true
+                    }
+                } else {
+                    player.skipToNextEpisode()
                 }
             }
         }
         .onDisappear {
-            // Restore default handler: record history even when PlayerView is not visible
+            // Restore default handler: record history + auto-advance even when PlayerView is not visible.
+            // Previously this handler forgot to call skipToNextEpisode, so playback silently stopped
+            // after one episode when the user wasn't looking at the full player.
             player.onEpisodeFinished = { [dataStore, vocabularyStore, player] in
+                if let ep = player.currentEpisode {
+                    vocabularyStore.saveWords(from: ep)
+                }
                 dataStore.completeEpisode(
                     totalWords: vocabularyStore.totalCount,
                     episode: player.currentEpisode
                 )
+                player.skipToNextEpisode()
             }
         }
         .fullScreenCover(isPresented: $showShareCard) {
@@ -119,37 +141,38 @@ struct PlayerView: View {
 
                 Spacer().frame(height: 40)
 
-                // Cover art
-                if let episode = player.currentEpisode {
+                // Content area — episode vs pattern
+                switch player.currentPlayItem {
+                case .pattern(let pattern, _):
+                    PatternPlayerContent(pattern: pattern, currentTime: player.progress)
+                        .padding(.horizontal, 24)
+                case .episode(let episode):
                     EpisodeThumbnail(episode: episode, size: 260)
-                }
-
-                // Episode info
-                VStack(spacing: 6) {
-                    Text(player.currentEpisode?.title ?? "")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundStyle(Color.textPrimary)
-                        .tracking(-0.5)
-
-                    Text(episodeMetaText)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color.textTertiary)
-
-                    // Phase badge
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(Color.appPrimary)
-                            .frame(width: 8, height: 8)
-                        Text(player.phase.label(isPro: subscriptionManager.isProUser))
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color.appPrimary)
+                    VStack(spacing: 6) {
+                        Text(episode.title)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundStyle(Color.textPrimary)
+                            .tracking(-0.5)
+                        Text(episodeMetaText)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color.textTertiary)
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color.appPrimary)
+                                .frame(width: 8, height: 8)
+                            Text(player.phase.label(isPro: subscriptionManager.isProUser))
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Color.appPrimary)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(Color.primaryLight, in: Capsule())
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 6)
-                    .background(Color.primaryLight, in: Capsule())
+                    .padding(.top, 28)
+                    .padding(.horizontal, 24)
+                case .none:
+                    EmptyView()
                 }
-                .padding(.top, 28)
-                .padding(.horizontal, 24)
 
                 // Pro upsell card (free users, after 4th round)
                 if player.phase == .proUpsell {
@@ -359,8 +382,26 @@ struct PlayerView: View {
                 Spacer()
             }
 
-            // Subtitle overlay (Pro only)
-            if player.showSubtitles, subscriptionManager.isProUser, let episode = player.currentEpisode {
+            // Pattern subtitle — absolute bottom overlay; does NOT push layout.
+            // Only Chinese text (narration), no English sample, no layout shift.
+            if isPlayingPattern,
+               player.showSubtitles,
+               subscriptionManager.isProUser,
+               case .pattern(let pattern, _) = player.currentPlayItem {
+                VStack {
+                    Spacer()
+                    PatternSubtitleFloat(pattern: pattern, currentTime: player.progress)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 24)
+                }
+                .allowsHitTesting(false)
+                .transition(.opacity)
+            }
+
+            // Episode subtitle overlay (Pro only) — for episodes only.
+            if player.showSubtitles, subscriptionManager.isProUser,
+               !isPlayingPattern,
+               let episode = player.currentEpisode {
                 SubtitleOverlay(
                     script: episode.script,
                     currentTime: player.progress,
@@ -372,6 +413,11 @@ struct PlayerView: View {
     }
 
     // MARK: - Helpers
+
+    private var isPlayingPattern: Bool {
+        if case .pattern = player.currentPlayItem { return true }
+        return false
+    }
 
     private var episodeMetaText: String {
         guard let episode = player.currentEpisode else { return "" }

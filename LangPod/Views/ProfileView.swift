@@ -16,6 +16,12 @@ struct ProfileView: View {
         return Calendar.current.date(from: components) ?? Date()
     }()
 
+    private var appVersionDisplay: String {
+        let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        return "\(short) (\(build))"
+    }
+
     var body: some View {
         NavigationStack {
         ZStack {
@@ -43,7 +49,7 @@ struct ProfileView: View {
                     legalSection
 
                     // Version
-                    Text("Castlingo v1.0.0")
+                    Text("Castlingo v\(appVersionDisplay)")
                         .font(.system(size: 12))
                         .foregroundStyle(Color.textQuaternary)
                         .frame(maxWidth: .infinity)
@@ -169,12 +175,47 @@ struct ProfileView: View {
                 settingsRow(icon: "moon.zzz", iconColor: "8B5CF6",
                             title: "定时停止", value: sleepTimerDisplayValue)
             }
+            divider
+            patternPlaybackToggle
         }
         .background(.white, in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.border, lineWidth: 1)
         )
+    }
+
+    private var patternPlaybackToggle: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "quote.bubble.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(.white)
+                .frame(width: 28, height: 28)
+                .background(Color(hex: "14B8A6"), in: RoundedRectangle(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("句型混播")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Color.textPrimary)
+                Text("播完一集后自动接这集的句型讲解")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.textTertiary)
+            }
+
+            Spacer()
+
+            Toggle("", isOn: Binding(
+                get: { audioPlayer.playPatternsAlongside },
+                set: { newValue in
+                    audioPlayer.playPatternsAlongside = newValue
+                    audioPlayer.rebuildQueueAfterSettingChange()
+                }
+            ))
+            .labelsHidden()
+            .tint(Color.appPrimary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 
 
@@ -427,6 +468,8 @@ struct ReminderTimePage: View {
                 let components = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
                 UserDefaults.standard.set(components.hour ?? 8, forKey: "reminderHour")
                 UserDefaults.standard.set(components.minute ?? 30, forKey: "reminderMinute")
+                // Triggers LangPodApp to re-arbitrate tomorrow's notification at the new time.
+                NotificationCenter.default.post(name: .reminderTimeChanged, object: nil)
                 dismiss()
             } label: {
                 Text("保存")

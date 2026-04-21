@@ -442,3 +442,253 @@ iOS App
 - [ ] 单词配对/连词成句难度层级细化
 - [ ] NewsAPI 接入获取真实每日新闻标题
 - [ ] 多语言翻译（日韩西法）
+
+### 2026-04-19 — 友盟接入 + 推送系统重构 + 抖音投放素材
+
+**App Store 已过审**（此前达成，今日起正式可下载）
+
+**抖音投放策略 & 素材：**
+- 讨论 100 素人号"图文求推荐"方案，评估风险并给了 A/B/C 三种执行路径
+- 用户选定：不同设备/IP 的 100 真实素人号 + 矩阵化求推荐文案
+- 生成 9 张抖音图文卡片 HTML 预览（`docs/douyin_cards_preview.html`），用户后来自改成 5 种样式（紫色提问/蓝色边框/黄色便签/iOS备忘录/粉色问号）
+- 评论区马甲号引导话术 × 6 套
+
+**友盟（Umeng）集成完成：**
+- 创建 `Services/Analytics.swift` 包装层（`#if canImport(UMCommon)` 条件编译，没 SDK 也能过编）
+- 10 个核心漏斗事件：`app_launch` / `onboarding_complete`（带 level+source）/ `episode_play_start` / `episode_complete` / `vocabulary_save` / `word_match_complete` / `feynman_complete` / `paywall_view` / `purchase_attempt/success/fail` / `push_opened`
+- AppKey: `69e359319a7f376488c57f94`（Info.plist 的 `UMAppKey` 字段）
+- 手动集成 SDK：UMCommon 7.5.10 + UMDevice + UYuMao + UTDID + UMCommonLog，共 5 个 framework + 1 个 bundle，通过 pbxproj 直接加
+- 配置 `FRAMEWORK_SEARCH_PATHS` + `-ObjC` 链接器标志
+- `PrivacyInfo.xcprivacy` 按友盟合规声明 DeviceID / ProductInteraction / CrashData（都是 Analytics 用途，未链接身份、不跟踪）
+- **说明**：新版 UMCommon 7.5+ 已合并 MobClick（分析模块），不需要单独 UMAnalytics
+- **说明**：友盟官方不提供 SPM 包，只支持 CocoaPods 或手动 XCFramework。走了 XCFramework 路线（轻量、不引入 Podfile）
+
+**隐私同意弹窗**：做完又撤回，用户决定先不做，待有需要时再加
+
+**本地推送系统彻底重构：**
+- 排查：原有 `scheduleEncounterReminder` 有 bug（`EpisodeCompleteView` 新建 `NotificationManager()` 实例，`isAuthorized` 异步还没刷就 `guard` 被挡，实际发不出去）
+- 核心改动：从"多条独立推送叠加"改为"**每日单条优先级仲裁**"
+- 5 层优先级（从高到低）：
+  1. Streak 要断（≥2 天没听 + streak ≥ 2）
+  2. 今天新集 + 当天没听
+  3. 旧词复现（2 天内有 encountered 词）
+  4. 词汇快忘（≥3 个词超过 30 天没练）
+  5. 朴素提醒（当天没听）
+- 单一稳定 ID `castlingo.daily`，重排自动覆盖
+- 5 个触发时机自动刷新：app 启动 / 回前台 / **进后台（最关键）** / 完播 / 用户改提醒时间（通过 `Notification.Name.reminderTimeChanged` 广播）
+- `EpisodeCompleteView` 的手动调用删掉，由仲裁器统一处理
+- 最终保证：每个用户每天最多 **1 条** 推送，且只在"值得发"时才发
+
+**推送漏斗埋点（方案 A 后续）：**
+- `NotificationManager` 实现 `UNUserNotificationCenterDelegate`
+- 用户点推送 → 触发 `push_opened` 事件带 `intent` 参数（5 种值之一）
+- 加 `willPresent` handler：前台时推送也显示，不被 iOS 抑制
+- 友盟后台可按 intent 分组，看"哪种文案点击率最高→哪种转化最终付费最好"
+- **iOS 限制**：本地推送不经服务器，友盟看不到"发出了几条"，只能算点击基数
+
+**今日完成清单：**
+- [x] Analytics.swift 包装层 + 10 事件埋点
+- [x] Info.plist UMAppKey 填入
+- [x] 5 Umeng XCFramework + 1 bundle 集成（pbxproj 改）
+- [x] PrivacyInfo.xcprivacy 补齐合规声明
+- [x] NotificationManager 优先级仲裁重写
+- [x] 5 个生命周期触发点接入
+- [x] EpisodeCompleteView bug 修复
+- [x] push_opened 漏斗埋点 + UNUserNotificationCenterDelegate
+- [x] 抖音 9 张图文卡片 HTML 预览
+- [x] 真机部署验证编译通过
+
+### 明日待办（2026-04-20）
+
+**优先级 1 — 抖音投放启动：**
+- [ ] 100 素人号分批次发图文（每天 10-15 个，别集中发）
+- [ ] 评论区马甲号引导按话术分散执行
+- [ ] 24 小时后回数据：点赞/评论/引流转化初判
+
+**优先级 2 — 数据验证（让数据跑）：**
+- [ ] 手机走一遍完整漏斗（onboarding → 播一集 → 完播 → 保存词汇 → 词义配对 → 连词成句 → 打开付费墙）
+- [ ] 15-30 分钟后去友盟后台看实时统计 + 自定义事件是否接收
+- [ ] 推送实测：设提醒时间到 2 分钟后，杀进程验证文案命中哪种 intent
+- [ ] 让推送系统跑 3-5 天，积累 `push_opened` 分 intent 的点击率数据
+
+**优先级 3 — 历史遗留：**
+- [ ] Hard 级别部分中文音频偏短的集重跑（MiniMax 分批）
+- [ ] GPT 提示词更新（混合单人播报 + 时事新闻）
+- [ ] iCloud 同步（CloudKit）
+- [ ] 多语言翻译（日韩西法）
+
+**决策记录（不做）：**
+- ~~"不要打扰我"推送总开关~~ —— 4/19 决定不做，iOS 系统设置已覆盖
+- ~~隐私同意弹窗~~ —— 4/19 决定暂缓
+
+### 2026-04-20 — 句型讲解模块端到端落地 + 包体瘦身
+
+**一整天 focus**：从零开发「句型讲解」整条链路 —— 产品设计 → pipeline → App UI → 真机联调。核心理念是**语感不是翻译**：母语者用句型是条件反射，由场景/情绪直接触发，绕过"中文→英文"的中间层。
+
+**产品设计（多轮迭代后定稿）：**
+- 句型 100% 来自每日播客 Pipeline 自动提取（砍掉最初想的 60 手工固定库方案）
+- 入口：首页「今日句型讲解」横滑小卡片 158×158 + 标题右侧「往期回顾→」紧凑入口
+- 混播逻辑：默认播客 5 遍后自动接这集的 2-3 个句型（设置可关），shuffle 以「播客+句型」为单元，repeatOne 包含 pattern
+- 付费：今日免费 + 历史 Pro Only
+- 6 段式讲解结构：读音 / 跟我念 3 次 / 字面意思 / 场景与感觉（核心 · VS 对比强制）/ 例句 ×3
+
+**Pipeline（extract_patterns.py）迭代 6 版：**
+- v1：初版用 `dot dot dot` 描述空缺、drill 用核心音节 → 被 TTS 字面读出来，被拒
+- v2：prompt 禁止 `dot dot dot`、drill 改完整短句、强化 VS 对比（"它和 X 不一样"必须出现）
+- v3：中文女声 `presenter_female` 太"主持人" → 换 `female-shaonv`（少女）；英文换用户提供的 `English_radiant_girl`
+- v4：例句顺序改「中文场景前缀 → 英文例句」
+- v5：drill 语速 0.7 → 0.85 → 0.9 都仍然不连读（MiniMax 在慢速下分词）
+- **v6（关键突破）**：drill 不单独调 TTS，而是**把 pronunciation_demo_en 的正常速度音频用 ffmpeg atempo 慢放到 0.7x**，保留连读/音调/节奏
+- 规则：`pronunciation_demo_en` 和 `example1.en_text` 必须是原文原句（"耳熟嘴熟"闭环）；3 个 template 类型必须多样（禁止全问句）；Hard 级别字面陷阱必须警告
+
+**字幕细粒度（今天最后补的 pipeline 改进）：**
+- 旧：每 section 一整段 TTS + 整段时间戳 → 字幕 300 字被 App 5 行截断
+- 新：`split_into_subtitles()` 按句号/分号/逗号拆成 ≤60 字子句 → 逐子句独立 TTS + 独立时间戳 → App 字幕按子句自动翻页
+- `synthesize_pattern_audio` 返回 `script_lines: List[Dict]` 替代 `timestamps: Dict`；`build_pattern_object` 简化为直接使用 script_lines
+- **不重跑老 13 集**（用户确认），明天 cron 跑的自动用新逻辑
+
+**播客字幕同等约束（generate_script.py prompt）：**
+- script 示例改成 "EXACTLY ONE English sentence — max 20 words"
+- Checklist 第 5 条新增 SUBTITLE RULE：每 script line 单句 + 英 ≤20 词 + 中 ≤30 字
+- 长对话强制 GPT 拆多行，避免单 line 多句被字幕截断
+
+**数据模型：**
+- `Pattern.swift`：id / episodeId / template / translationZh / scene / audioUrl / duration / explainerScript / exampleSentences(3) / thumbnailColor
+- `PatternSection` enum（7 种）+ `PatternScriptLine` / `PatternExample`
+- `PlayItem` enum：`.episode(Episode)` / `.pattern(Pattern, parentEpisode: Episode)` — 统一队列项
+- `PatternAccessGate`：静态方法判断"今日免费 / 历史 Pro"
+
+**AudioPlayer 重构：**
+- 新增 `currentPlayItem: PlayItem?` / `playQueue: [PlayItem]` / `playPatternsAlongside: Bool`
+- `playEpisode(in:)` 内部构造混播 PlayItem 队列（episode 后插入其 patterns）
+- 新增 `playPattern` / `playItem` / `handleItemFinished` / `skipToNext` / `skipToPrevious`
+- 保留 legacy alias（`skipToNextEpisode` / `currentEpisode`）不破坏现有调用点
+- Pattern 单次播放（无 5 遍循环），repeatOne 重放同一 pattern
+- Shuffle 以"episode + its patterns"为单元
+- 锁屏按 PlayItem 类型切换：episode → 封面 + "第 X/5 遍"；pattern → 米色卡片 + 模板文字
+
+**Bug 修复：**
+- **PatternSection Codable bug**（最坑）：String raw enum 的 Codable 用 rawValue 解码（不看 CodingKeys），默认驼峰 rawValue 和 snake_case JSON 不匹配 → 整个 episode JSON 解码抛异常 → `dataStore.episodes` 为空 → Medium/Hard tab 空白 + 混播完全不工作。修：直接给 case 设置 snake_case rawValue
+- **Pattern ID 冲突**：同日同级两集的 pattern_id 相同（date+idx）→ easy-002 覆盖 easy-001 的 mp3。修：加 episode suffix（`pattern_easy_20260330_001_1`）
+- **混播不接句型**：PlayerView.onDisappear 恢复的默认 handler 忘了 `skipToNextEpisode()` → 一旦打开过 PlayerView 再关，播完就停
+- **index.json 没带 patterns**：App 启动拉 lightweight index 没 patterns 字段 → 首页今日句型和混播都不工作。修：upload_oss 的 `update_episode_list` 加 patterns 字段；App 的 EpisodeIndexItem + Episode.init(from:) 带上 patterns
+
+**UI（多轮微调）：**
+- `PatternPlayerContent`：米色大字 serif 模板卡（260×260）+ scene tag + 7 段进度圆点 + 当前章节 label（固定高度防止跳动）
+- `PlayerView` 顶部 switch：episode → 原封面 + 集名 + phase badge；pattern → PatternPlayerContent
+- `HomeView`：今日句型小卡片（158×158 横滑）+ 紧凑"往期回顾"入口（今日空时显示）；nowPlayingCard 播 pattern 时显示 template + scene
+- `PatternHistoryView`：按日期倒序 + 锁图标 + 右上角蓝色圆形「播放全部」按钮
+- `ProfileView`：学习设置加「句型混播」Toggle
+- `EpisodeCompleteView`：加「今日句型」列表 row（无小播放按钮）+ 底部固定 CTA（播放句型 / 下一集 横排 + 保存词汇 全宽按钮）
+- 字幕演进：独立字幕卡 → 底部 overlay 不影响主布局 → 中英同字体（英文不再 serif italic，像自然穿插）
+
+**包体瘦身：**
+- `LangPod/Resources/*.mp3`：66 个 ep-*.mp3（33MB）全部删除（内容走 OSS 流式 + 缓存）
+- 用 Python 脚本批量从 pbxproj 删 264 条 mp3 引用
+- 保留 5 个 onboarding mp3 + 3 个 episodes_*.json fallback
+- **.app 从 55MB → 21MB**，Resources 42MB → 10MB
+- 今后新内容 100% 走 OSS，包体永远不涨
+
+**Analytics 事件（3 个新增）：**
+- `pattern_open`（source: home_today / home_today_paging / history / history_play_all）
+- `pattern_listen_complete`
+- `pattern_paywall_view`
+
+**OSS 数据：**
+- 13 集有 patterns（样本 + 回溯 6 + 今日 cron 6 补 patterns）
+- 每 pattern 讲解音频 ~100 秒、~1.5MB
+- 老集 patterns 保持整段字幕（不重跑），新集用子句字幕
+
+**产品决策（记录）：**
+- ~~手工 60 固定句型库~~ —— 放弃，全走 Pipeline 自动提取
+- ~~Tab Bar 加「句型」Tab~~ —— 放弃，5 个 Tab 太挤，用首页区块入口
+- ~~今日句型全宽 paging 大卡~~ —— 放弃，恢复小卡横滑
+- ~~老 13 集 patterns 重跑子句字幕~~ —— 放弃，只要 pipeline 改了，新集自动生效
+
+### 明日待办（2026-04-21）
+
+**优先级 1 — 服务器部署：**
+- [ ] 同步 extract_patterns.py + generate_script.py（改了 prompt + 拆子句）到阿里云
+- [ ] daily cron 串入 extract_patterns.py 步骤（目前只跑 script + audio）
+- [ ] 验证 4-21 新跑的集自带 patterns + 子句字幕 ≤5 行
+
+**优先级 2 — 验证：**
+- [ ] 真机全流程测试：今日句型卡片 → 播放页 → 字幕 → 混播接下一集
+- [ ] 免费 vs Pro 权限测试：历史句型付费墙触发
+- [ ] 完成页 CTA 测试：播放句型 → 进入 pattern 播放 → 跟回下一集
+
+### 2026-04-21 — 句型 TTS 换 ElevenLabs V3 + pipeline 部署上服务器
+
+**今日 focus**：把句型讲解的 TTS 从 MiniMax 换成 ElevenLabs v3（音质 + 多语言连贯度），反复打磨 prompt + 清洗逻辑直到音频质量过关，然后部署到阿里云服务器。明日凌晨 3 点 cron 将第一次自动产出带 patterns 的新集。
+
+**TTS 切换 ElevenLabs v3：**
+- 接入 `eleven_v3` multilingual 模型，一个 voice 读中英无切换
+- 5 个 voice 轮转（用户提供的：`XfNU2rGpBa01ckF309OY` / `lxYfHSkYm1EzQzGhdbfc` / `54Cze5LrTSyLgbO6Fhlc` / `9KsetBCT7UMILPg6Ksvu` / `1IKfgBmzdwnmAUPnryb3`）
+- `pick_voice_for_pattern(pattern_id)`：md5 hash % 5，稳定可复现（重跑同一 pattern 音色不变）
+- 只换句型模块 TTS，播客 podcast 继续用 MiniMax 双人对白（便宜且双人切换已 OK）
+- 中途试过 Rachel（英文母语 voice）读中文 — 中文腔调不自然，弃用；用户提供 5 个 V3 voice 后问题解决
+
+**Prompt 多轮迭代（规则 1-12）：**
+- 规则 1：禁止 `dot dot dot` / `...`（MiniMax 时代旧约束继承）
+- 规则 2：`pronunciation_demo_en` + `example1.en_text` 必须 script 原文原句（耳熟嘴熟闭环）
+- 规则 3：3 个 template 类型多样（问句/陈述/请求/感叹），script 简单时允许只输出 2 个
+- 规则 4：`scene_and_feeling_zh` 必须含具象画面 + 感觉关键词 + VS 对比 + 固定结尾
+- 规则 5：example `scene_prefix_zh` 带场景前缀
+- 规则 6：Hard 级别字面陷阱必须警告
+- 规则 7：`thumbnail_color` 限定 5 个候选
+- **规则 8（本轮核心）**：错误发音示范 = "英文原词 + 句号强制断开"，不用汉字拟音
+  - ❌ "不要念成 cǎo·dé·ài" / "库德·爱"（TTS 读中文拟音没有对比效果）
+  - ✅ "不要分开念成 Could. I."（TTS 自然停顿，模拟"不连读"的错误）
+- **规则 9**：IPA 音标前后加空格（`/kʊdaɪ/` 前后必须有空格，防粘连）
+- **规则 10**：`pronunciation_intro_zh` 不嵌入完整英文句子，结尾禁止破折号 ——（TTS 会读成吸气杂音）
+- **规则 11**：`meaning_zh` 严格短（≤50 字），只讲字面意思，不讲语气/场景/VS 对比
+- **规则 12**：`scene_prefix_zh` 必须"XXX——YYY。"双段（场景+情绪），禁止纯名词或英文翻译
+
+**字幕子句拆分逻辑完善（split_into_subtitles）：**
+- 合并 `X. Y.` 片段：规则 8 的错误示范被按句号切成两行 → 识别合并（`Can.` + `I.` → `Can. I.`）
+- 过滤孤立标点子句：GPT 偶尔在英文问号后写中文句号产生孤立 `'。'` 行，filter 掉只含标点的子句
+
+**TTS 尾部 artifact 清洗：**
+- `clean_for_tts` 去掉文本末尾的 `——` / `—`（ElevenLabs V3 处理破折号会生成短促含糊元音）
+- `trim_tts_tail`：用 `detect_leading_silence(reversed_seg)` 精准检测末尾 30-500ms 窗口的低能量区（-30dB 阈值）
+  - 第一版 `detect_silence()` 方法误杀中段（取最后一段静音可能错位到中间） → 替换为反转段 + leading silence 检测，窗口限死，绝不触及中段
+- 两重保险（GPT 不产破折号 + 代码补漏 trim），效果彻底
+
+**跟读 drill 方案保留 atempo 慢放：**
+- 试过把 drill 速度控制移到 App 端（动态 player.rate = 0.6） → 发现时间戳错位（实际时长变 1.67 倍，后续段 start/end 全错）
+- 最终决定保持 pipeline 里 ffmpeg atempo 慢放（质量损失极小，工程复杂度最低）
+- DRILL_SPEED 从 0.7 调到 0.6（用户希望更慢）
+
+**generate_daily.py 加入 extract_patterns 步骤：**
+- 原流程：script → audio → cover → upload_oss（4 步）
+- 新流程：script → audio → cover → **extract_patterns** → upload_oss（5 步）
+- 失败非致命（try/except 包住，句型生成失败不影响播客本身上传）
+
+**服务器部署：**
+- scp 5 个文件到 `/opt/langpod/pipeline/`：config.py / extract_patterns.py / generate_script.py / generate_daily.py / upload_oss.py
+- 服务器验证：ffmpeg 已装（`/usr/bin/ffmpeg`）、Python 依赖齐全、cron `0 3 * * *` 已配置
+- dry-run ElevenLabs 从服务器调用成功（3.8 秒测试音频）
+- 明日 04-22 凌晨 3 点 CST 首次自动产出带 patterns 的新集
+
+**生产数据状态：**
+- OSS 上 13 集有 patterns（3-19 sample + 3-30 回溯 6 + 4-20 cron 6）
+- 老 13 集继续用 MiniMax 音色（不重跑），4-22 起新集用 ElevenLabs V3
+- 可接受音色混搭（老 vs 新）—— 用户听感明显改善的新集会逐日累积
+
+**失败的路径（决策记录）：**
+- ~~Rachel 音色读中文~~ —— 英文母语 voice 硬读中文腔调别扭，弃用
+- ~~汉字拟音（cǎo·dé·ài）~~ —— 自己构造的汉字 TTS 读不出"错误示范"感，改英文+句号
+- ~~App 端动态 rate=0.6~~ —— 时间戳会错位 67%，放弃
+- ~~detect_silence 全段扫描 trim~~ —— 误杀中间内容（取最后一段静音可能错位到中间长停顿），改 detect_leading_silence(reversed)
+
+### 明日待办（2026-04-22）
+
+**优先级 1 — 监控 cron 产出：**
+- [ ] 早起看 `/opt/langpod/pipeline/logs/cron.log` 无 fatal error
+- [ ] 真机 app 首页今日句型区块有 6-9 张卡片（每级 2 集 × 2-3 patterns）
+- [ ] 抽样听一集新 patterns：音色/连读/字幕同步/跟读 0.6 速度
+
+**优先级 2 — 如果有问题：**
+- [ ] ElevenLabs 配额 / 网络超时导致失败 → 分析 log 判断
+- [ ] 字幕拆分在 hard 级别长段上有新 edge case？
+- [ ] 跑批量回溯给老 13 集换 ElevenLabs 音色？（用户决定，成本 ~¥50 + 20 分钟）
