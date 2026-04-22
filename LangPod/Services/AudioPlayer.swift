@@ -236,12 +236,21 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
     /// Play a pattern (single-pass; no 5-round loop).
-    /// Access gating (free/Pro + daily quota) is the CALLER's responsibility —
-    /// check PatternAccessGate.canAccess before invoking, surface the paywall
-    /// when it returns false. This method always starts playback if invoked.
+    /// Enforces PatternAccessGate as a defensive safety net — if a caller
+    /// forgets to pre-check, we bail out here rather than silently play a
+    /// locked pattern. Callers should still gate upstream so they can surface
+    /// the paywall; when this returns false, callers should too.
     /// Fires `onPatternStarted` so DataStore can record the play for quota.
     @discardableResult
     func playPattern(_ pattern: Pattern, parentEpisode: Episode, in queue: [PlayItem] = []) -> Bool {
+        let allowed = PatternAccessGate.canAccess(
+            pattern: pattern,
+            parentEpisode: parentEpisode,
+            isPro: isProUser,
+            playedTodayIds: dailyPatternIDsPlayedToday
+        )
+        guard allowed else { return false }
+
         currentPlayItem = .pattern(pattern, parentEpisode: parentEpisode)
         if !queue.isEmpty {
             playQueue = queue

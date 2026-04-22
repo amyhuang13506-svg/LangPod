@@ -252,6 +252,8 @@ struct PatternHistoryView: View {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 14))
                         .foregroundStyle(Color.warning)
+                } else if isPatternPlaying(pattern) {
+                    NowPlayingBars(isAnimating: audioPlayer.isPlaying, barHeight: 14)
                 } else {
                     Image(systemName: "play.fill")
                         .font(.system(size: 15))
@@ -289,6 +291,16 @@ struct PatternHistoryView: View {
     }
 
     // MARK: - Helpers
+
+    /// True only when the AudioPlayer is currently on THIS specific pattern.
+    /// Drives the per-row NowPlayingBars indicator so it rides the pattern
+    /// (not the parent episode) during pattern playback.
+    private func isPatternPlaying(_ pattern: Pattern) -> Bool {
+        if case .pattern(let current, _) = audioPlayer.currentPlayItem {
+            return current.id == pattern.id
+        }
+        return false
+    }
 
     /// Build a PlayItem queue of all accessible patterns in history order,
     /// starting from the given pattern. For free users this honours the daily

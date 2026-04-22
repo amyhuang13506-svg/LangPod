@@ -11,6 +11,10 @@ struct PlayerView: View {
     @State private var showShareCard = false
     @State private var showSpeedPicker = false
     @State private var showPaywall = false
+    /// Non-nil while the user is dragging the scrub bar. Locks the displayed
+    /// ratio to the finger position so the live `player.progress` tick doesn't
+    /// fight the drag. Committed via player.seek on release, then cleared.
+    @State private var scrubbingRatio: CGFloat?
     @Environment(SubscriptionManager.self) private var subscriptionManager
 
     var body: some View {
@@ -120,21 +124,23 @@ struct PlayerView: View {
     private var playerContent: some View {
         ZStack {
             VStack(spacing: 0) {
-                // Header
+                // Header — close button is a filled circular xmark so it reads
+                // as "close this overlay" across both episode and pattern pages.
                 HStack {
                     Button { dismiss() } label: {
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundStyle(Color.textTertiary)
+                        Image(systemName: "xmark")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Color.textPrimary)
+                            .frame(width: 34, height: 34)
+                            .background(Color.divider.opacity(0.7), in: Circle())
                     }
                     Spacer()
                     Text("正在播放")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Color.textSecondary)
                     Spacer()
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 20))
-                        .foregroundStyle(Color.textTertiary)
+                    // Invisible spacer to keep title centered
+                    Color.clear.frame(width: 34, height: 34)
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
@@ -209,9 +215,12 @@ struct PlayerView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
-                // Progress bar (draggable)
+                // Progress bar (draggable). Seek is committed on release only;
+                // during drag we just show a local preview ratio so the bar
+                // doesn't jitter from repeated AVPlayer.seek calls each frame.
                 VStack(spacing: 8) {
                     GeometryReader { geo in
+                        let displayedRatio = scrubbingRatio ?? liveRatio
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 3)
                                 .fill(Color.border)
@@ -219,14 +228,18 @@ struct PlayerView: View {
 
                             RoundedRectangle(cornerRadius: 3)
                                 .fill(Color.appPrimary)
-                                .frame(width: progressWidth(in: geo.size.width), height: 6)
+                                .frame(width: max(0, geo.size.width * displayedRatio), height: 6)
                         }
                         .gesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
-                                    let ratio = max(0, min(1, value.location.x / geo.size.width))
-                                    let time = Double(ratio) * player.duration
-                                    player.seek(to: time)
+                                    scrubbingRatio = max(0, min(1, value.location.x / geo.size.width))
+                                }
+                                .onEnded { _ in
+                                    if let r = scrubbingRatio {
+                                        player.seek(to: Double(r) * player.duration)
+                                    }
+                                    scrubbingRatio = nil
                                 }
                         )
                     }
@@ -391,7 +404,7 @@ struct PlayerView: View {
                 VStack {
                     Spacer()
                     PatternSubtitleFloat(pattern: pattern, currentTime: player.progress)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, 20)
                         .padding(.bottom, 24)
                 }
                 .allowsHitTesting(false)
@@ -429,6 +442,13 @@ struct PlayerView: View {
     private func progressWidth(in totalWidth: CGFloat) -> CGFloat {
         guard player.duration > 0 else { return 0 }
         return totalWidth * CGFloat(player.progress / player.duration)
+    }
+
+    /// Live playback ratio, clamped. Used as the progress bar fill when the
+    /// user is NOT actively scrubbing.
+    private var liveRatio: CGFloat {
+        guard player.duration > 0 else { return 0 }
+        return CGFloat(max(0, min(1, player.progress / player.duration)))
     }
 
     private func formatTime(_ seconds: Double) -> String {

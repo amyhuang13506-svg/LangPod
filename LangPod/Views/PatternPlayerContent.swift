@@ -29,10 +29,6 @@ struct PatternPlayerContent: View {
                 .foregroundStyle(Color.textSecondary)
             }
             .padding(.horizontal, 24)
-
-            // Section progress dots + current section content
-            sectionIndicator
-                .padding(.horizontal, 24)
         }
     }
 
@@ -79,53 +75,6 @@ struct PatternPlayerContent: View {
         return Color(hex: "E8DCC4")
     }
 
-    // MARK: - Section Indicator
-
-    private var currentSection: PatternSection? {
-        let line = pattern.explainerScript.first { line in
-            guard let start = line.start, let end = line.end else { return false }
-            return currentTime >= start && currentTime <= end
-        }
-        return line?.section
-    }
-
-    private var sectionIndicator: some View {
-        let sections = pattern.explainerScript.map(\.section)
-        let current = currentSection
-
-        return VStack(spacing: 12) {
-            // Dots — fixed 10pt so the row never changes height
-            HStack(spacing: 8) {
-                ForEach(sections, id: \.self) { section in
-                    let isActive = section == current
-                    Circle()
-                        .fill(isActive ? Color.appPrimary : Color.border)
-                        .frame(width: 10, height: 10)
-                        .scaleEffect(isActive ? 1.0 : 0.7)
-                        .animation(.easeInOut(duration: 0.25), value: isActive)
-                }
-            }
-
-            // Current-section label — always reserves its vertical slot so the
-            // progress bar / controls below don't jump when section changes.
-            HStack(spacing: 8) {
-                if let current {
-                    Image(systemName: current.icon)
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(current.label)
-                        .font(.system(size: 13, weight: .semibold))
-                }
-            }
-            .frame(height: 28)
-            .foregroundStyle(Color.appPrimary)
-            .padding(.horizontal, current == nil ? 0 : 14)
-            .background(
-                current == nil ? Color.clear : Color.primaryLight,
-                in: Capsule()
-            )
-            .animation(.easeInOut(duration: 0.2), value: current)
-        }
-    }
 }
 
 /// Subtitle overlay pinned to the bottom of the screen. Shows only the
@@ -144,34 +93,39 @@ struct PatternSubtitleFloat: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            if let line {
-                // Both Chinese narration and any English examples (drill / examples)
-                // render in the SAME font/style — no separate italic English block.
-                // This matches how native subtitles look when a narrator quotes an
-                // English phrase mid-sentence.
-                if !line.textZh.isEmpty {
-                    Text(line.textZh)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color.textPrimary)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(5)
-                        .truncationMode(.tail)
-                }
-                if !line.textEn.isEmpty {
-                    Text(line.textEn)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color.textPrimary)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                        .truncationMode(.tail)
-                }
-            }
+        // Frosted card matching the podcast SubtitleOverlay. Single Text renders
+        // both narration (ZH) and embedded example (EN) so lineLimit(5) applies
+        // to the COMBINED content — long English drill lines can flex past 2
+        // lines without the ZH being forced to 3. Styling rules:
+        //   • Pure ZH or pure EN  → 16pt primary (consistent hierarchy)
+        //   • ZH + EN together    → ZH 16pt primary, EN 14pt secondary quote
+        if let line {
+            combinedText(for: line)
+                .multilineTextAlignment(.center)
+                .lineLimit(5)
+                .truncationMode(.tail)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(Color.divider.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func combinedText(for line: PatternScriptLine) -> Text {
+        let zh = line.textZh
+        let en = line.textEn
+        let primary: (String) -> Text = { s in
+            Text(s)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(Color.textPrimary)
+        }
+        if zh.isEmpty { return primary(en) }
+        if en.isEmpty { return primary(zh) }
+        let secondaryEn = Text(en)
+            .font(.system(size: 14))
+            .foregroundColor(Color.textSecondary)
+        return primary(zh) + Text("\n") + secondaryEn
     }
 }
 

@@ -407,7 +407,7 @@ struct HomeView: View {
 
                 Spacer()
 
-                if audioPlayer.currentEpisode?.id == episode.id {
+                if isEpisodePlaying(episode) {
                     NowPlayingBars(isAnimating: audioPlayer.isPlaying, barHeight: 16)
                 } else {
                     Image(systemName: "play.fill")
@@ -573,7 +573,7 @@ struct HomeView: View {
 
                 Spacer()
 
-                if audioPlayer.currentEpisode?.id == episode.id {
+                if isEpisodePlaying(episode) {
                     NowPlayingBars(isAnimating: audioPlayer.isPlaying, barHeight: 14)
                 } else {
                     Image(systemName: "play.fill")
@@ -659,6 +659,9 @@ struct HomeView: View {
                         .font(.system(size: 12))
                         .foregroundStyle(Color.textTertiary)
                     Spacer()
+                    if !subscriptionManager.isProUser {
+                        patternQuotaBadge
+                    }
                     historyLink
                 }
 
@@ -706,6 +709,36 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    /// True only when the AudioPlayer is actively on an EPISODE item matching
+    /// this row. When a pattern is playing, the parent episode is NOT considered
+    /// "playing" — patterns are their own thing (see PatternHistoryView row).
+    private func isEpisodePlaying(_ episode: Episode) -> Bool {
+        if case .episode(let current) = audioPlayer.currentPlayItem {
+            return current.id == episode.id
+        }
+        return false
+    }
+
+    /// Small badge showing today's remaining free pattern quota. Hidden for Pro.
+    private var patternQuotaBadge: some View {
+        let used = dataStore.dailyPatternIDsPlayedToday.count
+        let max = SubscriptionManager.freeMaxDailyPatterns
+        let remaining = Swift.max(0, max - used)
+        return HStack(spacing: 3) {
+            Image(systemName: remaining == 0 ? "lock.fill" : "sparkles")
+                .font(.system(size: 10, weight: .semibold))
+            Text("今日免费 \(remaining)/\(max)")
+                .font(.system(size: 11, weight: .semibold))
+        }
+        .foregroundStyle(remaining == 0 ? Color.warning : Color.appPrimary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            (remaining == 0 ? Color.warningLight : Color.primaryLight),
+            in: Capsule()
+        )
     }
 
     private var historyLink: some View {
