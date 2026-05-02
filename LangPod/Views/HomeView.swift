@@ -8,44 +8,83 @@ struct HomeView: View {
     @State private var showAllEpisodes = false
     @State private var showPaywall = false
     @State private var showPatternHistory = false
+    @State private var topTab: TopTab = .home
+    @State private var selectedExplorePodcast: RawPodcast?
+    @State private var searchText: String = ""
+    @FocusState private var searchFocused: Bool
+
+    enum TopTab: Hashable { case home, explore }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Color.appBackground.ignoresSafeArea()
+        NavigationStack {
+            ZStack {
+                Color.appBackground.ignoresSafeArea()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
-                    headerSection
-                    levelTabs
-                    nowPlayingCard
-                    todayList
-                    todayPatternsSection
-                    weeklyPicksList
-                    pastEpisodesList
+                ScrollView(showsIndicators: false) {
+                    LazyVStack(spacing: 20) {
+                        switch topTab {
+                        case .home:
+                            rawPodcastSection
+                            if searchText.isEmpty {
+                                learningDivider
+                                levelTabs
+                                nowPlayingCard
+                                todayList
+                                todayPatternsSection
+                                weeklyPicksList
+                                pastEpisodesList
+                            }
+                        case .explore:
+                            exploreContent
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 4)
+                    .padding(.bottom, 100)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
-                .padding(.bottom, 100)
+            }
+            // iOS 原生 Navigation Bar：中央放分段 Picker（首页 / 探索），
+            // 底部用 .searchable 自带搜索行（向下拉出现，可置顶）
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Picker("", selection: $topTab) {
+                        Text("首页").tag(TopTab.home)
+                        Text("探索").tag(TopTab.explore)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 200)
+                }
+            }
+            .searchable(
+                text: $searchText,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: topTab == .home ? "搜索硅谷大佬 / 演讲" : "搜索 TED / Huberman / 探索内容"
+            )
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .fullScreenCover(item: $selectedExplorePodcast) { podcast in
+                RawPodcastPlayerView(podcast: podcast)
+            }
+            .fullScreenCover(isPresented: $showPlayer) {
+                PlayerView()
+            }
+            .fullScreenCover(isPresented: $showAllEpisodes) {
+                AllEpisodesView()
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+                    .environment(subscriptionManager)
+            }
+            .fullScreenCover(isPresented: $showPatternHistory) {
+                PatternHistoryView()
+            }
+            .task {
+                await preloadVisibleThumbnails()
             }
         }
-        .fullScreenCover(isPresented: $showPlayer) {
-            PlayerView()
-        }
-        .fullScreenCover(isPresented: $showAllEpisodes) {
-            AllEpisodesView()
-        }
-        .sheet(isPresented: $showPaywall) {
-            PaywallView()
-                .environment(subscriptionManager)
-        }
-        .fullScreenCover(isPresented: $showPatternHistory) {
-            PatternHistoryView()
-        }
-        .task {
-            // Preload today's episode thumbnails + now-playing cover so they appear instantly
-            await preloadVisibleThumbnails()
-        }
     }
+
 
     /// Preload thumbnails for the most important episodes (today's + now playing)
     /// so they're in ImageCache before the user scrolls to them.
@@ -78,37 +117,6 @@ struct HomeView: View {
                     _ = await ImageCache.shared.image(for: url)
                 }
             }
-        }
-    }
-
-    // MARK: - Header
-
-    private var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(greetingText)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color.textTertiary)
-
-                Text(dataStore.userName)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(Color.textPrimary)
-                    .tracking(-0.5)
-            }
-
-            Spacer()
-
-            // Streak badge
-            HStack(spacing: 6) {
-                Text("🔥")
-                    .font(.system(size: 14))
-                Text("\(dataStore.streakDays)")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color.gold)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(Color.warningLight, in: Capsule())
         }
     }
 
@@ -335,6 +343,154 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Raw Podcast (硅谷原声)
+
+    @ViewBuilder
+    private var rawPodcastSection: some View {
+        // 「硅谷原声」section 只展示 tech_keynote 分类，搜索时按标题/演讲者过滤
+        let techPodcasts = dataStore.rawPodcasts.filter { ($0.category ?? "tech_keynote") == "tech_keynote" }
+        let filtered = searchFilter(techPodcasts)
+        if !filtered.isEmpty {
+            RawPodcastSection(podcasts: filtered)
+        } else if !searchText.isEmpty {
+            emptySearchHint
+        }
+    }
+
+    private func searchFilter(_ list: [RawPodcast]) -> [RawPodcast] {
+        guard !searchText.isEmpty else { return list }
+        // BilingualSearch 中英双向匹配：搜「Tesla」也能命中「特斯拉」，反之亦然
+        return list.filter { p in
+            let combined = "\(p.title) \(p.speaker) \(p.event) \(p.topic)"
+            return BilingualSearch.matches(query: searchText, in: combined)
+        }
+    }
+
+    private var emptySearchHint: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 32))
+                .foregroundStyle(Color.textTertiary)
+            Text("「\(searchText)」没有匹配的内容")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Color.textSecondary)
+            // 把当前可搜的内容列出来，方便用户知道有什么
+            if !availableSearchTerms.isEmpty {
+                Text("当前可搜：\(availableSearchTerms)")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.textTertiary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 30)
+    }
+
+    /// 把当前 master 里有的 speaker / 标题关键词列出来（去重），让用户知道能搜什么
+    private var availableSearchTerms: String {
+        let speakers = Set(dataStore.rawPodcasts.map { $0.speaker })
+        return speakers.sorted().joined(separator: " · ")
+    }
+
+    /// 探索 in-place 内容：filter category=explore 的播客，行式列表
+    @ViewBuilder
+    private var exploreContent: some View {
+        let items = searchFilter(
+            dataStore.rawPodcasts.filter { ($0.category ?? "") == "explore" }
+                .sorted { $0.publishedAt > $1.publishedAt }
+        )
+        if items.isEmpty {
+            VStack(spacing: 8) {
+                Image(systemName: "globe")
+                    .font(.system(size: 32))
+                    .foregroundStyle(Color.textTertiary)
+                Text(searchText.isEmpty ? "探索内容生成中" : "没有匹配的内容")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.textSecondary)
+                if searchText.isEmpty {
+                    Text("Pipeline 正在扫描 TED / Huberman / Veritasium 等热门频道，明日上线")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textTertiary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 40)
+        } else {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("探索热门")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                    .tracking(-0.3)
+                ForEach(items) { p in
+                    Button { selectedExplorePodcast = p } label: {
+                        exploreRow(p)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private func exploreRow(_ p: RawPodcast) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack(alignment: .bottomTrailing) {
+                if let thumb = p.displayThumbnailUrl {
+                    CachedAsyncImage(url: thumb) {
+                        Rectangle().fill(Color(hex: "1A2540"))
+                    }
+                    .scaledToFill()
+                    .frame(width: 124, height: 70)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                } else {
+                    Rectangle().fill(Color(hex: "1A2540"))
+                        .frame(width: 124, height: 70)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                Text(p.durationDisplay)
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                    .padding(5)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(p.title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.textPrimary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                HStack(spacing: 4) {
+                    Text(p.speaker)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color.textSecondary)
+                    Text("·")
+                        .foregroundStyle(Color.textTertiary)
+                    Text(p.dateDisplay)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textTertiary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+
+    /// 「我的学习」分类大标题，与「硅谷原声」同级别样式。
+    private var learningDivider: some View {
+        Text("我的学习")
+            .font(.system(size: 22, weight: .bold))
+            .foregroundStyle(Color.textPrimary)
+            .tracking(-0.3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 8)
+    }
+
     // MARK: - Today's Episodes
 
     private func playAll(_ episodes: [Episode]) {
@@ -403,6 +559,7 @@ struct HomeView: View {
                             .font(.system(size: 12))
                             .foregroundStyle(Color.textTertiary)
                     }
+                    sourcePodcastBadge(for: episode)
                 }
 
                 Spacer()
@@ -424,6 +581,23 @@ struct HomeView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    /// 「源自硅谷原声 — Jensen Huang GTC 2024」backlink badge。
+    /// 仅当本集是某条 RawPodcast 的解读版本时显示。
+    @ViewBuilder
+    private func sourcePodcastBadge(for episode: Episode) -> some View {
+        if let source = dataStore.sourcePodcast(for: episode) {
+            HStack(spacing: 4) {
+                Image(systemName: "link")
+                    .font(.system(size: 9, weight: .bold))
+                Text("源自 · \(source.speaker)")
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(Color.appPrimary)
+            .padding(.top, 2)
+        }
     }
 
     // MARK: - Weekly Picks
@@ -569,6 +743,7 @@ struct HomeView: View {
                             .font(.system(size: 12))
                             .foregroundStyle(Color.textTertiary)
                     }
+                    sourcePodcastBadge(for: episode)
                 }
 
                 Spacer()
@@ -593,13 +768,6 @@ struct HomeView: View {
     }
 
     // MARK: - Helpers
-
-    private var greetingText: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        if hour < 12 { return "早上好" }
-        if hour < 18 { return "下午好" }
-        return "晚上好"
-    }
 
     private func episodeNumber(_ episode: Episode) -> Int {
         (dataStore.episodes.firstIndex(where: { $0.id == episode.id }) ?? 0) + 1

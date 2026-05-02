@@ -96,6 +96,135 @@ actor APIService {
         }
     }
 
+    // MARK: - Raw Podcast (硅谷原声)
+
+    /// 拉「硅谷原声」master 列表（pipeline A 写到 OSS 的）。
+    /// 失败时返回 nil；DataStore 会回到 bundle 里的种子数据。
+    func fetchRawPodcasts() async -> [RawPodcast]? {
+        guard let url = URL(string: "\(baseURL)/raw_podcasts/raw_podcasts.json") else {
+            return nil
+        }
+        do {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                debugLog("⚠️ raw_podcasts HTTP \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                return nil
+            }
+            let rewritten = rewriteURLs(data)
+            let items = try JSONDecoder().decode([RawPodcast].self, from: rewritten)
+            cacheRawPodcasts(items)
+            debugLog("✅ raw_podcasts loaded: \(items.count) items")
+            return items
+        } catch {
+            debugLog("⚠️ raw_podcasts fetch error: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    private func cacheRawPodcasts(_ items: [RawPodcast]) {
+        let file = cacheDirectory.appendingPathComponent("raw_podcasts.json")
+        if let data = try? JSONEncoder().encode(items) {
+            try? data.write(to: file)
+        }
+    }
+
+    /// 拉「硅谷原声」单期字幕。**网络优先，失败回缓存**（避免老缓存吞掉新版字幕）。
+    func fetchTranscript(transcriptUrl: String, podcastId: String) async -> RawTranscript? {
+        guard let url = URL(string: transcriptUrl) else {
+            return loadCachedTranscriptSync(podcastId: podcastId)
+        }
+        do {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                return loadCachedTranscriptSync(podcastId: podcastId)
+            }
+            let transcript = try JSONDecoder().decode(RawTranscript.self, from: data)
+            cacheTranscript(transcript, podcastId: podcastId)
+            return transcript
+        } catch {
+            debugLog("⚠️ transcript fetch error: \(error.localizedDescription)")
+            return loadCachedTranscriptSync(podcastId: podcastId)
+        }
+    }
+
+    private func cacheTranscript(_ transcript: RawTranscript, podcastId: String) {
+        let file = cacheDirectory.appendingPathComponent("transcript_\(podcastId).json")
+        if let data = try? JSONEncoder().encode(transcript) {
+            try? data.write(to: file)
+        }
+    }
+
+    nonisolated func loadCachedTranscriptSync(podcastId: String) -> RawTranscript? {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CastlingoEpisodes", isDirectory: true)
+        let file = dir.appendingPathComponent("transcript_\(podcastId).json")
+        guard let data = try? Data(contentsOf: file),
+              let t = try? JSONDecoder().decode(RawTranscript.self, from: data) else {
+            return nil
+        }
+        return t
+    }
+
+    /// 拉一集预翻译的词典（从 raw_podcasts/<id>/words.json）。
+    /// transcriptUrl 末尾的 transcript.json 替换为 words.json 即可。
+    func fetchPodcastWords(transcriptUrl: String, podcastId: String) async -> RawPodcastWords? {
+        let wordsUrlString = transcriptUrl.replacingOccurrences(
+            of: "transcript.json",
+            with: "words.json"
+        )
+        guard let url = URL(string: wordsUrlString) else {
+            return loadCachedWordsSync(podcastId: podcastId)
+        }
+        do {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                return loadCachedWordsSync(podcastId: podcastId)
+            }
+            let words = try JSONDecoder().decode(RawPodcastWords.self, from: data)
+            cacheWords(words, podcastId: podcastId)
+            return words
+        } catch {
+            debugLog("⚠️ words fetch error: \(error.localizedDescription)")
+            return loadCachedWordsSync(podcastId: podcastId)
+        }
+    }
+
+    private func cacheWords(_ words: RawPodcastWords, podcastId: String) {
+        let file = cacheDirectory.appendingPathComponent("words_\(podcastId).json")
+        if let data = try? JSONEncoder().encode(words) {
+            try? data.write(to: file)
+        }
+    }
+
+    nonisolated func loadCachedWordsSync(podcastId: String) -> RawPodcastWords? {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CastlingoEpisodes", isDirectory: true)
+        let file = dir.appendingPathComponent("words_\(podcastId).json")
+        guard let data = try? Data(contentsOf: file),
+              let w = try? JSONDecoder().decode(RawPodcastWords.self, from: data) else {
+            return nil
+        }
+        return w
+    }
+
+    nonisolated func loadCachedRawPodcastsSync() -> [RawPodcast]? {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CastlingoEpisodes", isDirectory: true)
+        let file = dir.appendingPathComponent("raw_podcasts.json")
+        guard let data = try? Data(contentsOf: file),
+              let items = try? JSONDecoder().decode([RawPodcast].self, from: data),
+              !items.isEmpty else {
+            return nil
+        }
+        return items
+    }
+
     /// Public access to disk cache (used by DataStore for instant startup display)
     nonisolated func loadCachedEpisodesSync(for level: PodcastLevel) -> [Episode]? {
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]

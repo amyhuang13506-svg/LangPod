@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Onboarding · YouTube 原声功能介绍</title>
+<style>
+  body {
+    margin: 0;
+    padding: 40px 20px;
+    background: #1a1a1a;
+    font-family: -apple-system, "PingFang SC", sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    flex-wrap: wrap;
+    gap: 40px;
+  }
+
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: #F7F8FC;
+    border-radius: 50px;
+    box-shadow: 0 0 0 12px #2a2a2a, 0 30px 80px rgba(0,0,0,0.5);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .notch {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 30px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 10;
+  }
+
+  .skip {
+    position: absolute;
+    top: 56px;
+    right: 16px;
+    color: #94A3B8;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 16px;
+    z-index: 5;
+  }
+
+  .content {
+    padding-top: 88px;
+    padding-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .header {
+    padding: 0 24px;
+  }
+
+  .title-1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1E293B;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+  }
+
+  .title-2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #3B82F6;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+  }
+
+  .sub {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #94A3B8;
+    line-height: 1.5;
+  }
+
+  /* Composite card — looks like the in-app player condensed */
+  .card {
+    margin: 18px 24px 0 24px;
+    background: #0a0a0a;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 14px 32px rgba(15, 23, 42, 0.4);
+  }
+
+  /* Source row */
+  .source {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #000;
+  }
+
+  .source-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .yt-logo {
+    width: 20px;
+    height: 14px;
+    background: #FF0000;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .yt-logo svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .source-right {
+    color: rgba(255,255,255,0.55);
+    font-size: 11px;
+  }
+
+  /* Video frame */
+  .video-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Subtitle frame */
+  .sub-frame {
+    background: #0a0a0a;
+    padding: 6px 0 14px 0;
+  }
+
+  .sub-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Quiet caption strip below card */
+  .caption {
+    margin: 14px 24px 0 24px;
+    font-size: 13px;
+    color: #94A3B8;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  .promise {
+    margin: 18px 24px 14px 24px;
+    background: #EFF6FF;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .promise-badge {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    background: #3B82F6;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: 10px;
+    letter-spacing: -0.3px;
+    line-height: 1;
+  }
+
+  .promise-line1 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1E293B;
+  }
+
+  .promise-line2 {
+    margin-top: 3px;
+    font-size: 11px;
+    color: #94A3B8;
+  }
+
+  .cta {
+    margin: auto 32px 0 32px;
+    height: 56px;
+    background: #3B82F6;
+    border-radius: 16px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .label {
+    color: #888;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 12px;
+    font-family: -apple-system;
+  }
+
+  .wrap {
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="skip">跳过</div>
+
+    <div class="content">
+      <div class="header">
+        <div class="title-1">看英语原声 YouTube</div>
+        <div class="title-2">中英双语字幕陪你学</div>
+        <div class="sub">Joe Rogan、Lex Fridman、Sam Altman…<br>每天更新全球热门播客</div>
+      </div>
+
+      <!-- Composite card: source bar + cropped video + cropped subtitle -->
+      <div class="card">
+        <div class="source">
+          <div class="source-left">
+            <div class="yt-logo">
+              <svg viewBox="0 0 24 24" fill="#fff"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.7-1.7C18.2 5 12 5 12 5s-6.2 0-7.9.5A2.5 2.5 0 0 0 2.4 7.2C2 9 2 12 2 12s0 3 .4 4.8a2.5 2.5 0 0 0 1.7 1.7C5.8 19 12 19 12 19s6.2 0 7.9-.5a2.5 2.5 0 0 0 1.7-1.7C22 15 22 12 22 12s0-3-.4-4.8zM10 15V9l5 3-5 3z"/></svg>
+            </div>
+            All-In Podcast
+          </div>
+          <div class="source-right">硅谷 · 科技</div>
+        </div>
+
+        <div class="video-frame">
+          <img src="onboarding_assets/youtube_video.jpg" alt="YouTube 原声视频画面">
+        </div>
+
+        <div class="sub-frame">
+          <img src="onboarding_assets/youtube_subtitle.jpg" alt="中英双语字幕">
+        </div>
+      </div>
+
+      <div class="caption">
+        视频 · 字幕 · 翻译，一边看一边学
+      </div>
+
+      <div class="promise">
+        <div class="promise-badge">600h</div>
+        <div>
+          <div class="promise-line1">600 小时 → 听力本能</div>
+          <div class="promise-line2">源自 FSI 外交官训练法 · 每天 20 分钟 ≈ 5 个月</div>
+        </div>
+      </div>
+
+      <div class="cta">继续</div>
+    </div>
+  </div>
+  <div class="label">Onboarding · Page 2 / 5 · YouTube 原声功能</div>
+</div>
+
+</body>
+</html>

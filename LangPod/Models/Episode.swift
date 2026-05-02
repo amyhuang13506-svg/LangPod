@@ -12,12 +12,16 @@ struct Episode: Codable, Identifiable {
     var thumbnail: String?
     var recycledWords: [String]?
     var patterns: [Pattern]?
+    /// 关联回 RawPodcast.id —— 表示本集是某条「硅谷原声」的解读版本。
+    /// UI 上 Episode 行会展示「源自硅谷原声」backlink badge。
+    var sourcePodcastId: String?
 
     enum CodingKeys: String, CodingKey {
         case id, title, level, date, thumbnail
         case durationSeconds = "duration_seconds"
         case audio, script, vocabulary, patterns
         case recycledWords = "recycled_words"
+        case sourcePodcastId = "source_podcast_id"
     }
 
     var podcastLevel: PodcastLevel? {
@@ -65,6 +69,7 @@ extension Episode {
         self.thumbnail = item.thumbnail
         self.recycledWords = nil
         self.patterns = item.patterns
+        self.sourcePodcastId = nil
     }
 }
 

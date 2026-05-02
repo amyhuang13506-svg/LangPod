@@ -63,6 +63,22 @@ class VocabularyStore {
 
     // MARK: - Actions
 
+    /// 单条加词（来自硅谷原声字幕等场景）。已存在的同名词会去重。
+    @discardableResult
+    func addWord(_ vocab: VocabularyItem, sourceLabel: String? = nil) -> Bool {
+        guard !words.contains(where: { $0.word.lowercased() == vocab.word.lowercased() }) else {
+            return false
+        }
+        words.append(SavedWord(from: vocab))
+        persist()
+        Analytics.track(.vocabularySave, params: [
+            "source": sourceLabel ?? "manual",
+            "word": vocab.word,
+            "total": "\(words.count)"
+        ])
+        return true
+    }
+
     func saveWords(from episode: Episode) {
         let before = words.count
         for vocab in episode.vocabulary {

@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<title>Castlingo — App Store Screenshots Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: #1e1e20;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 60px;
+    padding: 60px;
+  }
+
+  .screenshot {
+    width: 1290px;
+    height: 2796px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 32px;
+    transform-origin: top center;
+    transform: scale(0.33);
+    margin-bottom: -1880px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  /* ============ Screen 1: FSI 学习法 ============ */
+  .s1 {
+    background:
+      radial-gradient(ellipse 900px 700px at 15% 8%, rgba(255, 255, 255, 0.55) 0%, transparent 65%),
+      radial-gradient(ellipse 1100px 800px at 95% 100%, rgba(255, 206, 130, 0.28) 0%, transparent 60%),
+      radial-gradient(ellipse 800px 900px at -10% 60%, rgba(139, 180, 255, 0.45) 0%, transparent 55%),
+      linear-gradient(175deg, #d9e5ff 0%, #9ebcff 38%, #5680e8 72%, #3b5fc9 100%);
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .s1 .blob-1 {
+    top: -100px; right: -150px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, #fff6d9, transparent 70%);
+    opacity: 0.7;
+  }
+  .s1 .blob-2 {
+    bottom: 400px; left: -200px;
+    width: 700px; height: 500px;
+    background: radial-gradient(circle, #a8c5ff, transparent 70%);
+  }
+  .s1 .blob-3 {
+    bottom: -100px; right: 50px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, #ffd89a, transparent 70%);
+    opacity: 0.35;
+  }
+
+  .spark {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+  }
+  .s1 .sp1 { top: 500px; left: 100px; width: 14px; height: 14px; }
+  .s1 .sp2 { top: 680px; right: 140px; width: 10px; height: 10px; opacity: 0.7; }
+  .s1 .sp3 { top: 420px; right: 260px; width: 6px; height: 6px; }
+  .s1 .sp4 { top: 880px; left: 80px; width: 8px; height: 8px; opacity: 0.6; }
+  .s1 .sp5 { bottom: 300px; right: 110px; width: 12px; height: 12px; opacity: 0.5; }
+  .s1 .sp6 { top: 760px; right: 90px; width: 7px; height: 7px; opacity: 0.55; }
+
+  .soundwave {
+    position: absolute;
+    top: 1400px;
+    left: -120px;
+    width: 500px;
+    height: 500px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    opacity: 0.55;
+  }
+  .soundwave::before, .soundwave::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+  }
+  .soundwave::before { inset: 40px; }
+  .soundwave::after { inset: 80px; border-color: rgba(255, 255, 255, 0.08); }
+
+  /* Top small tag */
+  .tag {
+    position: absolute;
+    top: 160px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 32px;
+    background: rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 100px;
+    font-size: 32px;
+    letter-spacing: 3px;
+    color: #15245a;
+    font-weight: 600;
+    z-index: 5;
+  }
+
+  /* BIG HEADLINE — the selling point */
+  .headline {
+    position: absolute;
+    top: 260px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 180px;
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -6px;
+    color: #12205a;
+    z-index: 5;
+  }
+
+  .headline .fsi {
+    display: inline-block;
+    background: linear-gradient(90deg, #ff8a2a 0%, #ffb648 45%, #ffd57a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -4px;
+    padding: 0 8px;
+  }
+
+  .headline .row2 {
+    display: block;
+    font-size: 132px;
+    font-weight: 800;
+    letter-spacing: -3px;
+    margin-top: 16px;
+  }
+
+  .subhead {
+    position: absolute;
+    top: 700px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 40px;
+    font-weight: 500;
+    color: rgba(18, 32, 90, 0.78);
+    letter-spacing: 2px;
+    line-height: 1.5;
+    z-index: 5;
+  }
+
+  /* ============ Realistic iPhone 15 Pro Max frame (NO rotation) ============ */
+  .iphone {
+    position: absolute;
+    top: 850px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 760px;
+    height: 1620px;
+    z-index: 4;
+    filter: drop-shadow(0 50px 100px rgba(30, 50, 120, 0.4)) drop-shadow(0 20px 40px rgba(30, 50, 120, 0.22));
+  }
+
+  .iphone-frame {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, #8a8a8f 0%, #4d4d52 18%, #2a2a2e 35%, #1c1c1e 50%, #2a2a2e 68%, #4a4a50 85%, #7a7a80 100%);
+    border-radius: 110px;
+    padding: 10px;
+  }
+
+  .iphone-bezel {
+    position: absolute;
+    inset: 10px;
+    background: #000;
+    border-radius: 100px;
+    padding: 6px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+      inset 0 2px 4px rgba(255, 255, 255, 0.05);
+  }
+
+  .iphone-screen {
+    position: absolute;
+    inset: 16px;
+    border-radius: 88px;
+    overflow: hidden;
+    background: #f6f7fb;
+  }
+
+  .iphone-screen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    display: block;
+  }
+
+  .iphone-highlight {
+    position: absolute;
+    top: 4px;
+    left: 160px;
+    right: 160px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    border-radius: 100px;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .btn-volume-up {
+    position: absolute;
+    left: -6px;
+    top: 300px;
+    width: 10px;
+    height: 110px;
+    background: linear-gradient(90deg, #2a2a2e 0%, #555558 100%);
+    border-radius: 3px 0 0 3px;
+  }
+  .btn-volume-down {
+    position: absolute;
+    left: -6px;
+    top: 440px;
+    width: 10px;
+    height: 110px;
+    background: linear-gradient(90deg, #2a2a2e 0%, #555558 100%);
+    border-radius: 3px 0 0 3px;
+  }
+  .btn-action {
+    position: absolute;
+    left: -6px;
+    top: 200px;
+    width: 10px;
+    height: 60px;
+    background: linear-gradient(90deg, #2a2a2e 0%, #555558 100%);
+    border-radius: 3px 0 0 3px;
+  }
+  .btn-power {
+    position: absolute;
+    right: -6px;
+    top: 360px;
+    width: 10px;
+    height: 180px;
+    background: linear-gradient(-90deg, #2a2a2e 0%, #555558 100%);
+    border-radius: 0 3px 3px 0;
+  }
+
+  /* Footer ribbon */
+  .footer-line {
+    position: absolute;
+    bottom: 180px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 38px;
+    font-weight: 700;
+    color: rgba(18, 32, 90, 0.85);
+    letter-spacing: 2px;
+    z-index: 5;
+  }
+  .footer-line .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff9a3d;
+    margin: 0 24px;
+    vertical-align: middle;
+  }
+
+  /* ============ Screen 2: 句型讲解 ============ */
+  .s2 {
+    background:
+      radial-gradient(ellipse 1000px 700px at 20% 10%, rgba(255, 255, 255, 0.55) 0%, transparent 65%),
+      radial-gradient(ellipse 1000px 800px at 100% 95%, rgba(178, 226, 198, 0.38) 0%, transparent 60%),
+      radial-gradient(ellipse 800px 900px at -10% 55%, rgba(120, 170, 255, 0.4) 0%, transparent 55%),
+      linear-gradient(175deg, #d4e8ff 0%, #8eb2f5 40%, #4d73d9 75%, #2a4cb0 100%);
+  }
+
+  .s2 .blob-1 {
+    top: -120px; right: -180px;
+    width: 650px; height: 650px;
+    background: radial-gradient(circle, #d7f0d8, transparent 70%);
+    opacity: 0.6;
+  }
+  .s2 .blob-2 {
+    bottom: 380px; left: -220px;
+    width: 700px; height: 520px;
+    background: radial-gradient(circle, #9abdff, transparent 70%);
+  }
+  .s2 .blob-3 {
+    bottom: -80px; right: 40px;
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, #c5e8d0, transparent 70%);
+    opacity: 0.4;
+  }
+
+  .s2 .sp1 { top: 480px; left: 110px; width: 14px; height: 14px; }
+  .s2 .sp2 { top: 660px; right: 160px; width: 10px; height: 10px; opacity: 0.75; }
+  .s2 .sp3 { top: 420px; right: 280px; width: 6px; height: 6px; }
+  .s2 .sp4 { top: 860px; left: 90px; width: 8px; height: 8px; opacity: 0.6; }
+  .s2 .sp5 { bottom: 310px; right: 120px; width: 12px; height: 12px; opacity: 0.5; }
+  .s2 .sp6 { top: 770px; right: 80px; width: 7px; height: 7px; opacity: 0.55; }
+
+  .s2 .soundwave {
+    top: 1380px;
+    left: auto;
+    right: -140px;
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  /* Quote mark decoration */
+  .quote-mark {
+    position: absolute;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 600px;
+    color: rgba(255, 255, 255, 0.14);
+    font-weight: 700;
+    line-height: 1;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .s2 .quote-left { top: 120px; left: -40px; }
+  .s2 .quote-right { bottom: 600px; right: -40px; transform: rotate(180deg); }
+
+  .s2 .headline .sentence-icon {
+    display: inline-block;
+    background: linear-gradient(90deg, #86e0a5 0%, #ffb648 50%, #ff8a2a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -4px;
+    padding: 0 8px;
+  }
+
+  .s2 .footer-line .dot {
+    background: #4dbd72;
+  }
+
+  /* ============ Screen 3: 费曼学习法 ============ */
+  .s3 {
+    background:
+      radial-gradient(ellipse 1000px 700px at 15% 8%, rgba(255, 255, 255, 0.55) 0%, transparent 65%),
+      radial-gradient(ellipse 1100px 800px at 100% 100%, rgba(200, 160, 255, 0.38) 0%, transparent 60%),
+      radial-gradient(ellipse 900px 900px at -5% 55%, rgba(145, 175, 255, 0.42) 0%, transparent 55%),
+      linear-gradient(175deg, #dee6ff 0%, #9bafff 38%, #5968e0 72%, #3a3fb8 100%);
+  }
+
+  .s3 .blob-1 {
+    top: -120px; right: -180px;
+    width: 650px; height: 650px;
+    background: radial-gradient(circle, #f0dfff, transparent 70%);
+    opacity: 0.65;
+  }
+  .s3 .blob-2 {
+    bottom: 380px; left: -220px;
+    width: 700px; height: 520px;
+    background: radial-gradient(circle, #a0b4ff, transparent 70%);
+  }
+  .s3 .blob-3 {
+    bottom: -80px; right: 40px;
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, #d5bdff, transparent 70%);
+    opacity: 0.42;
+  }
+
+  .s3 .sp1 { top: 480px; left: 110px; width: 14px; height: 14px; }
+  .s3 .sp2 { top: 660px; right: 160px; width: 10px; height: 10px; opacity: 0.75; }
+  .s3 .sp3 { top: 420px; right: 280px; width: 6px; height: 6px; }
+  .s3 .sp4 { top: 860px; left: 90px; width: 8px; height: 8px; opacity: 0.6; }
+  .s3 .sp5 { bottom: 310px; right: 120px; width: 12px; height: 12px; opacity: 0.5; }
+  .s3 .sp6 { top: 770px; right: 80px; width: 7px; height: 7px; opacity: 0.55; }
+
+  /* Chat bubble outlines — 费曼 = speak it out */
+  .bubble {
+    position: absolute;
+    border: 3px solid rgba(255, 255, 255, 0.35);
+    border-radius: 48px;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-right: 3px solid rgba(255, 255, 255, 0.35);
+    border-bottom: 3px solid rgba(255, 255, 255, 0.35);
+    background: transparent;
+    transform: rotate(45deg);
+  }
+
+  .s3 .bubble-1 {
+    top: 1380px;
+    left: -80px;
+    width: 340px;
+    height: 180px;
+    opacity: 0.7;
+  }
+  .s3 .bubble-1::after {
+    bottom: -18px;
+    right: 60px;
+    border-left: none;
+    border-top: none;
+    border-bottom-right-radius: 6px;
+  }
+
+  .s3 .bubble-2 {
+    top: 1600px;
+    right: -70px;
+    width: 280px;
+    height: 150px;
+    opacity: 0.55;
+    border-width: 2px;
+  }
+  .s3 .bubble-2::after {
+    bottom: -14px;
+    left: 50px;
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
+    border-left: none;
+    border-top: none;
+    border-bottom-right-radius: 4px;
+  }
+
+  .s3 .bubble-3 {
+    top: 1800px;
+    left: 40px;
+    width: 200px;
+    height: 110px;
+    opacity: 0.45;
+    border-width: 2px;
+  }
+  .s3 .bubble-3::after {
+    bottom: -12px;
+    right: 40px;
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+    border-left: none;
+    border-top: none;
+    border-bottom-right-radius: 4px;
+  }
+
+  /* Inner dots inside bubbles (typing indicator vibe) */
+  .bubble .typing {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 14px;
+  }
+  .bubble .typing span {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+  }
+  .s3 .bubble-2 .typing span { width: 12px; height: 12px; }
+  .s3 .bubble-3 .typing span { width: 10px; height: 10px; }
+
+  .s3 .headline .feynman {
+    display: inline-block;
+    background: linear-gradient(90deg, #c97aff 0%, #ff9a3d 55%, #ffd57a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -4px;
+    padding: 0 8px;
+  }
+
+  .s3 .footer-line .dot {
+    background: #c97aff;
+  }
+
+  /* ============ Screen 4: 每日更新 · 贴近生活 ============ */
+  .s4 {
+    background:
+      radial-gradient(ellipse 1100px 800px at 90% 5%, rgba(255, 180, 130, 0.55) 0%, transparent 55%),
+      radial-gradient(ellipse 900px 700px at 10% 12%, rgba(255, 255, 255, 0.5) 0%, transparent 60%),
+      radial-gradient(ellipse 900px 900px at -5% 55%, rgba(130, 170, 255, 0.42) 0%, transparent 55%),
+      linear-gradient(175deg, #fde4d0 0%, #c9d8ff 28%, #7a9cf0 62%, #3b5dcc 100%);
+  }
+
+  .s4 .blob-1 {
+    top: -120px; right: -180px;
+    width: 750px; height: 750px;
+    background: radial-gradient(circle, #ffe0b5, transparent 70%);
+    opacity: 0.8;
+  }
+  .s4 .blob-2 {
+    bottom: 380px; left: -220px;
+    width: 700px; height: 520px;
+    background: radial-gradient(circle, #a6bcff, transparent 70%);
+  }
+  .s4 .blob-3 {
+    bottom: -80px; right: 40px;
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, #ffc29a, transparent 70%);
+    opacity: 0.4;
+  }
+
+  .s4 .sp1 { top: 480px; left: 110px; width: 14px; height: 14px; }
+  .s4 .sp2 { top: 660px; right: 160px; width: 10px; height: 10px; opacity: 0.75; }
+  .s4 .sp3 { top: 420px; right: 280px; width: 6px; height: 6px; }
+  .s4 .sp4 { top: 860px; left: 90px; width: 8px; height: 8px; opacity: 0.6; }
+  .s4 .sp5 { bottom: 310px; right: 120px; width: 12px; height: 12px; opacity: 0.5; }
+  .s4 .sp6 { top: 770px; right: 80px; width: 7px; height: 7px; opacity: 0.55; }
+
+  /* Sunrise rays top-right */
+  .sunrise {
+    position: absolute;
+    top: -200px;
+    right: -200px;
+    width: 700px;
+    height: 700px;
+    background: conic-gradient(
+      from 200deg,
+      transparent 0deg,
+      rgba(255, 220, 170, 0.28) 20deg,
+      transparent 40deg,
+      rgba(255, 220, 170, 0.22) 60deg,
+      transparent 80deg,
+      rgba(255, 220, 170, 0.18) 100deg,
+      transparent 120deg
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+
+  /* Calendar dot grid — day-by-day freshness */
+  .cal-grid {
+    position: absolute;
+    top: 1400px;
+    left: 30px;
+    width: 200px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+    opacity: 0.55;
+    z-index: 1;
+  }
+  .cal-grid .cell {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.7);
+  }
+  .cal-grid .cell.filled {
+    background: rgba(255, 174, 110, 0.85);
+    border-color: rgba(255, 174, 110, 1);
+    box-shadow: 0 0 18px rgba(255, 180, 130, 0.6);
+  }
+
+  .cal-grid-right {
+    position: absolute;
+    top: 1500px;
+    right: 30px;
+    width: 180px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 18px;
+    opacity: 0.4;
+    z-index: 1;
+  }
+  .cal-grid-right .cell {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.45);
+    border: 2px solid rgba(255, 255, 255, 0.65);
+  }
+  .cal-grid-right .cell.filled {
+    background: rgba(255, 174, 110, 0.8);
+    border-color: rgba(255, 174, 110, 1);
+  }
+
+  .s4 .headline .daily {
+    display: inline-block;
+    background: linear-gradient(90deg, #ff7a3d 0%, #ffab5c 50%, #ffd57a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -4px;
+    padding: 0 8px;
+  }
+
+  .s4 .footer-line .dot {
+    background: #ff7a3d;
+  }
+
+  /* ============ Screen 5: 科学记忆 · 遗忘曲线 ============ */
+  .s5 {
+    background:
+      radial-gradient(ellipse 1000px 700px at 15% 8%, rgba(255, 255, 255, 0.55) 0%, transparent 65%),
+      radial-gradient(ellipse 1100px 800px at 95% 95%, rgba(140, 230, 220, 0.4) 0%, transparent 60%),
+      radial-gradient(ellipse 900px 900px at -5% 55%, rgba(120, 175, 255, 0.4) 0%, transparent 55%),
+      linear-gradient(175deg, #d5ecff 0%, #8dc6ea 32%, #4286c8 68%, #24508f 100%);
+  }
+
+  .s5 .blob-1 {
+    top: -120px; right: -180px;
+    width: 650px; height: 650px;
+    background: radial-gradient(circle, #c7f3ec, transparent 70%);
+    opacity: 0.7;
+  }
+  .s5 .blob-2 {
+    bottom: 380px; left: -220px;
+    width: 700px; height: 520px;
+    background: radial-gradient(circle, #a5c9ff, transparent 70%);
+  }
+  .s5 .blob-3 {
+    bottom: -80px; right: 40px;
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, #8de0d2, transparent 70%);
+    opacity: 0.45;
+  }
+
+  .s5 .sp1 { top: 480px; left: 110px; width: 14px; height: 14px; }
+  .s5 .sp2 { top: 660px; right: 160px; width: 10px; height: 10px; opacity: 0.75; }
+  .s5 .sp3 { top: 420px; right: 280px; width: 6px; height: 6px; }
+  .s5 .sp4 { top: 860px; left: 90px; width: 8px; height: 8px; opacity: 0.6; }
+  .s5 .sp5 { bottom: 310px; right: 120px; width: 12px; height: 12px; opacity: 0.5; }
+  .s5 .sp6 { top: 770px; right: 80px; width: 7px; height: 7px; opacity: 0.55; }
+
+  /* Forgetting curve SVG — declining then flattening */
+  .curve {
+    position: absolute;
+    bottom: 400px;
+    left: -40px;
+    right: -40px;
+    height: 360px;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .curve svg { width: 100%; height: 100%; }
+
+  .s5 .headline .memory {
+    display: inline-block;
+    background: linear-gradient(90deg, #2dd4bf 0%, #60d7ea 45%, #8ddbff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -4px;
+    padding: 0 8px;
+  }
+
+  .s5 .footer-line .dot {
+    background: #2dd4bf;
+  }
+
+  /* ============ Screen 6: 硅谷原声 · 一手 AI 资讯 ============ */
+  .s6 {
+    background:
+      radial-gradient(ellipse 1100px 800px at 90% 5%, rgba(120, 220, 255, 0.42) 0%, transparent 55%),
+      radial-gradient(ellipse 900px 700px at 10% 12%, rgba(255, 255, 255, 0.5) 0%, transparent 60%),
+      radial-gradient(ellipse 900px 900px at -5% 55%, rgba(110, 145, 255, 0.42) 0%, transparent 55%),
+      linear-gradient(175deg, #cfe5ff 0%, #6e9bf2 35%, #2c4dba 72%, #14225e 100%);
+  }
+
+  .s6 .blob-1 {
+    top: -120px; right: -180px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, #aef0ff, transparent 70%);
+    opacity: 0.6;
+  }
+  .s6 .blob-2 {
+    bottom: 380px; left: -220px;
+    width: 700px; height: 520px;
+    background: radial-gradient(circle, #94aaff, transparent 70%);
+  }
+  .s6 .blob-3 {
+    bottom: -80px; right: 40px;
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, #b0e6ff, transparent 70%);
+    opacity: 0.4;
+  }
+
+  .s6 .sp1 { top: 480px; left: 110px; width: 14px; height: 14px; }
+  .s6 .sp2 { top: 660px; right: 160px; width: 10px; height: 10px; opacity: 0.75; }
+  .s6 .sp3 { top: 420px; right: 280px; width: 6px; height: 6px; }
+  .s6 .sp4 { top: 860px; left: 90px; width: 8px; height: 8px; opacity: 0.6; }
+  .s6 .sp5 { bottom: 310px; right: 120px; width: 12px; height: 12px; opacity: 0.5; }
+  .s6 .sp6 { top: 770px; right: 80px; width: 7px; height: 7px; opacity: 0.55; }
+
+  /* Tech grid backdrop — circuit / data feel */
+  .tech-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 80px 80px;
+    background-position: -1px -1px;
+    z-index: 1;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse 1400px 1000px at 50% 60%, black 25%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse 1400px 1000px at 50% 60%, black 25%, transparent 70%);
+  }
+
+  /* Glowing circuit nodes */
+  .node {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(110, 230, 255, 0.95);
+    box-shadow:
+      0 0 25px rgba(110, 230, 255, 0.85),
+      0 0 60px rgba(110, 230, 255, 0.45);
+    z-index: 1;
+  }
+  .s6 .node-1 { top: 1450px; left: 80px; }
+  .s6 .node-2 { top: 1620px; right: 100px; width: 14px; height: 14px; }
+  .s6 .node-3 { top: 1820px; left: 130px; width: 12px; height: 12px; }
+  .s6 .node-4 { top: 2000px; right: 80px; width: 16px; height: 16px; }
+  .s6 .node-5 { top: 1280px; right: 130px; width: 10px; height: 10px; }
+
+  .s6 .headline .silicon {
+    display: inline-block;
+    background: linear-gradient(90deg, #6ee7ff 0%, #92ffe0 50%, #d4f9ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -4px;
+    padding: 0 8px;
+    text-shadow: 0 0 60px rgba(110, 230, 255, 0.4);
+  }
+
+  .s6 .tag {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(170, 230, 255, 0.5);
+    color: #e8f6ff;
+  }
+
+  .s6 .headline {
+    color: #fff;
+  }
+
+  .s6 .subhead {
+    color: rgba(220, 235, 255, 0.85);
+  }
+
+  .s6 .footer-line {
+    color: rgba(220, 235, 255, 0.92);
+  }
+
+  .s6 .footer-line .dot {
+    background: #6ee7ff;
+    box-shadow: 0 0 12px rgba(110, 230, 255, 0.7);
+  }
+
+  /* ============ Screen 7: YouTube 双语字幕 ============ */
+  .s7 {
+    background:
+      radial-gradient(ellipse 1100px 800px at 90% 8%, rgba(255, 160, 200, 0.4) 0%, transparent 55%),
+      radial-gradient(ellipse 900px 700px at 10% 12%, rgba(255, 255, 255, 0.5) 0%, transparent 60%),
+      radial-gradient(ellipse 900px 900px at -5% 55%, rgba(140, 175, 255, 0.42) 0%, transparent 55%),
+      linear-gradient(175deg, #ffe1ec 0%, #c4d4ff 28%, #6f8af0 65%, #2f49a8 100%);
+  }
+
+  .s7 .blob-1 {
+    top: -120px; right: -180px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, #ffd0e2, transparent 70%);
+    opacity: 0.7;
+  }
+  .s7 .blob-2 {
+    bottom: 380px; left: -220px;
+    width: 700px; height: 520px;
+    background: radial-gradient(circle, #adc3ff, transparent 70%);
+  }
+  .s7 .blob-3 {
+    bottom: -80px; right: 40px;
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, #ffc0d4, transparent 70%);
+    opacity: 0.42;
+  }
+
+  .s7 .sp1 { top: 480px; left: 110px; width: 14px; height: 14px; }
+  .s7 .sp2 { top: 660px; right: 160px; width: 10px; height: 10px; opacity: 0.75; }
+  .s7 .sp3 { top: 420px; right: 280px; width: 6px; height: 6px; }
+  .s7 .sp4 { top: 860px; left: 90px; width: 8px; height: 8px; opacity: 0.6; }
+  .s7 .sp5 { bottom: 310px; right: 120px; width: 12px; height: 12px; opacity: 0.5; }
+  .s7 .sp6 { top: 770px; right: 80px; width: 7px; height: 7px; opacity: 0.55; }
+
+  /* Floating subtitle bars (bilingual hint) */
+  .sub-bar {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 14px;
+    z-index: 1;
+    box-shadow: 0 8px 32px rgba(255, 100, 150, 0.18);
+  }
+  .sub-bar.zh { background: rgba(255, 255, 255, 0.4); }
+  .s7 .sb-1 { top: 1380px; left: -40px; width: 260px; height: 22px; transform: rotate(-4deg); }
+  .s7 .sb-2 { top: 1416px; left: -30px; width: 200px; height: 16px; transform: rotate(-4deg); opacity: 0.7; }
+
+  .s7 .sb-3 { top: 1620px; right: -30px; width: 280px; height: 24px; transform: rotate(3deg); }
+  .s7 .sb-4 { top: 1660px; right: -20px; width: 220px; height: 18px; transform: rotate(3deg); opacity: 0.7; }
+
+  .s7 .sb-5 { top: 1860px; left: -30px; width: 220px; height: 20px; transform: rotate(-2deg); opacity: 0.85; }
+  .s7 .sb-6 { top: 1893px; left: -20px; width: 170px; height: 14px; transform: rotate(-2deg); opacity: 0.6; }
+
+  /* Play triangle decoration */
+  .play-deco {
+    position: absolute;
+    width: 0;
+    height: 0;
+    z-index: 1;
+    pointer-events: none;
+    border-style: solid;
+    border-color: transparent;
+    border-left-color: rgba(255, 100, 150, 0.4);
+  }
+  .s7 .pl-1 {
+    top: 1290px;
+    right: 60px;
+    border-width: 30px 0 30px 50px;
+  }
+  .s7 .pl-2 {
+    top: 2050px;
+    right: 200px;
+    border-width: 20px 0 20px 34px;
+    border-left-color: rgba(255, 100, 150, 0.3);
+  }
+
+  .s7 .headline .video {
+    display: inline-block;
+    background: linear-gradient(90deg, #ff6a9c 0%, #ff8e5e 55%, #ffc56a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -4px;
+    padding: 0 8px;
+  }
+
+  .s7 .footer-line .dot {
+    background: #ff6a9c;
+  }
+</style>
+</head>
+<body>
+
+<!-- Screen 1: FSI 学习法 -->
+<div class="screenshot s1">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="spark sp1"></div>
+  <div class="spark sp2"></div>
+  <div class="spark sp3"></div>
+  <div class="spark sp4"></div>
+  <div class="spark sp5"></div>
+  <div class="spark sp6"></div>
+  <div class="soundwave"></div>
+
+  <div class="tag">美国外交官 70 年训练体系</div>
+
+  <div class="headline">
+    <span class="fsi">FSI</span> 学习法
+    <span class="row2">像母语一样刻进耳朵</span>
+  </div>
+
+  <div class="subhead">零输入 · 被动吸收 · 条件反射</div>
+
+  <div class="iphone">
+    <div class="iphone-frame">
+      <div class="iphone-bezel">
+        <div class="iphone-screen">
+          <img src="../IMG_6782.PNG" alt="播放页">
+        </div>
+      </div>
+      <div class="iphone-highlight"></div>
+    </div>
+    <div class="btn-action"></div>
+    <div class="btn-volume-up"></div>
+    <div class="btn-volume-down"></div>
+    <div class="btn-power"></div>
+  </div>
+
+  <div class="footer-line">
+    3 遍原音<span class="dot"></span>1 遍翻译<span class="dot"></span>1 遍原音
+  </div>
+</div>
+
+<!-- Screen 2: 句型讲解 -->
+<div class="screenshot s2">
+  <div class="quote-mark quote-left">"</div>
+  <div class="quote-mark quote-right">"</div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="spark sp1"></div>
+  <div class="spark sp2"></div>
+  <div class="spark sp3"></div>
+  <div class="spark sp4"></div>
+  <div class="spark sp5"></div>
+  <div class="spark sp6"></div>
+  <div class="soundwave"></div>
+
+  <div class="tag">独家功能 · AI 每日更新</div>
+
+  <div class="headline">
+    <span class="sentence-icon">句型讲解</span>
+    <span class="row2">学语感，不学语法</span>
+  </div>
+
+  <div class="subhead">场景触发的条件反射，不是翻译</div>
+
+  <div class="iphone">
+    <div class="iphone-frame">
+      <div class="iphone-bezel">
+        <div class="iphone-screen">
+          <img src="../IMG_6783.PNG" alt="句型讲解页">
+        </div>
+      </div>
+      <div class="iphone-highlight"></div>
+    </div>
+    <div class="btn-action"></div>
+    <div class="btn-volume-up"></div>
+    <div class="btn-volume-down"></div>
+    <div class="btn-power"></div>
+  </div>
+
+  <div class="footer-line">
+    读音<span class="dot"></span>跟读<span class="dot"></span>场景<span class="dot"></span>例句
+  </div>
+</div>
+
+<!-- Screen 3: 费曼学习法 -->
+<div class="screenshot s3">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="spark sp1"></div>
+  <div class="spark sp2"></div>
+  <div class="spark sp3"></div>
+  <div class="spark sp4"></div>
+  <div class="spark sp5"></div>
+  <div class="spark sp6"></div>
+
+  <div class="bubble bubble-1"><div class="typing"><span></span><span></span><span></span></div></div>
+  <div class="bubble bubble-2"><div class="typing"><span></span><span></span><span></span></div></div>
+  <div class="bubble bubble-3"><div class="typing"><span></span><span></span><span></span></div></div>
+
+  <div class="tag">费曼 · 输出倒逼输入</div>
+
+  <div class="headline">
+    <span class="feynman">费曼学习法</span>
+    <span class="row2">听懂 ≠ 会用</span>
+  </div>
+
+  <div class="subhead">从听懂到能教，4 层递进式掌握</div>
+
+  <div class="iphone">
+    <div class="iphone-frame">
+      <div class="iphone-bezel">
+        <div class="iphone-screen">
+          <img src="../审核截图/Simulator Screenshot - iPhone 17 Pro Max - 2026-04-12 at 14.12.10.png" alt="我的词汇">
+        </div>
+      </div>
+      <div class="iphone-highlight"></div>
+    </div>
+    <div class="btn-action"></div>
+    <div class="btn-volume-up"></div>
+    <div class="btn-volume-down"></div>
+    <div class="btn-power"></div>
+  </div>
+
+  <div class="footer-line">
+    听懂<span class="dot"></span>认出<span class="dot"></span>会用<span class="dot"></span>能教
+  </div>
+</div>
+
+<!-- Screen 4: 每日更新 · 贴近生活 -->
+<div class="screenshot s4">
+  <div class="sunrise"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="spark sp1"></div>
+  <div class="spark sp2"></div>
+  <div class="spark sp3"></div>
+  <div class="spark sp4"></div>
+  <div class="spark sp5"></div>
+  <div class="spark sp6"></div>
+
+  <div class="cal-grid">
+    <div class="cell filled"></div><div class="cell filled"></div><div class="cell filled"></div><div class="cell filled"></div><div class="cell filled"></div>
+    <div class="cell filled"></div><div class="cell filled"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+    <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+  </div>
+  <div class="cal-grid-right">
+    <div class="cell filled"></div><div class="cell filled"></div><div class="cell filled"></div><div class="cell"></div><div class="cell"></div>
+    <div class="cell filled"></div><div class="cell filled"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+    <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+  </div>
+
+  <div class="tag">AI 每日 0 点更新</div>
+
+  <div class="headline">
+    <span class="daily">贴近生活</span>
+    <span class="row2">的每日英语</span>
+  </div>
+
+  <div class="subhead">365 天不重样 · 热点话题今天刚出炉</div>
+
+  <div class="iphone">
+    <div class="iphone-frame">
+      <div class="iphone-bezel">
+        <div class="iphone-screen">
+          <img src="../IMG_6780.PNG" alt="首页">
+        </div>
+      </div>
+      <div class="iphone-highlight"></div>
+    </div>
+    <div class="btn-action"></div>
+    <div class="btn-volume-up"></div>
+    <div class="btn-volume-down"></div>
+    <div class="btn-power"></div>
+  </div>
+
+  <div class="footer-line">
+    流行文化<span class="dot"></span>今日新闻<span class="dot"></span>日常对话
+  </div>
+</div>
+
+<!-- Screen 5: 科学记忆 · 遗忘曲线 -->
+<div class="screenshot s5">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="spark sp1"></div>
+  <div class="spark sp2"></div>
+  <div class="spark sp3"></div>
+  <div class="spark sp4"></div>
+  <div class="spark sp5"></div>
+  <div class="spark sp6"></div>
+
+  <div class="curve">
+    <svg viewBox="0 0 1290 360" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="curveGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/>
+          <stop offset="50%" stop-color="rgba(255,255,255,0.9)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0.55)"/>
+        </linearGradient>
+      </defs>
+      <!-- Faded original curve -->
+      <path d="M 0 40 Q 120 40 200 180 T 500 300 Q 800 330 1290 340"
+            stroke="rgba(255,255,255,0.28)" stroke-width="4" fill="none" stroke-dasharray="10 14"/>
+      <!-- Spaced repetition curve - rises back up at intervals -->
+      <path d="M 0 50 Q 100 50 180 160 T 380 240 Q 420 150 500 170 T 700 230 Q 760 150 840 180 T 1050 220 Q 1120 160 1290 175"
+            stroke="url(#curveGrad)" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <!-- Data points at rebounds -->
+      <circle cx="420" cy="150" r="10" fill="rgba(45, 212, 191, 0.9)"/>
+      <circle cx="760" cy="150" r="10" fill="rgba(45, 212, 191, 0.9)"/>
+      <circle cx="1120" cy="160" r="10" fill="rgba(45, 212, 191, 0.9)"/>
+      <circle cx="420" cy="150" r="20" fill="rgba(45, 212, 191, 0.3)"/>
+      <circle cx="760" cy="150" r="20" fill="rgba(45, 212, 191, 0.3)"/>
+      <circle cx="1120" cy="160" r="20" fill="rgba(45, 212, 191, 0.3)"/>
+    </svg>
+  </div>
+
+  <div class="tag">艾宾浩斯遗忘曲线</div>
+
+  <div class="headline">
+    <span class="memory">科学记忆</span>
+    <span class="row2">听过，就真的记住</span>
+  </div>
+
+  <div class="subhead">旧词会回来找你，AI 帮你记牢</div>
+
+  <div class="iphone">
+    <div class="iphone-frame">
+      <div class="iphone-bezel">
+        <div class="iphone-screen">
+          <img src="../审核截图/裁剪后/screenshot_3.png" alt="本集完成">
+        </div>
+      </div>
+      <div class="iphone-highlight"></div>
+    </div>
+    <div class="btn-action"></div>
+    <div class="btn-volume-up"></div>
+    <div class="btn-volume-down"></div>
+    <div class="btn-power"></div>
+  </div>
+
+  <div class="footer-line">
+    每集沉淀<span class="dot"></span>间隔复现<span class="dot"></span>升级闯关
+  </div>
+</div>
+
+<!-- Screen 6: 硅谷原声 · 一手 AI 资讯 -->
+<div class="screenshot s6">
+  <div class="tech-grid"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="spark sp1"></div>
+  <div class="spark sp2"></div>
+  <div class="spark sp3"></div>
+  <div class="spark sp4"></div>
+  <div class="spark sp5"></div>
+  <div class="spark sp6"></div>
+
+  <div class="node node-1"></div>
+  <div class="node node-2"></div>
+  <div class="node node-3"></div>
+  <div class="node node-4"></div>
+  <div class="node node-5"></div>
+
+  <div class="tag">AI 时代 · 一手原声</div>
+
+  <div class="headline">
+    <span class="silicon">硅谷原声</span>
+    <span class="row2">听大佬怎么说</span>
+  </div>
+
+  <div class="subhead">NVIDIA · OpenAI · All-In · a16z</div>
+
+  <div class="iphone">
+    <div class="iphone-frame">
+      <div class="iphone-bezel">
+        <div class="iphone-screen">
+          <img src="../a75a87ad8f73cea88f0e14e34e0a93ea.jpg" alt="硅谷原声首页">
+        </div>
+      </div>
+      <div class="iphone-highlight"></div>
+    </div>
+    <div class="btn-action"></div>
+    <div class="btn-volume-up"></div>
+    <div class="btn-volume-down"></div>
+    <div class="btn-power"></div>
+  </div>
+
+  <div class="footer-line">
+    深度访谈<span class="dot"></span>大佬演讲<span class="dot"></span>实时更新
+  </div>
+</div>
+
+<!-- Screen 7: YouTube 双语字幕 -->
+<div class="screenshot s7">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="spark sp1"></div>
+  <div class="spark sp2"></div>
+  <div class="spark sp3"></div>
+  <div class="spark sp4"></div>
+  <div class="spark sp5"></div>
+  <div class="spark sp6"></div>
+
+  <div class="sub-bar sb-1"></div>
+  <div class="sub-bar sb-2 zh"></div>
+  <div class="sub-bar sb-3"></div>
+  <div class="sub-bar sb-4 zh"></div>
+  <div class="sub-bar sb-5"></div>
+  <div class="sub-bar sb-6 zh"></div>
+  <div class="play-deco pl-1"></div>
+  <div class="play-deco pl-2"></div>
+
+  <div class="tag">YouTube 视频源 · 双语字幕</div>
+
+  <div class="headline">
+    <span class="video">边看边学</span>
+    <span class="row2">句句中英对照</span>
+  </div>
+
+  <div class="subhead">单词级对齐 · 难点反复看</div>
+
+  <div class="iphone">
+    <div class="iphone-frame">
+      <div class="iphone-bezel">
+        <div class="iphone-screen">
+          <img src="../19d7c8c83a6d6ef6d6dc66cf2696aa43.jpg" alt="YouTube 双语字幕">
+        </div>
+      </div>
+      <div class="iphone-highlight"></div>
+    </div>
+    <div class="btn-action"></div>
+    <div class="btn-volume-up"></div>
+    <div class="btn-volume-down"></div>
+    <div class="btn-power"></div>
+  </div>
+
+  <div class="footer-line">
+    视频字幕<span class="dot"></span>中英对照<span class="dot"></span>单词高亮
+  </div>
+</div>
+
+</body>
+</html>

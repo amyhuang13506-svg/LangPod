@@ -1,0 +1,340 @@
+"""
+Pipeline A — 第二阶段：候选 → 下载音频 → 上传 OSS → 写入 master 清单
+
+输入：raw_podcast_pipeline.py --json 输出的 candidates 列表
+输出：
+  - 音频文件上传到 OSS：raw_podcasts/<id>/audio.m4a
+  - 缩略图上传：raw_podcasts/<id>/thumbnail.jpg
+  - master JSON 更新：raw_podcasts/raw_podcasts.json（App 直接 fetch 这个 URL）
+
+ID 规则：
+  - YouTube 视频：raw-yt-<video_id>
+  - RSS 集：raw-rss-<sha1(guid)[:12]>
+
+Master 列表在 OSS 上是单一真理源，每天 cron 增量更新（不重复下载已有 ID）。
+"""
+import hashlib
+import json
+import re
+import shutil
+import sys
+import tempfile
+from pathlib import Path
+from typing import Optional
+
+import requests
+
+try:
+    import yt_dlp
+except ImportError:
+    print("❌ pip install yt-dlp")
+    sys.exit(1)
+
+from config import (
+    OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET,
+    OSS_BUCKET_NAME, OSS_ENDPOINT, OSS_CDN_DOMAIN,
+)
+
+try:
+    import oss2
+except ImportError:
+    print("❌ pip install oss2")
+    sys.exit(1)
+
+
+OUTPUT_DIR = Path(__file__).resolve().parent / "output"
+OUTPUT_DIR.mkdir(exist_ok=True)
+LOCAL_MASTER = OUTPUT_DIR / "raw_podcasts_master.json"
+OSS_MASTER_KEY = "raw_podcasts/raw_podcasts.json"
+
+
+def get_bucket():
+    auth = oss2.Auth(OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET)
+    return oss2.Bucket(auth, OSS_ENDPOINT, OSS_BUCKET_NAME)
+
+
+# =============================================================
+# Master state — 单一真理源，本地缓存 + OSS 同步
+# =============================================================
+
+def load_master(bucket=None) -> list[dict]:
+    """从 OSS 拉 master，OSS 拉不到回到本地缓存，再不行返回空。"""
+    if bucket:
+        try:
+            data = bucket.get_object(OSS_MASTER_KEY).read()
+            items = json.loads(data)
+            LOCAL_MASTER.write_text(json.dumps(items, ensure_ascii=False, indent=2))
+            print(f"  📥 master 从 OSS 加载（{len(items)} 条）")
+            return items
+        except oss2.exceptions.NoSuchKey:
+            print("  ℹ️  OSS master 不存在，从空开始")
+        except Exception as e:
+            print(f"  ⚠️  OSS master 加载失败：{e}（回到本地缓存）")
+    if LOCAL_MASTER.exists():
+        return json.loads(LOCAL_MASTER.read_text())
+    return []
+
+
+def save_master(items: list[dict], bucket=None) -> None:
+    """写本地 + 上传 OSS。"""
+    LOCAL_MASTER.write_text(json.dumps(items, ensure_ascii=False, indent=2))
+    print(f"  💾 master 本地写入 {LOCAL_MASTER.name}（{len(items)} 条）")
+    if bucket:
+        bucket.put_object(
+            OSS_MASTER_KEY,
+            json.dumps(items, ensure_ascii=False, indent=2).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        print(f"  ☁️  master 上传 OSS：{OSS_CDN_DOMAIN}/{OSS_MASTER_KEY}")
+
+
+# =============================================================
+# 候选 → master 条目转换
+# =============================================================
+
+def candidate_id(c: dict) -> str:
+    """候选 → 稳定 ID。"""
+    if c["media_type"] == "video":
+        # YouTube video ID 已经是稳定的
+        m = re.search(r"v=([\w-]+)", c["source_url"])
+        vid = m.group(1) if m else c["source_id"]
+        return f"raw-yt-{vid}"
+    # RSS：guid 可能是 URL，hash 后取前 12 位
+    h = hashlib.sha1((c.get("source_id") or c["source_url"]).encode()).hexdigest()[:12]
+    return f"raw-rss-{h}"
+
+
+def candidate_to_master_entry(
+    c: dict,
+    audio_oss_url: str,
+    thumbnail_oss_url: Optional[str],
+    has_video: bool,
+    transcript_oss_url: Optional[str] = None,
+) -> dict:
+    """转成 App 的 RawPodcast Codable schema。"""
+    return {
+        "id":                  candidate_id(c),
+        "title":               c["title"],
+        "speaker":             c["speaker"],
+        "event":               c.get("event") or c["speaker"],
+        "media_type":          c["media_type"],
+        "youtube_id":          _extract_youtube_id(c["source_url"]) if c["media_type"] == "video" else None,
+        "audio_url":           audio_oss_url,
+        "thumbnail":           thumbnail_oss_url,
+        "has_video":           has_video,
+        "transcript_url":      transcript_oss_url,
+        "published_at":        c.get("published_at", ""),
+        "duration_seconds":    c.get("duration_seconds", 0),
+        "topic":               c.get("topic", ""),
+        "category":            c.get("category", "tech_keynote"),  # tech_keynote | explore
+        "thumbnail_color":     None,
+        "summary_zh":          None,        # 留给 Pipeline B 填
+        "related_episode_ids": [],          # 留给 Pipeline B 填
+        # 内部字段（App 不读）
+        "_source_url":         c["source_url"],
+        "_score":              c.get("score", 0),
+        "_view_count":         c.get("view_count", 0),
+        "_like_count":         c.get("like_count", 0),
+    }
+
+
+def _extract_youtube_id(url: str) -> Optional[str]:
+    m = re.search(r"(?:v=|youtu\.be/)([\w-]{11})", url)
+    return m.group(1) if m else None
+
+
+# =============================================================
+# 下载（YouTube → yt-dlp 取 audio；RSS → 直接 GET）
+# =============================================================
+
+def download_video_youtube(youtube_url: str, out_path: Path) -> bool:
+    """yt-dlp 下载 YouTube 视频（mp4，含 video + audio 两个轨道）。
+
+    YouTube 2024 后强推 SABR 流，纯 audio 格式（itag 140）需要 PO Token 才能拉。
+    workaround：tv_embedded / web_creator / android 客户端能拿到 format 18（mp4
+    360p with audio）。我们保留这个 mp4 整体上传，App 端可以同时显示视频画面 +
+    用 AVPlayer 播放音轨。
+    """
+    out_stem = out_path.with_suffix("")
+    ydl_opts = {
+        "format": "best[ext=mp4]/best",
+        "outtmpl": str(out_stem) + ".%(ext)s",
+        "noplaylist": True,
+        "quiet": True,
+        "no_warnings": True,
+        "socket_timeout": 60,
+        # 网络抖动恢复：分片重试 + 断点续传 + 总重试
+        "retries": 10,
+        "fragment_retries": 10,
+        "concurrent_fragment_downloads": 1,
+        "continuedl": True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["tv_embedded", "web_creator", "android"],
+            },
+        },
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.extract_info(youtube_url, download=True)
+        # 找下载下来的文件（任何视频扩展名）
+        for f in out_stem.parent.iterdir():
+            if f.stem == out_stem.name and f.is_file():
+                if f.suffix in (".mp4", ".webm", ".mkv", ".mov", ".m4v"):
+                    if f != out_path.with_suffix(f.suffix):
+                        shutil.move(str(f), str(out_path.with_suffix(f.suffix)))
+                    return True
+        return False
+    except Exception as e:
+        print(f"  ✗ yt-dlp 失败：{e}")
+        return False
+
+
+def download_audio_rss(audio_url: str, out_path: Path) -> bool:
+    """直接 GET，跟随 redirect。"""
+    try:
+        r = requests.get(audio_url, stream=True, timeout=120, allow_redirects=True,
+                         headers={"User-Agent": "Castlingo-Pipeline/1.0"})
+        if r.status_code != 200:
+            print(f"  ✗ HTTP {r.status_code}")
+            return False
+        with out_path.open("wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+        return True
+    except Exception as e:
+        print(f"  ✗ download 失败：{e}")
+        return False
+
+
+def download_thumbnail(url: Optional[str], out_path: Path) -> bool:
+    if not url:
+        return False
+    try:
+        r = requests.get(url, timeout=30, allow_redirects=True)
+        if r.status_code != 200:
+            return False
+        out_path.write_bytes(r.content)
+        return True
+    except Exception:
+        return False
+
+
+# =============================================================
+# 处理一条候选：下载 + 上传 + 返回 master entry
+# =============================================================
+
+def process_candidate(c: dict, bucket) -> Optional[dict]:
+    cid = candidate_id(c)
+    print(f"\n→ 处理 {cid}")
+    print(f"   {c['title'][:70]}")
+
+    # 1) 下载到临时目录
+    with tempfile.TemporaryDirectory() as tmp:
+        tmpd = Path(tmp)
+        # 视频源默认下成 mp4（含视频轨），RSS 源就是 mp3
+        media_local = tmpd / "media.mp4" if c["media_type"] == "video" else tmpd / "media.mp3"
+        thumb_local = tmpd / "thumbnail.jpg"
+
+        if c["media_type"] == "video":
+            ok = download_video_youtube(c["source_url"], media_local)
+            # yt-dlp 实际写出的扩展名可能是 webm 等，找一下
+            if ok and not media_local.exists():
+                for f in tmpd.iterdir():
+                    if f.stem == "media" and f.is_file():
+                        media_local = f
+                        break
+        else:
+            ok = download_audio_rss(c["source_url"], media_local)
+        if not ok or not media_local.exists():
+            return None
+
+        size_mb = media_local.stat().st_size / 1024 / 1024
+        print(f"   ✓ 媒体 {size_mb:.1f}MB ({media_local.suffix})")
+
+        download_thumbnail(c.get("thumbnail"), thumb_local)
+
+        # 2) 上传到 OSS
+        ext = media_local.suffix.lstrip(".")
+        content_type = {
+            "mp4": "video/mp4",
+            "m4v": "video/mp4",
+            "mov": "video/quicktime",
+            "webm": "video/webm",
+            "mkv": "video/x-matroska",
+            "m4a": "audio/mp4",
+            "mp3": "audio/mpeg",
+        }.get(ext, "application/octet-stream")
+        # OSS key 命名仍叫 media（兼容音视频），向后兼容下原 audio_url 字段名
+        media_oss_key = f"raw_podcasts/{cid}/media.{ext}"
+        bucket.put_object(media_oss_key, media_local.read_bytes(),
+                          headers={"Content-Type": content_type})
+        media_oss_url = f"{OSS_CDN_DOMAIN}/{media_oss_key}"
+        has_video = content_type.startswith("video/")
+        print(f"   ☁️  {'video' if has_video else 'audio'}: {media_oss_url}")
+
+        thumb_oss_url = None
+        if thumb_local.exists():
+            thumb_oss_key = f"raw_podcasts/{cid}/thumbnail.jpg"
+            bucket.put_object(thumb_oss_key, thumb_local.read_bytes(),
+                              headers={"Content-Type": "image/jpeg"})
+            thumb_oss_url = f"{OSS_CDN_DOMAIN}/{thumb_oss_key}"
+            print(f"   ☁️  thumb: {thumb_oss_url}")
+
+        # 3) Whisper 转写 + 中文翻译，输出 transcript.json 上 OSS
+        transcript_oss_url = None
+        try:
+            from transcribe import generate_transcript
+            transcript_oss_url = generate_transcript(media_local, cid, bucket)
+        except Exception as e:
+            print(f"  ⚠️  transcript 失败（不影响主流程）：{e}")
+
+        # 4) 预翻译所有单词，输出 words.json，让 App 端点词查询零延迟
+        if transcript_oss_url:
+            try:
+                from pretranslate_words import pretranslate_for_podcast
+                pretranslate_for_podcast(cid, bucket)
+            except Exception as e:
+                print(f"  ⚠️  pretranslate_words 失败（不影响主流程）：{e}")
+
+    return candidate_to_master_entry(c, media_oss_url, thumb_oss_url, has_video, transcript_oss_url)
+
+
+# =============================================================
+# 主入口：candidates → 增量入库
+# =============================================================
+
+def process_candidates(candidates: list[dict], top_n: int = 3) -> list[dict]:
+    """处理 top N 新候选（已在 master 的跳过）。"""
+    bucket = get_bucket()
+    master = load_master(bucket)
+    existing_ids = {m["id"] for m in master}
+
+    processed = 0
+    for c in candidates:
+        if processed >= top_n:
+            break
+        cid = candidate_id(c)
+        if cid in existing_ids:
+            continue
+        entry = process_candidate(c, bucket)
+        if entry:
+            master.insert(0, entry)
+            existing_ids.add(cid)
+            processed += 1
+
+    if processed > 0:
+        save_master(master, bucket)
+    print(f"\n✅ 本次新增 {processed} 条，master 总计 {len(master)} 条")
+    return master
+
+
+if __name__ == "__main__":
+    # 用法：python3 raw_podcast_processor.py [top_n]
+    candidates_path = OUTPUT_DIR / "raw_candidates.json"
+    if not candidates_path.exists():
+        print(f"❌ 先跑 raw_podcast_pipeline.py --json 生成 {candidates_path.name}")
+        sys.exit(1)
+    candidates = json.loads(candidates_path.read_text())
+    top_n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
+    process_candidates(candidates, top_n=top_n)

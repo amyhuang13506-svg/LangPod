@@ -107,8 +107,6 @@ struct PlayerView: View {
             PaywallView()
                 .environment(subscriptionManager)
         }
-
-
     }
 
     private func checkLevelUp() {

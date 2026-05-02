@@ -10,17 +10,26 @@ Full pipeline:
 4. Upload to Aliyun OSS
 """
 
+import json
 import logging
+import os
 import random
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from generate_script import generate_episode_script, save_episode
 from generate_audio import process_episode as process_audio
 from generate_cover import process_episode as process_cover
 from extract_patterns import process_episode as process_patterns, load_pattern_manifest, save_pattern_manifest
 from upload_oss import get_bucket, upload_episode, update_episode_list
-from config import LEVELS, OUTPUT_DIR, TOPIC_POOL
+from news_fetcher import fetch_headlines_for_level
+from config import (
+    LEVELS,
+    OUTPUT_DIR,
+    TOPIC_POOL,
+    TOPIC_COOLDOWN_DAYS,
+    NEWS_PRIMARY_LEVELS,
+)
 
 # Setup logging
 logging.basicConfig(
@@ -34,14 +43,112 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def pick_topics_for_level(level, count):
-    """Sample `count` distinct topics from the level's pool, no repeats within a run."""
+TOPIC_MANIFEST_PATH = os.path.join(OUTPUT_DIR, "topic_manifest.json")
+
+
+def load_topic_manifest():
+    if os.path.exists(TOPIC_MANIFEST_PATH):
+        try:
+            with open(TOPIC_MANIFEST_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"easy": [], "medium": [], "hard": []}
+
+
+def save_topic_manifest(manifest):
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    with open(TOPIC_MANIFEST_PATH, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+
+
+def _recently_used_topics(manifest, level, days):
+    """Topics (string equality) used within the last `days` for this level."""
+    today = datetime.now().date()
+    cutoff = today - timedelta(days=days)
+    used = set()
+    for entry in manifest.get(level, []):
+        try:
+            d = datetime.strptime(entry["date"], "%Y-%m-%d").date()
+        except (KeyError, ValueError, TypeError):
+            continue
+        if d >= cutoff:
+            used.add(entry.get("topic", ""))
+    used.discard("")
+    return used
+
+
+def _last_used_dates(manifest, level):
+    """{topic: latest_date_string}, used to rank stale topics by oldness."""
+    last = {}
+    for entry in manifest.get(level, []):
+        t = entry.get("topic", "")
+        d = entry.get("date", "")
+        if not t or not d:
+            continue
+        if t not in last or d > last[t]:
+            last[t] = d
+    return last
+
+
+def pick_topics_for_level(level, count, manifest):
+    """Pick `count` topics for today, avoiding any used in the last
+    TOPIC_COOLDOWN_DAYS for this level. For medium/hard, slot 1 is filled
+    with a today's news headline (when available) for novelty.
+
+    Mutates `manifest` in place — caller saves after the run completes
+    (so failed episodes don't burn topics permanently).
+    """
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    used_recent = _recently_used_topics(manifest, level, TOPIC_COOLDOWN_DAYS)
+    selected = []
+
+    # Slot 1 (medium/hard only): today's news headline → novelty
+    if level in NEWS_PRIMARY_LEVELS and count > 0:
+        try:
+            headlines = fetch_headlines_for_level(level, max_count=10)
+        except Exception as e:
+            log.warning(f"   ⚠️  News fetch failed: {e}")
+            headlines = []
+        for h in headlines:
+            if h and h not in used_recent:
+                selected.append(h)
+                used_recent.add(h)
+                break
+
+    # Remaining slots: TOPIC_POOL filtered by cooldown
     pool = list(TOPIC_POOL.get(level, []))
-    random.shuffle(pool)
-    if len(pool) < count:
-        # Pool smaller than needed — allow cycling
-        return (pool * ((count // len(pool)) + 1))[:count] if pool else [None] * count
-    return pool[:count]
+    fresh = [t for t in pool if t not in used_recent]
+    random.shuffle(fresh)
+
+    needed = count - len(selected)
+    if len(fresh) >= needed:
+        selected.extend(fresh[:needed])
+    else:
+        # Fresh pool exhausted — top up with least-recently-used stale topics
+        selected.extend(fresh)
+        last_used = _last_used_dates(manifest, level)
+        stale = [t for t in pool if t in used_recent]
+        stale.sort(key=lambda t: last_used.get(t, ""))  # oldest first
+        for t in stale:
+            if len(selected) >= count:
+                break
+            if t not in selected:
+                selected.append(t)
+
+    # Pad with None if still short (shouldn't happen with non-empty pool)
+    while len(selected) < count:
+        selected.append(None)
+
+    # Record picks (only real topics, not None)
+    for t in selected:
+        if t:
+            manifest.setdefault(level, []).append({
+                "topic": t,
+                "date": today_str,
+            })
+
+    return selected
 
 
 def run_pipeline(target_level=None):
@@ -56,10 +163,11 @@ def run_pipeline(target_level=None):
     generated = 0
     errors = 0
     pattern_manifest = load_pattern_manifest()
+    topic_manifest = load_topic_manifest()
 
     for level, config in levels.items():
         count = config["daily_episodes"]
-        topics = pick_topics_for_level(level, count)
+        topics = pick_topics_for_level(level, count, topic_manifest)
         log.info(f"\n📝 Level [{level}]: generating {count} episode(s)")
         log.info(f"   Topics: {topics}")
 
@@ -108,6 +216,8 @@ def run_pipeline(target_level=None):
                 update_episode_list(bucket, level)
             except Exception as e:
                 log.error(f"   ❌ Failed to update index: {e}")
+
+    save_topic_manifest(topic_manifest)
 
     elapsed = (datetime.now() - start_time).total_seconds()
     log.info(f"\n{'=' * 50}")

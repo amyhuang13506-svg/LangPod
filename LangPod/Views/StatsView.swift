@@ -4,6 +4,7 @@ struct StatsView: View {
     @Environment(DataStore.self) private var dataStore
     @Environment(AudioPlayer.self) private var audioPlayer
     @Environment(VocabularyStore.self) private var vocabularyStore
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var showPlayer = false
     @State private var showPaywall = false
 
@@ -245,9 +246,43 @@ struct StatsView: View {
 
     // MARK: - History List
 
-    private var displayHistory: [ListenedEpisode] {
+    /// Unified history entry for the 播放历史 list. Episodes + patterns share
+    /// the same day grouping + star toggle + tap-to-play flow, but render
+    /// differently (thumbnail vs. template card).
+    private enum HistoryEntry: Identifiable {
+        case episode(ListenedEpisode)
+        case pattern(ListenedPattern)
+
+        var id: String {
+            switch self {
+            case .episode(let e): "ep-\(e.id)"
+            case .pattern(let p): "pt-\(p.id)"
+            }
+        }
+        var listenedAt: Date {
+            switch self {
+            case .episode(let e): e.listenedAt
+            case .pattern(let p): p.listenedAt
+            }
+        }
+        var dayString: String {
+            switch self {
+            case .episode(let e): e.dayString
+            case .pattern(let p): p.dayString
+            }
+        }
+        var isStarred: Bool {
+            switch self {
+            case .episode(let e): e.isStarred
+            case .pattern(let p): p.isStarred
+            }
+        }
+    }
+
+    /// All accessible episode history entries (filtered to starred if the
+    /// global star toggle is on), deduped so a given episode appears once.
+    private var displayEpisodes: [ListenedEpisode] {
         let source = dataStore.starredOnly ? dataStore.starredHistory : dataStore.listenHistory
-        // Deduplicate: keep only the most recent record per episode
         var seen = Set<String>()
         return source.filter { ep in
             if seen.contains(ep.episodeId) { return false }
@@ -256,14 +291,62 @@ struct StatsView: View {
         }
     }
 
-    private var displayHistoryByDay: [(String, [ListenedEpisode])] {
-        let calendar = Calendar.current
-        let grouped = Dictionary(grouping: displayHistory) { episode in
-            calendar.startOfDay(for: episode.listenedAt)
+    private var displayPatterns: [ListenedPattern] {
+        let source = dataStore.starredOnly
+            ? dataStore.patternHistory.filter { $0.isStarred }
+            : dataStore.patternHistory
+        var seen = Set<String>()
+        return source.filter { p in
+            if seen.contains(p.patternId) { return false }
+            seen.insert(p.patternId)
+            return true
         }
-        return grouped.sorted { $0.key > $1.key }.map { (_, episodes) in
-            let label = episodes.first?.dayString ?? ""
-            return (label, episodes)
+    }
+
+    private var displayEntries: [HistoryEntry] {
+        let episodes = displayEpisodes.map { HistoryEntry.episode($0) }
+        let patterns = displayPatterns.map { HistoryEntry.pattern($0) }
+        let combined: [HistoryEntry]
+        switch dataStore.historyFilter {
+        case .all: combined = episodes + patterns
+        case .episode: combined = episodes
+        case .pattern: combined = patterns
+        }
+        return combined.sorted { $0.listenedAt > $1.listenedAt }
+    }
+
+    private var displayEntriesByDay: [(String, [HistoryEntry])] {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: displayEntries) { entry in
+            calendar.startOfDay(for: entry.listenedAt)
+        }
+        return grouped.sorted { $0.key > $1.key }.map { (_, items) in
+            let label = items.first?.dayString ?? ""
+            return (label, items)
+        }
+    }
+
+    private var filterSegment: some View {
+        HStack(spacing: 6) {
+            ForEach(DataStore.HistoryFilter.allCases, id: \.self) { f in
+                let isSelected = dataStore.historyFilter == f
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        dataStore.historyFilter = f
+                    }
+                } label: {
+                    Text(f.label)
+                        .font(.system(size: 12, weight: isSelected ? .bold : .medium))
+                        .foregroundStyle(isSelected ? .white : Color.textSecondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            isSelected ? Color.appPrimary : Color.divider,
+                            in: Capsule()
+                        )
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 
@@ -276,7 +359,7 @@ struct StatsView: View {
 
                 Spacer()
 
-                if displayHistory.count >= 2 {
+                if canPlayHistoryQueue {
                     Button { playHistoryQueue() } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "play.fill")
@@ -303,24 +386,40 @@ struct StatsView: View {
                 }
             }
 
-            if displayHistory.isEmpty {
-                Text(dataStore.starredOnly ? "还没有收藏的播客" : "还没有播放记录")
+            filterSegment
+
+            if displayEntries.isEmpty {
+                Text(historyEmptyText)
                     .font(.system(size: 14))
                     .foregroundStyle(Color.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
-                ForEach(displayHistoryByDay, id: \.0) { dayLabel, episodes in
+                ForEach(displayEntriesByDay, id: \.0) { dayLabel, entries in
                     Text(dayLabel)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.textTertiary)
                         .padding(.top, 4)
 
-                    ForEach(episodes) { episode in
-                        historyRow(episode)
+                    ForEach(entries) { entry in
+                        switch entry {
+                        case .episode(let ep): historyRow(ep)
+                        case .pattern(let p): patternHistoryRow(p)
+                        }
                     }
                 }
             }
+        }
+    }
+
+    private var historyEmptyText: String {
+        switch (dataStore.starredOnly, dataStore.historyFilter) {
+        case (true, .pattern): "还没有收藏的句型"
+        case (true, .episode): "还没有收藏的播客"
+        case (true, .all): "还没有收藏记录"
+        case (false, .pattern): "还没有句型播放记录"
+        case (false, .episode): "还没有播客播放记录"
+        case (false, .all): "还没有播放记录"
         }
     }
 
@@ -348,7 +447,7 @@ struct StatsView: View {
     private func historyRow(_ record: ListenedEpisode) -> some View {
         Button {
             let episode = episodeForRecord(record)
-            let queue = displayHistory.map { episodeForRecord($0) }
+            let queue = displayEpisodes.map { episodeForRecord($0) }
             if audioPlayer.playEpisode(episode, in: queue) {
                 showPlayer = true
             }
@@ -398,11 +497,152 @@ struct StatsView: View {
         EpisodeThumbnail(episode: episodeForRecord(record), size: 40)
     }
 
+    /// 当前筛选视图下能否"顺序播放"。
+    /// 句型模式需要至少 2 条 + 至少 1 条未被付费墙挡住。
+    private var canPlayHistoryQueue: Bool {
+        switch dataStore.historyFilter {
+        case .all, .episode:
+            return displayEpisodes.count >= 2
+        case .pattern:
+            return accessiblePatternItems.count >= 1 && displayPatterns.count >= 2
+        }
+    }
+
+    /// 句型模式/全部模式下按历史顺序收集所有"能播的" pattern 条目。
+    /// 历史记录里找不到父 episode 的 pattern 会被静默跳过（可能是切级别后内存里没加载）。
+    private var accessiblePatternItems: [PlayItem] {
+        displayPatterns.compactMap { record -> PlayItem? in
+            guard let (p, parent) = patternWithParent(record) else { return nil }
+            let ok = PatternAccessGate.canAccess(
+                pattern: p,
+                parentEpisode: parent,
+                isPro: subscriptionManager.isProUser,
+                playedTodayIds: dataStore.dailyPatternIDsPlayedToday
+            )
+            return ok ? .pattern(p, parentEpisode: parent) : nil
+        }
+    }
+
     private func playHistoryQueue() {
-        let queue = displayHistory.map { episodeForRecord($0) }
-        guard let first = queue.first else { return }
-        audioPlayer.playEpisode(first, in: queue)
-        showPlayer = true
+        switch dataStore.historyFilter {
+        case .all, .episode:
+            let queue = displayEpisodes.map { episodeForRecord($0) }
+            guard let first = queue.first else { return }
+            audioPlayer.playEpisode(first, in: queue)
+            showPlayer = true
+        case .pattern:
+            let items = accessiblePatternItems
+            guard case .pattern(let first, let parent) = items.first else {
+                showPaywall = true
+                return
+            }
+            audioPlayer.playPattern(first, parentEpisode: parent, in: items)
+            showPlayer = true
+            Analytics.track(.patternOpen, params: [
+                "pattern_id": first.id,
+                "episode_id": parent.id,
+                "source": "history_play_all",
+            ])
+        }
+    }
+
+    // MARK: - Pattern Row
+
+    /// Resolve a pattern history record back to the live Pattern + parent Episode.
+    /// Returns nil when the parent episode is no longer in dataStore.episodes
+    /// (e.g. the user switched channels or it rolled out of the cache) — in
+    /// that case the row still renders but tapping shows a paywall / no-op.
+    private func patternWithParent(_ record: ListenedPattern) -> (Pattern, Episode)? {
+        guard let ep = dataStore.episodes.first(where: { $0.id == record.episodeId }),
+              let p = ep.patterns?.first(where: { $0.id == record.patternId })
+        else { return nil }
+        return (p, ep)
+    }
+
+    private func patternHistoryRow(_ record: ListenedPattern) -> some View {
+        Button {
+            guard let (pattern, parent) = patternWithParent(record) else {
+                showPaywall = true
+                return
+            }
+            let accessible = PatternAccessGate.canAccess(
+                pattern: pattern,
+                parentEpisode: parent,
+                isPro: subscriptionManager.isProUser,
+                playedTodayIds: dataStore.dailyPatternIDsPlayedToday
+            )
+            if accessible {
+                audioPlayer.playPattern(pattern, parentEpisode: parent)
+                showPlayer = true
+                Analytics.track(.patternOpen, params: [
+                    "pattern_id": pattern.id,
+                    "episode_id": parent.id,
+                    "source": "history_tab",
+                ])
+            } else {
+                showPaywall = true
+            }
+        } label: {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(patternCardColor(record))
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        Image(systemName: "quote.bubble.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color(white: 0.35))
+                    )
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(record.template)
+                        .font(.system(size: 14, weight: .semibold, design: .serif))
+                        .foregroundStyle(Color.textPrimary)
+                        .lineLimit(1)
+                    HStack(spacing: 6) {
+                        Text("句型")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color.appPrimary)
+                        Text("·")
+                            .foregroundStyle(Color.textQuaternary)
+                        Text(PodcastLevel(rawValue: record.level)?.tabName ?? "")
+                            .font(.system(size: 11))
+                            .foregroundStyle(levelColor(record.level))
+                        Text("·")
+                            .foregroundStyle(Color.textQuaternary)
+                        Text(record.scene)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.textTertiary)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                Button { dataStore.togglePatternStar(record) } label: {
+                    Image(systemName: record.isStarred ? "star.fill" : "star")
+                        .font(.system(size: 18))
+                        .foregroundStyle(record.isStarred ? Color.warning : Color.textQuaternary)
+                        .frame(width: 36, height: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(.white, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.border, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func patternCardColor(_ record: ListenedPattern) -> Color {
+        if let hex = patternWithParent(record)?.0.thumbnailColor {
+            return Color(hex: hex)
+        }
+        return Color(hex: "F1EBE1")
     }
 
     private func levelColor(_ level: String) -> Color {
@@ -420,4 +660,5 @@ struct StatsView: View {
         .environment(DataStore())
         .environment(AudioPlayer())
         .environment(VocabularyStore())
+        .environment(SubscriptionManager())
 }

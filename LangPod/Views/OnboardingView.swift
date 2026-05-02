@@ -7,9 +7,10 @@ struct OnboardingView: View {
 
     enum OnboardingPage: Int, CaseIterable {
         case welcome = 0
-        case methodDemo = 1
-        case levelSelect = 2
-        case userSource = 3
+        case goal = 1
+        case methodDemo = 2
+        case levelSelect = 3
+        case userSource = 4
     }
 
     var body: some View {
@@ -40,6 +41,12 @@ struct OnboardingView: View {
             switch currentPage {
             case .welcome:
                 welcomePage
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
+            case .goal:
+                goalPage
                     .transition(.asymmetric(
                         insertion: .move(edge: .trailing).combined(with: .opacity),
                         removal: .move(edge: .leading).combined(with: .opacity)
@@ -201,7 +208,7 @@ struct OnboardingView: View {
             Spacer()
 
             Button {
-                goToPage(.methodDemo)
+                goToPage(.goal)
             } label: {
                 Text("开始使用")
                     .font(.system(size: 16, weight: .semibold))
@@ -215,7 +222,215 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: - Page 2: Method Demo
+    // MARK: - Page 2: Goal — YouTube 原声功能介绍
+
+    @State private var goalSubtitlePhase: Int = 0
+    @State private var goalSubtitleTimer: Timer?
+
+    private let goalSubtitles: [(en: String, zh: String)] = [
+        (en: "Sleep is the most powerful performance enhancer.",
+         zh: "睡眠是最强大的表现增强剂。"),
+        (en: "We always see the tip of the spear writing their own tools.",
+         zh: "我们总能看到尖端团队在开发自己的工具。"),
+        (en: "I see that every day in the SaaS product index.",
+         zh: "我每天都能在 SaaS 产品指数里看到。"),
+        (en: "It's about understanding what they actually do.",
+         zh: "关键是理解他们究竟在做什么。"),
+        (en: "The compounding effect over time is enormous.",
+         zh: "长期复利效应是巨大的。")
+    ]
+
+    private func subtitle(at offset: Int) -> (en: String, zh: String) {
+        let count = goalSubtitles.count
+        let idx = ((goalSubtitlePhase + offset) % count + count) % count
+        return goalSubtitles[idx]
+    }
+
+    private var goalPage: some View {
+        VStack(spacing: 0) {
+            Spacer().frame(height: 62)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("看英语原声 YouTube")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                Text("中英双语字幕陪你学")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(Color.appPrimary)
+
+                Text("Joe Rogan、Lex Fridman、Sam Altman…\n每天更新全球热门播客")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.textTertiary)
+                    .lineSpacing(3)
+                    .padding(.top, 8)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 24)
+
+            Spacer().frame(height: 18)
+
+            // Composite card: source bar + video + subtitle
+            VStack(spacing: 0) {
+                // Source row
+                HStack {
+                    HStack(spacing: 8) {
+                        youtubeBadge
+                        Text("All-In Podcast")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    Spacer()
+                    Text("硅谷 · 科技")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.55))
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Color.black)
+
+                LoopingVideoPlayer(resourceName: "onboarding_demo", resourceExt: "mp4")
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 160)
+                    .clipped()
+
+                VStack(alignment: .leading, spacing: 12) {
+                    subtitleRow(
+                        en: subtitle(at: -1).en,
+                        zh: subtitle(at: -1).zh,
+                        enFont: 13, enWeight: .medium, enOpacity: 0.30,
+                        zhFont: 11, zhOpacity: 0.24,
+                        currentLines: 1
+                    )
+
+                    subtitleRow(
+                        en: subtitle(at: 0).en,
+                        zh: subtitle(at: 0).zh,
+                        enFont: 16, enWeight: .bold, enOpacity: 1.0,
+                        zhFont: 13, zhOpacity: 0.78,
+                        currentLines: 2
+                    )
+
+                    subtitleRow(
+                        en: subtitle(at: 1).en,
+                        zh: subtitle(at: 1).zh,
+                        enFont: 13, enWeight: .medium, enOpacity: 0.30,
+                        zhFont: 11, zhOpacity: 0.24,
+                        currentLines: 1
+                    )
+                }
+                .frame(maxWidth: .infinity, minHeight: 178, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 18)
+                .background(Color(hex: "0a0a0a"))
+            }
+            .background(Color(hex: "0a0a0a"))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: Color.black.opacity(0.25), radius: 14, x: 0, y: 10)
+            .padding(.horizontal, 24)
+
+            Text("视频 · 字幕 · 翻译，一边看一边学")
+                .font(.system(size: 13))
+                .foregroundStyle(Color.textTertiary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 14)
+                .padding(.horizontal, 24)
+
+            Spacer()
+
+            HStack(spacing: 14) {
+                Text("600h")
+                    .font(.system(size: 14, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("600 小时 → 听力本能")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Text("源自 FSI 外交官训练法 · 每天 20 分钟 ≈ 5 个月")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textTertiary)
+                }
+
+                Spacer()
+            }
+            .padding(14)
+            .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 14))
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
+
+            Button {
+                stopGoalSubtitleLoop()
+                goToPage(.methodDemo)
+            } label: {
+                Text("继续")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 16))
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 40)
+        }
+        .onAppear { startGoalSubtitleLoop() }
+        .onDisappear { stopGoalSubtitleLoop() }
+    }
+
+    private func subtitleRow(
+        en: String, zh: String,
+        enFont: CGFloat, enWeight: Font.Weight, enOpacity: Double,
+        zhFont: CGFloat, zhOpacity: Double,
+        currentLines: Int
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(en)
+                .font(.system(size: enFont, weight: enWeight))
+                .foregroundStyle(.white.opacity(enOpacity))
+                .lineLimit(currentLines)
+                .truncationMode(.tail)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .contentTransition(.opacity)
+            Text(zh)
+                .font(.system(size: zhFont))
+                .foregroundStyle(.white.opacity(zhOpacity))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .contentTransition(.opacity)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func startGoalSubtitleLoop() {
+        goalSubtitleTimer?.invalidate()
+        goalSubtitlePhase = 0
+        goalSubtitleTimer = Timer.scheduledTimer(withTimeInterval: 2.4, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 0.45)) {
+                goalSubtitlePhase = (goalSubtitlePhase + 1) % goalSubtitles.count
+            }
+        }
+    }
+
+    private func stopGoalSubtitleLoop() {
+        goalSubtitleTimer?.invalidate()
+        goalSubtitleTimer = nil
+    }
+
+    private var youtubeBadge: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(hex: "FF0000"))
+                .frame(width: 22, height: 15)
+            Image(systemName: "play.fill")
+                .font(.system(size: 7, weight: .black))
+                .foregroundStyle(.white)
+        }
+    }
+
+    // MARK: - Page 3: Method Demo
 
     @State private var demoStep: DemoStep = .idle
     @State private var showWaveform = false
@@ -244,14 +459,32 @@ struct OnboardingView: View {
                     Spacer().frame(height: 44)
 
                     // Title
-                    VStack(spacing: 6) {
+                    VStack(spacing: 8) {
                         Text("Castlingo 听力法")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(Color.textPrimary)
 
-                        Text("用60秒体验一次完整的听力训练")
+                        Text("60 秒体验：YouTube 原声 → 5 遍训练")
                             .font(.system(size: 17))
                             .foregroundStyle(Color.textTertiary)
+
+                        HStack(spacing: 6) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(Color(hex: "FF0000"))
+                                    .frame(width: 16, height: 11)
+                                Image(systemName: "play.fill")
+                                    .font(.system(size: 5, weight: .black))
+                                    .foregroundStyle(.white)
+                            }
+                            Text("由 YouTube 原声拆解生成")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.primaryLight, in: Capsule())
+                        .padding(.top, 4)
                     }
 
                     Spacer().frame(height: 60)
@@ -462,7 +695,7 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: - Page 3: Trial Listen + Level Select
+    // MARK: - Page 4: Trial Listen + Level Select
 
     @State private var selectedLevel: PodcastLevel = .easy
     @State private var trialPlayingLevel: PodcastLevel? = nil
@@ -618,7 +851,7 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: - Page 4: User Source
+    // MARK: - Page 5: User Source
 
     @State private var selectedSource: String? = nil
 
@@ -746,4 +979,42 @@ struct OnboardingView: View {
 #Preview {
     OnboardingView()
         .environment(DataStore())
+}
+
+// MARK: - Looping muted video for onboarding goal page
+
+struct LoopingVideoPlayer: UIViewRepresentable {
+    let resourceName: String
+    let resourceExt: String
+
+    final class PlayerView: UIView {
+        let playerLayer = AVPlayerLayer()
+        var player: AVQueuePlayer?
+        var looper: AVPlayerLooper?
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            playerLayer.frame = bounds
+        }
+    }
+
+    func makeUIView(context: Context) -> PlayerView {
+        let view = PlayerView()
+        view.backgroundColor = .black
+        view.layer.addSublayer(view.playerLayer)
+        view.playerLayer.videoGravity = .resizeAspectFill
+
+        if let url = Bundle.main.url(forResource: resourceName, withExtension: resourceExt) {
+            let item = AVPlayerItem(url: url)
+            let player = AVQueuePlayer()
+            view.looper = AVPlayerLooper(player: player, templateItem: item)
+            view.player = player
+            view.playerLayer.player = player
+            player.isMuted = true
+            player.play()
+        }
+        return view
+    }
+
+    func updateUIView(_ uiView: PlayerView, context: Context) {}
 }

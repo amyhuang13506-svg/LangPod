@@ -274,28 +274,59 @@ def generate_chinese_audio(episode, output_dir):
     return audio_path, skipped, total
 
 
+# NAME_PAIRS mirrors generate_script.py — used only as fallback for legacy episodes
+# that were generated before the `speakers` field existed.
+_LEGACY_NAME_PAIRS = [
+    ("Alex", "Lisa"), ("Ryan", "Emma"), ("James", "Sophie"), ("Daniel", "Olivia"),
+    ("Michael", "Sarah"), ("David", "Rachel"), ("Kevin", "Amy"), ("Tom", "Nina"),
+]
+_LEGACY_NAME_GENDER = {}
+for _m, _f in _LEGACY_NAME_PAIRS:
+    _LEGACY_NAME_GENDER[_m] = "male"
+    _LEGACY_NAME_GENDER[_f] = "female"
+
+
 def detect_speakers(episode):
-    """Auto-detect speaker genders.
-    - Two-person dialogue: first unique speaker = male, second = female.
-    - Solo (Host): randomize gender per episode (seeded by episode id) so solo eps alternate voices.
+    """Resolve speaker→gender map for voice assignment.
+
+    Priority:
+      1. `episode["speakers"]` written by generate_script.py (authoritative).
+      2. NAME_PAIRS reverse lookup — legacy episodes without the field.
+      3. For 'Host' only: deterministic hash of episode id — legacy fallback.
+    Raises RuntimeError if any speaker remains unresolved — we refuse to guess.
     """
     global speakers
     speakers = {}
-    seen = []
-    # Seed from episode id so the same episode always gets the same voice on reruns.
+
+    ep = episode.get("speakers") or {}
+    trusted = {}
+    if isinstance(ep, dict):
+        for k, v in ep.items():
+            if isinstance(k, str) and isinstance(v, str) and v.strip().lower() in ("male", "female"):
+                trusted[k.strip()] = v.strip().lower()
+
     ep_seed = sum(ord(c) for c in episode.get("id", ""))
-    host_gender = "male" if (ep_seed % 2 == 0) else "female"
+    host_gender_fallback = "male" if (ep_seed % 2 == 0) else "female"
+
+    unresolved = []
     for line in episode.get("script", []):
-        name = line["speaker"]
-        if name not in speakers:
-            if name == "Host":
-                speakers[name] = host_gender
-            elif len(seen) == 0:
-                speakers[name] = "male"
-                seen.append(name)
-            else:
-                speakers[name] = "female"
-                seen.append(name)
+        name = line.get("speaker")
+        if not name or name in speakers:
+            continue
+        g = trusted.get(name) or _LEGACY_NAME_GENDER.get(name)
+        if g is None and name == "Host":
+            g = host_gender_fallback
+        if g is None:
+            unresolved.append(name)
+            continue
+        speakers[name] = g
+
+    if unresolved:
+        raise RuntimeError(
+            "Cannot resolve gender for speaker(s) %s in episode %s. "
+            "Episode JSON must include a `speakers` field. Regenerate via generate_script.py."
+            % (unresolved, episode.get("id"))
+        )
 
 
 def process_episode(json_path):

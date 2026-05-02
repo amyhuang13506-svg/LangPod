@@ -18,6 +18,7 @@ import os
 import sys
 import tempfile
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import requests
@@ -50,12 +51,21 @@ TTS_INTER_CALL_SLEEP_S = 0.15
 DRILL_SPEED = 0.6
 DRILL_SILENCE_MS = 1200
 
+# Per-level English speed for the regular pattern explanation (demo + examples).
+# Drill is always at DRILL_SPEED regardless. Easy beginners need every word clear,
+# medium gets a small slowdown, hard stays natural.
+PATTERN_EN_SPEED = {
+    "easy": 0.78,
+    "medium": 0.9,
+    "hard": 1.0,
+}
+
 # Pause budget between TTS chunks
 SECTION_SILENCE_MS = 400        # between top-level sections
 WITHIN_SECTION_SILENCE_MS = 250  # within a section, between zh/en switches
 
-# Recent templates window for dedup (≈ last 30 episodes × 2-3 patterns)
-DEDUP_WINDOW = 90
+# Dedup: a pattern (same template) must not repeat within this many days.
+DEDUP_WINDOW_DAYS = 30
 
 
 import re
@@ -205,9 +215,37 @@ def save_pattern_manifest(manifest):
         json.dump(manifest, f, ensure_ascii=False, indent=2)
 
 
-def get_recent_templates(manifest):
-    recent = manifest.get("patterns", [])[-DEDUP_WINDOW:]
-    return [p["template"] for p in recent]
+def get_recent_templates(manifest, reference_date):
+    """Return templates extracted within DEDUP_WINDOW_DAYS of reference_date.
+    reference_date is the current episode's date ("YYYY-MM-DD"); any manifest
+    entry dated later than (reference_date - 30 days) — and not later than
+    reference_date itself — is considered a clash and must be skipped by GPT.
+    Entries older than the window are allowed to recur.
+    """
+    try:
+        ref = datetime.strptime(reference_date, "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return []
+    cutoff = ref - timedelta(days=DEDUP_WINDOW_DAYS)
+    recent = []
+    for p in manifest.get("patterns", []):
+        d = p.get("date")
+        if not d:
+            continue
+        try:
+            pd = datetime.strptime(d, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if cutoff <= pd <= ref:
+            recent.append(p["template"])
+    # Dedup templates themselves in case the same one was extracted multiple times
+    seen = set()
+    unique = []
+    for t in recent:
+        if t not in seen:
+            seen.add(t)
+            unique.append(t)
+    return unique
 
 
 # ---------- GPT extraction ----------
@@ -225,7 +263,7 @@ def extract_patterns_with_gpt(episode, recent_templates):
     dedup_block = ""
     if recent_templates:
         dedup_block = (
-            "\n=== 已抽取过的句型（避免重复，跳过这些选新的）===\n"
+            "\n=== 最近 30 天已抽取过的句型（一个月内不得重复，必须跳过这些选新的）===\n"
             + "\n".join("- " + t for t in recent_templates)
             + "\n"
         )
@@ -296,28 +334,25 @@ def extract_patterns_with_gpt(episode, recent_templates):
    "#E8DCC4" (米色) / "#D4E5D4" (淡绿) / "#E5D4E0" (淡紫) / "#DCE5F0" (淡蓝) / "#F0E0D4" (淡橙)
    不同句型用不同颜色让用户视觉区分
 
-**规则 8：错误发音示范 = "英文原词 + 句号强制断开"，不用汉字拟音**
-   在 pronunciation_explanation_zh 里，当要模拟学生"不连读/错误分开读"的发音时，
-   **直接用英文原词 + 句号拆**，不用汉字拟音。
+**规则 8：连读讲解 = "标准清晰 + 地道进阶"双层框架**
+   pronunciation_demo_en 是 TTS 合成的标准清晰读法（每个词听得清楚，帮学习者认词），
+   连读是地道化的进阶读法。讲解必须明确区分这两层，而不是暗示示范读错了。
 
-   核心原理：TTS 读带句号的英文会自然停顿，读出"两个分开的词"的效果，
-   真实还原"没有连读"的错误读法。用汉字拟音 TTS 会当正常中文读，没有对比效果。
+   核心原理：承认 TTS 字正腔圆的限制，把它转化为教学优势 ——
+   "先听清每个词，再听地道连读"。不要让用户对比时觉得示范和讲解矛盾。
 
-   ❌ 错误（汉字拟音，TTS 读成中文朗读）：
-   - "不要分开念成 库德·爱"
-   - "不要读成 凯恩·艾"
-   - "不要念成 杜·由"
+   ❌ 错误（暗示示范读错了、或强行让 TTS 模仿地道连读）：
+   - "注意 Could I 要连读，听起来像 /kʊdaɪ/。不要分开读成 Could. I."
+     （让用户误以为示范就是 Could. I. 这种错的，其实示范读得很自然）
 
-   ✅ 正确（英文 + 句号断词，TTS 自然停顿模拟错误）：
-   - "Could I 要连读，不要分开念成 Could. I."
-   - "Can I 要连读，不要读成 Can. I."
-   - "Do you 要连读，不要读成 Do. You."
-   - "Would you 要连读，不要读成 Would. You."
-   - "Thank you 要连读，不要读成 Thank. You."
+   ✅ 正确（承认示范清晰，引入连读作为地道化进阶）：
+   - "刚才标准读法每个词都很清楚。如果你想读得地道一点，可以连读成 /kʊdaɪ/，听起来更流畅。不要分开读成 Could. I."
+   - "标准读法听得出每个词。地道的母语者会连读成 /dʒə/（Do you），听起来更顺。不要一个一个蹦：Do. You."
+   - "示范读得清清楚楚。如果想模仿母语者的自然感，可以连读成 /θæŋkju/，像一个词一样。不要分开读成 Thank. You."
 
    标准句式模板：
-   "注意 X 要连读，听起来像 /IPA/。不要分开读成 X. Y."
-   （X.Y. 中间必须是句号 + 空格，让 TTS 把两个词当独立句子读 → 自然有停顿）
+   "刚才标准读法每个词都很清楚。如果你想读得地道一点，可以连读成 /IPA/ ，听起来更流畅。不要分开读成 X. Y."
+   （X. Y. 中间必须是句号 + 空格，让 TTS 把两个词当独立句子读 → 自然有停顿 → 对比出"不连读"的效果）
 
    只在 pronunciation_explanation_zh 段用这个手法。其他段不用。
 
@@ -365,7 +400,7 @@ def extract_patterns_with_gpt(episode, recent_templates):
       "thumbnail_color": "#E8DCC4",
       "pronunciation_intro_zh": "今天我们学一个超实用的礼貌请求句型。先听标准发音。",
       "pronunciation_demo_en": "Could I borrow your pen, please?",
-      "pronunciation_explanation_zh": "注意 Could I 这两个词要连读，听起来像 /kʊdaɪ/ 。不要分开念成 Could. I.",
+      "pronunciation_explanation_zh": "刚才标准读法每个词都很清楚。如果你想读得地道一点，可以连读成 /kʊdaɪ/ ，听起来更流畅。不要分开读成 Could. I.",
       "meaning_zh": "Could I 字面意思是：我可以做某事吗？",
       "scene_and_feeling_zh": "现在你想象一个画面：你在咖啡店，店员忙得不可开交，你想点单，但又不想显得理所当然。这时候你说 Could I order a latte, please?。这个 Could I 带着一种谦卑感、一种 我知道你忙、我先试探一下、你拒绝也没关系 的口吻。它和 Can I 不一样。Can I 是默认你会答应；Could I 是先把决定权递给对方。所以越是对陌生人、长辈、服务员、上司，越要用 Could I。记住这种感觉——当你脑子里有 给对方留余地 的画面时，嘴里就会自动冒出 Could I。不要去翻译 我可以怎么样吗 这几个字，直接由感觉触发。",
       "examples": [
@@ -389,6 +424,7 @@ def extract_patterns_with_gpt(episode, recent_templates):
 4. 每个 scene_and_feeling_zh 段都包含 "它和 X 不一样" 的对比句
 5. 每个 scene_and_feeling_zh 都以 "记住这种感觉——" 开头的固定结尾收口
 6. 每个 example 的 scene_prefix_zh 是场景画面（"X——Y"格式），不是翻译
+7. 当前输出的任何 template 都不能出现在上面"最近 30 天已抽取过的句型"列表中（一个月内禁止重复）
 
 请输出 2-3 个句型，按高频实用性排序（script 太简单时只输出 2 个）。""" % (
         level,
@@ -523,13 +559,18 @@ def _append(combined, text, voice_id):
     return combined + seg
 
 
-def synthesize_pattern_audio(pattern_data, output_dir, pattern_id):
+def synthesize_pattern_audio(pattern_data, output_dir, pattern_id, level="medium"):
     """Generate the explainer audio with PER-SENTENCE timestamps, so subtitles
     can flip alongside the audio (instead of showing one 300-char block).
+
+    `level` controls the English playback speed (PATTERN_EN_SPEED) — beginners
+    get every word slowed down for clarity. The drill segment is always at
+    DRILL_SPEED regardless of level.
 
     Returns (audio_path, script_lines, duration_sec) where script_lines is a
     list of dicts matching PatternScriptLine in the Swift model.
     """
+    en_speed = PATTERN_EN_SPEED.get(level, 1.0)
     combined = AudioSegment.empty()
     script_lines = []
     silence_short = AudioSegment.silent(duration=WITHIN_SECTION_SILENCE_MS)
@@ -559,8 +600,14 @@ def synthesize_pattern_audio(pattern_data, output_dir, pattern_id):
 
     # Pre-synthesize demo once at natural speed; reused (atempo-slowed) in drill.
     demo_text = pattern_data["pronunciation_demo_en"]
-    demo_segment = eleven_tts(demo_text, voice_id)
-    drill_slow = slowdown_segment(demo_segment, tempo=DRILL_SPEED) if demo_segment is not None else None
+    demo_natural = eleven_tts(demo_text, voice_id)
+    drill_slow = slowdown_segment(demo_natural, tempo=DRILL_SPEED) if demo_natural is not None else None
+    # Demo for the explanation phase is slowed per level (always derived from
+    # the natural-speed clip — drill is also from natural, never compounded).
+    if demo_natural is not None and en_speed < 1.0:
+        demo_segment = slowdown_segment(demo_natural, tempo=en_speed)
+    else:
+        demo_segment = demo_natural
 
     # ===== 1. pronunciation =====
     # intro (zh, multi-sentence) → demo (en, single line) → explanation (zh, multi-sentence)
@@ -660,8 +707,11 @@ def synthesize_pattern_audio(pattern_data, output_dir, pattern_id):
         en_text = ex.get("en_text", "")
         if en_text:
             s_ms = len(combined)
-            combined = _append(combined, en_text, voice_id)
-            if len(combined) > s_ms:
+            # Synthesize at natural speed, then slow down per level (matches demo).
+            ex_natural = eleven_tts(clean_for_tts(en_text), voice_id)
+            if ex_natural is not None:
+                ex_seg = slowdown_segment(ex_natural, tempo=en_speed) if en_speed < 1.0 else ex_natural
+                combined += ex_seg
                 script_lines.append({
                     "section": section, "text_zh": "", "text_en": en_text,
                     "start": s_ms / 1000.0, "end": len(combined) / 1000.0,
@@ -713,7 +763,7 @@ def process_episode(episode_json_path, manifest, force=False):
 
     print("\n📚 Extracting patterns from %s (%s)..." % (episode["id"], episode["title"]))
 
-    recent = get_recent_templates(manifest)
+    recent = get_recent_templates(manifest, episode.get("date", ""))
     try:
         result = extract_patterns_with_gpt(episode, recent)
     except Exception as e:
@@ -724,6 +774,22 @@ def process_episode(episode_json_path, manifest, force=False):
     if not raw_patterns:
         print("   ⚠️  GPT returned no patterns")
         return False
+
+    # Defensive client-side dedup: if GPT returned a template we explicitly
+    # listed as off-limits (happens occasionally), drop it before TTS to save
+    # API cost and keep the 30-day rule hard.
+    recent_set = set(recent)
+    filtered = []
+    for p in raw_patterns:
+        t = p.get("template", "").strip()
+        if t and t in recent_set:
+            print("   ⏭  Dropping duplicate template within 30d: %s" % t[:60])
+            continue
+        filtered.append(p)
+    if not filtered:
+        print("   ⚠️  All GPT patterns were duplicates of recent 30 days")
+        return False
+    raw_patterns = filtered
 
     episode_dir = os.path.dirname(episode_json_path)
     patterns_dir = os.path.join(episode_dir, "patterns")
@@ -741,7 +807,7 @@ def process_episode(episode_json_path, manifest, force=False):
 
         try:
             audio_path, script_lines, duration_sec = synthesize_pattern_audio(
-                pattern_data, patterns_dir, pattern_id
+                pattern_data, patterns_dir, pattern_id, level=episode["level"]
             )
         except Exception as e:
             print("      ❌ TTS failed for %s: %s" % (pattern_id, e))

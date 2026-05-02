@@ -27,6 +27,7 @@ from config import (
     GPT_API_KEY,
     GPT_MODEL,
     BANNED_TOPICS,
+    COMPETITOR_RESTRICTION,
     LEVELS,
     FORMAT_POOL,
     OUTPUT_DIR,
@@ -206,14 +207,16 @@ def generate_episode_script(level, episode_num, topic=None, recycle_words=None, 
     if topic:
         topic_line = "TODAY'S TOPIC: %s\nBuild the entire conversation around this topic.\n\n" % topic
     else:
-        # Inject today's real headlines (filtered) as inspiration. GPT picks one
-        # and builds the episode around it. Falls back silently to TOPIC_POOL if
-        # NewsAPI is down or all headlines were filtered.
+        # Inject today's real headlines (filtered) as inspiration — but ONLY for
+        # medium/hard. Easy uses TOPIC_POOL exclusively because real headlines are
+        # written in adult-newspaper English and pull GPT toward complex vocab
+        # even when we tell it not to quote them. Easy stays simple by topic too.
         headlines = []
-        try:
-            headlines = fetch_headlines_for_level(level, max_count=5)
-        except Exception as e:
-            print("   ⚠️  News fetch errored (%s) — falling back to TOPIC_POOL" % e)
+        if level != "easy":
+            try:
+                headlines = fetch_headlines_for_level(level, max_count=5)
+            except Exception as e:
+                print("   ⚠️  News fetch errored (%s) — falling back to TOPIC_POOL" % e)
         if headlines:
             bullet_list = "\n".join("- %s" % h for h in headlines)
             topic_line = (
@@ -286,7 +289,7 @@ def generate_episode_script(level, episode_num, topic=None, recycle_words=None, 
         % (format_name, format_desc_filled)
     )
 
-    prompt = """%s%s%s
+    prompt = """%s%s%s%s
 %s%s%s=== OUTPUT FORMAT ===
 Generate valid JSON ONLY. No markdown, no explanation, no text outside the JSON.
 
@@ -348,8 +351,10 @@ Do NOT set duration_seconds — it will be calculated from audio.
    `script`, and every value is exactly "male" or "female" (lowercase). For solo
    format, `speakers` is exactly {"Host": "<given_gender>"}. Mismatches are REJECTED.
 9. The JSON is valid and parseable
+10. NO competitor app names mentioned positively (Duolingo, Babbel, Memrise, etc — see Competitor Restriction)
 """ % (
         level_prompt,
+        COMPETITOR_RESTRICTION,
         length_header,
         format_block,
         speaker_hint,

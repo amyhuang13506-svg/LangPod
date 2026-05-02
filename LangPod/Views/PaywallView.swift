@@ -270,12 +270,12 @@ struct PaywallView: View {
     }
 
     private let comparisons: [ComparisonRow] = [
+        ComparisonRow(freeText: "仅英文字幕",  proText: "油管播客·双语+查词"),
         ComparisonRow(freeText: "每日 2 集",  proText: "每日无限集数"),
         ComparisonRow(freeText: "仅前 4 遍",  proText: "完整 5 遍循环播放法"),
-        ComparisonRow(freeText: "❌ 不可用",  proText: "实时双语字幕"),
+        ComparisonRow(freeText: "❌ 不可用",  proText: "AI 学习播客双语字幕"),
         ComparisonRow(freeText: "每集 3 个",  proText: "每集全部生词卡片"),
-        ComparisonRow(freeText: "每日 1 轮",  proText: "词义配对无限练习"),
-        ComparisonRow(freeText: "每日 1 轮",  proText: "连词成句无限练习"),
+        ComparisonRow(freeText: "每日 1 轮",  proText: "词义配对+连词成句无限制"),
     ]
 
     private var featureCard: some View {

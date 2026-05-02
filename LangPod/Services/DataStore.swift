@@ -21,6 +21,10 @@ class DataStore {
     var currentEpisode: Episode?
     var isLoadingEpisodes = false
 
+    /// 真实大佬演讲/keynote 列表，YouTube 嵌入流式播放（不托管）。
+    /// 数据来自 bundle 的 raw_podcasts.json，后续可改为服务器拉取。
+    var rawPodcasts: [RawPodcast] = []
+
 
     // Streak system
     var streakDays: Int {
@@ -61,8 +65,23 @@ class DataStore {
 
     // Listening history
     var listenHistory: [ListenedEpisode] = []
+    var patternHistory: [ListenedPattern] = []
     var totalListeningSeconds: Int {
         didSet { UserDefaults.standard.set(totalListeningSeconds, forKey: "totalListeningSeconds") }
+    }
+
+    /// 记录页播放历史的分段筛选：全部 / 播客 / 句型
+    var historyFilter: HistoryFilter = .all
+
+    enum HistoryFilter: String, CaseIterable {
+        case all, episode, pattern
+        var label: String {
+            switch self {
+            case .all: "全部"
+            case .episode: "播客"
+            case .pattern: "句型"
+            }
+        }
     }
 
     init() {
@@ -85,7 +104,43 @@ class DataStore {
         refreshDailyCountIfNeeded()
         checkStreakContinuity()
         loadListenHistory()
+        loadPatternHistory()
         loadEpisodes()
+        loadRawPodcasts()
+    }
+
+    private func loadRawPodcasts() {
+        // 三层 fallback：磁盘缓存（最快）→ bundle 种子（首次启动）→ 服务器（最新）
+        if let cached = APIService.shared.loadCachedRawPodcastsSync() {
+            rawPodcasts = cached
+        } else if let url = Bundle.main.url(forResource: "raw_podcasts", withExtension: "json"),
+                  let data = try? Data(contentsOf: url),
+                  let items = try? JSONDecoder().decode([RawPodcast].self, from: data) {
+            rawPodcasts = items
+        } else {
+            rawPodcasts = []
+        }
+        fetchRemoteRawPodcasts()
+    }
+
+    private func fetchRemoteRawPodcasts() {
+        Task {
+            guard let remote = await APIService.shared.fetchRawPodcasts(), !remote.isEmpty else {
+                return
+            }
+            await MainActor.run {
+                self.rawPodcasts = remote
+            }
+        }
+    }
+
+    /// 反向查找：Episode 是哪条「硅谷原声」的解读版本？
+    /// 优先用 episode.sourcePodcastId（pipeline 写入），fallback 走 RawPodcast.relatedEpisodeIds。
+    func sourcePodcast(for episode: Episode) -> RawPodcast? {
+        if let id = episode.sourcePodcastId {
+            return rawPodcasts.first { $0.id == id }
+        }
+        return rawPodcasts.first { $0.relatedEpisodeIds?.contains(episode.id) == true }
     }
 
     func loadEpisodes() {
@@ -155,6 +210,41 @@ class DataStore {
     func recordPatternPlayed(_ patternId: String) {
         refreshDailyCountIfNeeded()
         dailyPatternIDsPlayedToday.insert(patternId)
+        recordPatternHistory(patternId: patternId)
+    }
+
+    /// Append (or dedupe) a pattern-history entry. Same pattern on same day
+    /// keeps only the latest entry so the 播放历史 list stays tidy.
+    private func recordPatternHistory(patternId: String) {
+        guard let (pattern, episode) = findPatternWithParent(id: patternId) else { return }
+
+        let alreadyToday = patternHistory.contains {
+            $0.patternId == patternId &&
+            Calendar.current.isDateInToday($0.listenedAt)
+        }
+        guard !alreadyToday else { return }
+
+        let record = ListenedPattern(
+            patternId: pattern.id,
+            episodeId: pattern.episodeId,
+            template: pattern.template,
+            translationZh: pattern.translationZh,
+            scene: pattern.scene,
+            level: episode.level,
+            durationSeconds: pattern.durationSeconds,
+            listenedAt: Date()
+        )
+        patternHistory.insert(record, at: 0)
+        savePatternHistory()
+    }
+
+    private func findPatternWithParent(id: String) -> (Pattern, Episode)? {
+        for ep in episodes {
+            if let p = ep.patterns?.first(where: { $0.id == id }) {
+                return (p, ep)
+            }
+        }
+        return nil
     }
 
     /// Record a history entry as soon as the user starts playing a new episode.
@@ -290,6 +380,30 @@ class DataStore {
         // Start with empty history — only real user data
         listenHistory = []
         saveListenHistory()
+    }
+
+    // MARK: - Pattern History
+
+    func togglePatternStar(_ record: ListenedPattern) {
+        guard let idx = patternHistory.firstIndex(where: { $0.id == record.id }) else { return }
+        patternHistory[idx].isStarred.toggle()
+        savePatternHistory()
+    }
+
+    private func savePatternHistory() {
+        guard let data = try? JSONEncoder().encode(patternHistory) else { return }
+        UserDefaults.standard.set(data, forKey: "patternHistory")
+    }
+
+    private func loadPatternHistory() {
+        guard let data = UserDefaults.standard.data(forKey: "patternHistory"),
+              let history = try? JSONDecoder().decode([ListenedPattern].self, from: data) else {
+            patternHistory = []
+            return
+        }
+        let cutoff = Date().addingTimeInterval(-Double(historyRetentionDays) * 86400)
+        patternHistory = history.filter { $0.isStarred || $0.listenedAt > cutoff }
+        if patternHistory.count != history.count { savePatternHistory() }
     }
 
     var totalListeningTimeDisplay: String {
