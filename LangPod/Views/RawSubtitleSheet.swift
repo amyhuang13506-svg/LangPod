@@ -187,7 +187,7 @@ struct RawSubtitleSheet: View {
 
         VStack(alignment: .leading, spacing: 6) {
             if isPro {
-                wordTaggedLine(seg, isFocused: isFocused)
+                wordTaggedLine(seg, isFocused: isFocused, isActive: isActive)
             } else {
                 Text(seg.en)
                     .font(.system(size: 16, weight: .medium))
@@ -238,12 +238,52 @@ struct RawSubtitleSheet: View {
 
     // 把英文按词拆开，每个词都是独立可点的 view（Pro 模式）。
     // 非焦点行用实色灰（不是 white opacity），避免在黑底上看起来像"被蒙住的字"。
-    private func wordTaggedLine(_ seg: RawTranscriptSegment, isFocused: Bool) -> some View {
-        let words = tokenize(seg.en)
-        let color: Color = isFocused ? .white : Color(white: 0.55)
+    // 当 segment 携带 words 词级时间戳时，启用 Karaoke 模式：当前正在说的词高亮黄色。
+    @ViewBuilder
+    private func wordTaggedLine(_ seg: RawTranscriptSegment, isFocused: Bool, isActive: Bool) -> some View {
+        if let timedWords = seg.words, !timedWords.isEmpty {
+            karaokeWordLine(seg, words: timedWords, isFocused: isFocused, isActive: isActive)
+        } else {
+            // Fallback：老数据没有词级时间戳，用 regex 拆词，无 karaoke
+            legacyWordLine(seg, isFocused: isFocused)
+        }
+    }
+
+    /// Karaoke 模式：每个词独立 view，用真实词级时间戳判定当前是否正在说
+    private func karaokeWordLine(
+        _ seg: RawTranscriptSegment,
+        words: [WordTimestamp],
+        isFocused: Bool,
+        isActive: Bool
+    ) -> some View {
+        let baseColor: Color = isFocused ? .white : Color(white: 0.55)
+        // 哪个词正在说？只在 isActive（音频正落在该段）时计算，否则全段同色
+        let activeWordIdx: Int? = isActive ? currentWordIndex(in: words, at: currentTime) : nil
         return WordFlowLayout(spacing: 5, lineSpacing: 4) {
             ForEach(words.indices, id: \.self) { i in
-                let token = words[i]
+                let timed = words[i]
+                let isCurrent = (i == activeWordIdx)
+                Button {
+                    let plain = stripPunct(timed.w).lowercased()
+                    if !plain.isEmpty { onTapWord(plain, seg) }
+                } label: {
+                    Text(timed.w)
+                        .font(.system(size: 16, weight: isCurrent ? .bold : .medium))
+                        .foregroundStyle(isCurrent ? Color(hex: "FFD60A") : baseColor)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: activeWordIdx)
+    }
+
+    /// Fallback：老数据无词级时间戳时的渲染（regex 拆词，无 karaoke）
+    private func legacyWordLine(_ seg: RawTranscriptSegment, isFocused: Bool) -> some View {
+        let tokens = tokenize(seg.en)
+        let color: Color = isFocused ? .white : Color(white: 0.55)
+        return WordFlowLayout(spacing: 5, lineSpacing: 4) {
+            ForEach(tokens.indices, id: \.self) { i in
+                let token = tokens[i]
                 if token.isWord {
                     Button {
                         onTapWord(token.text.lowercased(), seg)
@@ -260,6 +300,36 @@ struct RawSubtitleSheet: View {
                 }
             }
         }
+    }
+
+    /// 二分查找当前时间落在哪个词。返回 nil 表示在词与词之间的间隙
+    private func currentWordIndex(in words: [WordTimestamp], at time: Double) -> Int? {
+        var lo = 0, hi = words.count - 1
+        while lo <= hi {
+            let mid = (lo + hi) / 2
+            let w = words[mid]
+            if time < w.s {
+                hi = mid - 1
+            } else if time >= w.e {
+                lo = mid + 1
+            } else {
+                return mid
+            }
+        }
+        // 落在词缝里：返回最近过去的词，让高亮"粘"住而不是闪
+        return hi >= 0 ? hi : nil
+    }
+
+    /// 去掉单词尾部标点（"hello," → "hello"）用于查词
+    private func stripPunct(_ s: String) -> String {
+        var out = s
+        while let last = out.last, ".,!?;:\"'()[]".contains(last) {
+            out.removeLast()
+        }
+        while let first = out.first, ".,!?;:\"'()[]".contains(first) {
+            out.removeFirst()
+        }
+        return out
     }
 
     /// 把句子分词为「词 / 非词（标点 / 数字）」的有序列表

@@ -17,8 +17,18 @@ struct RawTranscriptSegment: Codable, Identifiable {
     let end: Double
     let en: String
     let zh: String?
+    /// 词级时间戳（pipeline v2 起新加，老 transcript.json 没有）。
+    /// 用于 Karaoke 风格 —— 当前正在说的词高亮、点词跳音频
+    let words: [WordTimestamp]?
 
     var id: String { "\(start)-\(end)" }
+}
+
+/// 单词级时间戳。w = 词原文（含尾标点）、s = start 秒、e = end 秒。
+struct WordTimestamp: Codable, Hashable {
+    let w: String
+    let s: Double
+    let e: Double
 }
 
 /// 「油管播客」预翻译词典。pipeline 在生成 transcript 时一并产出，
