@@ -24,6 +24,8 @@
 	<string>69e359319a7f376488c57f94</string>
 	<key>OSSBaseURL</key>
 	<string>https://castlingo.oss-accelerate.aliyuncs.com</string>
+	<key>CastlingoAPIBaseURL</key>
+	<string>https://api.myblackhole.pro</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>

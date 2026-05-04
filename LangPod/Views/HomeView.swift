@@ -22,10 +22,14 @@ struct HomeView: View {
 
                 ScrollView(showsIndicators: false) {
                     LazyVStack(spacing: 20) {
-                        switch topTab {
-                        case .home:
-                            rawPodcastSection
-                            if searchText.isEmpty {
+                        if !searchText.isEmpty {
+                            // Tab 在搜索态被绕过：不论用户在「首页」还是「探索」，
+                            // 都看到一份覆盖所有内容类型的统一结果页。
+                            globalSearchResults
+                        } else {
+                            switch topTab {
+                            case .home:
+                                rawPodcastSection
                                 learningDivider
                                 levelTabs
                                 nowPlayingCard
@@ -33,9 +37,9 @@ struct HomeView: View {
                                 todayPatternsSection
                                 weeklyPicksList
                                 pastEpisodesList
+                            case .explore:
+                                exploreContent
                             }
-                        case .explore:
-                            exploreContent
                         }
                     }
                     .padding(.horizontal, 24)
@@ -82,7 +86,31 @@ struct HomeView: View {
             .task {
                 await preloadVisibleThumbnails()
             }
+            .onChange(of: dataStore.pendingRawPodcastId) { _, newValue in
+                consumePendingRawPodcast(id: newValue)
+            }
+            .onChange(of: dataStore.rawPodcasts.count) { _, _ in
+                // Master list just refreshed (e.g. push fired before cache had it)
+                // — retry consuming any pending deep-link target.
+                consumePendingRawPodcast(id: dataStore.pendingRawPodcastId)
+            }
+            .onAppear {
+                // Cold-launch from push: ContentView's listener may have set
+                // the pending id before HomeView's onChange was wired up.
+                consumePendingRawPodcast(id: dataStore.pendingRawPodcastId)
+            }
         }
+    }
+
+    private func consumePendingRawPodcast(id: String?) {
+        guard let id, !id.isEmpty,
+              let podcast = dataStore.rawPodcasts.first(where: { $0.id == id }) else {
+            return
+        }
+        // Land on the home tab so the cover sits over the right context.
+        topTab = .home
+        selectedExplorePodcast = podcast
+        dataStore.pendingRawPodcastId = nil
     }
 
 
@@ -347,74 +375,33 @@ struct HomeView: View {
 
     @ViewBuilder
     private var rawPodcastSection: some View {
-        // 「硅谷原声」section 只展示 tech_keynote 分类，搜索时按标题/演讲者过滤
+        // 「硅谷原声」section 只展示 tech_keynote 分类。
+        // 搜索态下整个 section 不再渲染（统一走 globalSearchResults）。
         let techPodcasts = dataStore.rawPodcasts.filter { ($0.category ?? "tech_keynote") == "tech_keynote" }
-        let filtered = searchFilter(techPodcasts)
-        if !filtered.isEmpty {
-            RawPodcastSection(podcasts: filtered)
-        } else if !searchText.isEmpty {
-            emptySearchHint
+        if !techPodcasts.isEmpty {
+            RawPodcastSection(podcasts: techPodcasts)
         }
-    }
-
-    private func searchFilter(_ list: [RawPodcast]) -> [RawPodcast] {
-        guard !searchText.isEmpty else { return list }
-        // BilingualSearch 中英双向匹配：搜「Tesla」也能命中「特斯拉」，反之亦然
-        return list.filter { p in
-            let combined = "\(p.title) \(p.speaker) \(p.event) \(p.topic)"
-            return BilingualSearch.matches(query: searchText, in: combined)
-        }
-    }
-
-    private var emptySearchHint: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 32))
-                .foregroundStyle(Color.textTertiary)
-            Text("「\(searchText)」没有匹配的内容")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Color.textSecondary)
-            // 把当前可搜的内容列出来，方便用户知道有什么
-            if !availableSearchTerms.isEmpty {
-                Text("当前可搜：\(availableSearchTerms)")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.textTertiary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 30)
-    }
-
-    /// 把当前 master 里有的 speaker / 标题关键词列出来（去重），让用户知道能搜什么
-    private var availableSearchTerms: String {
-        let speakers = Set(dataStore.rawPodcasts.map { $0.speaker })
-        return speakers.sorted().joined(separator: " · ")
     }
 
     /// 探索 in-place 内容：filter category=explore 的播客，行式列表
     @ViewBuilder
     private var exploreContent: some View {
-        let items = searchFilter(
-            dataStore.rawPodcasts.filter { ($0.category ?? "") == "explore" }
-                .sorted { $0.publishedAt > $1.publishedAt }
-        )
+        let items = dataStore.rawPodcasts
+            .filter { ($0.category ?? "") == "explore" }
+            .sorted { $0.publishedAt > $1.publishedAt }
         if items.isEmpty {
             VStack(spacing: 8) {
                 Image(systemName: "globe")
                     .font(.system(size: 32))
                     .foregroundStyle(Color.textTertiary)
-                Text(searchText.isEmpty ? "探索内容生成中" : "没有匹配的内容")
+                Text("探索内容生成中")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.textSecondary)
-                if searchText.isEmpty {
-                    Text("Pipeline 正在扫描 TED / Huberman / Veritasium 等热门频道，明日上线")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.textTertiary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
-                }
+                Text("Pipeline 正在扫描 TED / Huberman / Veritasium 等热门频道，明日上线")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.textTertiary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
             }
             .frame(maxWidth: .infinity)
             .padding(.top, 40)
@@ -1013,6 +1000,279 @@ struct HomeView: View {
             green: Double((v >> 8) & 0xFF) / 255.0,
             blue: Double(v & 0xFF) / 255.0
         )
+    }
+}
+
+// MARK: - Global Search Results
+
+extension HomeView {
+    /// 搜索态下的统一结果页：硅谷原声 / 探索 / 每日学习 / 句型讲解 4 个分组。
+    /// Tab 选择在搜索态被绕过 — 同一关键词在两个 Tab 下看到完全相同的结果。
+    @ViewBuilder
+    fileprivate var globalSearchResults: some View {
+        let techMatches = matchingRawPodcasts(category: "tech_keynote")
+        let exploreMatches = matchingRawPodcasts(category: "explore")
+        let episodeMatches = matchingEpisodes()
+        let patternMatches = matchingPatterns()
+        let totalCount = techMatches.count + exploreMatches.count + episodeMatches.count + patternMatches.count
+
+        if totalCount == 0 {
+            globalSearchEmpty
+        } else {
+            VStack(alignment: .leading, spacing: 24) {
+                if !techMatches.isEmpty {
+                    searchGroup(title: "硅谷原声", count: techMatches.count) {
+                        VStack(spacing: 8) {
+                            ForEach(techMatches) { p in
+                                searchRawPodcastRow(p)
+                            }
+                        }
+                    }
+                }
+                if !exploreMatches.isEmpty {
+                    searchGroup(title: "探索热门", count: exploreMatches.count) {
+                        VStack(spacing: 8) {
+                            ForEach(exploreMatches) { p in
+                                searchRawPodcastRow(p)
+                            }
+                        }
+                    }
+                }
+                if !episodeMatches.isEmpty {
+                    searchGroup(title: "每日学习", count: episodeMatches.count) {
+                        VStack(spacing: 8) {
+                            ForEach(episodeMatches) { ep in
+                                episodeRow(ep)
+                            }
+                        }
+                    }
+                }
+                if !patternMatches.isEmpty {
+                    searchGroup(title: "句型讲解", count: patternMatches.count) {
+                        VStack(spacing: 8) {
+                            ForEach(patternMatches, id: \.pattern.id) { item in
+                                searchPatternRow(pattern: item.pattern, parent: item.parent)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func searchGroup<Content: View>(
+        title: String,
+        count: Int,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(title)
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                Text("· \(count)")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.textTertiary)
+            }
+            content()
+        }
+    }
+
+    private var globalSearchEmpty: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 32))
+                .foregroundStyle(Color.textTertiary)
+            Text("「\(searchText)」没有匹配的内容")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Color.textSecondary)
+            Text("可以试试 演讲者、单词、句型、级别（初级/中级/高级）")
+                .font(.system(size: 12))
+                .foregroundStyle(Color.textTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
+    }
+
+    // MARK: Match helpers
+
+    fileprivate func matchingRawPodcasts(category: String) -> [RawPodcast] {
+        let pool = dataStore.rawPodcasts.filter { ($0.category ?? "tech_keynote") == category }
+        return pool.filter { p in
+            let combined = [p.title, p.speaker, p.event, p.topic, p.summaryZh ?? ""]
+                .joined(separator: " ")
+            return BilingualSearch.matches(query: searchText, in: combined)
+        }
+        .sorted { $0.publishedAt > $1.publishedAt }
+    }
+
+    fileprivate func matchingEpisodes() -> [Episode] {
+        dataStore.episodes
+            .filter { episodeMatches($0) }
+            .sorted { $0.date > $1.date }
+    }
+
+    private func episodeMatches(_ e: Episode) -> Bool {
+        var parts: [String] = [e.title, e.level, e.podcastLevel?.tabName ?? ""]
+        for v in e.vocabulary {
+            parts.append(v.word)
+            parts.append(v.translationZh)
+            if let zh = v.exampleZh { parts.append(zh) }
+            parts.append(v.example)
+        }
+        if let recycled = e.recycledWords { parts.append(contentsOf: recycled) }
+        // Lightweight episodes have empty script — that's fine, just skip.
+        for line in e.script {
+            parts.append(line.text)
+            parts.append(line.translationZh)
+        }
+        if let patterns = e.patterns {
+            for p in patterns {
+                parts.append(p.template)
+                parts.append(p.translationZh)
+                parts.append(p.scene)
+            }
+        }
+        return BilingualSearch.matches(query: searchText, in: parts.joined(separator: " "))
+    }
+
+    fileprivate func matchingPatterns() -> [(pattern: Pattern, parent: Episode)] {
+        var pool: [(Pattern, Episode)] = []
+        for ep in dataStore.episodes {
+            if let ps = ep.patterns {
+                for p in ps { pool.append((p, ep)) }
+            }
+        }
+        return pool.filter { (p, _) in
+            var parts = [p.template, p.translationZh, p.scene]
+            for ex in p.exampleSentences {
+                parts.append(ex.english)
+                parts.append(ex.chinese)
+            }
+            return BilingualSearch.matches(query: searchText, in: parts.joined(separator: " "))
+        }
+    }
+
+    // MARK: Compact search rows
+
+    private func searchRawPodcastRow(_ p: RawPodcast) -> some View {
+        Button { selectedExplorePodcast = p } label: {
+            HStack(alignment: .top, spacing: 12) {
+                ZStack(alignment: .bottomTrailing) {
+                    if let thumb = p.displayThumbnailUrl {
+                        CachedAsyncImage(url: thumb) {
+                            Rectangle().fill(Color(hex: "1A2540"))
+                        }
+                        .scaledToFill()
+                        .frame(width: 124, height: 70)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    } else {
+                        Rectangle().fill(Color(hex: "1A2540"))
+                            .frame(width: 124, height: 70)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    Text(p.durationDisplay)
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                        .padding(5)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(p.title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.textPrimary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    HStack(spacing: 4) {
+                        Text(p.speaker)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color.textSecondary)
+                        Text("·")
+                            .foregroundStyle(Color.textTertiary)
+                        Text(p.dateDisplay)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func searchPatternRow(pattern: Pattern, parent: Episode) -> some View {
+        let accessible = PatternAccessGate.canAccess(
+            pattern: pattern,
+            parentEpisode: parent,
+            isPro: subscriptionManager.isProUser,
+            playedTodayIds: dataStore.dailyPatternIDsPlayedToday
+        )
+        return Button {
+            if accessible {
+                let items: [PlayItem] = [.pattern(pattern, parentEpisode: parent)]
+                audioPlayer.playPattern(pattern, parentEpisode: parent, in: items)
+                showPlayer = true
+                Analytics.track(.patternOpen, params: [
+                    "pattern_id": pattern.id,
+                    "episode_id": parent.id,
+                    "source": "search",
+                ])
+            } else {
+                Analytics.track(.patternPaywallView, params: [
+                    "pattern_id": pattern.id,
+                    "source": "search",
+                ])
+                showPaywall = true
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: accessible ? "quote.bubble.fill" : "lock.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(Color(hex: "E8B800"))
+                    .frame(width: 36, height: 36)
+                    .background(Color(hex: "FFF4D6"), in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(pattern.template)
+                        .font(.system(size: 15, weight: .semibold, design: .serif))
+                        .foregroundStyle(Color.textPrimary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    HStack(spacing: 6) {
+                        Text(pattern.scene)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.textSecondary)
+                            .lineLimit(1)
+                        Text("·")
+                            .foregroundStyle(Color.textTertiary)
+                        Text(pattern.durationDisplay)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.textTertiary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(.white, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.border, lineWidth: 1)
+            )
+            .opacity(accessible ? 1 : 0.6)
+        }
+        .buttonStyle(.plain)
     }
 }
 

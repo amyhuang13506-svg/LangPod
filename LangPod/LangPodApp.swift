@@ -11,6 +11,7 @@ class AppState {
 
 @main
 struct LangPodApp: App {
+    @UIApplicationDelegateAdaptor(PushService.self) var pushService
     @State private var dataStore = DataStore()
     @State private var audioPlayer = AudioPlayer()
     @State private var vocabularyStore = VocabularyStore()
@@ -81,15 +82,22 @@ struct LangPodApp: App {
                 // Deferred analytics bootstrap: runs after first frame.
                 Analytics.setup()
                 Analytics.track(.appLaunch)
-                // Request notification permission after first launch
+                // Request notification permission after first launch.
+                // requestPushAuthorization() also asks iOS for permission, so
+                // we only need NotificationManager.requestPermission() to keep
+                // its `isAuthorized` flag in sync for the local-push arbiter.
                 if dataStore.hasCompletedOnboarding {
                     notificationManager.requestPermission()
+                    PushService.shared.requestPushAuthorization()
                 }
                 refreshDailyNotification()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 dataStore.loadEpisodes()
                 refreshDailyNotification()
+                // Re-register on every foreground in case the user just turned
+                // on permission in Settings (system holds the prompt for life).
+                PushService.shared.registerIfAuthorized()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
                 // Most important refresh: we just closed the app, so state is
@@ -99,6 +107,20 @@ struct LangPodApp: App {
             }
             .onReceive(NotificationCenter.default.publisher(for: .reminderTimeChanged)) { _ in
                 refreshDailyNotification()
+            }
+            .onChange(of: dataStore.selectedLevel) { _, newLevel in
+                // Re-register so server-side level filter stays accurate after
+                // the user switches reading level in Profile or Onboarding.
+                PushService.shared.reuploadForLevelChange(newLevel: newLevel.rawValue)
+            }
+            .onChange(of: dataStore.hasCompletedOnboarding) { _, completed in
+                // First time finishing onboarding → ask for push permission so
+                // the user can start receiving new-episode notifications today,
+                // not on next cold launch.
+                if completed {
+                    notificationManager.requestPermission()
+                    PushService.shared.requestPushAuthorization()
+                }
             }
         }
     }

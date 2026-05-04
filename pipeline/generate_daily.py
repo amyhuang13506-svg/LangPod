@@ -22,6 +22,7 @@ from generate_audio import process_episode as process_audio
 from generate_cover import process_episode as process_cover
 from extract_patterns import process_episode as process_patterns, load_pattern_manifest, save_pattern_manifest
 from upload_oss import get_bucket, upload_episode, update_episode_list
+from enqueue_push import enqueue_episode
 from news_fetcher import fetch_headlines_for_level
 from config import (
     LEVELS,
@@ -205,6 +206,18 @@ def run_pipeline(target_level=None):
 
                 generated += 1
                 log.info(f"   ✅ Episode complete!")
+
+                # Step 6: Queue push for the 07:50 flush (deferred from
+                # midnight upload time so users wake up to a single batch
+                # instead of being buzzed at 00:03–00:20).
+                try:
+                    enqueue_episode(
+                        episode_id=episode["id"],
+                        level=level,
+                        title=episode["title"],
+                    )
+                except Exception as e:
+                    log.warning(f"   ⚠️ Failed to enqueue push (non-fatal): {e}")
 
             except Exception as e:
                 errors += 1

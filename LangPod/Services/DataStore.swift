@@ -25,6 +25,11 @@ class DataStore {
     /// 数据来自 bundle 的 raw_podcasts.json，后续可改为服务器拉取。
     var rawPodcasts: [RawPodcast] = []
 
+    /// Set by ContentView when a remote push targets a raw podcast (id starts
+    /// with `raw-`). HomeView observes this and presents the player.
+    /// Single-shot: HomeView clears it back to nil once consumed.
+    var pendingRawPodcastId: String? = nil
+
 
     // Streak system
     var streakDays: Int {
@@ -132,6 +137,17 @@ class DataStore {
                 self.rawPodcasts = remote
             }
         }
+    }
+
+    /// Force-refresh the master list from OSS. Used by the deep-link path so a
+    /// just-pushed item that isn't in our local cache yet becomes visible
+    /// before HomeView's onChange handler tries to look it up.
+    @MainActor
+    func refreshRawPodcastsFromRemote() async {
+        guard let remote = await APIService.shared.fetchRawPodcasts(), !remote.isEmpty else {
+            return
+        }
+        self.rawPodcasts = remote
     }
 
     /// 反向查找：Episode 是哪条「硅谷原声」的解读版本？

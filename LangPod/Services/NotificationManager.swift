@@ -40,13 +40,30 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     /// User tapped the notification → log the funnel event with the intent type,
     /// so the Umeng dashboard can tell us which copy converts best.
+    /// Also: if the payload carries an `episode_id` (remote push from new-content
+    /// pipeline), broadcast it so HomeView can deep-link into that episode.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        let intent = response.notification.request.content.userInfo["intent"] as? String ?? "unknown"
+        let userInfo = response.notification.request.content.userInfo
+        let intent = userInfo["intent"] as? String ?? "unknown"
         Analytics.track(.pushOpened, params: ["intent": intent])
+
+        if let episodeId = userInfo["episode_id"] as? String, !episodeId.isEmpty {
+            let level = userInfo["level"] as? String
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .openEpisodeFromPush,
+                    object: nil,
+                    userInfo: [
+                        "episode_id": episodeId,
+                        "level": level ?? ""
+                    ]
+                )
+            }
+        }
         completionHandler()
     }
 

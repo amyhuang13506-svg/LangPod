@@ -18,6 +18,13 @@ Thumbs.db
 pipeline/config.py
 pipeline/config.py.local
 
+# APNs auth keys (secrets, never commit)
+*.p8
+AuthKey_*.p8
+
+# YouTube auth cookies (extracted from logged-in browser, never commit)
+pipeline/youtube_cookies.txt
+
 # Umeng SDK (vendored binaries, linked via FRAMEWORK_SEARCH_PATHS, not committed)
 iOS/
 

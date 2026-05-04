@@ -174,6 +174,23 @@ def download_video_youtube(youtube_url: str, out_path: Path) -> bool:
             },
         },
     }
+    # 代理优先：阿里云新加坡 IP 被 YouTube 硬封，需要住宅代理。
+    # 配置方式：编辑 config.py 设 YOUTUBE_PROXY_URL = "http://user:pass@host:port"
+    proxy_url = ""
+    try:
+        from config import YOUTUBE_PROXY_URL as _proxy
+        proxy_url = _proxy or ""
+    except ImportError:
+        pass
+
+    if proxy_url:
+        # 走代理时不挂 cookies —— Mac IP 导出的 cookies 与代理 IP 不匹配会触发风控
+        ydl_opts["proxy"] = proxy_url
+    else:
+        # 没代理（本地 Mac 跑），用 cookies 兜底
+        cookies_path = Path(__file__).resolve().parent / "youtube_cookies.txt"
+        if cookies_path.exists():
+            ydl_opts["cookiefile"] = str(cookies_path)
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.extract_info(youtube_url, download=True)
@@ -285,7 +302,15 @@ def process_candidate(c: dict, bucket) -> Optional[dict]:
         transcript_oss_url = None
         try:
             from transcribe import generate_transcript
-            transcript_oss_url = generate_transcript(media_local, cid, bucket)
+            podcast_meta = {
+                "title": c["title"],
+                "speaker": c["speaker"],
+                "topic": c.get("topic", ""),
+                "event": c.get("event") or c["speaker"],
+            }
+            transcript_oss_url = generate_transcript(
+                media_local, cid, bucket, podcast_meta=podcast_meta
+            )
         except Exception as e:
             print(f"  ⚠️  transcript 失败（不影响主流程）：{e}")
 
@@ -310,6 +335,7 @@ def process_candidates(candidates: list[dict], top_n: int = 3) -> list[dict]:
     master = load_master(bucket)
     existing_ids = {m["id"] for m in master}
 
+    new_entries: list[dict] = []
     processed = 0
     for c in candidates:
         if processed >= top_n:
@@ -321,12 +347,49 @@ def process_candidates(candidates: list[dict], top_n: int = 3) -> list[dict]:
         if entry:
             master.insert(0, entry)
             existing_ids.add(cid)
+            new_entries.append(entry)
             processed += 1
 
     if processed > 0:
         save_master(master, bucket)
+        # Push first — only after master is saved on OSS, otherwise users
+        # tapping the deep link race ahead of an empty master list.
+        notify_users(new_entries)
     print(f"\n✅ 本次新增 {processed} 条，master 总计 {len(master)} 条")
     return master
+
+
+def notify_users(new_entries: list[dict]) -> None:
+    """
+    Queue exactly ONE notification per pipeline run — the highest-ranked new
+    raw podcast — for the next 07:50 flush. The other top_n entries still get
+    downloaded and listed in the app, they just don't ring everyone's phone.
+    Best-effort; never raises.
+    """
+    if not new_entries:
+        return
+    try:
+        from enqueue_push import enqueue_raw_podcast
+    except ImportError as e:
+        print(f"  ⚠️ enqueue module missing — skipping notifications: {e}")
+        return
+
+    # Pick the most popular new entry. `_score` is computed upstream from view
+    # count + recency + signal-source weighting; `_view_count` is the tiebreaker
+    # for the rare case scores collide.
+    top = max(
+        new_entries,
+        key=lambda e: (e.get("_score", 0), e.get("_view_count", 0)),
+    )
+    print(f"  📣 picked top of {len(new_entries)}: {top['id']} (score={top.get('_score')}, views={top.get('_view_count')})")
+    try:
+        enqueue_raw_podcast(
+            podcast_id=top["id"],
+            title=top.get("title", ""),
+            speaker=top.get("speaker", ""),
+        )
+    except Exception as e:  # noqa: BLE001 — logging only
+        print(f"  ⚠️ enqueue failed for {top.get('id')}: {e}")
 
 
 if __name__ == "__main__":
