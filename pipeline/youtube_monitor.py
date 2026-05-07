@@ -73,48 +73,56 @@ def fetch_recent_videos(
     max_results: int = 5,
     published_after: Optional[datetime] = None,
 ) -> list[dict]:
-    """从 YouTube 频道 RSS 拉近期视频列表。**完全免费、不消耗 API 配额**。
-    （之前用 search.list 每次 100 单位，22 频道 ≈ 2200 单位/次，太奢侈）
+    """从 YouTube 频道拉近期视频列表。**完全免费、不消耗 Data API 配额**。
 
-    api_key / max_results 参数保留为兼容签名，实际 RSS 返回最多 15 条。
+    实现：yt-dlp 走 IPRoyal 住宅代理 list channel /videos 页面（替代 YouTube RSS feed —
+    后者 2026-05 起对 channel_id 大面积返回 404/500，已不可用）。
+
+    返回字段简化（只有 video_id + title + channel_title），其余 published_at /
+    duration / view_count / like_count 由下游 fetch_video_details 通过 Data API 补全。
+    `published_after` 过滤交给下游的 score_item 时新度处理（避免 flat playlist 没日期的尴尬）。
     """
-    import feedparser
-    rss_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+    import yt_dlp
+    proxy = ""
     try:
-        r = requests.get(rss_url, timeout=15, headers={"User-Agent": "Castlingo/1.0"})
-        if r.status_code != 200:
-            print(f"  ! RSS fetch failed: HTTP {r.status_code}")
-            return []
-        feed = feedparser.parse(r.content)
+        from config import YOUTUBE_PROXY_URL as _proxy
+        proxy = _proxy or ""
+    except ImportError:
+        pass
+
+    opts = {
+        "extract_flat": True,
+        "quiet": True,
+        "no_warnings": True,
+        "playlistend": max_results,
+        "skip_download": True,
+    }
+    if proxy:
+        opts["proxy"] = proxy
+
+    url = f"https://www.youtube.com/channel/{channel_id}/videos"
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(url, download=False)
     except Exception as e:
-        print(f"  ! RSS fetch error: {e}")
+        print(f"  ! channel scan failed: {e}")
         return []
 
-    cutoff_str = None
-    if published_after:
-        cutoff_str = published_after.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    entries = info.get("entries") or []
+    channel_title = info.get("channel") or info.get("uploader") or ""
 
     out = []
-    for entry in feed.entries[:max_results]:
-        vid = getattr(entry, "yt_videoid", None)
-        if not vid:
-            # entry.id 形如 yt:video:XXXXXXXXXXX
-            entry_id = getattr(entry, "id", "")
-            if "yt:video:" in entry_id:
-                vid = entry_id.split("yt:video:")[-1]
+    for e in entries[:max_results]:
+        vid = e.get("id")
         if not vid:
             continue
-        published_at = getattr(entry, "published", "")
-        if cutoff_str and published_at and published_at < cutoff_str:
-            continue
-        # 缩略图：feed 给的是 hqdefault，用 maxresdefault 走 YouTube CDN
         thumb = f"https://i.ytimg.com/vi/{vid}/maxresdefault.jpg"
         out.append({
             "video_id":      vid,
-            "title":         entry.get("title", "").strip(),
-            "channel_title": feed.feed.get("title", ""),
-            "published_at":  published_at,
-            "description":   (entry.get("summary") or "")[:300],
+            "title":         (e.get("title") or "").strip(),
+            "channel_title": channel_title,
+            "published_at":  "",     # 由 fetch_video_details (Data API) 补
+            "description":   "",     # 同上
             "thumbnail":     thumb,
         })
     return out

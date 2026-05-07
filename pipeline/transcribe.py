@@ -57,13 +57,13 @@ def extract_audio_for_transcription(media_path: Path, out_path: Path, bitrate: s
         str(out_path),
     ]
     try:
-        result = subprocess.run(cmd, capture_output=True, timeout=600)
+        result = subprocess.run(cmd, capture_output=True, timeout=1800)
         if result.returncode != 0:
             print(f"  ✗ ffmpeg 失败: {result.stderr.decode()[:300]}")
             return False
         return out_path.exists()
     except subprocess.TimeoutExpired:
-        print("  ✗ ffmpeg 超时（>10min）")
+        print("  ✗ ffmpeg 超时（>30min）")
         return False
 
 

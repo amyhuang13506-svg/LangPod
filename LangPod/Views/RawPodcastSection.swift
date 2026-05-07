@@ -1,30 +1,54 @@
 import SwiftUI
 
-/// 首页「硅谷原声」横滑区块。展示真实大佬演讲/keynote/访谈，点击进入对应播放器：
-/// - video → YouTube IFrame 全屏
-/// - audio → 原生 AVPlayer（后台播 + 锁屏控制）
-/// MVP 不做解读层 / 字幕 / 词汇抽取，先验证用户对原声本身的反应。
+/// 通用 raw_podcast 横滑区块。
+/// - title 默认 "今日推荐"，可传入分类名（"娱乐 · 文化" 等）做探索分类行
+/// - compact=true 用 220pt 卡片宽度（多张并排），false 用 hero 全宽
+/// - "查看更多" → RawPodcastFeedView，传入 allPodcasts
 struct RawPodcastSection: View {
+    let title: String
     let podcasts: [RawPodcast]
+    /// "查看更多"页面用的完整列表（默认就是 podcasts；可传更大的池子，比如某分类全集）
+    let allPodcasts: [RawPodcast]
+    /// compact = 卡片宽度 ~220pt，一屏可见 2-3 张（用于探索分类多行并列）
+    /// 非 compact = 卡片几乎全宽（"今日推荐"hero 样式）
+    let compact: Bool
+    /// 是否显示右上角"查看更多"
+    let showSeeMore: Bool
     @State private var selectedPodcast: RawPodcast?
     @State private var showAllFeed: Bool = false
 
+    init(
+        title: String = "今日推荐",
+        podcasts: [RawPodcast],
+        allPodcasts: [RawPodcast]? = nil,
+        compact: Bool = false,
+        showSeeMore: Bool = true
+    ) {
+        self.title = title
+        self.podcasts = podcasts
+        self.allPodcasts = allPodcasts ?? podcasts
+        self.compact = compact
+        self.showSeeMore = showSeeMore
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: compact ? 10 : 14) {
             HStack(alignment: .firstTextBaseline) {
-                Text("硅谷原声")
-                    .font(.system(size: 22, weight: .bold))
+                Text(title)
+                    .font(.system(size: compact ? 17 : 22, weight: .bold))
                     .foregroundStyle(Color.textPrimary)
                     .tracking(-0.3)
                 Spacer()
-                Button { showAllFeed = true } label: {
-                    HStack(spacing: 3) {
-                        Text("查看更多")
-                            .font(.system(size: 13, weight: .medium))
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
+                if showSeeMore {
+                    Button { showAllFeed = true } label: {
+                        HStack(spacing: 3) {
+                            Text("查看更多")
+                                .font(.system(size: 13, weight: .medium))
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundStyle(Color.appPrimary)
                     }
-                    .foregroundStyle(Color.appPrimary)
                 }
             }
 
@@ -35,10 +59,7 @@ struct RawPodcastSection: View {
                             podcastCard(podcast)
                         }
                         .buttonStyle(.plain)
-                        // 卡片宽度 = 容器宽度 - 36，让下一张卡左侧露出 ~24pt 提示可滑动
-                        .containerRelativeFrame(.horizontal) { length, _ in
-                            length - 36
-                        }
+                        .modifier(CardWidthModifier(compact: compact))
                     }
                 }
                 .scrollTargetLayout()
@@ -50,15 +71,70 @@ struct RawPodcastSection: View {
             RawPodcastPlayerView(podcast: podcast)
         }
         .fullScreenCover(isPresented: $showAllFeed) {
-            RawPodcastFeedView(podcasts: podcasts)
+            RawPodcastFeedView(title: title, podcasts: allPodcasts)
         }
     }
 
     @ViewBuilder
     private func podcastCard(_ podcast: RawPodcast) -> some View {
-        switch podcast.mediaType {
-        case .video: videoCard(podcast)
-        case .audio: audioCard(podcast)
+        if compact {
+            compactCard(podcast)
+        } else {
+            switch podcast.mediaType {
+            case .video: videoCard(podcast)
+            case .audio: audioCard(podcast)
+            }
+        }
+    }
+
+    /// Compact 卡片：16:9 缩略图 + 标题/speaker 放在下方（YouTube/B站样式）
+    private func compactCard(_ podcast: RawPodcast) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // 缩略图：纯图（标题不再 overlay 在图上）+ 媒体类型徽章 + 时长徽章
+            Color.clear
+                .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                .overlay(
+                    Group {
+                        if let thumb = podcast.displayThumbnailUrl {
+                            CachedAsyncImage(url: thumb) {
+                                Rectangle().fill(cardBgColor(podcast))
+                            }
+                            .scaledToFill()
+                        } else {
+                            Rectangle().fill(cardBgColor(podcast))
+                        }
+                    }
+                )
+                .overlay(alignment: .bottomTrailing) {
+                    Text(podcast.durationDisplay)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                        .padding(8)
+                }
+                .overlay(alignment: .topTrailing) {
+                    if podcast.isNewToday {
+                        newBadge.padding(8)
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            // 文字信息：标题 + speaker
+            VStack(alignment: .leading, spacing: 3) {
+                Text(podcast.title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.textPrimary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(height: 36, alignment: .topLeading)
+                Text(podcast.speaker)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.textTertiary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -85,9 +161,10 @@ struct RawPodcastSection: View {
                     endPoint: .bottom
                 )
             )
-            .overlay(alignment: .topLeading) {
-                mediaTypeBadge(podcast.mediaType)
-                    .padding(12)
+            .overlay(alignment: .topTrailing) {
+                if podcast.isNewToday {
+                    newBadge.padding(12)
+                }
             }
             .overlay(alignment: .bottomLeading) {
                 VStack(alignment: .leading, spacing: 5) {
@@ -147,9 +224,10 @@ struct RawPodcastSection: View {
                     .font(.system(size: 88, weight: .light))
                     .foregroundStyle(.white.opacity(0.18))
             )
-            .overlay(alignment: .topLeading) {
-                mediaTypeBadge(.audio)
-                    .padding(12)
+            .overlay(alignment: .topTrailing) {
+                if podcast.isNewToday {
+                    newBadge.padding(12)
+                }
             }
             .overlay(alignment: .bottomLeading) {
                 VStack(alignment: .leading, spacing: 5) {
@@ -179,17 +257,14 @@ struct RawPodcastSection: View {
             .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
     }
 
-    private func mediaTypeBadge(_ type: RawPodcast.MediaType) -> some View {
-        HStack(spacing: 3) {
-            Image(systemName: type == .video ? "video.fill" : "headphones")
-                .font(.system(size: 8, weight: .bold))
-            Text(type == .video ? "视频" : "音频")
-                .font(.system(size: 9, weight: .bold))
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 3)
-        .background(Color.black.opacity(0.55), in: Capsule())
+    /// 今日上新角标 — 鲜红色 NEW 胶囊
+    private var newBadge: some View {
+        Text("NEW")
+            .font(.system(size: 10, weight: .heavy))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(Color(red: 1.0, green: 0.23, blue: 0.19), in: Capsule())
     }
 
     private func cardBgColor(_ podcast: RawPodcast) -> Color {
@@ -208,5 +283,18 @@ struct RawPodcastSection: View {
             green: Double((v >> 8) & 0xFF) / 255.0,
             blue: Double(v & 0xFF) / 255.0
         )
+    }
+}
+
+/// 卡片宽度策略：hero（"今日推荐"）几乎全宽；compact（探索分类）固定 220pt
+private struct CardWidthModifier: ViewModifier {
+    let compact: Bool
+
+    func body(content: Content) -> some View {
+        if compact {
+            content.frame(width: 220)
+        } else {
+            content.containerRelativeFrame(.horizontal) { length, _ in length - 36 }
+        }
     }
 }

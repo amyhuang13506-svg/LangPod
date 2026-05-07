@@ -1,15 +1,21 @@
 import SwiftUI
 
-/// 「硅谷原声」全部内容浏览页。从首页「查看更多」进入。
+/// 通用 raw_podcast 列表浏览页。从首页「今日推荐」/各探索分类的「查看更多」进入。
 /// - 顶部主题筛选 chips（横滑）
 /// - 主区按日期分组的卡片列表（每行大缩略图 + 标题 + 演讲者 + 时长）
 /// - 点击进入播放页（同首页）
 struct RawPodcastFeedView: View {
+    let title: String
     let podcasts: [RawPodcast]
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTopic: String? = nil
     @State private var selectedPodcast: RawPodcast?
     @State private var searchText: String = ""
+
+    init(title: String = "今日推荐", podcasts: [RawPodcast]) {
+        self.title = title
+        self.podcasts = podcasts
+    }
 
     private var topics: [String] {
         var set = Set<String>()
@@ -99,7 +105,7 @@ struct RawPodcastFeedView: View {
                 }
             }
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索演讲者 / 标题")
-            .navigationTitle("硅谷原声")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -111,7 +117,7 @@ struct RawPodcastFeedView: View {
                 }
                 ToolbarItem(placement: .principal) {
                     VStack(spacing: 0) {
-                        Text("硅谷原声")
+                        Text(title)
                             .font(.system(size: 16, weight: .semibold))
                         Text("\(filtered.count) 期")
                             .font(.system(size: 11))

@@ -13,7 +13,7 @@ struct HomeView: View {
     @State private var searchText: String = ""
     @FocusState private var searchFocused: Bool
 
-    enum TopTab: Hashable { case home, explore }
+    enum TopTab: Hashable { case home, learn }
 
     var body: some View {
         NavigationStack {
@@ -23,22 +23,21 @@ struct HomeView: View {
                 ScrollView(showsIndicators: false) {
                     LazyVStack(spacing: 20) {
                         if !searchText.isEmpty {
-                            // Tab 在搜索态被绕过：不论用户在「首页」还是「探索」，
+                            // Tab 在搜索态被绕过：不论用户在「首页」还是「学习」，
                             // 都看到一份覆盖所有内容类型的统一结果页。
                             globalSearchResults
                         } else {
                             switch topTab {
                             case .home:
-                                rawPodcastSection
-                                learningDivider
+                                rawPodcastSection      // 今日推荐 hero
+                                exploreContent          // 分类横滑（娱乐 / 两性 / 思想 / ...）
+                            case .learn:
                                 levelTabs
                                 nowPlayingCard
                                 todayList
                                 todayPatternsSection
                                 weeklyPicksList
                                 pastEpisodesList
-                            case .explore:
-                                exploreContent
                             }
                         }
                     }
@@ -47,14 +46,14 @@ struct HomeView: View {
                     .padding(.bottom, 100)
                 }
             }
-            // iOS 原生 Navigation Bar：中央放分段 Picker（首页 / 探索），
+            // iOS 原生 Navigation Bar：中央放分段 Picker（首页 / 学习），
             // 底部用 .searchable 自带搜索行（向下拉出现，可置顶）
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Picker("", selection: $topTab) {
                         Text("首页").tag(TopTab.home)
-                        Text("探索").tag(TopTab.explore)
+                        Text("学习").tag(TopTab.learn)
                     }
                     .pickerStyle(.segmented)
                     .frame(width: 200)
@@ -63,7 +62,7 @@ struct HomeView: View {
             .searchable(
                 text: $searchText,
                 placement: .navigationBarDrawer(displayMode: .always),
-                prompt: topTab == .home ? "搜索硅谷大佬 / 演讲" : "搜索 TED / Huberman / 探索内容"
+                prompt: topTab == .home ? "搜索演讲 / 访谈" : "搜索每日播客 / 句型"
             )
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
@@ -371,25 +370,31 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Raw Podcast (硅谷原声)
+    // MARK: - 今日推荐（hero 横滑）
 
     @ViewBuilder
     private var rawPodcastSection: some View {
-        // 「硅谷原声」section 只展示 tech_keynote 分类。
-        // 搜索态下整个 section 不再渲染（统一走 globalSearchResults）。
-        let techPodcasts = dataStore.rawPodcasts.filter { ($0.category ?? "tech_keynote") == "tech_keynote" }
-        if !techPodcasts.isEmpty {
-            RawPodcastSection(podcasts: techPodcasts)
+        // 「今日推荐」混合所有 raw podcasts（不分 tech_keynote / explore），
+        // 按发布日期倒序，hero 横滑取 top 5；不展示"查看更多"，全量入口在探索 Tab。
+        let recent = dataStore.rawPodcasts.sorted { $0.publishedAt > $1.publishedAt }
+        if !recent.isEmpty {
+            RawPodcastSection(
+                title: "今日推荐",
+                podcasts: Array(recent.prefix(5)),
+                showSeeMore: false
+            )
         }
     }
 
-    /// 探索 in-place 内容：filter category=explore 的播客，行式列表
+    /// 探索 in-place 内容：按 ExploreCategory 分组，每组一个横滑 row（compact 卡片），
+    /// 右上角"查看更多"进入对应分类的全量列表。
     @ViewBuilder
     private var exploreContent: some View {
-        let items = dataStore.rawPodcasts
+        let exploreItems = dataStore.rawPodcasts
             .filter { ($0.category ?? "") == "explore" }
             .sorted { $0.publishedAt > $1.publishedAt }
-        if items.isEmpty {
+
+        if exploreItems.isEmpty {
             VStack(spacing: 8) {
                 Image(systemName: "globe")
                     .font(.system(size: 32))
@@ -397,7 +402,7 @@ struct HomeView: View {
                 Text("探索内容生成中")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.textSecondary)
-                Text("Pipeline 正在扫描 TED / Huberman / Veritasium 等热门频道，明日上线")
+                Text("Pipeline 正在扫描 TED / Huberman / Hot Ones 等热门频道，明日上线")
                     .font(.system(size: 12))
                     .foregroundStyle(Color.textTertiary)
                     .multilineTextAlignment(.center)
@@ -406,76 +411,20 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
             .padding(.top, 40)
         } else {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("探索热门")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(Color.textPrimary)
-                    .tracking(-0.3)
-                ForEach(items) { p in
-                    Button { selectedExplorePodcast = p } label: {
-                        exploreRow(p)
+            VStack(alignment: .leading, spacing: 24) {
+                ForEach(ExploreCategory.displayOrder) { cat in
+                    let items = exploreItems.filter { $0.exploreCategory == cat }
+                    if !items.isEmpty {
+                        RawPodcastSection(
+                            title: cat.displayName,
+                            podcasts: Array(items.prefix(8)),
+                            allPodcasts: items,
+                            compact: true
+                        )
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
-    }
-
-    private func exploreRow(_ p: RawPodcast) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            ZStack(alignment: .bottomTrailing) {
-                if let thumb = p.displayThumbnailUrl {
-                    CachedAsyncImage(url: thumb) {
-                        Rectangle().fill(Color(hex: "1A2540"))
-                    }
-                    .scaledToFill()
-                    .frame(width: 124, height: 70)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                } else {
-                    Rectangle().fill(Color(hex: "1A2540"))
-                        .frame(width: 124, height: 70)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-                Text(p.durationDisplay)
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
-                    .padding(5)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(p.title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color.textPrimary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                HStack(spacing: 4) {
-                    Text(p.speaker)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(Color.textSecondary)
-                    Text("·")
-                        .foregroundStyle(Color.textTertiary)
-                    Text(p.dateDisplay)
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color.textTertiary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-    }
-
-    /// 「我的学习」分类大标题，与「硅谷原声」同级别样式。
-    private var learningDivider: some View {
-        Text("我的学习")
-            .font(.system(size: 22, weight: .bold))
-            .foregroundStyle(Color.textPrimary)
-            .tracking(-0.3)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 8)
     }
 
     // MARK: - Today's Episodes
@@ -1006,33 +955,23 @@ struct HomeView: View {
 // MARK: - Global Search Results
 
 extension HomeView {
-    /// 搜索态下的统一结果页：硅谷原声 / 探索 / 每日学习 / 句型讲解 4 个分组。
+    /// 搜索态下的统一结果页：原声推荐 / 每日学习 / 句型讲解 3 个分组。
     /// Tab 选择在搜索态被绕过 — 同一关键词在两个 Tab 下看到完全相同的结果。
     @ViewBuilder
     fileprivate var globalSearchResults: some View {
-        let techMatches = matchingRawPodcasts(category: "tech_keynote")
-        let exploreMatches = matchingRawPodcasts(category: "explore")
+        let podcastMatches = matchingAllRawPodcasts()
         let episodeMatches = matchingEpisodes()
         let patternMatches = matchingPatterns()
-        let totalCount = techMatches.count + exploreMatches.count + episodeMatches.count + patternMatches.count
+        let totalCount = podcastMatches.count + episodeMatches.count + patternMatches.count
 
         if totalCount == 0 {
             globalSearchEmpty
         } else {
             VStack(alignment: .leading, spacing: 24) {
-                if !techMatches.isEmpty {
-                    searchGroup(title: "硅谷原声", count: techMatches.count) {
+                if !podcastMatches.isEmpty {
+                    searchGroup(title: "原声 · 演讲", count: podcastMatches.count) {
                         VStack(spacing: 8) {
-                            ForEach(techMatches) { p in
-                                searchRawPodcastRow(p)
-                            }
-                        }
-                    }
-                }
-                if !exploreMatches.isEmpty {
-                    searchGroup(title: "探索热门", count: exploreMatches.count) {
-                        VStack(spacing: 8) {
-                            ForEach(exploreMatches) { p in
+                            ForEach(podcastMatches) { p in
                                 searchRawPodcastRow(p)
                             }
                         }
@@ -1099,9 +1038,8 @@ extension HomeView {
 
     // MARK: Match helpers
 
-    fileprivate func matchingRawPodcasts(category: String) -> [RawPodcast] {
-        let pool = dataStore.rawPodcasts.filter { ($0.category ?? "tech_keynote") == category }
-        return pool.filter { p in
+    fileprivate func matchingAllRawPodcasts() -> [RawPodcast] {
+        return dataStore.rawPodcasts.filter { p in
             let combined = [p.title, p.speaker, p.event, p.topic, p.summaryZh ?? ""]
                 .joined(separator: " ")
             return BilingualSearch.matches(query: searchText, in: combined)

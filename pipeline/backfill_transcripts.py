@@ -40,18 +40,30 @@ def has_v2_transcript(bucket, podcast_id: str) -> bool:
 
 
 def download_media(podcast_id: str, dst: Path) -> bool:
-    """从 OSS 下 media.mp4 / media.mp3 到本地"""
+    """从 OSS 下 media.mp4 / media.mp3 到本地。
+    用 curl 避免 requests stream 模式下数据慢滴时无限 hang 的问题。
+    """
+    import subprocess
     for ext in ("mp4", "mp3", "m4a"):
         url = f"{OSS_CDN_DOMAIN}/raw_podcasts/{podcast_id}/media.{ext}"
+        # curl --max-time 总超时 600s（10min 足够下 ~500MB）
+        # --speed-limit 10240 + --speed-time 30：30s 内速率 < 10KB/s 直接断
+        cmd = [
+            "curl", "-sL", "-o", str(dst),
+            "--max-time", "600",
+            "--speed-limit", "10240", "--speed-time", "30",
+            "-w", "%{http_code}",
+            url,
+        ]
         try:
-            r = requests.get(url, stream=True, timeout=300, allow_redirects=True)
-            if r.status_code == 200:
-                with dst.open("wb") as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                if dst.stat().st_size > 0:
-                    return True
-        except Exception:
+            r = subprocess.run(cmd, capture_output=True, timeout=900)
+            if r.returncode == 0 and r.stdout.decode().strip() == "200" and dst.stat().st_size > 0:
+                return True
+        except subprocess.TimeoutExpired:
+            print(f"  ✗ download {podcast_id}.{ext} 超时")
+            continue
+        except Exception as e:
+            print(f"  ✗ download {podcast_id}.{ext} 异常：{e}")
             continue
     return False
 
@@ -151,11 +163,20 @@ def main():
     print("\n开始处理...")
     ok, fail = 0, 0
     failures = []
+    master_dirty = False
     for i, t in enumerate(targets, 1):
         print(f"\n[{i}/{len(targets)}]", end="")
         try:
             if backfill_one(t, bucket, force=args.force, skip_words=args.no_words, skip_translate=args.no_translate):
                 ok += 1
+                # 同步更新 master entry 的 transcript_url（避免"transcript 在 OSS 但 master 缺 url"的孤儿态）
+                expected_url = f"{OSS_CDN_DOMAIN}/raw_podcasts/{t['id']}/transcript.json"
+                for m in master:
+                    if m.get("id") == t["id"] and m.get("transcript_url") != expected_url:
+                        m["transcript_url"] = expected_url
+                        master_dirty = True
+                        print(f"  📝 master.transcript_url 已更新")
+                        break
             else:
                 fail += 1
                 failures.append(t["id"])
@@ -163,6 +184,11 @@ def main():
             print(f"  ✗ {t['id']} 异常: {e}")
             fail += 1
             failures.append(t["id"])
+
+    if master_dirty:
+        new_data = json.dumps(master, ensure_ascii=False, indent=2)
+        bucket.put_object(OSS_MASTER_KEY, new_data.encode("utf-8"))
+        print(f"\n  ☁️  master.json 已上传 OSS（同步 transcript_url 字段）")
 
     print(f"\n\n=== 完成: ok={ok} / fail={fail} ===")
     if failures:

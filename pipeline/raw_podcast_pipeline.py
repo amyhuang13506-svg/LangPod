@@ -64,13 +64,61 @@ def score_item(item: dict) -> int:
         score -= 80
     if "doodle" in title_lower:
         score -= 40
-    if "ad " in title_lower or "advertisement" in title_lower:
-        score -= 30
+
+    # 硬性广告/促销过滤（标题级 — 高置信度）
+    # 标题里直接说"赞助/广告/促销码/折扣/抽奖"的整集，全部踢出候选池
+    ad_title_signals = [
+        "sponsored", "#sponsored", "[ad]", "(ad)", "#ad",
+        " ad:", "advertisement",
+        "promo code", "use code", "discount code", "coupon code",
+        "% off", "deal alert", "limited offer", "limited time",
+        "giveaway", "unboxing", "official trailer",
+    ]
+    if any(sig in title_lower for sig in ad_title_signals):
+        return -999  # sentinel: collect_candidates 会过滤掉
+    # 描述前 200 字硬指标（整集就是广告 / 付费推广）
+    desc_head = desc_lower[:200]
+    ad_desc_signals = [
+        "this video is sponsored",
+        "this episode is sponsored",
+        "this is a paid promotion",
+        "this is a paid partnership",
+        "paid promotion by",
+        "in paid partnership with",
+    ]
+    if any(sig in desc_head for sig in ad_desc_signals):
+        return -999
+
     keynote_keywords = ["keynote", "announces", "introducing", "demo", "interview",
                         "podcast", "presentation", "earnings"]
     for kw in keynote_keywords:
         if kw in title_lower:
             score += 6
+            break
+
+    # 偏好：两性 / 娱乐 / 明星访谈 / 大众传播性内容
+    entertainment_keywords = [
+        # 明星访谈格式
+        "interview with", "sits down with", "tells", "opens up",
+        "73 questions", "hot ones", "first we feast",
+        "diary of", "joe rogan", "fallon", "kimmel",
+        # 两性 / 关系
+        "relationship", "dating", "love", "couple",
+        "marriage", "breakup", "ex-", "boyfriend", "girlfriend",
+        "single", "soulmate", "chemistry",
+        # 娱乐 / 流行文化
+        "celebrity", "actress", "actor", "singer", "model",
+        "drama", "gossip", "viral", "trending", "scandal",
+        "secrets", "confessions", "behind the scenes",
+        "first time", "the truth about", "what really happened",
+        "reaction", "react to",
+        # 心理 / 通俗成长
+        "psychology of", "why we", "self-improvement",
+        "mindset", "habits", "anxiety", "confidence",
+    ]
+    for kw in entertainment_keywords:
+        if kw in title_lower:
+            score += 15
             break
 
     # 时新度：近 3 天 / 7 天大幅加权（用户要「近一周最热」）
@@ -158,6 +206,12 @@ def collect_candidates(yt_days: int = 7, rss_days: int = 14, top_n: int = 30) ->
     print(f"  → {len(rss_normalized)} 条 RSS 播客集\n")
 
     all_items = yt_normalized + rss_normalized
+    rejected = [x for x in all_items if x["score"] <= -999]
+    all_items = [x for x in all_items if x["score"] > -999]
+    if rejected:
+        print(f"  ⛔  过滤 {len(rejected)} 条广告/促销内容")
+        for r in rejected[:5]:
+            print(f"      · {r.get('title','')[:60]}")
     all_items.sort(key=lambda x: x["score"], reverse=True)
     return all_items[:top_n]
 

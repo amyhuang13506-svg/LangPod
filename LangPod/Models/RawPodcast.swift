@@ -53,16 +53,21 @@ struct RawPodcast: Codable, Identifiable, Hashable {
         return publishedAt
     }
 
+    /// 是否为今日上新（publishedAt == 今天）
+    var isNewToday: Bool {
+        let today = DateFormatter.episodeDate.string(from: Date())
+        return publishedAt == today
+    }
+
+    /// 时长显示，YouTube 风格：≥1h 用 H:MM:SS，否则 M:SS。
     var durationDisplay: String {
-        if durationSeconds >= 3600 {
-            let h = durationSeconds / 3600
-            let m = (durationSeconds % 3600) / 60
-            return m > 0 ? "\(h)时\(m)分" : "\(h)小时"
+        let h = durationSeconds / 3600
+        let m = (durationSeconds % 3600) / 60
+        let s = durationSeconds % 60
+        if h > 0 {
+            return String(format: "%d:%02d:%02d", h, m, s)
         }
-        if durationSeconds >= 60 {
-            return "\(durationSeconds / 60)分钟"
-        }
-        return "\(durationSeconds)秒"
+        return String(format: "%d:%02d", m, s)
     }
 
     var watchUrl: URL? {
@@ -80,5 +85,46 @@ struct RawPodcast: Codable, Identifiable, Hashable {
             return "https://i.ytimg.com/vi/\(id)/maxresdefault.jpg"
         }
         return nil
+    }
+
+    /// 探索区分类：根据 topic 关键词归到 6 大类之一。
+    /// 用于首页「探索」分类横滑展示。
+    var exploreCategory: ExploreCategory? {
+        let t = topic
+        if t.contains("娱乐") || t.contains("时尚") || t.contains("文化") { return .entertainment }
+        if t.contains("两性") || t.contains("心理") || t.contains("关系") { return .relationship }
+        if t.contains("科学") || t.contains("数学") || t.contains("科普") { return .science }
+        if t.contains("创业") || t.contains("商业") || t.contains("投资") { return .business }
+        if t.contains("评测") { return .tech }
+        if t.contains("思想") || t.contains("演讲") || t.contains("学术") || t.contains("访谈") || t.contains("健康") { return .mind }
+        return nil
+    }
+}
+
+/// 「探索」区的 6 大分类。每个分类在首页占一个横滑 row，右上角"查看更多"。
+enum ExploreCategory: String, CaseIterable, Identifiable, Hashable {
+    case entertainment    // 娱乐 · 文化（Hot Ones / Vogue / Vanity Fair / WIRED）
+    case relationship     // 两性 · 心理（Matthew Hussey / Jay Shetty / School of Life / Mark Manson / MedCircle）
+    case mind             // 思想 · 访谈（TED / Huberman / Diary of CEO / Modern Wisdom / Tim Ferriss）
+    case science          // 科普 · 科学（Veritasium / Kurzgesagt / 3Blue1Brown）
+    case business         // 创业 · 商业（YC / Stanford / Acquired）
+    case tech             // 科技 · 评测（MKBHD）
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .entertainment: return "娱乐 · 文化"
+        case .relationship:  return "两性 · 心理"
+        case .mind:          return "思想 · 访谈"
+        case .science:       return "科普 · 科学"
+        case .business:      return "创业 · 商业"
+        case .tech:          return "科技 · 评测"
+        }
+    }
+
+    /// 首页展示顺序（娱乐 / 两性优先 — 用户偏好大众传播性内容）
+    static var displayOrder: [ExploreCategory] {
+        [.entertainment, .relationship, .mind, .science, .business, .tech]
     }
 }

@@ -184,13 +184,12 @@ def download_video_youtube(youtube_url: str, out_path: Path) -> bool:
         pass
 
     if proxy_url:
-        # 走代理时不挂 cookies —— Mac IP 导出的 cookies 与代理 IP 不匹配会触发风控
         ydl_opts["proxy"] = proxy_url
-    else:
-        # 没代理（本地 Mac 跑），用 cookies 兜底
-        cookies_path = Path(__file__).resolve().parent / "youtube_cookies.txt"
-        if cookies_path.exists():
-            ydl_opts["cookiefile"] = str(cookies_path)
+    # YouTube 2026-05 起对无 cookie 请求统一要求"Sign in to confirm you're not a bot"
+    # （即使来自住宅 IP）。代理 + cookies 组合是当前最稳的反反爬。
+    cookies_path = Path(__file__).resolve().parent / "youtube_cookies.txt"
+    if cookies_path.exists():
+        ydl_opts["cookiefile"] = str(cookies_path)
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.extract_info(youtube_url, download=True)

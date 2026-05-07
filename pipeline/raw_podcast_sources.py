@@ -50,6 +50,19 @@ YOUTUBE_CHANNELS = [
 
     # === 探索：科技产品评测 / 文化 ===
     {"handle": "@mkbhd",             "label": "MKBHD",          "topic": "科技 · 评测",     "tier": 2, "kind": "analysis", "category": "explore"},
+
+    # === 探索：娱乐 / 名人访谈（轻松输入 + 真实英语口语）===
+    {"handle": "@FirstWeFeast",      "label": "Hot Ones",       "topic": "娱乐 · 名人访谈", "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@VanityFair",        "label": "Vanity Fair",    "topic": "娱乐 · 文化",     "tier": 2, "kind": "analysis", "category": "explore"},
+    {"handle": "@WIRED",             "label": "WIRED",          "topic": "娱乐 · 科技文化", "tier": 2, "kind": "analysis", "category": "explore"},
+    {"handle": "@Vogue",             "label": "Vogue",          "topic": "娱乐 · 时尚",     "tier": 2, "kind": "analysis", "category": "explore"},
+
+    # === 探索：两性 / 关系 / 心理 ===
+    {"handle": "@MatthewHussey",     "label": "Matthew Hussey", "topic": "两性 · 沟通",     "tier": 1, "kind": "speaker",  "category": "explore"},
+    {"handle": "@JayShetty",         "label": "Jay Shetty",     "topic": "两性 · 人生导师", "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@TheSchoolofLife",   "label": "School of Life", "topic": "两性 · 心理动画", "tier": 1, "kind": "speaker",  "category": "explore"},
+    {"handle": "@IAmMarkManson",     "label": "Mark Manson",    "topic": "两性 · 心理",     "tier": 2, "kind": "speaker",  "category": "explore"},
+    {"handle": "@medcircle",         "label": "MedCircle",      "topic": "心理 · 专家访谈", "tier": 2, "kind": "analysis", "category": "explore"},
 ]
 
 # RSS feeds 已停用 —— 用户决策：硅谷原声只收视频访谈（YouTube）。
