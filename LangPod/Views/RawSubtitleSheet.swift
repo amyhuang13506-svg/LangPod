@@ -190,16 +190,16 @@ struct RawSubtitleSheet: View {
                 wordTaggedLine(seg, isFocused: isFocused, isActive: isActive)
             } else {
                 Text(seg.en)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(isFocused ? .white : Color(white: 0.55))
+                    .font(.system(size: 19, weight: .medium))
+                    .foregroundStyle(isFocused ? .white : Color(white: 0.38))
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if isPro, showChinese, let zh = seg.zh, !zh.isEmpty {
                 Text(zh)
-                    .font(.system(size: 13))
-                    .foregroundStyle(isFocused ? .white.opacity(0.85) : Color(white: 0.5))
+                    .font(.system(size: 16))
+                    .foregroundStyle(isFocused ? .white : Color(white: 0.35))
                     .fixedSize(horizontal: false, vertical: true)
             } else if !isPro && isActive {
                 Button(action: onUpgrade) {
@@ -256,31 +256,30 @@ struct RawSubtitleSheet: View {
         isFocused: Bool,
         isActive: Bool
     ) -> some View {
-        let baseColor: Color = isFocused ? .white : Color(white: 0.55)
-        // 哪个词正在说？只在 isActive（音频正落在该段）时计算，否则全段同色
-        let activeWordIdx: Int? = isActive ? currentWordIndex(in: words, at: currentTime) : nil
+        // 词级时间戳在快速口语下落点不稳，单词级 karaoke 高亮会误导
+        // → 关掉单词级高亮，整段统一颜色（焦点段白、其他灰）
+        // 词级时间戳保留在数据里供未来用（如点词跳音频），仅展示层不再使用
+        let baseColor: Color = isFocused ? .white : Color(white: 0.38)
         return WordFlowLayout(spacing: 5, lineSpacing: 4) {
             ForEach(words.indices, id: \.self) { i in
                 let timed = words[i]
-                let isCurrent = (i == activeWordIdx)
                 Button {
                     let plain = stripPunct(timed.w).lowercased()
                     if !plain.isEmpty { onTapWord(plain, seg) }
                 } label: {
                     Text(timed.w)
-                        .font(.system(size: 16, weight: isCurrent ? .bold : .medium))
-                        .foregroundStyle(isCurrent ? Color(hex: "FFD60A") : baseColor)
+                        .font(.system(size: 19, weight: .medium))
+                        .foregroundStyle(baseColor)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .animation(.easeOut(duration: 0.15), value: activeWordIdx)
     }
 
     /// Fallback：老数据无词级时间戳时的渲染（regex 拆词，无 karaoke）
     private func legacyWordLine(_ seg: RawTranscriptSegment, isFocused: Bool) -> some View {
         let tokens = tokenize(seg.en)
-        let color: Color = isFocused ? .white : Color(white: 0.55)
+        let color: Color = isFocused ? .white : Color(white: 0.38)
         return WordFlowLayout(spacing: 5, lineSpacing: 4) {
             ForEach(tokens.indices, id: \.self) { i in
                 let token = tokens[i]
@@ -289,13 +288,13 @@ struct RawSubtitleSheet: View {
                         onTapWord(token.text.lowercased(), seg)
                     } label: {
                         Text(token.text)
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 19, weight: .medium))
                             .foregroundStyle(color)
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text(token.text)
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 19, weight: .medium))
                         .foregroundStyle(color)
                 }
             }
