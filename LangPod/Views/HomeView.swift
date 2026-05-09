@@ -374,14 +374,24 @@ struct HomeView: View {
 
     @ViewBuilder
     private var rawPodcastSection: some View {
-        // 「今日推荐」按 pipeline 入库时间（crawledAt）倒序 —— 当天 cron 抓回的
-        // 新视频必然排在最顶，即使该视频原始上传日期是几个月前。
-        // hero 横滑取 top 5；不展示"查看更多"，全量入口在探索 Tab。
-        let recent = dataStore.rawPodcasts.sorted { $0.sortKey > $1.sortKey }
-        if !recent.isEmpty {
+        // 「今日推荐」组成规则：
+        //   1. 当天 pipeline 入库（crawledAt 是今天）的全部条目，全部进 hero。
+        //      即使今天抓了 8 条，全部展示——保证"今天的新内容必然能看到"。
+        //   2. 如果今天的不足 5 条，用历史 sortKey 倒序补到 5 条兜底。
+        //   3. 上限 10 条避免 hero 横滑过长。
+        let all = dataStore.rawPodcasts
+        let todayItems = all.filter { $0.isNewToday }
+            .sorted { $0.sortKey > $1.sortKey }
+        let backfill = all.filter { !$0.isNewToday }
+            .sorted { $0.sortKey > $1.sortKey }
+        let combined = todayItems + backfill
+        let displayCount = min(max(todayItems.count, 5), 10)
+        let podcasts = Array(combined.prefix(displayCount))
+
+        if !podcasts.isEmpty {
             RawPodcastSection(
                 title: "今日推荐",
-                podcasts: Array(recent.prefix(5)),
+                podcasts: podcasts,
                 showSeeMore: false
             )
         }
