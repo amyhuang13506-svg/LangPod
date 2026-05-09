@@ -138,3 +138,71 @@ TOPIC_BONUS = {
     "学术": 0,
     "AR/VR": 0,
 }
+
+# ⭐ 明星关键词加分 —— 标题/描述命中即加分，让这些华人观众熟悉的脸优先冒头。
+# 匹配规则：不区分大小写，子串匹配。命中越多分数越高（但单个标题加分上限 50）。
+# 维护原则：只放"华人英语学习者一眼认得"的名字 —— 流行天后 + 华裔/亚裔
+# 演艺人 + 顶流好莱坞。冷门或政治人物不放。
+STAR_KEYWORDS: dict[str, int] = {
+    # === 流行天后（中文社交平台高曝光）===
+    "taylor swift":      45,
+    "beyoncé":           35,
+    "beyonce":           35,
+    "ariana grande":     35,
+    "billie eilish":     35,
+    "selena gomez":      30,
+    "sabrina carpenter": 30,
+    "olivia rodrigo":    30,
+    "dua lipa":          25,
+    "rihanna":           30,
+    "lady gaga":         28,
+    "lana del rey":      22,
+    "miley cyrus":       22,
+
+    # === 华裔/亚裔演艺人（华人特别熟悉）===
+    "ali wong":          45,   # 黄阿丽 stand-up 顶流
+    "jimmy o. yang":     45,
+    "jimmy o yang":      45,
+    "awkwafina":         35,
+    "olivia munn":       30,
+    "sandra oh":         30,
+    "lucy liu":          28,
+    "henry golding":     28,
+    "lana condor":       25,
+    "steven yeun":       25,
+    "john cho":          22,
+    "daniel wu":         22,
+    "jamie chung":       20,
+    "constance wu":      22,
+    "michelle yeoh":     30,   # 杨紫琼
+
+    # === 韩流（中文圈高热）===
+    "bts":               30,
+    "blackpink":         30,
+    "jennie":            22,
+    "lisa":              22,
+    "rosé":              20,
+    "rose":              18,   # 谨慎，rose 也指普通词，权重略低
+    "iu":                18,
+    "newjeans":          22,
+    "twice":             20,
+
+    # === 好莱坞顶流（中文圈认知度高）===
+    "zendaya":           35,
+    "timothée chalamet": 32,
+    "timothee chalamet": 32,
+    "margot robbie":     30,
+    "sydney sweeney":    30,
+    "jennifer lawrence": 28,
+    "emma stone":        25,
+    "anne hathaway":     25,
+    "florence pugh":     22,
+    "ryan reynolds":     22,
+    "blake lively":      20,
+
+    # === 两性/心理顶流作者（华人圈翻译书畅销）===
+    "esther perel":      30,
+    "mel robbins":       25,
+    "brené brown":       22,
+    "brene brown":       22,
+}

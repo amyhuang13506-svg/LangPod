@@ -21,7 +21,7 @@ from pathlib import Path
 
 from raw_podcast_sources import (
     YOUTUBE_CHANNELS, RSS_FEEDS,
-    TIER_BONUS, KIND_BONUS, TOPIC_BONUS,
+    TIER_BONUS, KIND_BONUS, TOPIC_BONUS, STAR_KEYWORDS,
 )
 from youtube_monitor import scan_channels
 from rss_monitor import scan_feeds
@@ -45,6 +45,23 @@ def score_item(item: dict) -> int:
     topic_prefix = topic.split("·")[0].strip() if topic else ""
     if topic_prefix:
         score += TOPIC_BONUS.get(topic_prefix, 0)
+
+    # ⭐ 明星关键词加分 —— 标题或描述命中 STAR_KEYWORDS 时大幅加分，让华人
+    # 观众熟悉的脸（Taylor Swift / Ali Wong / BTS / Zendaya 等）优先冒头。
+    # 单个候选最多累加 50 分，避免标题硬塞多个名字打爆分数榜。
+    haystack = ((item.get("title") or "") + " " + (item.get("description") or ""))[:500].lower()
+    star_score = 0
+    matched_stars: list[str] = []
+    for kw, bonus in STAR_KEYWORDS.items():
+        if kw in haystack:
+            star_score += bonus
+            matched_stars.append(kw)
+            if star_score >= 50:
+                break
+    if star_score > 0:
+        score += min(star_score, 50)
+        # 印日志方便观察哪些名人在出现
+        print(f"      ⭐ star match: {matched_stars} (+{min(star_score,50)}) — {(item.get('title') or '')[:60]}")
 
     dur = item.get("duration_seconds", 0)
     if dur > 0 and dur < 120:                     # < 2min — short / 广告
