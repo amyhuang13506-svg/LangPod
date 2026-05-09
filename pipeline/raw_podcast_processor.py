@@ -355,13 +355,23 @@ def process_candidate(c: dict, bucket) -> Optional[dict]:
 # 主入口：candidates → 增量入库
 # =============================================================
 
+MAX_PER_TOPIC = 2  # nightly cap so 6-condi top doesn't collapse into one theme
+
+
 def process_candidates(candidates: list[dict], top_n: int = 3) -> list[dict]:
-    """处理 top N 新候选（已在 master 的跳过）。"""
+    """处理 top N 新候选 (已在 master 的跳过)。
+
+    Topic-diverse selection: each topic prefix (e.g. "娱乐") may contribute at
+    most MAX_PER_TOPIC entries per run. Ensures the home hero shows ≥3 different
+    themes when top_n ≥ 6, instead of 6 entertainment clips dominating because
+    TOPIC_BONUS handed them all huge scores.
+    """
     bucket = get_bucket()
     master = load_master(bucket)
     existing_ids = {m["id"] for m in master}
 
     new_entries: list[dict] = []
+    topic_counts: dict[str, int] = {}
     processed = 0
     for c in candidates:
         if processed >= top_n:
@@ -369,12 +379,21 @@ def process_candidates(candidates: list[dict], top_n: int = 3) -> list[dict]:
         cid = candidate_id(c)
         if cid in existing_ids:
             continue
+
+        topic_prefix = ((c.get("topic") or "").split("·")[0].strip()) or "未分类"
+        if topic_counts.get(topic_prefix, 0) >= MAX_PER_TOPIC:
+            print(f"  ⏭️  skip {cid} — topic '{topic_prefix}' already has {MAX_PER_TOPIC} picks")
+            continue
+
         entry = process_candidate(c, bucket)
         if entry:
             master.insert(0, entry)
             existing_ids.add(cid)
             new_entries.append(entry)
+            topic_counts[topic_prefix] = topic_counts.get(topic_prefix, 0) + 1
             processed += 1
+
+    print(f"  📊 topic distribution: {topic_counts}")
 
     if processed > 0:
         save_master(master, bucket)
