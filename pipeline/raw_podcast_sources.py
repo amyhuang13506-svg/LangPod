@@ -177,15 +177,21 @@ STAR_KEYWORDS: dict[str, int] = {
     "michelle yeoh":     30,   # 杨紫琼
 
     # === 韩流（中文圈高热）===
-    "bts":               30,
+    # 单字名（IU / Rose / Lisa / Jennie / BTS）容易和英文常用词撞 —
+    # "BTS" = Behind The Scenes、"Lisa" = 普通女名、"Rose" = 玫瑰。
+    # 所以只放高辨识度全名 / 团名（≥2 词）+ 大写专属。
     "blackpink":         30,
-    "jennie":            22,
-    "lisa":              22,
-    "rosé":              20,
-    "rose":              18,   # 谨慎，rose 也指普通词，权重略低
-    "iu":                18,
     "newjeans":          22,
-    "twice":             20,
+    "stray kids":        22,
+    "le sserafim":       20,
+    "twice":             18,   # twice 也是普通词但拼写完整时少误中
+    "jungkook":          25,
+    "v of bts":          22,   # 安全的 BTS 成员引用形式
+    "jimin":             20,
+    "rosé blackpink":    20,
+    "jennie kim":        22,
+    "lisa blackpink":    22,
+    "iu lee ji eun":     20,   # IU 本名，安全
 
     # === 好莱坞顶流（中文圈认知度高）===
     "zendaya":           35,

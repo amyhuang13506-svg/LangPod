@@ -49,11 +49,18 @@ def score_item(item: dict) -> int:
     # ⭐ 明星关键词加分 —— 标题或描述命中 STAR_KEYWORDS 时大幅加分，让华人
     # 观众熟悉的脸（Taylor Swift / Ali Wong / BTS / Zendaya 等）优先冒头。
     # 单个候选最多累加 50 分，避免标题硬塞多个名字打爆分数榜。
+    # 关键：用 regex word-boundary 匹配，避免 "iu" 误中 "studio"、"rose"
+    # 误中 "verbose" 这种子串噪声。
+    import re as _re
     haystack = ((item.get("title") or "") + " " + (item.get("description") or ""))[:500].lower()
     star_score = 0
     matched_stars: list[str] = []
     for kw, bonus in STAR_KEYWORDS.items():
-        if kw in haystack:
+        # \b 词边界：英文 word boundary 在 ASCII 字母数字字符两侧。
+        # 对含特殊字符（é、空格、句点）的关键词需要稍灵活：先用 \b 包裹
+        # 再 escape 内部内容。
+        pattern = r"\b" + _re.escape(kw) + r"\b"
+        if _re.search(pattern, haystack):
             star_score += bonus
             matched_stars.append(kw)
             if star_score >= 50:
