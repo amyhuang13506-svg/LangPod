@@ -19,6 +19,7 @@ import re
 import shutil
 import sys
 import tempfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -173,6 +174,10 @@ def download_video_youtube(youtube_url: str, out_path: Path) -> bool:
                 "player_client": ["tv_embedded", "web_creator", "android"],
             },
         },
+        # YouTube 2026-05 起对所有视频流 URL 加 n challenge JS 加密
+        # （SABR streaming experiment）。yt-dlp 需要显式开启 JS runtime 才能解。
+        # Node ≥20.0.0 必装：sudo apt install -y nodejs (NodeSource setup_20.x)
+        "js_runtimes": {"node": {}},
     }
     # 代理优先：阿里云新加坡 IP 被 YouTube 硬封，需要住宅代理。
     # 配置方式：编辑 config.py 设 YOUTUBE_PROXY_URL = "http://user:pass@host:port"
@@ -184,12 +189,24 @@ def download_video_youtube(youtube_url: str, out_path: Path) -> bool:
         pass
 
     if proxy_url:
+        # IPRoyal sticky session 默认 lifetime-30m，跑批量时第 2-3 条就会过期 → 504。
+        # 每次调用替换 session-XXX 为新的 random token，保证当前下载窗口内 IP 稳定。
+        import re, uuid
+        fresh_session = uuid.uuid4().hex[:10]
+        proxy_url = re.sub(r"session-[a-zA-Z0-9]+", f"session-{fresh_session}", proxy_url)
         ydl_opts["proxy"] = proxy_url
     # YouTube 2026-05 起对无 cookie 请求统一要求"Sign in to confirm you're not a bot"
     # （即使来自住宅 IP）。代理 + cookies 组合是当前最稳的反反爬。
     cookies_path = Path(__file__).resolve().parent / "youtube_cookies.txt"
     if cookies_path.exists():
         ydl_opts["cookiefile"] = str(cookies_path)
+    # 硬超时保护：yt-dlp 偶尔会在 SABR/n-challenge 路径上无限挂起（socket_timeout 不覆盖所有路径）。
+    # 用 SIGALRM 强制超时，每个视频最多 15 分钟。
+    import signal
+    class _YdlTimeout(Exception): pass
+    def _alarm_handler(signum, frame): raise _YdlTimeout()
+    old_handler = signal.signal(signal.SIGALRM, _alarm_handler)
+    signal.alarm(900)
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.extract_info(youtube_url, download=True)
@@ -201,9 +218,15 @@ def download_video_youtube(youtube_url: str, out_path: Path) -> bool:
                         shutil.move(str(f), str(out_path.with_suffix(f.suffix)))
                     return True
         return False
+    except _YdlTimeout:
+        print(f"  ✗ yt-dlp 硬超时（>15min），跳过")
+        return False
     except Exception as e:
         print(f"  ✗ yt-dlp 失败：{e}")
         return False
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
 
 
 def download_audio_rss(audio_url: str, out_path: Path) -> bool:
@@ -358,11 +381,44 @@ def process_candidates(candidates: list[dict], top_n: int = 3) -> list[dict]:
     return master
 
 
+PUSH_HISTORY_FILE = Path(__file__).resolve().parent / "last_pushed_topics.json"
+PUSH_TOPIC_COOLDOWN_DAYS = 3  # 同一 topic 前缀近 N 天推过则降权
+
+
+def _load_push_history() -> list[dict]:
+    """Read recent push log: list of {topic, pushed_at_iso}."""
+    if not PUSH_HISTORY_FILE.exists():
+        return []
+    try:
+        with open(PUSH_HISTORY_FILE, "r") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def _save_push_history(entries: list[dict]) -> None:
+    tmp = PUSH_HISTORY_FILE.with_suffix(".tmp")
+    with open(tmp, "w") as f:
+        json.dump(entries, f, ensure_ascii=False, indent=2)
+    tmp.replace(PUSH_HISTORY_FILE)
+
+
+def _topic_prefix(entry: dict) -> str:
+    """Extract '娱乐' from '娱乐 · 名人访谈'."""
+    t = (entry.get("topic") or "").strip()
+    return t.split("·")[0].strip() if t else ""
+
+
 def notify_users(new_entries: list[dict]) -> None:
     """
     Queue exactly ONE notification per pipeline run — the highest-ranked new
     raw podcast — for the next 07:50 flush. The other top_n entries still get
     downloaded and listed in the app, they just don't ring everyone's phone.
+
+    Topic-rotation: any topic that was already pushed within the last
+    `PUSH_TOPIC_COOLDOWN_DAYS` days gets a -50 penalty for tonight's selection,
+    so the user doesn't see "娱乐...娱乐...娱乐" three days in a row.
     Best-effort; never raises.
     """
     if not new_entries:
@@ -373,20 +429,64 @@ def notify_users(new_entries: list[dict]) -> None:
         print(f"  ⚠️ enqueue module missing — skipping notifications: {e}")
         return
 
+    # Build the set of "recently pushed" topic prefixes
+    history = _load_push_history()
+    cutoff = datetime.now(timezone.utc) - timedelta(days=PUSH_TOPIC_COOLDOWN_DAYS)
+    recent_topics: set[str] = set()
+    for h in history:
+        try:
+            ts = datetime.fromisoformat(h["pushed_at"])
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            if ts >= cutoff and h.get("topic"):
+                recent_topics.add(h["topic"])
+        except (KeyError, ValueError):
+            continue
+
+    def adjusted_score(e: dict) -> int:
+        s = e.get("_score", 0)
+        if _topic_prefix(e) in recent_topics:
+            s -= 50
+        return s
+
     # Pick the most popular new entry. `_score` is computed upstream from view
     # count + recency + signal-source weighting; `_view_count` is the tiebreaker
-    # for the rare case scores collide.
+    # for the rare case scores collide. Cooldown penalty rotates topics.
     top = max(
         new_entries,
-        key=lambda e: (e.get("_score", 0), e.get("_view_count", 0)),
+        key=lambda e: (adjusted_score(e), e.get("_view_count", 0)),
     )
-    print(f"  📣 picked top of {len(new_entries)}: {top['id']} (score={top.get('_score')}, views={top.get('_view_count')})")
+    top_topic = _topic_prefix(top)
+    print(
+        f"  📣 picked top of {len(new_entries)}: {top['id']} "
+        f"(score={top.get('_score')}→{adjusted_score(top)}, topic={top_topic!r}, "
+        f"views={top.get('_view_count')}, cooled_topics={sorted(recent_topics)})"
+    )
     try:
         enqueue_raw_podcast(
             podcast_id=top["id"],
             title=top.get("title", ""),
             speaker=top.get("speaker", ""),
         )
+        # Record this push so the next 3 days won't rotate back to the same topic.
+        history.append({
+            "topic": top_topic,
+            "podcast_id": top["id"],
+            "pushed_at": datetime.now(timezone.utc).isoformat(),
+        })
+        # Keep only entries within cooldown window + a safety margin
+        keep_cutoff = datetime.now(timezone.utc) - timedelta(days=PUSH_TOPIC_COOLDOWN_DAYS + 4)
+        kept = []
+        for h in history:
+            try:
+                ts = datetime.fromisoformat(h["pushed_at"])
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+                if ts >= keep_cutoff:
+                    kept.append(h)
+            except (KeyError, ValueError):
+                continue
+        _save_push_history(kept)
     except Exception as e:  # noqa: BLE001 — logging only
         print(f"  ⚠️ enqueue failed for {top.get('id')}: {e}")
 

@@ -57,12 +57,53 @@ YOUTUBE_CHANNELS = [
     {"handle": "@WIRED",             "label": "WIRED",          "topic": "娱乐 · 科技文化", "tier": 2, "kind": "analysis", "category": "explore"},
     {"handle": "@Vogue",             "label": "Vogue",          "topic": "娱乐 · 时尚",     "tier": 2, "kind": "analysis", "category": "explore"},
 
+    # === 探索：脱口秀 / 喜剧（纯单口 + 明星娱乐导向，避开政治晚间秀）===
+    # Jimmy Fallon: 主打游戏 / 明星互动 / Lip Sync Battle，政治含量低
+    {"handle": "@TheTonightShow",    "label": "Jimmy Fallon",    "topic": "娱乐 · 文化", "tier": 1, "kind": "analysis", "category": "explore"},
+    # Netflix Is A Joke: 纯 stand-up specials 片段（Kevin Hart / Ali Wong / Trevor Noah 等）
+    {"handle": "@NetflixIsAJoke",    "label": "Netflix Stand-up", "topic": "娱乐 · 文化", "tier": 1, "kind": "analysis", "category": "explore"},
+    # JustForLaughs: 加拿大喜剧节官方，纯 stand-up 专场
+    {"handle": "@JustForLaughs",     "label": "Just for Laughs", "topic": "娱乐 · 文化", "tier": 2, "kind": "analysis", "category": "explore"},
+    # Dry Bar Comedy: 干净 stand-up（无政治、无脏话）
+    {"handle": "@DryBarComedy",      "label": "Dry Bar Comedy",  "topic": "娱乐 · 文化", "tier": 2, "kind": "analysis", "category": "explore"},
+    # Conan O'Brien Needs A Friend: Conan 名人访谈播客（轻喜剧），政治极少
+    {"handle": "@TeamCoco",          "label": "Conan O'Brien",   "topic": "娱乐 · 文化", "tier": 2, "kind": "analysis", "category": "explore"},
+
     # === 探索：两性 / 关系 / 心理 ===
     {"handle": "@MatthewHussey",     "label": "Matthew Hussey", "topic": "两性 · 沟通",     "tier": 1, "kind": "speaker",  "category": "explore"},
     {"handle": "@JayShetty",         "label": "Jay Shetty",     "topic": "两性 · 人生导师", "tier": 1, "kind": "analysis", "category": "explore"},
     {"handle": "@TheSchoolofLife",   "label": "School of Life", "topic": "两性 · 心理动画", "tier": 1, "kind": "speaker",  "category": "explore"},
     {"handle": "@IAmMarkManson",     "label": "Mark Manson",    "topic": "两性 · 心理",     "tier": 2, "kind": "speaker",  "category": "explore"},
     {"handle": "@medcircle",         "label": "MedCircle",      "topic": "心理 · 专家访谈", "tier": 2, "kind": "analysis", "category": "explore"},
+
+    # === 探索：娱乐 · 名人访谈（华人喜爱方向重点扩充）===
+    {"handle": "@callherdaddy",          "label": "Call Her Daddy",   "topic": "两性 · 访谈",     "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@armchairexpertpod",     "label": "Armchair Expert",  "topic": "娱乐 · 名人访谈", "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@SmartLess",             "label": "SmartLess",        "topic": "娱乐 · 名人访谈", "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@AccessHollywood",       "label": "Access Hollywood", "topic": "娱乐 · 八卦",     "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@Variety",               "label": "Variety",          "topic": "娱乐 · 明星访谈", "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@GrahamNortonOfficial",  "label": "Graham Norton",    "topic": "娱乐 · 明星访谈", "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@Glamour",               "label": "Glamour",          "topic": "娱乐 · 明星访谈", "tier": 2, "kind": "analysis", "category": "explore"},
+    {"handle": "@people",                "label": "PEOPLE",           "topic": "娱乐 · 明星访谈", "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@AmeliaDimoldenberg",    "label": "Chicken Shop Date","topic": "娱乐 · 明星访谈", "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@CapitalOfficial",       "label": "Capital FM",       "topic": "娱乐 · 明星访谈", "tier": 2, "kind": "analysis", "category": "explore"},
+    {"handle": "@BUILDseriesNYC",        "label": "BUILD Series",     "topic": "娱乐 · 明星访谈", "tier": 2, "kind": "analysis", "category": "explore"},
+
+    # === 探索：两性 · 关系顶流 / 喜剧 ===
+    {"handle": "@EstherPerel",           "label": "Esther Perel",     "topic": "两性 · 关系",     "tier": 1, "kind": "speaker",  "category": "explore"},
+    {"handle": "@whitneycummings",       "label": "Whitney Cummings", "topic": "两性 · 喜剧",     "tier": 2, "kind": "analysis", "category": "explore"},
+
+    # === 探索：心理 · 情感（短视频博主，TikTok 已火）===
+    {"handle": "@DrJulie",               "label": "Dr Julie Smith",   "topic": "心理 · 情感",     "tier": 1, "kind": "speaker",  "category": "explore"},
+
+    # === 探索：美食 · 制作 / vlog（华人爱看吃，听力轻松）===
+    {"handle": "@bonappetit",            "label": "Bon Appétit",      "topic": "美食 · 制作",     "tier": 1, "kind": "analysis", "category": "explore"},
+    {"handle": "@JoshuaWeissman",        "label": "Joshua Weissman",  "topic": "美食 · vlog",     "tier": 2, "kind": "analysis", "category": "explore"},
+    {"handle": "@MarkWiens",             "label": "Mark Wiens",       "topic": "美食 · 旅游",     "tier": 1, "kind": "analysis", "category": "explore"},
+
+    # === 探索：旅游 · vlog ===
+    {"handle": "@DrewBinsky",            "label": "Drew Binsky",      "topic": "旅游 · vlog",     "tier": 2, "kind": "analysis", "category": "explore"},
+    {"handle": "@KaraandNate",           "label": "Kara and Nate",    "topic": "旅游 · vlog",     "tier": 2, "kind": "analysis", "category": "explore"},
 ]
 
 # RSS feeds 已停用 —— 用户决策：硅谷原声只收视频访谈（YouTube）。
@@ -79,4 +120,21 @@ KIND_BONUS = {
     "model_release":  25,    # 新模型发布优先级最高
     "news":           10,    # 一般新闻
     "analysis":       12,    # 解读类
+}
+# Topic 加权 —— 华人英语学习者偏好的内容方向，按 topic 字段前缀匹配。
+# 设计原则：娱乐/两性 > company(20) 让生活类内容能压过科技公司发布会冒头，
+# AI / 商业等给小幅减分（不归零）确保科技源仍偶尔上榜不被完全淹没。
+TOPIC_BONUS = {
+    "娱乐": 28,
+    "两性": 25,
+    "心理": 18,
+    "美食": 15,
+    "旅游": 12,
+    "AI":   -8,   # 降权，但有重大发布时仍可凭 model_release 加分上位
+    "商业": -3,
+    "硬件": 0,
+    "科技": 0,
+    "思想": 5,
+    "学术": 0,
+    "AR/VR": 0,
 }

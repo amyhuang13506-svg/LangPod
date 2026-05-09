@@ -21,7 +21,7 @@ from pathlib import Path
 
 from raw_podcast_sources import (
     YOUTUBE_CHANNELS, RSS_FEEDS,
-    TIER_BONUS, KIND_BONUS,
+    TIER_BONUS, KIND_BONUS, TOPIC_BONUS,
 )
 from youtube_monitor import scan_channels
 from rss_monitor import scan_feeds
@@ -38,6 +38,13 @@ def score_item(item: dict) -> int:
     score = 0
     score += TIER_BONUS.get(item.get("source_tier", 3), 0)
     score += KIND_BONUS.get(item.get("source_kind", "news"), 0)
+
+    # Topic 加权 —— "娱乐 · 名人访谈" 这类带前缀的 topic，按前缀（"娱乐"）查表。
+    # 让娱乐/两性/心理/美食/旅游能盖过 company(20)，AI/商业相对降权。
+    topic = (item.get("source_topic") or "").strip()
+    topic_prefix = topic.split("·")[0].strip() if topic else ""
+    if topic_prefix:
+        score += TOPIC_BONUS.get(topic_prefix, 0)
 
     dur = item.get("duration_seconds", 0)
     if dur > 0 and dur < 120:                     # < 2min — short / 广告
@@ -76,6 +83,18 @@ def score_item(item: dict) -> int:
     ]
     if any(sig in title_lower for sig in ad_title_signals):
         return -999  # sentinel: collect_candidates 会过滤掉
+
+    # 政治内容硬过滤 —— 用户偏好纯娱乐 / 知识 / 关系内容，不要政治
+    # （特朗普 / 拜登 / 选举 / 国会等关键词直接踢出，即使来自信任频道也不要）
+    political_signals = [
+        "trump", "biden", "obama", "kamala", "harris", "vance",
+        "election", "senate", "congress", "republican", "democrat",
+        "political", "politics", "white house", "capitol",
+        "putin", "zelensky", "netanyahu",
+        "maga", "gop", "dnc", "rnc", "impeach",
+    ]
+    if any(sig in title_lower for sig in political_signals):
+        return -999
     # 描述前 200 字硬指标（整集就是广告 / 付费推广）
     desc_head = desc_lower[:200]
     ad_desc_signals = [
