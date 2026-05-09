@@ -374,9 +374,10 @@ struct HomeView: View {
 
     @ViewBuilder
     private var rawPodcastSection: some View {
-        // 「今日推荐」混合所有 raw podcasts（不分 tech_keynote / explore），
-        // 按发布日期倒序，hero 横滑取 top 5；不展示"查看更多"，全量入口在探索 Tab。
-        let recent = dataStore.rawPodcasts.sorted { $0.publishedAt > $1.publishedAt }
+        // 「今日推荐」按 pipeline 入库时间（crawledAt）倒序 —— 当天 cron 抓回的
+        // 新视频必然排在最顶，即使该视频原始上传日期是几个月前。
+        // hero 横滑取 top 5；不展示"查看更多"，全量入口在探索 Tab。
+        let recent = dataStore.rawPodcasts.sorted { $0.sortKey > $1.sortKey }
         if !recent.isEmpty {
             RawPodcastSection(
                 title: "今日推荐",

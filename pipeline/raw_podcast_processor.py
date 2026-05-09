@@ -125,6 +125,10 @@ def candidate_to_master_entry(
         "has_video":           has_video,
         "transcript_url":      transcript_oss_url,
         "published_at":        c.get("published_at", ""),
+        # When THIS pipeline pulled the video (UTC ISO). Drives the App's
+        # "今日推荐" hero — newly-ingested videos always sort to the top
+        # regardless of YouTube upload date.
+        "crawled_at":          datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "duration_seconds":    c.get("duration_seconds", 0),
         "topic":               c.get("topic", ""),
         "category":            c.get("category", "tech_keynote"),  # tech_keynote | explore

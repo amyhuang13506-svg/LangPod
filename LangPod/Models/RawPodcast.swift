@@ -19,6 +19,12 @@ struct RawPodcast: Codable, Identifiable, Hashable {
     let transcriptUrl: String?          // 字幕 JSON URL（OSS 上的，{segments: [{start,end,en,zh}]}）
     let category: String?               // tech_keynote = 硅谷原声 / explore = 探索
     let publishedAt: String
+    /// When the pipeline ingested this video into our master list (UTC ISO).
+    /// Used by the home "今日推荐" section to surface freshly-pulled videos
+    /// at the top regardless of their original YouTube upload date — which is
+    /// the field that anchors "newness" from the user's perspective on the app.
+    /// Optional for backward compat with older master entries.
+    let crawledAt: String?
     let durationSeconds: Int
     let topic: String
     let thumbnailColor: String?
@@ -33,6 +39,7 @@ struct RawPodcast: Codable, Identifiable, Hashable {
         case hasVideo = "has_video"
         case transcriptUrl = "transcript_url"
         case publishedAt = "published_at"
+        case crawledAt = "crawled_at"
         case durationSeconds = "duration_seconds"
         case thumbnailColor = "thumbnail_color"
         case summaryZh = "summary_zh"
@@ -53,10 +60,21 @@ struct RawPodcast: Codable, Identifiable, Hashable {
         return publishedAt
     }
 
-    /// 是否为今日上新（publishedAt == 今天）
+    /// 是否为今日上新 — 优先看 crawledAt（pipeline 入库时间），新流水可信。
+    /// 老条目无 crawledAt 时回退到 publishedAt 比较。
     var isNewToday: Bool {
         let today = DateFormatter.episodeDate.string(from: Date())
+        if let c = crawledAt, c.count >= 10 {
+            return String(c.prefix(10)) == today
+        }
         return publishedAt == today
+    }
+
+    /// "今日推荐"排序专用 key：crawledAt 比 publishedAt 更能反映"今天有没有新货"。
+    /// 老数据回退到 publishedAt，保留后排出现的兜底秩序。
+    var sortKey: String {
+        if let c = crawledAt, !c.isEmpty { return c }
+        return publishedAt
     }
 
     /// 时长显示，YouTube 风格：≥1h 用 H:MM:SS，否则 M:SS。
