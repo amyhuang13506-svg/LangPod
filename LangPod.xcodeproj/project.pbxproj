@@ -88,6 +88,7 @@
 		D10001 /* AchievementsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20001 /* AchievementsPage.swift */; };
 		IC0001 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = IC0002 /* ImageCache.swift */; };
 		LP0001 /* ListenedPattern.swift in Sources */ = {isa = PBXBuildFile; fileRef = LP0002 /* ListenedPattern.swift */; };
+		LR0001 /* ListenedRawPodcast.swift in Sources */ = {isa = PBXBuildFile; fileRef = LR0002 /* ListenedRawPodcast.swift */; };
 		NM0001 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = NM0002 /* NotificationManager.swift */; };
 		PS0001 /* PushService.swift in Sources */ = {isa = PBXBuildFile; fileRef = PS0002 /* PushService.swift */; };
 		P10001 /* Pattern.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20001 /* Pattern.swift */; };
@@ -200,6 +201,7 @@
 		D20001 /* AchievementsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsPage.swift; sourceTree = "<group>"; };
 		IC0002 /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
 		LP0002 /* ListenedPattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenedPattern.swift; sourceTree = "<group>"; };
+		LR0002 /* ListenedRawPodcast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenedRawPodcast.swift; sourceTree = "<group>"; };
 		NM0002 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		PS0002 /* PushService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushService.swift; sourceTree = "<group>"; };
 		P20001 /* Pattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pattern.swift; sourceTree = "<group>"; };
@@ -281,6 +283,7 @@
 				A20030 /* ListeningLevel.swift */,
 				A20035 /* ListenedEpisode.swift */,
 				LP0002 /* ListenedPattern.swift */,
+				LR0002 /* ListenedRawPodcast.swift */,
 				P20001 /* Pattern.swift */,
 				P20002 /* PlayItem.swift */,
 				RP0002 /* RawPodcast.swift */,
@@ -568,6 +571,7 @@
 				A10032 /* APIService.swift in Sources */,
 				A10033 /* ListenedEpisode.swift in Sources */,
 				LP0001 /* ListenedPattern.swift in Sources */,
+				LR0001 /* ListenedRawPodcast.swift in Sources */,
 				A10040 /* EpisodeThumbnail.swift in Sources */,
 				A10044 /* AllEpisodesView.swift in Sources */,
 				B30001 /* EpisodeToast.swift in Sources */,
@@ -722,7 +726,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = LangPod/LangPod.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = 4SYQ773ULJ;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -743,7 +747,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.4;
+				MARKETING_VERSION = 1.2.5;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -764,7 +768,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = LangPod/LangPod.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = 4SYQ773ULJ;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -785,7 +789,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.4;
+				MARKETING_VERSION = 1.2.5;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

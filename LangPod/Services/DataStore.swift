@@ -71,20 +71,22 @@ class DataStore {
     // Listening history
     var listenHistory: [ListenedEpisode] = []
     var patternHistory: [ListenedPattern] = []
+    var rawPodcastHistory: [ListenedRawPodcast] = []
     var totalListeningSeconds: Int {
         didSet { UserDefaults.standard.set(totalListeningSeconds, forKey: "totalListeningSeconds") }
     }
 
-    /// 记录页播放历史的分段筛选：全部 / 播客 / 句型
+    /// 记录页播放历史的分段筛选：全部 / 播客 / 句型 / 视频
     var historyFilter: HistoryFilter = .all
 
     enum HistoryFilter: String, CaseIterable {
-        case all, episode, pattern
+        case all, episode, pattern, raw
         var label: String {
             switch self {
             case .all: "全部"
             case .episode: "播客"
             case .pattern: "句型"
+            case .raw: "视频"
             }
         }
     }
@@ -110,6 +112,7 @@ class DataStore {
         checkStreakContinuity()
         loadListenHistory()
         loadPatternHistory()
+        loadRawPodcastHistory()
         loadEpisodes()
         loadRawPodcasts()
     }
@@ -420,6 +423,54 @@ class DataStore {
         let cutoff = Date().addingTimeInterval(-Double(historyRetentionDays) * 86400)
         patternHistory = history.filter { $0.isStarred || $0.listenedAt > cutoff }
         if patternHistory.count != history.count { savePatternHistory() }
+    }
+
+    // MARK: - Raw Podcast History (硅谷原声)
+
+    /// 用户进入「硅谷原声」播放页就记一条历史 + 推 streak。同一条同一天去重，
+    /// 跟 episode/pattern 一致。RawPodcastPlayerView.onAppear 调这个。
+    func recordRawPodcastPlayStart(_ podcast: RawPodcast) {
+        updateStreak()
+
+        let alreadyToday = rawPodcastHistory.contains {
+            $0.podcastId == podcast.id &&
+            Calendar.current.isDateInToday($0.listenedAt)
+        }
+        guard !alreadyToday else { return }
+
+        let record = ListenedRawPodcast(
+            podcastId: podcast.id,
+            title: podcast.title,
+            speaker: podcast.speaker,
+            mediaType: podcast.mediaType.rawValue,
+            thumbnail: podcast.displayThumbnailUrl,
+            durationSeconds: podcast.durationSeconds,
+            listenedAt: Date()
+        )
+        rawPodcastHistory.insert(record, at: 0)
+        saveRawPodcastHistory()
+    }
+
+    func toggleRawPodcastStar(_ record: ListenedRawPodcast) {
+        guard let idx = rawPodcastHistory.firstIndex(where: { $0.id == record.id }) else { return }
+        rawPodcastHistory[idx].isStarred.toggle()
+        saveRawPodcastHistory()
+    }
+
+    private func saveRawPodcastHistory() {
+        guard let data = try? JSONEncoder().encode(rawPodcastHistory) else { return }
+        UserDefaults.standard.set(data, forKey: "rawPodcastHistory")
+    }
+
+    private func loadRawPodcastHistory() {
+        guard let data = UserDefaults.standard.data(forKey: "rawPodcastHistory"),
+              let history = try? JSONDecoder().decode([ListenedRawPodcast].self, from: data) else {
+            rawPodcastHistory = []
+            return
+        }
+        let cutoff = Date().addingTimeInterval(-Double(historyRetentionDays) * 86400)
+        rawPodcastHistory = history.filter { $0.isStarred || $0.listenedAt > cutoff }
+        if rawPodcastHistory.count != history.count { saveRawPodcastHistory() }
     }
 
     var totalListeningTimeDisplay: String {

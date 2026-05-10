@@ -106,6 +106,8 @@ struct RawPodcastPlayerView: View {
             if controller == nil, let urlStr = podcast.audioUrl, let url = URL(string: urlStr) {
                 controller = RawAudioController(url: url, podcast: podcast)
             }
+            // 记一条「硅谷原声」播放历史 + 推 streak（当天同一条会去重）
+            dataStore.recordRawPodcastPlayStart(podcast)
         }
         .onDisappear {
             controller?.pause()
@@ -113,9 +115,14 @@ struct RawPodcastPlayerView: View {
         .task {
             await loadTranscriptIfNeeded()
         }
-        .sheet(isPresented: $showPaywall) {
-            PaywallView()
+        // 本 View 自己是用 .fullScreenCover 弹出来的；在里面再叠系统 .sheet 配合
+        // AVPlayer + .preferredColorScheme(.dark)，iOS 18 SwiftUI 会偶发 modal 冲突崩溃。
+        // 解决：用 fullScreenCover 但套 PaywallSheetCover 模拟 sheet 视觉
+        // （顶部圆角 + 留缝 + grabber + 拖拽下拉关闭 + 半透蒙层）。
+        .fullScreenCover(isPresented: $showPaywall) {
+            PaywallSheetCover(isPresented: $showPaywall)
                 .environment(subscriptionManager)
+                .presentationBackground(.clear)
         }
         .overlay(alignment: .top) {
             if let toast = addedWordToast {
@@ -666,6 +673,116 @@ struct RawPodcastPlayerView: View {
         }
         .padding(12)
         .background(Color.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+// MARK: - Paywall sheet visual wrapper
+
+/// 把 PaywallView 包成「sheet 视觉」的容器，但底层走 .fullScreenCover —— 避免
+/// 「fullScreenCover 内嵌 .sheet」在 iOS 18 SwiftUI + AVPlayer + dark scheme 下
+/// 偶发 modal 冲突崩溃的已知问题。
+///
+/// 视觉特征（贴近系统 sheet）：
+/// - 顶部留 50pt 缝隙，露出底层 RawPodcastPlayerView
+/// - 顶部圆角 28pt + grabber 拉手
+/// - 黑色半透明 backdrop，淡入
+/// - 拖拽下拉超过阈值关闭（仅响应 grabber 区域，避免和 PaywallView 内 ScrollView 冲突）
+/// - 点击 backdrop 关闭（系统 fullScreenCover 自带从底滑下的 dismiss 动画）
+private struct PaywallSheetCover: View {
+    @Binding var isPresented: Bool
+    @Environment(SubscriptionManager.self) private var subscriptionManager
+    @State private var dragOffset: CGFloat = 0
+    @State private var backdropOpacity: Double = 0
+
+    private let topInset: CGFloat = 50
+    private let dismissThreshold: CGFloat = 120
+    private let cornerRadius: CGFloat = 28
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .top) {
+                // Backdrop —— 点击关闭
+                Color.black
+                    .opacity(backdropOpacity)
+                    .ignoresSafeArea()
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        isPresented = false
+                    }
+
+                // Sheet 卡片（PaywallView + 顶部 grabber 叠层）
+                ZStack(alignment: .top) {
+                    // 底色层：圆角顶部 + 一直延伸到屏幕底（含 home indicator 安全区）。
+                    // PaywallView 本体的 gradient 背景止于 safe area，下方 34pt 由这层白色补齐。
+                    UnevenRoundedRectangle(
+                        cornerRadii: .init(
+                            topLeading: cornerRadius,
+                            bottomLeading: 0,
+                            bottomTrailing: 0,
+                            topTrailing: cornerRadius
+                        )
+                    )
+                    .fill(Color.white)
+                    .ignoresSafeArea(edges: .bottom)
+
+                    PaywallView()
+                        .environment(subscriptionManager)
+                        .clipShape(
+                            .rect(
+                                topLeadingRadius: cornerRadius,
+                                bottomLeadingRadius: 0,
+                                bottomTrailingRadius: 0,
+                                topTrailingRadius: cornerRadius
+                            )
+                        )
+
+                    // Grabber 拉手 + 拖拽热区（仅这块响应下拉关闭，不干扰 PaywallView 的 ScrollView）
+                    VStack(spacing: 0) {
+                        Capsule()
+                            .fill(Color.black.opacity(0.22))
+                            .frame(width: 38, height: 5)
+                            .padding(.top, 8)
+                        Spacer(minLength: 0)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 28)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                if value.translation.height >= 0 {
+                                    dragOffset = value.translation.height
+                                }
+                            }
+                            .onEnded { value in
+                                if value.translation.height > dismissThreshold {
+                                    // 下拉超过阈值：先把卡片继续滑出去，
+                                    // 再 flip isPresented 让系统 dismiss（此时已不可见）
+                                    withAnimation(.easeOut(duration: 0.22)) {
+                                        dragOffset = geo.size.height
+                                        backdropOpacity = 0
+                                    }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+                                        isPresented = false
+                                    }
+                                } else {
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                        dragOffset = 0
+                                    }
+                                }
+                            }
+                    )
+                }
+                .padding(.top, topInset)
+                .offset(y: dragOffset)
+            }
+        }
+        .background(Color.clear)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.3)) {
+                backdropOpacity = 0.45
+            }
+        }
     }
 }
 

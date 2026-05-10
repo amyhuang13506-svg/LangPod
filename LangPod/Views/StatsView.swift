@@ -7,6 +7,7 @@ struct StatsView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var showPlayer = false
     @State private var showPaywall = false
+    @State private var selectedRawPodcast: RawPodcast?
 
     var body: some View {
         ZStack {
@@ -30,6 +31,9 @@ struct StatsView: View {
         }
         .fullScreenCover(isPresented: $showPaywall) {
             PaywallView()
+        }
+        .fullScreenCover(item: $selectedRawPodcast) { podcast in
+            RawPodcastPlayerView(podcast: podcast)
         }
     }
 
@@ -246,35 +250,39 @@ struct StatsView: View {
 
     // MARK: - History List
 
-    /// Unified history entry for the 播放历史 list. Episodes + patterns share
-    /// the same day grouping + star toggle + tap-to-play flow, but render
-    /// differently (thumbnail vs. template card).
+    /// Unified history entry for the 播放历史 list. Episodes / patterns / raw
+    /// podcasts share day grouping + star toggle + tap-to-play, but render differently.
     private enum HistoryEntry: Identifiable {
         case episode(ListenedEpisode)
         case pattern(ListenedPattern)
+        case raw(ListenedRawPodcast)
 
         var id: String {
             switch self {
             case .episode(let e): "ep-\(e.id)"
             case .pattern(let p): "pt-\(p.id)"
+            case .raw(let r): "rw-\(r.id)"
             }
         }
         var listenedAt: Date {
             switch self {
             case .episode(let e): e.listenedAt
             case .pattern(let p): p.listenedAt
+            case .raw(let r): r.listenedAt
             }
         }
         var dayString: String {
             switch self {
             case .episode(let e): e.dayString
             case .pattern(let p): p.dayString
+            case .raw(let r): r.dayString
             }
         }
         var isStarred: Bool {
             switch self {
             case .episode(let e): e.isStarred
             case .pattern(let p): p.isStarred
+            case .raw(let r): r.isStarred
             }
         }
     }
@@ -303,14 +311,28 @@ struct StatsView: View {
         }
     }
 
+    private var displayRawPodcasts: [ListenedRawPodcast] {
+        let source = dataStore.starredOnly
+            ? dataStore.rawPodcastHistory.filter { $0.isStarred }
+            : dataStore.rawPodcastHistory
+        var seen = Set<String>()
+        return source.filter { r in
+            if seen.contains(r.podcastId) { return false }
+            seen.insert(r.podcastId)
+            return true
+        }
+    }
+
     private var displayEntries: [HistoryEntry] {
         let episodes = displayEpisodes.map { HistoryEntry.episode($0) }
         let patterns = displayPatterns.map { HistoryEntry.pattern($0) }
+        let raws = displayRawPodcasts.map { HistoryEntry.raw($0) }
         let combined: [HistoryEntry]
         switch dataStore.historyFilter {
-        case .all: combined = episodes + patterns
+        case .all: combined = episodes + patterns + raws
         case .episode: combined = episodes
         case .pattern: combined = patterns
+        case .raw: combined = raws
         }
         return combined.sorted { $0.listenedAt > $1.listenedAt }
     }
@@ -405,6 +427,7 @@ struct StatsView: View {
                         switch entry {
                         case .episode(let ep): historyRow(ep)
                         case .pattern(let p): patternHistoryRow(p)
+                        case .raw(let r): rawPodcastHistoryRow(r)
                         }
                     }
                 }
@@ -416,9 +439,11 @@ struct StatsView: View {
         switch (dataStore.starredOnly, dataStore.historyFilter) {
         case (true, .pattern): "还没有收藏的句型"
         case (true, .episode): "还没有收藏的播客"
+        case (true, .raw): "还没有收藏的视频"
         case (true, .all): "还没有收藏记录"
         case (false, .pattern): "还没有句型播放记录"
         case (false, .episode): "还没有播客播放记录"
+        case (false, .raw): "还没有视频播放记录"
         case (false, .all): "还没有播放记录"
         }
     }
@@ -499,12 +524,15 @@ struct StatsView: View {
 
     /// 当前筛选视图下能否"顺序播放"。
     /// 句型模式需要至少 2 条 + 至少 1 条未被付费墙挡住。
+    /// 硅谷原声模式不支持顺序播放（每条走独立 RawAudioController，没全局队列）。
     private var canPlayHistoryQueue: Bool {
         switch dataStore.historyFilter {
         case .all, .episode:
             return displayEpisodes.count >= 2
         case .pattern:
             return accessiblePatternItems.count >= 1 && displayPatterns.count >= 2
+        case .raw:
+            return false
         }
     }
 
@@ -530,6 +558,9 @@ struct StatsView: View {
             guard let first = queue.first else { return }
             audioPlayer.playEpisode(first, in: queue)
             showPlayer = true
+        case .raw:
+            // 硅谷原声不支持队列顺序播放（按钮 canPlayHistoryQueue 已挡）
+            return
         case .pattern:
             let items = accessiblePatternItems
             guard case .pattern(let first, let parent) = items.first else {
@@ -643,6 +674,88 @@ struct StatsView: View {
             return Color(hex: hex)
         }
         return Color(hex: "F1EBE1")
+    }
+
+    // MARK: - Raw Podcast Row (硅谷原声)
+
+    /// 把历史记录反向解析回当前内存里的 RawPodcast。
+    /// 服务器侧条目滚出主列表后会找不到 → row 仍渲染但 tap 不响应。
+    private func liveRawPodcast(_ record: ListenedRawPodcast) -> RawPodcast? {
+        dataStore.rawPodcasts.first { $0.id == record.podcastId }
+    }
+
+    private func rawPodcastHistoryRow(_ record: ListenedRawPodcast) -> some View {
+        Button {
+            if let podcast = liveRawPodcast(record) {
+                selectedRawPodcast = podcast
+            }
+        } label: {
+            HStack(spacing: 12) {
+                rawThumbnail(record)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(record.title)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.textPrimary)
+                        .lineLimit(2)
+                    HStack(spacing: 6) {
+                        Text(record.mediaType == "video" ? "视频源" : "播客")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color.appPrimary)
+                        Text("·")
+                            .foregroundStyle(Color.textQuaternary)
+                        Text(record.speaker)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.textTertiary)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                Button { dataStore.toggleRawPodcastStar(record) } label: {
+                    Image(systemName: record.isStarred ? "star.fill" : "star")
+                        .font(.system(size: 18))
+                        .foregroundStyle(record.isStarred ? Color.warning : Color.textQuaternary)
+                        .frame(width: 36, height: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(.white, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.border, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func rawThumbnail(_ record: ListenedRawPodcast) -> some View {
+        if let urlStr = record.thumbnail, !urlStr.isEmpty {
+            CachedAsyncImage(url: urlStr) {
+                rawThumbnailFallback
+            }
+            .scaledToFill()
+            .frame(width: 40, height: 40)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        } else {
+            rawThumbnailFallback
+        }
+    }
+
+    private var rawThumbnailFallback: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(Color(hex: "252B3F"))
+            .frame(width: 40, height: 40)
+            .overlay(
+                Image(systemName: "waveform")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.white.opacity(0.6))
+            )
     }
 
     private func levelColor(_ level: String) -> Color {
