@@ -355,16 +355,19 @@ def process_candidate(c: dict, bucket) -> Optional[dict]:
 # 主入口：candidates → 增量入库
 # =============================================================
 
-MAX_PER_TOPIC = 2  # nightly cap so 6-condi top doesn't collapse into one theme
+MAX_PER_TOPIC = 2    # nightly cap so 6-cand top doesn't collapse into one theme
+MAX_PER_CHANNEL = 1  # never two videos from the same source channel in one run
 
 
 def process_candidates(candidates: list[dict], top_n: int = 3) -> list[dict]:
     """处理 top N 新候选 (已在 master 的跳过)。
 
-    Topic-diverse selection: each topic prefix (e.g. "娱乐") may contribute at
-    most MAX_PER_TOPIC entries per run. Ensures the home hero shows ≥3 different
-    themes when top_n ≥ 6, instead of 6 entertainment clips dominating because
-    TOPIC_BONUS handed them all huge scores.
+    Diversity caps applied per run:
+      - MAX_PER_TOPIC entries per topic prefix (e.g. 娱乐 / 两性 / 美食)
+      - MAX_PER_CHANNEL entries per source channel (label) — prevents Esther
+        Perel from posting 5 videos and dominating, even though they're all
+        legitimate matches; one Esther Perel + one Jay Shetty is better than
+        two Esther Perels in the same hero row.
     """
     bucket = get_bucket()
     master = load_master(bucket)
@@ -372,12 +375,19 @@ def process_candidates(candidates: list[dict], top_n: int = 3) -> list[dict]:
 
     new_entries: list[dict] = []
     topic_counts: dict[str, int] = {}
+    channel_counts: dict[str, int] = {}
     processed = 0
     for c in candidates:
         if processed >= top_n:
             break
         cid = candidate_id(c)
         if cid in existing_ids:
+            continue
+
+        # Channel cap — speaker comes from source_label = the channel display name.
+        channel_key = (c.get("speaker") or "").strip().lower() or "unknown"
+        if channel_counts.get(channel_key, 0) >= MAX_PER_CHANNEL:
+            print(f"  ⏭️  skip {cid} — channel '{c.get('speaker','?')}' already has {MAX_PER_CHANNEL} pick")
             continue
 
         topic_prefix = ((c.get("topic") or "").split("·")[0].strip()) or "未分类"
@@ -391,9 +401,11 @@ def process_candidates(candidates: list[dict], top_n: int = 3) -> list[dict]:
             existing_ids.add(cid)
             new_entries.append(entry)
             topic_counts[topic_prefix] = topic_counts.get(topic_prefix, 0) + 1
+            channel_counts[channel_key] = channel_counts.get(channel_key, 0) + 1
             processed += 1
 
     print(f"  📊 topic distribution: {topic_counts}")
+    print(f"  📊 channel distribution: {channel_counts}")
 
     if processed > 0:
         save_master(master, bucket)
