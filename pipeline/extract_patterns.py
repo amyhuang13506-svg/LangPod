@@ -3,7 +3,7 @@ Step 3 (post-audio): Extract 2-3 sentence patterns from each episode and
 generate explainer audio per the 6-section format.
 
 Sections produced:
-  1. pronunciation              (中文导入 + 英文示范 + 中文连读讲解)
+  1. pronunciation              (中文导入 + 英文示范)
   2. pronunciation_drill        ("来跟我念 3 次" + 英文核心音节 × 3, speed=0.7)
   3. meaning                    (字面意思; hard 级别如有字面陷阱必须警告)
   4. scene_and_feeling          (核心段: 具象画面 + 感觉关键词 + VS 对比)
@@ -18,7 +18,6 @@ import os
 import sys
 import tempfile
 import time
-from datetime import datetime, timedelta
 from pathlib import Path
 
 import requests
@@ -28,18 +27,28 @@ from config import (
     GPT_API_ENDPOINT,
     GPT_API_KEY,
     GPT_MODEL,
-    ELEVENLABS_API_KEY,
-    ELEVENLABS_API_ENDPOINT,
-    ELEVENLABS_MODEL,
-    ELEVENLABS_PATTERN_VOICES,
+    MINIMAX_API_KEY,
+    MINIMAX_API_ENDPOINT,
+    MINIMAX_MODEL,
+    MINIMAX_VOICE_ALEX,
+    MINIMAX_VOICE_LISA,
+    MINIMAX_VOICE_ZH_MALE,
+    MINIMAX_VOICE_ZH_FEMALE,
     OUTPUT_DIR,
 )
 
 
 PATTERN_MANIFEST_PATH = os.path.join(OUTPUT_DIR, "pattern_manifest.json")
 
-# ElevenLabs v3 — one voice reads CN + EN naturally.
-# 5-voice rotation picked by stable hash of pattern_id (same pattern always gets same voice on reruns).
+# MiniMax voices are language-specific, so each pattern uses a pair (one English
+# voice + one Chinese voice), kept gender-consistent so the speaker sounds like
+# the same person across the en/zh switches. Picked by stable hash of pattern_id
+# so reruns keep the same voice.
+PATTERN_VOICE_PAIRS = [
+    {"en": MINIMAX_VOICE_ALEX, "zh": MINIMAX_VOICE_ZH_MALE},     # male pair
+    {"en": MINIMAX_VOICE_LISA, "zh": MINIMAX_VOICE_ZH_FEMALE},   # female pair
+]
+
 TTS_MAX_ATTEMPTS = 4
 TTS_BACKOFF_BASE_S = 2.0
 TTS_INTER_CALL_SLEEP_S = 0.15
@@ -51,21 +60,32 @@ TTS_INTER_CALL_SLEEP_S = 0.15
 DRILL_SPEED = 0.6
 DRILL_SILENCE_MS = 1200
 
-# Per-level English speed for the regular pattern explanation (demo + examples).
-# Drill is always at DRILL_SPEED regardless. Easy beginners need every word clear,
-# medium gets a small slowdown, hard stays natural.
-PATTERN_EN_SPEED = {
-    "easy": 0.78,
-    "medium": 0.9,
-    "hard": 1.0,
+# Per-level English speed for the demo phrase (the natural-speed read shown
+# right after the Chinese intro). Drill is always at DRILL_SPEED regardless.
+PATTERN_DEMO_SPEED = {
+    "easy": 0.7,
+    "medium": 0.8,
+    "hard": 0.9,
+}
+
+# Examples come at the end and tend to be the hardest to follow — multiple
+# new sentences in a row, no repetition. Slow them down a notch below the demo
+# so learners have time to actually parse each one.
+PATTERN_EXAMPLE_SPEED = {
+    "easy": 0.65,
+    "medium": 0.75,
+    "hard": 0.85,
 }
 
 # Pause budget between TTS chunks
 SECTION_SILENCE_MS = 400        # between top-level sections
 WITHIN_SECTION_SILENCE_MS = 250  # within a section, between zh/en switches
 
-# Dedup: a pattern (same template) must not repeat within this many days.
-DEDUP_WINDOW_DAYS = 30
+# Dedup is permanent: any template ever extracted is permanently blocked.
+# Old explainer audio + scripts are kept long-term; we never regenerate the
+# same template (which would produce a near-identical explainer the user has
+# already heard). Easy's small daily-talk pool will naturally saturate over
+# time and produce zero new patterns per episode — that's accepted.
 
 
 import re
@@ -215,34 +235,24 @@ def save_pattern_manifest(manifest):
         json.dump(manifest, f, ensure_ascii=False, indent=2)
 
 
-def get_recent_templates(manifest, reference_date):
-    """Return templates extracted within DEDUP_WINDOW_DAYS of reference_date.
-    reference_date is the current episode's date ("YYYY-MM-DD"); any manifest
-    entry dated later than (reference_date - 30 days) — and not later than
-    reference_date itself — is considered a clash and must be skipped by GPT.
-    Entries older than the window are allowed to recur.
+def get_recent_templates(manifest, reference_date=None, level=None):
+    """Return ALL templates ever extracted at the given level (or all levels if
+    `level` is None). Dedup is permanent — once a template is used, it never
+    regenerates, so the user never hears two near-identical explainers.
+
+    `reference_date` is unused (kept for backward-compat with older callers).
     """
-    try:
-        ref = datetime.strptime(reference_date, "%Y-%m-%d").date()
-    except (TypeError, ValueError):
-        return []
-    cutoff = ref - timedelta(days=DEDUP_WINDOW_DAYS)
-    recent = []
-    for p in manifest.get("patterns", []):
-        d = p.get("date")
-        if not d:
-            continue
-        try:
-            pd = datetime.strptime(d, "%Y-%m-%d").date()
-        except ValueError:
-            continue
-        if cutoff <= pd <= ref:
-            recent.append(p["template"])
-    # Dedup templates themselves in case the same one was extracted multiple times
     seen = set()
     unique = []
-    for t in recent:
-        if t not in seen:
+    for p in manifest.get("patterns", []):
+        if level is not None:
+            ep_id = p.get("episode_id", "")
+            # episode_id format: "ep-YYYYMMDD-<level>-NNN"
+            parts = ep_id.split("-")
+            if len(parts) >= 3 and parts[2] != level:
+                continue
+        t = p.get("template")
+        if t and t not in seen:
             seen.add(t)
             unique.append(t)
     return unique
@@ -263,7 +273,7 @@ def extract_patterns_with_gpt(episode, recent_templates):
     dedup_block = ""
     if recent_templates:
         dedup_block = (
-            "\n=== 最近 30 天已抽取过的句型（一个月内不得重复，必须跳过这些选新的）===\n"
+            "\n=== 已经讲解过的句型（永久不得重复，必须跳过这些选新的）===\n"
             + "\n".join("- " + t for t in recent_templates)
             + "\n"
         )
@@ -334,42 +344,14 @@ def extract_patterns_with_gpt(episode, recent_templates):
    "#E8DCC4" (米色) / "#D4E5D4" (淡绿) / "#E5D4E0" (淡紫) / "#DCE5F0" (淡蓝) / "#F0E0D4" (淡橙)
    不同句型用不同颜色让用户视觉区分
 
-**规则 8：连读讲解 = "标准清晰 + 地道进阶"双层框架**
-   pronunciation_demo_en 是 TTS 合成的标准清晰读法（每个词听得清楚，帮学习者认词），
-   连读是地道化的进阶读法。讲解必须明确区分这两层，而不是暗示示范读错了。
-
-   核心原理：承认 TTS 字正腔圆的限制，把它转化为教学优势 ——
-   "先听清每个词，再听地道连读"。不要让用户对比时觉得示范和讲解矛盾。
-
-   ❌ 错误（暗示示范读错了、或强行让 TTS 模仿地道连读）：
-   - "注意 Could I 要连读，听起来像 /kʊdaɪ/。不要分开读成 Could. I."
-     （让用户误以为示范就是 Could. I. 这种错的，其实示范读得很自然）
-
-   ✅ 正确（承认示范清晰，引入连读作为地道化进阶）：
-   - "刚才标准读法每个词都很清楚。如果你想读得地道一点，可以连读成 /kʊdaɪ/，听起来更流畅。不要分开读成 Could. I."
-   - "标准读法听得出每个词。地道的母语者会连读成 /dʒə/（Do you），听起来更顺。不要一个一个蹦：Do. You."
-   - "示范读得清清楚楚。如果想模仿母语者的自然感，可以连读成 /θæŋkju/，像一个词一样。不要分开读成 Thank. You."
-
-   标准句式模板：
-   "刚才标准读法每个词都很清楚。如果你想读得地道一点，可以连读成 /IPA/ ，听起来更流畅。不要分开读成 X. Y."
-   （X. Y. 中间必须是句号 + 空格，让 TTS 把两个词当独立句子读 → 自然有停顿 → 对比出"不连读"的效果）
-
-   只在 pronunciation_explanation_zh 段用这个手法。其他段不用。
-
-**规则 9：IPA 音标前后加空格**
-   写 /IPA/ 时前后必须有空格，避免跟汉字粘在一起让 TTS 混淆。
-   ✅ "听起来像 /kʊdaɪ/ 这样" （前后空格）
-   ❌ "听起来像/kʊdaɪ/这样" （粘连）
-   简化原则：能用汉字描述就不写音标；必要时才用 IPA，避免过度细节（/ˈbɒr.oʊ/ 这种）。
-
-**规则 10：pronunciation_intro_zh 只写中文导入，不嵌入完整英文句子，结尾不要加破折号**
+**规则 8：pronunciation_intro_zh 只写中文导入，不嵌入完整英文句子，结尾不要加破折号**
    完整英文示范在 pronunciation_demo_en 独立字段，intro 只写中文引导。
    ❌ "今天我们学：Could I borrow your pen, please? 先听标准发音 ——"（嵌入完整英文 + 破折号）
    ❌ "今天我们学一个礼貌请求句型，先听标准发音 ——"（末尾破折号 TTS 会读出杂音）
    ✅ "今天我们学一个礼貌请求句型。先听标准发音。"（纯中文 + 句号收尾）
    结尾必须用句号或问号，禁止用破折号（——）/ 省略号（...）结尾。
 
-**规则 11：meaning_zh 严格短（≤50 字），只讲字面意思**
+**规则 9：meaning_zh 严格短（≤50 字），只讲字面意思**
    meaning_zh 内容限于：
    - 字面意思（这个句型的中文字面对应）
    - Hard 级别字面陷阱警告（如果有）
@@ -379,7 +361,7 @@ def extract_patterns_with_gpt(episode, recent_templates):
    - 什么时候用、跟谁用（归 scene_and_feeling_zh）
    如果字面意思很直白（像 "I love ___" = "我爱 ___"），meaning_zh 可以只写一句。
 
-**规则 12：scene_prefix_zh 必须是"具体场景——情绪/态度"双段结构**
+**规则 10：scene_prefix_zh 必须是"具体场景——情绪/态度"双段结构**
    格式：XXX——YYY。
    - XXX（2-8 字）：具体场景，必须有画面感
    - YYY（5-15 字）：带情绪 / 态度 / 动作的描述
@@ -400,7 +382,6 @@ def extract_patterns_with_gpt(episode, recent_templates):
       "thumbnail_color": "#E8DCC4",
       "pronunciation_intro_zh": "今天我们学一个超实用的礼貌请求句型。先听标准发音。",
       "pronunciation_demo_en": "Could I borrow your pen, please?",
-      "pronunciation_explanation_zh": "刚才标准读法每个词都很清楚。如果你想读得地道一点，可以连读成 /kʊdaɪ/ ，听起来更流畅。不要分开读成 Could. I.",
       "meaning_zh": "Could I 字面意思是：我可以做某事吗？",
       "scene_and_feeling_zh": "现在你想象一个画面：你在咖啡店，店员忙得不可开交，你想点单，但又不想显得理所当然。这时候你说 Could I order a latte, please?。这个 Could I 带着一种谦卑感、一种 我知道你忙、我先试探一下、你拒绝也没关系 的口吻。它和 Can I 不一样。Can I 是默认你会答应；Could I 是先把决定权递给对方。所以越是对陌生人、长辈、服务员、上司，越要用 Could I。记住这种感觉——当你脑子里有 给对方留余地 的画面时，嘴里就会自动冒出 Could I。不要去翻译 我可以怎么样吗 这几个字，直接由感觉触发。",
       "examples": [
@@ -424,7 +405,7 @@ def extract_patterns_with_gpt(episode, recent_templates):
 4. 每个 scene_and_feeling_zh 段都包含 "它和 X 不一样" 的对比句
 5. 每个 scene_and_feeling_zh 都以 "记住这种感觉——" 开头的固定结尾收口
 6. 每个 example 的 scene_prefix_zh 是场景画面（"X——Y"格式），不是翻译
-7. 当前输出的任何 template 都不能出现在上面"最近 30 天已抽取过的句型"列表中（一个月内禁止重复）
+7. 当前输出的任何 template 都不能出现在上面"最近已抽取过的句型"列表中（窗口内禁止重复）
 
 请输出 2-3 个句型，按高频实用性排序（script 太简单时只输出 2 个）。""" % (
         level,
@@ -458,17 +439,17 @@ def extract_patterns_with_gpt(episode, recent_templates):
 
 # ---------- TTS synthesis ----------
 
-def pick_voice_for_pattern(pattern_id):
-    """Stable hash → voice index; same pattern_id always gets same voice on reruns."""
+def pick_voice_pair_for_pattern(pattern_id):
+    """Stable hash → voice pair (en+zh of same gender); same pattern_id always
+    gets the same pair on reruns."""
     h = hashlib.md5(pattern_id.encode("utf-8")).hexdigest()
-    return ELEVENLABS_PATTERN_VOICES[int(h, 16) % len(ELEVENLABS_PATTERN_VOICES)]
+    return PATTERN_VOICE_PAIRS[int(h, 16) % len(PATTERN_VOICE_PAIRS)]
 
 
 def trim_tts_tail(seg):
-    """Trim low-energy tail artifact ElevenLabs sometimes leaves (garbled vowel
-    or breath sound). Uses detect_leading_silence on reversed segment; safe —
-    never touches middle. Threshold loosened to -30dB to catch faint artifacts,
-    window widened to 500ms (em-dash artifact can be ~200-400ms).
+    """Trim low-energy tail artifact TTS sometimes leaves (garbled vowel or
+    breath sound). Uses detect_leading_silence on reversed segment; safe —
+    never touches middle.
     """
     if seg is None or len(seg) < 200:
         return seg
@@ -483,35 +464,29 @@ def trim_tts_tail(seg):
     return seg
 
 
-def eleven_tts(text, voice_id):
-    """Synthesize text via ElevenLabs v3. Returns AudioSegment or None.
-    One voice handles both Chinese narration and English examples — no mid-section switching.
-    Trims trailing noise/silence ElevenLabs sometimes appends.
+def minimax_tts(text, voice_id):
+    """Synthesize text via MiniMax speech-02-hd. Returns AudioSegment or None.
+    Voice is language-specific — caller picks en or zh voice from the pattern's
+    gender-paired voice set.
     """
     text = (text or "").strip()
     if not text:
         return None
-    url = "%s/%s" % (ELEVENLABS_API_ENDPOINT, voice_id)
-    headers = {
-        "xi-api-key": ELEVENLABS_API_KEY,
-        "Content-Type": "application/json",
-        "Accept": "audio/mpeg",
-    }
     body = {
+        "model": MINIMAX_MODEL,
         "text": text,
-        "model_id": ELEVENLABS_MODEL,
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.75,
-            "style": 0.0,
-            "use_speaker_boost": True,
-        },
+        "voice_setting": {"voice_id": voice_id, "speed": 1.0},
+        "audio_setting": {"format": "mp3", "sample_rate": 32000},
+    }
+    headers = {
+        "Authorization": "Bearer %s" % MINIMAX_API_KEY,
+        "Content-Type": "application/json",
     }
 
     last_error = None
     for attempt in range(TTS_MAX_ATTEMPTS):
         try:
-            response = requests.post(url, headers=headers, json=body, timeout=180)
+            response = requests.post(MINIMAX_API_ENDPOINT, headers=headers, json=body, timeout=60)
         except requests.RequestException as e:
             last_error = "network: %s" % e
             time.sleep(TTS_BACKOFF_BASE_S * (2 ** attempt))
@@ -525,12 +500,31 @@ def eleven_tts(text, voice_id):
             continue
 
         if response.status_code != 200:
-            print("   ❌ ElevenLabs error %d: %s" % (response.status_code, response.text[:300]))
+            print("   ❌ MiniMax error %d: %s" % (response.status_code, response.text[:300]))
             return None
 
         try:
+            result = response.json()
+        except ValueError:
+            last_error = "invalid json"
+            time.sleep(TTS_BACKOFF_BASE_S * (2 ** attempt))
+            continue
+
+        audio_hex = None
+        if isinstance(result, dict):
+            data = result.get("data")
+            if isinstance(data, dict):
+                audio_hex = data.get("audio")
+            audio_hex = audio_hex or result.get("audio")
+
+        if not audio_hex:
+            last_error = "empty audio: %s" % str(result)[:200]
+            time.sleep(TTS_BACKOFF_BASE_S * (2 ** attempt))
+            continue
+
+        try:
             tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
-            tmp.write(response.content)
+            tmp.write(bytes.fromhex(audio_hex))
             tmp.close()
             try:
                 seg = AudioSegment.from_mp3(tmp.name)
@@ -542,18 +536,18 @@ def eleven_tts(text, voice_id):
             time.sleep(TTS_BACKOFF_BASE_S * (2 ** attempt))
             continue
 
-    print("   ❌ ElevenLabs TTS failed after %d attempts (%s)" % (TTS_MAX_ATTEMPTS, last_error))
+    print("   ❌ MiniMax TTS failed after %d attempts (%s)" % (TTS_MAX_ATTEMPTS, last_error))
     return None
 
 
 def _append(combined, text, voice_id):
-    """Append an ElevenLabs-synthesized chunk. Chinese text is cleaned first."""
+    """Append a MiniMax-synthesized chunk. Text is cleaned first."""
     if not text:
         return combined
     text = clean_for_tts(text)
     if not text:
         return combined
-    seg = eleven_tts(text, voice_id)
+    seg = minimax_tts(text, voice_id)
     if seg is None:
         return combined
     return combined + seg
@@ -563,57 +557,43 @@ def synthesize_pattern_audio(pattern_data, output_dir, pattern_id, level="medium
     """Generate the explainer audio with PER-SENTENCE timestamps, so subtitles
     can flip alongside the audio (instead of showing one 300-char block).
 
-    `level` controls the English playback speed (PATTERN_EN_SPEED) — beginners
-    get every word slowed down for clarity. The drill segment is always at
-    DRILL_SPEED regardless of level.
+    `level` controls the English playback speed — beginners get every word
+    slowed down for clarity. Demo uses PATTERN_DEMO_SPEED; examples (harder to
+    follow because they're new sentences) use the slower PATTERN_EXAMPLE_SPEED.
+    The drill segment is always at DRILL_SPEED regardless of level.
 
     Returns (audio_path, script_lines, duration_sec) where script_lines is a
     list of dicts matching PatternScriptLine in the Swift model.
     """
-    en_speed = PATTERN_EN_SPEED.get(level, 1.0)
+    demo_speed = PATTERN_DEMO_SPEED.get(level, 1.0)
+    example_speed = PATTERN_EXAMPLE_SPEED.get(level, 1.0)
     combined = AudioSegment.empty()
     script_lines = []
     silence_short = AudioSegment.silent(duration=WITHIN_SECTION_SILENCE_MS)
     silence_section = AudioSegment.silent(duration=SECTION_SILENCE_MS)
     silence_drill = AudioSegment.silent(duration=DRILL_SILENCE_MS)
 
-    def add_zh_sentences(section, text):
-        """Split Chinese narration into subtitle-sized chunks and synthesize
-        each separately; append a script_line per chunk with its own timestamps."""
-        for sub in split_into_subtitles(text):
-            start_ms = len(combined)
-            new_combined = _append(combined, sub, voice_id)
-            if len(new_combined) == start_ms:
-                continue  # TTS failed
-            script_lines.append({
-                "section": section,
-                "text_zh": sub,
-                "text_en": "",
-                "start": start_ms / 1000.0,
-                "end": len(new_combined) / 1000.0,
-            })
-            # Mutate via outer combined
-            add_zh_sentences._combined = new_combined
-
-    # Pick one voice for this entire pattern (stable by pattern_id hash).
-    voice_id = pick_voice_for_pattern(pattern_id)
+    # Pick a voice pair (en + zh, gender-matched) for this pattern.
+    voices = pick_voice_pair_for_pattern(pattern_id)
+    en_voice = voices["en"]
+    zh_voice = voices["zh"]
 
     # Pre-synthesize demo once at natural speed; reused (atempo-slowed) in drill.
     demo_text = pattern_data["pronunciation_demo_en"]
-    demo_natural = eleven_tts(demo_text, voice_id)
+    demo_natural = minimax_tts(demo_text, en_voice)
     drill_slow = slowdown_segment(demo_natural, tempo=DRILL_SPEED) if demo_natural is not None else None
     # Demo for the explanation phase is slowed per level (always derived from
     # the natural-speed clip — drill is also from natural, never compounded).
-    if demo_natural is not None and en_speed < 1.0:
-        demo_segment = slowdown_segment(demo_natural, tempo=en_speed)
+    if demo_natural is not None and demo_speed < 1.0:
+        demo_segment = slowdown_segment(demo_natural, tempo=demo_speed)
     else:
         demo_segment = demo_natural
 
     # ===== 1. pronunciation =====
-    # intro (zh, multi-sentence) → demo (en, single line) → explanation (zh, multi-sentence)
+    # intro (zh, multi-sentence) → demo (en, single line)
     for sub in split_into_subtitles(pattern_data.get("pronunciation_intro_zh", "")):
         s_ms = len(combined)
-        combined = _append(combined, sub, voice_id)
+        combined = _append(combined, sub, zh_voice)
         if len(combined) > s_ms:
             script_lines.append({
                 "section": "pronunciation", "text_zh": sub, "text_en": "",
@@ -630,21 +610,11 @@ def synthesize_pattern_audio(pattern_data, output_dir, pattern_id, level="medium
         })
         combined += silence_short
 
-    for sub in split_into_subtitles(pattern_data.get("pronunciation_explanation_zh", "")):
-        s_ms = len(combined)
-        combined = _append(combined, sub, voice_id)
-        if len(combined) > s_ms:
-            script_lines.append({
-                "section": "pronunciation", "text_zh": sub, "text_en": "",
-                "start": s_ms / 1000.0, "end": len(combined) / 1000.0,
-            })
-            combined += silence_short
-
     combined += silence_section
 
     # ===== 2. pronunciation_drill (3× slowed demo, linking preserved) =====
     s_ms = len(combined)
-    combined = _append(combined, "来，跟我念 3 次。", voice_id)
+    combined = _append(combined, "来，跟我念 3 次。", zh_voice)
     if len(combined) > s_ms:
         script_lines.append({
             "section": "pronunciation_drill", "text_zh": "来，跟我念 3 次 ——", "text_en": "",
@@ -668,7 +638,7 @@ def synthesize_pattern_audio(pattern_data, output_dir, pattern_id, level="medium
     # ===== 3. meaning (multi-sentence zh) =====
     for sub in split_into_subtitles(pattern_data.get("meaning_zh", "")):
         s_ms = len(combined)
-        combined = _append(combined, sub, voice_id)
+        combined = _append(combined, sub, zh_voice)
         if len(combined) > s_ms:
             script_lines.append({
                 "section": "meaning", "text_zh": sub, "text_en": "",
@@ -680,7 +650,7 @@ def synthesize_pattern_audio(pattern_data, output_dir, pattern_id, level="medium
     # ===== 4. scene_and_feeling (longest, always needs chunking) =====
     for sub in split_into_subtitles(pattern_data.get("scene_and_feeling_zh", "")):
         s_ms = len(combined)
-        combined = _append(combined, sub, voice_id)
+        combined = _append(combined, sub, zh_voice)
         if len(combined) > s_ms:
             script_lines.append({
                 "section": "scene_and_feeling", "text_zh": sub, "text_en": "",
@@ -696,7 +666,7 @@ def synthesize_pattern_audio(pattern_data, output_dir, pattern_id, level="medium
         scene_prefix = ex.get("scene_prefix_zh", "")
         for sub in split_into_subtitles(scene_prefix):
             s_ms = len(combined)
-            combined = _append(combined, sub, voice_id)
+            combined = _append(combined, sub, zh_voice)
             if len(combined) > s_ms:
                 script_lines.append({
                     "section": section, "text_zh": sub, "text_en": "",
@@ -708,9 +678,9 @@ def synthesize_pattern_audio(pattern_data, output_dir, pattern_id, level="medium
         if en_text:
             s_ms = len(combined)
             # Synthesize at natural speed, then slow down per level (matches demo).
-            ex_natural = eleven_tts(clean_for_tts(en_text), voice_id)
+            ex_natural = minimax_tts(clean_for_tts(en_text), en_voice)
             if ex_natural is not None:
-                ex_seg = slowdown_segment(ex_natural, tempo=en_speed) if en_speed < 1.0 else ex_natural
+                ex_seg = slowdown_segment(ex_natural, tempo=example_speed) if example_speed < 1.0 else ex_natural
                 combined += ex_seg
                 script_lines.append({
                     "section": section, "text_zh": "", "text_en": en_text,
@@ -763,7 +733,7 @@ def process_episode(episode_json_path, manifest, force=False):
 
     print("\n📚 Extracting patterns from %s (%s)..." % (episode["id"], episode["title"]))
 
-    recent = get_recent_templates(manifest, episode.get("date", ""))
+    recent = get_recent_templates(manifest, episode.get("date", ""), level=episode.get("level"))
     try:
         result = extract_patterns_with_gpt(episode, recent)
     except Exception as e:
@@ -783,11 +753,11 @@ def process_episode(episode_json_path, manifest, force=False):
     for p in raw_patterns:
         t = p.get("template", "").strip()
         if t and t in recent_set:
-            print("   ⏭  Dropping duplicate template within 30d: %s" % t[:60])
+            print("   ⏭  Dropping already-extracted template: %s" % t[:60])
             continue
         filtered.append(p)
     if not filtered:
-        print("   ⚠️  All GPT patterns were duplicates of recent 30 days")
+        print("   ⚠️  All GPT patterns were already extracted before — skipping episode")
         return False
     raw_patterns = filtered
 
