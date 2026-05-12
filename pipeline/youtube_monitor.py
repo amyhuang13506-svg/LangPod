@@ -148,19 +148,32 @@ def fetch_video_details(video_ids: list[str], api_key: str = YOUTUBE_API_KEY) ->
             print(f"  ! videos.list failed: HTTP {r.status_code} — {r.text[:200]}")
             continue
         for it in r.json().get("items", []):
-            out.append({
-                "video_id": it["id"],
-                "title": it["snippet"]["title"],
-                "channel_title": it["snippet"]["channelTitle"],
-                "channel_id": it["snippet"]["channelId"],
-                "published_at": it["snippet"]["publishedAt"],
-                "description": it["snippet"]["description"],
-                "duration": it["contentDetails"]["duration"],
-                "duration_seconds": _parse_iso_duration(it["contentDetails"]["duration"]),
-                "view_count": int(it["statistics"].get("viewCount", 0) or 0),
-                "like_count": int(it["statistics"].get("likeCount", 0) or 0),
-                "thumbnail": it["snippet"].get("thumbnails", {}).get("high", {}).get("url"),
-            })
+            # Defensive: live streams, premieres, and removed/age-gated videos
+            # sometimes lack contentDetails.duration or even contentDetails
+            # entirely. The 2026-05-12 cron crashed on KeyError 'duration' and
+            # produced zero output for the day — must not let one bad item
+            # take down the entire scan. Skip if essential fields missing.
+            try:
+                snippet = it.get("snippet", {})
+                stats = it.get("statistics", {}) or {}
+                content = it.get("contentDetails", {}) or {}
+                duration_iso = content.get("duration") or "PT0S"
+                out.append({
+                    "video_id": it.get("id", ""),
+                    "title": snippet.get("title", ""),
+                    "channel_title": snippet.get("channelTitle", ""),
+                    "channel_id": snippet.get("channelId", ""),
+                    "published_at": snippet.get("publishedAt", ""),
+                    "description": snippet.get("description", ""),
+                    "duration": duration_iso,
+                    "duration_seconds": _parse_iso_duration(duration_iso),
+                    "view_count": int(stats.get("viewCount", 0) or 0),
+                    "like_count": int(stats.get("likeCount", 0) or 0),
+                    "thumbnail": snippet.get("thumbnails", {}).get("high", {}).get("url"),
+                })
+            except Exception as e:  # noqa: BLE001 — never let one bad item kill the run
+                print(f"  ! skip malformed item {it.get('id','?')}: {type(e).__name__}: {e}")
+                continue
     return out
 
 
