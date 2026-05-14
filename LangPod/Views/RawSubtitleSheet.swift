@@ -250,28 +250,28 @@ struct RawSubtitleSheet: View {
     }
 
     /// Karaoke 模式：每个词独立 view，用真实词级时间戳判定当前是否正在说
+    /// 当前正在说的词标黄（仅在当前段播放时生效），字号其他样式不变
     private func karaokeWordLine(
         _ seg: RawTranscriptSegment,
         words: [WordTimestamp],
         isFocused: Bool,
         isActive: Bool
     ) -> some View {
-        // 词级时间戳在快速口语下落点不稳，单词级 karaoke 高亮会误导
-        // → 关掉单词级高亮，整段统一颜色（焦点段白、其他灰）
-        // 词级时间戳保留在数据里供未来用（如点词跳音频），仅展示层不再使用
         let baseColor: Color = isFocused ? .white : Color(white: 0.38)
+        let highlightColor = Color(hex: "FFD60A")
+        let activeWordIdx: Int? = isActive ? currentWordIndex(in: words, at: currentTime) : nil
         return WordFlowLayout(spacing: 5, lineSpacing: 4) {
             ForEach(words.indices, id: \.self) { i in
                 let timed = words[i]
-                Button {
-                    let plain = stripPunct(timed.w).lowercased()
-                    if !plain.isEmpty { onTapWord(plain, seg) }
-                } label: {
-                    Text(timed.w)
-                        .font(.system(size: 19, weight: .medium))
-                        .foregroundStyle(baseColor)
-                }
-                .buttonStyle(.plain)
+                let isCurrent = (i == activeWordIdx)
+                Text(timed.w)
+                    .font(.system(size: 19, weight: .medium))
+                    .foregroundStyle(isCurrent ? highlightColor : baseColor)
+                    .fixedSize()
+                    .onTapGesture {
+                        let plain = stripPunct(timed.w).lowercased()
+                        if !plain.isEmpty { onTapWord(plain, seg) }
+                    }
             }
         }
     }
@@ -284,18 +284,18 @@ struct RawSubtitleSheet: View {
             ForEach(tokens.indices, id: \.self) { i in
                 let token = tokens[i]
                 if token.isWord {
-                    Button {
-                        onTapWord(token.text.lowercased(), seg)
-                    } label: {
-                        Text(token.text)
-                            .font(.system(size: 19, weight: .medium))
-                            .foregroundStyle(color)
-                    }
-                    .buttonStyle(.plain)
+                    Text(token.text)
+                        .font(.system(size: 19, weight: .medium))
+                        .foregroundStyle(color)
+                        .fixedSize()
+                        .onTapGesture {
+                            onTapWord(token.text.lowercased(), seg)
+                        }
                 } else {
                     Text(token.text)
                         .font(.system(size: 19, weight: .medium))
                         .foregroundStyle(color)
+                        .fixedSize()
                 }
             }
         }
@@ -375,7 +375,11 @@ private struct WordFlowLayout: Layout {
     var lineSpacing: CGFloat = 4
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? .infinity
+        // 关键：proposal.width 为 nil 时按屏宽兜底（而不是 .infinity）。
+        // 如果按 .infinity 算，所有词会挤一行，返回 1 行高度 → VStack 据此预留空间，
+        // placeSubviews 时实际宽度有限会换行，第二行就会和下方 Text（中文）重叠。
+        let fallbackWidth: CGFloat = UIScreen.main.bounds.width - 40
+        let width = proposal.width ?? fallbackWidth
         return measure(width: width, subviews: subviews).size
     }
 

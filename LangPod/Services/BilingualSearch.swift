@@ -62,6 +62,14 @@ enum BilingualSearch {
         "startup":         ["创业"],
         "neuroscience":    ["神经科学"],
         "science":         ["科学"],
+
+        // App 学习内容（级别 / 模块）—— 让用户能用「初级」搜到 easy 级 episode
+        "easy":            ["初级", "简单"],
+        "medium":          ["中级", "中等"],
+        "hard":            ["高级", "困难"],
+        "pattern":         ["句型", "句型讲解", "讲解"],
+        "vocabulary":      ["词汇", "单词", "生词"],
+        "episode":         ["集", "播客集", "学习播客"],
     ]
 
     /// 把单条查询扩展成所有等价词（包含原查询本身）

@@ -16,6 +16,9 @@ struct RawPodcastSection: View {
     let showSeeMore: Bool
     @State private var selectedPodcast: RawPodcast?
     @State private var showAllFeed: Bool = false
+    /// 在 feed view 里点中的视频，先暂存。等 feed 的 fullScreenCover 完全 dismiss
+    /// 后再 flip 到 selectedPodcast，触发 player cover —— 避免同时叠两层崩溃。
+    @State private var pendingFeedSelection: RawPodcast?
 
     init(
         title: String = "今日推荐",
@@ -70,8 +73,19 @@ struct RawPodcastSection: View {
         .fullScreenCover(item: $selectedPodcast) { podcast in
             RawPodcastPlayerView(podcast: podcast)
         }
-        .fullScreenCover(isPresented: $showAllFeed) {
-            RawPodcastFeedView(title: title, podcasts: allPodcasts)
+        .fullScreenCover(
+            isPresented: $showAllFeed,
+            onDismiss: {
+                // feed 已完全收起后再开 player，确保任意时刻只有一层 cover
+                if let p = pendingFeedSelection {
+                    pendingFeedSelection = nil
+                    selectedPodcast = p
+                }
+            }
+        ) {
+            RawPodcastFeedView(title: title, podcasts: allPodcasts) { p in
+                pendingFeedSelection = p
+            }
         }
     }
 

@@ -20,32 +20,42 @@ struct HomeView: View {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
 
-                ScrollView(showsIndicators: false) {
-                    LazyVStack(spacing: 20) {
-                        if !searchText.isEmpty {
-                            // Tab 在搜索态被绕过：不论用户在「首页」还是「学习」，
-                            // 都看到一份覆盖所有内容类型的统一结果页。
+                if !searchText.isEmpty {
+                    // 搜索态绕过 segment：不论用户在「首页」还是「学习」，都看到统一结果。
+                    ScrollView(showsIndicators: false) {
+                        LazyVStack(spacing: 20) {
                             globalSearchResults
-                        } else {
-                            switch topTab {
-                            case .home:
-                                rawPodcastSection      // 今日推荐 hero
-                                exploreContent          // 分类横滑（娱乐 / 两性 / 思想 / ...）
-                            case .learn:
-                                levelTabs
-                                nowPlayingCard
-                                todayList
-                                todayPatternsSection
-                                weeklyPicksList
-                                pastEpisodesList
-                            }
                         }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 4)
+                        .padding(.bottom, 100)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 4)
-                    .padding(.bottom, 100)
+                } else {
+                    // 用 TabView .page 实现两个 segment 间的横向滑动切换。
+                    // selection 与顶部 Picker 双向绑定，swipe 和点击都能触发。
+                    TabView(selection: $topTab) {
+                        homeSegmentScroll
+                            .tag(TopTab.home)
+                        learnSegmentScroll
+                            .tag(TopTab.learn)
+                    }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .animation(.easeInOut(duration: 0.25), value: topTab)
                 }
             }
+            // 「首页」segment 在播 AI 音频时，底部挂一个 mini 播放条 —— 让用户在
+            // 浏览视频内容时能感知 / 控制后台正在播的学习音频。其它 3 个 tab 不挂。
+            .overlay(alignment: .bottom) {
+                if topTab == .home,
+                   searchText.isEmpty,
+                   let ep = audioPlayer.currentEpisode {
+                    miniPlayBar(for: ep)
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 8)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: audioPlayer.currentEpisode?.id)
             // iOS 原生 Navigation Bar：中央放分段 Picker（首页 / 学习），
             // 底部用 .searchable 自带搜索行（向下拉出现，可置顶）
             .navigationBarTitleDisplayMode(.inline)
@@ -99,6 +109,154 @@ struct HomeView: View {
                 consumePendingRawPodcast(id: dataStore.pendingRawPodcastId)
             }
         }
+    }
+
+    // MARK: - Segment scroll views (TabView .page 的两个 page)
+
+    /// 「首页」segment：今日推荐 hero + 探索分类。底部留 100pt 给 tab bar +
+    /// mini 播放条（若可见）。
+    @ViewBuilder
+    private var homeSegmentScroll: some View {
+        ScrollView(showsIndicators: false) {
+            LazyVStack(spacing: 20) {
+                rawPodcastSection
+                exploreContent
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 4)
+            // 有 mini 播放条时多预留 ~70pt，避免最后一行被遮挡
+            .padding(.bottom, audioPlayer.currentEpisode == nil ? 100 : 170)
+        }
+    }
+
+    /// 「学习」segment：级别 + 正在播放 + 今日 + 句型 + 周精选 + 往期。
+    /// 该页本身已有大「正在播放」卡，因此不挂 mini 条（由父 view 的 topTab 判定决定）。
+    @ViewBuilder
+    private var learnSegmentScroll: some View {
+        ScrollView(showsIndicators: false) {
+            LazyVStack(spacing: 20) {
+                levelTabs
+                nowPlayingCard
+                todayList
+                todayPatternsSection
+                weeklyPicksList
+                pastEpisodesList
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 4)
+            .padding(.bottom, 100)
+        }
+    }
+
+    // MARK: - Mini play bar（首页 segment 底部）
+
+    private func miniPlayBar(for episode: Episode) -> some View {
+        // 标题/副标题随当前播放项动态切换：句型 vs episode
+        let titleText: String = {
+            if case .pattern(let p, _) = audioPlayer.currentPlayItem {
+                return p.template
+            }
+            return episode.title
+        }()
+        let subtitleText: String = {
+            if case .pattern(_, _) = audioPlayer.currentPlayItem {
+                return "今日句型讲解"
+            }
+            return audioPlayer.phase.roundDisplay(isPro: subscriptionManager.isProUser)
+        }()
+
+        // bar 主体（封面 + 文字）点击进全屏 PlayerView；三个 transport 按钮各自单独
+        // 处理事件不冒泡。整体布局参考系统级 mini 播放器：[封面 | 标题 | prev | play | next]。
+        return HStack(spacing: 10) {
+            Button {
+                showPlayer = true
+            } label: {
+                HStack(spacing: 10) {
+                    EpisodeThumbnail(episode: episode, size: 44)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(titleText)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.textPrimary)
+                            .lineLimit(1)
+                        Text(subtitleText)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.textTertiary)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            // 上一集
+            Button {
+                if audioPlayer.episodeQueue.isEmpty {
+                    audioPlayer.episodeQueue = dataStore.episodes
+                }
+                if !audioPlayer.skipToPreviousEpisode() {
+                    showPaywall = true
+                }
+            } label: {
+                Image(systemName: "backward.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.textSecondary)
+                    .frame(width: 32, height: 32)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            // 播放 / 暂停
+            Button {
+                audioPlayer.togglePlayPause()
+            } label: {
+                Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(Color.appPrimary, in: Circle())
+            }
+            .buttonStyle(.plain)
+
+            // 下一集
+            Button {
+                if audioPlayer.episodeQueue.isEmpty {
+                    audioPlayer.episodeQueue = dataStore.episodes
+                }
+                if !audioPlayer.skipToNextEpisode() {
+                    showPaywall = true
+                }
+            } label: {
+                Image(systemName: "forward.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.textSecondary)
+                    .frame(width: 32, height: 32)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            // 关闭：停掉音频，bar 自身随 currentEpisode 清空而消失
+            Button {
+                audioPlayer.stop()
+                audioPlayer.currentPlayItem = nil
+                audioPlayer.currentEpisode = nil
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.textTertiary)
+                    .frame(width: 26, height: 26)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(.white, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.border, lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 4)
     }
 
     private func consumePendingRawPodcast(id: String?) {

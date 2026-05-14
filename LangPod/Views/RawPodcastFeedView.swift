@@ -7,14 +7,21 @@ import SwiftUI
 struct RawPodcastFeedView: View {
     let title: String
     let podcasts: [RawPodcast]
+    /// 点视频时上抛给父级；本 view 不再自己嵌套 fullScreenCover 弹 player —
+    /// 避免 iOS 18 SwiftUI 三层 cover + AVPlayer + dark scheme 的 modal 冲突崩溃。
+    let onSelect: (RawPodcast) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTopic: String? = nil
-    @State private var selectedPodcast: RawPodcast?
     @State private var searchText: String = ""
 
-    init(title: String = "今日推荐", podcasts: [RawPodcast]) {
+    init(
+        title: String = "今日推荐",
+        podcasts: [RawPodcast],
+        onSelect: @escaping (RawPodcast) -> Void
+    ) {
         self.title = title
         self.podcasts = podcasts
+        self.onSelect = onSelect
     }
 
     private var topics: [String] {
@@ -95,7 +102,10 @@ struct RawPodcastFeedView: View {
                                         .padding(.horizontal, 16)
                                     ForEach(group.items) { p in
                                         feedRow(p)
-                                            .onTapGesture { selectedPodcast = p }
+                                            .onTapGesture {
+                                                onSelect(p)
+                                                dismiss()
+                                            }
                                     }
                                 }
                             }
@@ -124,9 +134,6 @@ struct RawPodcastFeedView: View {
                             .foregroundStyle(Color.textTertiary)
                     }
                 }
-            }
-            .fullScreenCover(item: $selectedPodcast) { podcast in
-                RawPodcastPlayerView(podcast: podcast)
             }
         }
     }
