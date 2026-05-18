@@ -79,6 +79,8 @@ struct LangPodApp: App {
             }
             .task {
                 setupPlayGate()
+                // 锁屏 / 控制中心 handler 全局注册一次，谁在播谁就是 active。
+                RemoteCommandRouter.shared.setup()
                 // Deferred analytics bootstrap: runs after first frame.
                 Analytics.setup()
                 Analytics.track(.appLaunch)

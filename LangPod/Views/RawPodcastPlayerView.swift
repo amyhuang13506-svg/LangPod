@@ -103,13 +103,20 @@ struct RawPodcastPlayerView: View {
             if audioPlayer.isPlaying {
                 audioPlayer.togglePlayPause()
             }
-            if controller == nil, let urlStr = podcast.audioUrl, let url = URL(string: urlStr) {
-                controller = RawAudioController(url: url, podcast: podcast)
+            // 走共享 session 拿 controller：同一条 podcast → 复用已有实例，
+            // AVPlayer / 解码缓冲 / 视频帧全部保留，秒续播；不同条 → 内部 tear down 旧的建新的。
+            let c = RawPlaybackSession.shared.controller(for: podcast)
+            controller = c
+            // 复用场景下用户期望继续播；旧实例被暂停过则恢复。
+            if let c, c.player.timeControlStatus != .playing {
+                c.play()
             }
             // 记一条「硅谷原声」播放历史 + 推 streak（当天同一条会去重）
             dataStore.recordRawPodcastPlayStart(podcast)
         }
         .onDisappear {
+            // 只暂停，不销毁 —— controller 仍由 RawPlaybackSession 持有。
+            // 下次再开同一条直接续播，画面无 reload。
             controller?.pause()
         }
         .task {
@@ -786,6 +793,39 @@ private struct PaywallSheetCover: View {
     }
 }
 
+// MARK: - Playback session (shared across view lifecycle)
+
+/// 持有当前活跃的 RawAudioController。SwiftUI 关掉 fullScreenCover 不会销毁
+/// 这里的 controller —— 用户再打开同一条原声时，AVPlayer / 视频缓冲 / 解码器
+/// 都还在，画面秒续，不会"明显重新加载"。
+/// 切换到另一条原声 → tear down 旧的，建新的。
+@Observable
+final class RawPlaybackSession {
+    static let shared = RawPlaybackSession()
+    private init() {}
+
+    var controller: RawAudioController?
+
+    /// 返回当前 podcast 的 controller —— 同一条则复用（断点续播），不同条则换。
+    /// 没有 audioUrl 的返回 nil。
+    func controller(for podcast: RawPodcast) -> RawAudioController? {
+        if let existing = controller, existing.podcast.id == podcast.id {
+            return existing
+        }
+        controller?.tearDown()
+        controller = nil
+        guard let urlStr = podcast.audioUrl, let url = URL(string: urlStr) else { return nil }
+        let c = RawAudioController(url: url, podcast: podcast)
+        controller = c
+        return c
+    }
+
+    func clear() {
+        controller?.tearDown()
+        controller = nil
+    }
+}
+
 // MARK: - Audio/Video controls (AVPlayer-based, supports background play + lock screen)
 
 /// 单个 AVPlayer 实例同时驱动视频画面（VideoPlayerLayerView）和控件 UI。
@@ -838,13 +878,17 @@ final class RawAudioController {
             print("[RawAudio] AVAudioSession 设置失败: \(error)")
         }
         self.player = AVPlayer(url: url)
-        self.player.automaticallyWaitsToMinimizeStalling = false
+        // 视频内容首播时让 AVPlayer 等待足够缓冲再 start，避免出现"音频响但画面停在
+        // 封面"的撕裂（首帧 keyframe 可能在视频开头 1-3s，缓冲未到时画面空）。
+        // 纯音频时仍可走快速启动。
+        self.player.automaticallyWaitsToMinimizeStalling = (podcast.hasVideo == true)
+        // 预设 3s 前向缓冲，让 first frame 决策有充足数据。
+        self.player.currentItem?.preferredForwardBufferDuration = 3.0
         // 读上次保存的进度（>1s 才算有意义；接近结尾也忽略，让用户从头听）
         self.resumePosition = Self.savedPosition(for: podcast.id)
         addPeriodicObserver()
         observeStatus()
         observeAppLifecycle()
-        setupRemoteCommands()
         publishNowPlayingInfo()
         loadArtwork()
         // 不在这里直接 play()。observeStatus 里 readyToPlay 后做 seek + play，避免
@@ -927,15 +971,18 @@ final class RawAudioController {
         if isMeaningful {
             let t = CMTime(seconds: target, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
             player.seek(to: t, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
-                self?.player.play()
+                self?.play()
             }
         } else {
-            player.play()
+            play()
         }
     }
 
     func play() {
         player.play()
+        // 立刻声明自己是锁屏的控制目标 —— 主 AudioPlayer 之前可能 active 着，要顶掉。
+        RemoteCommandRouter.shared.active = self
+        publishNowPlayingInfo()
     }
 
     func pause() {
@@ -947,13 +994,33 @@ final class RawAudioController {
         if player.timeControlStatus == .playing {
             player.pause()
         } else {
-            player.play()
+            play()
         }
     }
 
     func seek(to seconds: Double) {
         let t = CMTime(seconds: seconds, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
         player.seek(to: t)
+    }
+
+    /// 主动清理资源（被 RawPlaybackSession 在切换 podcast 时调用）。
+    /// deinit 也会做同样的事，但 ARC 析构时机不可控，显式 tearDown 更稳。
+    func tearDown() {
+        if currentTime > 1.0 {
+            Self.savePosition(currentTime, for: podcast.id)
+        }
+        player.pause()
+        if let obs = timeObserver { player.removeTimeObserver(obs); timeObserver = nil }
+        statusObserver?.invalidate(); statusObserver = nil
+        rateObserver?.invalidate(); rateObserver = nil
+        timeControlObserver?.invalidate(); timeControlObserver = nil
+        if let o = bgLifecycleObserver { NotificationCenter.default.removeObserver(o); bgLifecycleObserver = nil }
+        if let o = fgLifecycleObserver { NotificationCenter.default.removeObserver(o); fgLifecycleObserver = nil }
+        // 如果我是当前 active，让出去；不然会 dangling
+        if RemoteCommandRouter.shared.active === self {
+            RemoteCommandRouter.shared.active = nil
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        }
     }
 
     deinit {
@@ -967,60 +1034,18 @@ final class RawAudioController {
         timeControlObserver?.invalidate()
         if let o = bgLifecycleObserver { NotificationCenter.default.removeObserver(o) }
         if let o = fgLifecycleObserver { NotificationCenter.default.removeObserver(o) }
-        // 清掉锁屏信息和远程控制 handler，避免下次进 Castlingo episode 残留
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
-        let center = MPRemoteCommandCenter.shared()
-        center.playCommand.removeTarget(nil)
-        center.pauseCommand.removeTarget(nil)
-        center.togglePlayPauseCommand.removeTarget(nil)
-        center.skipForwardCommand.removeTarget(nil)
-        center.skipBackwardCommand.removeTarget(nil)
-        center.changePlaybackPositionCommand.removeTarget(nil)
-    }
-
-    // MARK: - 锁屏 / 控制中心 (MPNowPlayingInfoCenter + MPRemoteCommandCenter)
-
-    private func setupRemoteCommands() {
-        let center = MPRemoteCommandCenter.shared()
-        // 清掉旧 handler 避免重复绑定（Castlingo 主 AudioPlayer 可能也注册过）
-        center.playCommand.removeTarget(nil)
-        center.pauseCommand.removeTarget(nil)
-        center.togglePlayPauseCommand.removeTarget(nil)
-        center.skipForwardCommand.removeTarget(nil)
-        center.skipBackwardCommand.removeTarget(nil)
-        center.changePlaybackPositionCommand.removeTarget(nil)
-
-        center.playCommand.addTarget { [weak self] _ in
-            self?.play()
-            return .success
-        }
-        center.pauseCommand.addTarget { [weak self] _ in
-            self?.pause()
-            return .success
-        }
-        center.togglePlayPauseCommand.addTarget { [weak self] _ in
-            self?.toggle()
-            return .success
-        }
-        center.skipForwardCommand.preferredIntervals = [30]
-        center.skipForwardCommand.addTarget { [weak self] _ in
-            guard let self else { return .commandFailed }
-            self.seek(to: min(self.duration, self.currentTime + 30))
-            return .success
-        }
-        center.skipBackwardCommand.preferredIntervals = [15]
-        center.skipBackwardCommand.addTarget { [weak self] _ in
-            guard let self else { return .commandFailed }
-            self.seek(to: max(0, self.currentTime - 15))
-            return .success
-        }
-        center.changePlaybackPositionCommand.addTarget { [weak self] event in
-            guard let self,
-                  let e = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
-            self.seek(to: e.positionTime)
-            return .success
+        // 不再 removeTarget(nil) —— handler 全部归 RemoteCommandRouter 管理。
+        // 如果我还是 active，让出去。
+        if RemoteCommandRouter.shared.active === self {
+            RemoteCommandRouter.shared.active = nil
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
         }
     }
+
+    // MARK: - 锁屏 / 控制中心 (MPNowPlayingInfoCenter)
+    //
+    // MPRemoteCommand handler 全部归 RemoteCommandRouter.shared 统一管理；这里只
+    // 负责发布 nowPlayingInfo（封面/标题/进度），让锁屏 widget 渲染。
 
     private func publishNowPlayingInfo() {
         var info: [String: Any] = [:]
@@ -1064,6 +1089,21 @@ final class RawAudioController {
                 }
             }
         }
+    }
+}
+
+// MARK: - RemoteControllable
+
+extension RawAudioController: RemoteControllable {
+    func remoteTogglePlay() { toggle() }
+    func remoteSkipForward() {
+        seek(to: min(duration, currentTime + 30))
+    }
+    func remoteSkipBackward() {
+        seek(to: max(0, currentTime - 15))
+    }
+    func remoteSeek(to seconds: Double) {
+        seek(to: seconds)
     }
 }
 

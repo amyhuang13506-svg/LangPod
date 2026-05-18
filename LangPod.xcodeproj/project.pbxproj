@@ -43,6 +43,7 @@
 		A10040 /* EpisodeThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20042 /* EpisodeThumbnail.swift */; };
 		A10044 /* AllEpisodesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20046 /* AllEpisodesView.swift */; };
 		AN0001 /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AN0002 /* Analytics.swift */; };
+		RC0001 /* RemoteCommandRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC0002 /* RemoteCommandRouter.swift */; };
 		B10061 /* ep-20260319-easy-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20061 /* ep-20260319-easy-001_cover.jpg */; };
 		B10062 /* ep-20260319-hard-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20062 /* ep-20260319-hard-001_cover.jpg */; };
 		B10063 /* ep-20260319-medium-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20063 /* ep-20260319-medium-001_cover.jpg */; };
@@ -156,6 +157,7 @@
 		A20046 /* AllEpisodesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllEpisodesView.swift; sourceTree = "<group>"; };
 		A30001 /* LangPod.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LangPod.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AN0002 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
+		RC0002 /* RemoteCommandRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteCommandRouter.swift; sourceTree = "<group>"; };
 		B20061 /* ep-20260319-easy-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ep-20260319-easy-001_cover.jpg"; sourceTree = "<group>"; };
 		B20062 /* ep-20260319-hard-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ep-20260319-hard-001_cover.jpg"; sourceTree = "<group>"; };
 		B20063 /* ep-20260319-medium-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ep-20260319-medium-001_cover.jpg"; sourceTree = "<group>"; };
@@ -306,6 +308,7 @@
 				SM0002 /* SubscriptionManager.swift */,
 				IC0002 /* ImageCache.swift */,
 				AN0002 /* Analytics.swift */,
+				RC0002 /* RemoteCommandRouter.swift */,
 				P20003 /* PatternAccessGate.swift */,
 				RP0072 /* WordLookupService.swift */,
 				RP0102 /* BilingualSearch.swift */,
@@ -555,6 +558,7 @@
 				A10022 /* SavedWord.swift in Sources */,
 				A10023 /* VocabularyStore.swift in Sources */,
 				AN0001 /* Analytics.swift in Sources */,
+				RC0001 /* RemoteCommandRouter.swift in Sources */,
 				P10001 /* Pattern.swift in Sources */,
 				P10002 /* PlayItem.swift in Sources */,
 				P10003 /* PatternAccessGate.swift in Sources */,

@@ -428,6 +428,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             duration = player?.duration ?? 0
             progress = 0
             startTimer()
+            RemoteCommandRouter.shared.active = self
         } catch {
             // Audio file not playable, advance to next phase
             advancePhase()
@@ -486,6 +487,8 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             }
             self.updateNowPlayingInfo()
         }
+
+        RemoteCommandRouter.shared.active = self
 
         // Background: download for caching (next play will use instant cached path)
         Task {
@@ -790,27 +793,10 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
     // MARK: - Now Playing Info (Lock Screen)
-
-    private func setupRemoteCommands() {
-        let center = MPRemoteCommandCenter.shared()
-
-        center.playCommand.addTarget { [weak self] _ in
-            self?.togglePlayPause()
-            return .success
-        }
-        center.pauseCommand.addTarget { [weak self] _ in
-            self?.togglePlayPause()
-            return .success
-        }
-        center.nextTrackCommand.addTarget { [weak self] _ in
-            self?.skipToNextEpisode()
-            return .success
-        }
-        center.previousTrackCommand.addTarget { [weak self] _ in
-            self?.skipToPreviousEpisode()
-            return .success
-        }
-    }
+    //
+    // Remote-command handlers are owned by RemoteCommandRouter.shared (registered
+    // once at app launch). We just declare ourselves as the active target when
+    // playback actually begins. See conformance to RemoteControllable below.
 
     private func updateNowPlayingInfo() {
         guard let item = currentPlayItem else { return }
@@ -997,7 +983,6 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
 
     override init() {
         super.init()
-        setupRemoteCommands()
         interruptionObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification,
             object: AVAudioSession.sharedInstance(),
@@ -1011,5 +996,35 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         if let obs = interruptionObserver {
             NotificationCenter.default.removeObserver(obs)
         }
+    }
+}
+
+// MARK: - RemoteControllable
+
+extension AudioPlayer: RemoteControllable {
+    func remoteTogglePlay() {
+        togglePlayPause()
+    }
+
+    func remoteSkipForward() {
+        let target = min(duration, progress + 30)
+        seek(to: target)
+    }
+
+    func remoteSkipBackward() {
+        let target = max(0, progress - 15)
+        seek(to: target)
+    }
+
+    func remoteNextTrack() {
+        skipToNextEpisode()
+    }
+
+    func remotePreviousTrack() {
+        skipToPreviousEpisode()
+    }
+
+    func remoteSeek(to seconds: Double) {
+        seek(to: seconds)
     }
 }
