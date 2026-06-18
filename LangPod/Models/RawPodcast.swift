@@ -60,14 +60,20 @@ struct RawPodcast: Codable, Identifiable, Hashable {
         return publishedAt
     }
 
+    private static let iso8601 = ISO8601DateFormatter()
+
     /// 是否为今日上新 — 优先看 crawledAt（pipeline 入库时间），新流水可信。
     /// 老条目无 crawledAt 时回退到 publishedAt 比较。
+    ///
+    /// crawledAt 是 UTC（"…Z"），而 cron 在 04:00 CST = 前一天 20:00 UTC 入库，
+    /// 裸截 prefix(10) 比本地日期会差一天 → 角标永远不亮。改为把 UTC 瞬间
+    /// 换算到设备本地时区再按本地日历判断「是否今天」。
     var isNewToday: Bool {
-        let today = DateFormatter.episodeDate.string(from: Date())
-        if let c = crawledAt, c.count >= 10 {
-            return String(c.prefix(10)) == today
+        if let c = crawledAt, !c.isEmpty,
+           let date = RawPodcast.iso8601.date(from: c) {
+            return Calendar.current.isDateInToday(date)
         }
-        return publishedAt == today
+        return publishedAt == DateFormatter.episodeDate.string(from: Date())
     }
 
     /// "今日推荐"排序专用 key：crawledAt 比 publishedAt 更能反映"今天有没有新货"。
