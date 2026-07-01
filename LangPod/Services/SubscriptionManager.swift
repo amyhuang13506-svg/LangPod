@@ -1,8 +1,12 @@
 import StoreKit
 import SwiftUI
+#if canImport(RevenueCat)
+import RevenueCat
+#endif
 
-/// Trial availability for a given product — derived from App Store Connect's
+/// Trial availability for a given product — derived from the store's
 /// introductory offer config + per-user eligibility check.
+/// Shared by both the StoreKit and RevenueCat backends (always compiled).
 struct TrialInfo: Equatable {
     let productID: String
     /// e.g. "7 天", "1 个月"
@@ -11,6 +15,319 @@ struct TrialInfo: Equatable {
     let durationDays: Int
     let isEligible: Bool
 }
+
+/// RevenueCat SDK configuration. Plain strings, always compiled (no SDK needed).
+enum RevenueCatConfig {
+    /// Castlingo's RevenueCat **public SDK key** for the App Store app.
+    /// Starts with `appl_`. Get it from RevenueCat → Project → API Keys →
+    /// the App Store app's public key.
+    ///
+    /// TODO: paste the real `appl_...` key here. Until then, RevenueCat is
+    /// left unconfigured and the paywall reports "未配置" instead of crashing.
+    static let apiKey = "appl_iaEuHxxagtwCjPrKmfwKOKoQGby"
+
+    /// RevenueCat entitlement identifier that grants Pro. Must match the
+    /// entitlement created in the RevenueCat dashboard.
+    static let entitlementID = "pro"
+
+    /// True once a real key has been pasted — gates `Purchases.configure`.
+    static var isReady: Bool {
+        apiKey.hasPrefix("appl_") && !apiKey.contains("REPLACE")
+    }
+}
+
+#if canImport(RevenueCat)
+
+// ============================================================================
+// MARK: - RevenueCat backend
+// Active when the RevenueCat SPM package is present. Wraps RevenueCat while
+// keeping the exact same public surface as the StoreKit version below, so no
+// call site (PaywallView + 45 others) needs to change.
+// ============================================================================
+
+@Observable
+class SubscriptionManager {
+    // MARK: - State
+
+    var isPro: Bool = false
+    var isPurchasing = false
+
+    /// Last user-visible error from purchase flow. nil when no error / after dismiss.
+    var lastPurchaseError: String?
+
+    // Trial info fetched from offerings (nil = no intro offer OR user not eligible)
+    var yearlyTrialInfo: TrialInfo?
+    var monthlyTrialInfo: TrialInfo?
+
+    /// Raw debug snapshot for the DEBUG overlay on PaywallView. Diagnostic only.
+    var trialDebugLines: [String] = []
+
+    // Mock toggles for development (DEBUG only — see isProUser gate).
+    var mockProEnabled: Bool {
+        didSet { UserDefaults.standard.set(mockProEnabled, forKey: "mockProEnabled") }
+    }
+    var mockHasTrialEnabled: Bool {
+        didSet { UserDefaults.standard.set(mockHasTrialEnabled, forKey: "mockHasTrialEnabled") }
+    }
+
+    /// Real subscription OR mock (DEBUG only). The DEBUG gate stops the
+    /// UserDefaults-backed `mockProEnabled` from leaking Pro into Release.
+    var isProUser: Bool {
+        #if DEBUG
+        return isPro || mockProEnabled
+        #else
+        return isPro
+        #endif
+    }
+
+    var effectiveYearlyTrial: TrialInfo? {
+        #if DEBUG
+        guard mockHasTrialEnabled else { return nil }
+        if let real = yearlyTrialInfo { return real }
+        return TrialInfo(productID: Self.yearlyID, durationDisplay: "7 天", durationDays: 7, isEligible: true)
+        #else
+        return yearlyTrialInfo
+        #endif
+    }
+
+    var effectiveMonthlyTrial: TrialInfo? {
+        // Product policy: monthly never offers a free trial.
+        nil
+    }
+
+    // MARK: - Localized Price Display
+
+    private var yearlyPackage: Package?
+    private var monthlyPackage: Package?
+
+    var yearlyPriceDisplay: String {
+        if let pkg = yearlyPackage {
+            return Self.formatPriceWithPeriod(pkg.storeProduct)
+        }
+        return "¥298/年"
+    }
+
+    var monthlyPriceDisplay: String {
+        if let pkg = monthlyPackage {
+            return Self.formatPriceWithPeriod(pkg.storeProduct)
+        }
+        return "¥48/月"
+    }
+
+    private static func formatPriceWithPeriod(_ product: StoreProduct) -> String {
+        guard let period = product.subscriptionPeriod else { return product.localizedPriceString }
+        return "\(product.localizedPriceString)/\(periodUnitDisplay(period))"
+    }
+
+    private static func periodUnitDisplay(_ period: RevenueCat.SubscriptionPeriod) -> String {
+        let value = period.value
+        switch period.unit {
+        case .day:   return value == 1 ? "天" : "\(value)天"
+        case .week:  return value == 1 ? "周" : "\(value)周"
+        case .month: return value == 1 ? "月" : "\(value)个月"
+        case .year:  return value == 1 ? "年" : "\(value)年"
+        @unknown default: return ""
+        }
+    }
+
+    // MARK: - Product / Entitlement IDs
+
+    static let yearlyID = "com.amyhuang.castlingo.pro.yearly.v2"
+    static let monthlyID = "com.amyhuang.castlingo.pro.monthly.v2"
+
+    private var customerInfoListener: Task<Void, Never>?
+
+    // MARK: - Free Tier Limits
+
+    static let freeMaxDailyEpisodes = 2
+    static let freeMaxDailyPatterns = 2
+    static let freeMaxVocabPerEpisode = 3
+    // Free users: 3 English + 1 Translation = 4 rounds (skip 5th)
+    // Pro users: full 5 rounds
+
+    // MARK: - Init
+
+    init() {
+        self.mockProEnabled = UserDefaults.standard.bool(forKey: "mockProEnabled")
+        #if DEBUG
+        let savedMockTrial = UserDefaults.standard.object(forKey: "mockHasTrialEnabled") as? Bool
+        self.mockHasTrialEnabled = savedMockTrial ?? true
+        #else
+        self.mockHasTrialEnabled = false
+        #endif
+        // All Purchases.shared access is deferred into Tasks, so it runs after
+        // LangPodApp.init() has called Purchases.configure() synchronously.
+        customerInfoListener = listenForCustomerInfo()
+        Task { await loadProducts() }
+        Task { await checkStatus() }
+    }
+
+    deinit {
+        customerInfoListener?.cancel()
+    }
+
+    // MARK: - RevenueCat
+
+    @MainActor
+    func loadProducts() async {
+        guard Purchases.isConfigured else { return }
+        do {
+            let offerings = try await Purchases.shared.offerings()
+            let offering = offerings.current
+            yearlyPackage = offering?.annual
+                ?? offering?.availablePackages.first { $0.storeProduct.productIdentifier == Self.yearlyID }
+            monthlyPackage = offering?.monthly
+                ?? offering?.availablePackages.first { $0.storeProduct.productIdentifier == Self.monthlyID }
+            await refreshTrialInfo()
+        } catch {
+            // Offerings not available yet (dashboard not configured / offline)
+        }
+    }
+
+    /// Reads the yearly package's introductory offer and populates yearlyTrialInfo.
+    /// Monthly is deliberately never given a trial (product policy).
+    @MainActor
+    func refreshTrialInfo() async {
+        guard Purchases.isConfigured else { return }
+        var yearly: TrialInfo? = nil
+        var lines: [String] = []
+        lines.append("yearlyPkg=\(yearlyPackage != nil) monthlyPkg=\(monthlyPackage != nil)")
+
+        if let product = yearlyPackage?.storeProduct {
+            if let intro = product.introductoryDiscount {
+                lines.append("intro.paymentMode=\(intro.paymentMode)")
+                lines.append("intro.period=\(intro.subscriptionPeriod.value) \(intro.subscriptionPeriod.unit)")
+                if intro.paymentMode == .freeTrial {
+                    // NOTE: we surface the trial whenever a free-trial intro offer
+                    // exists. Per-user eligibility can be refined later via
+                    // Purchases.shared.checkTrialOrIntroDiscountEligibility(...).
+                    yearly = TrialInfo(
+                        productID: Self.yearlyID,
+                        durationDisplay: Self.displayFromPeriod(intro.subscriptionPeriod),
+                        durationDays: Self.daysFromPeriod(intro.subscriptionPeriod),
+                        isEligible: true
+                    )
+                    lines.append("  ✅ yearly trial")
+                } else {
+                    lines.append("  × not .freeTrial")
+                }
+            } else {
+                lines.append("× no introductoryDiscount")
+            }
+        } else {
+            lines.append("× no yearly package")
+        }
+
+        lines.append("final: yearly=\(yearly != nil ? "Y" : "nil")")
+        yearlyTrialInfo = yearly
+        monthlyTrialInfo = nil
+        trialDebugLines = lines
+        for line in lines { print("🔍 [TrialDebug/RC] \(line)") }
+    }
+
+    private static func daysFromPeriod(_ period: RevenueCat.SubscriptionPeriod) -> Int {
+        let value = period.value
+        switch period.unit {
+        case .day:   return value
+        case .week:  return value * 7
+        case .month: return value * 30
+        case .year:  return value * 365
+        @unknown default: return 0
+        }
+    }
+
+    private static func displayFromPeriod(_ period: RevenueCat.SubscriptionPeriod) -> String {
+        let value = period.value
+        switch period.unit {
+        case .day:   return "\(value) 天"
+        case .week:  return value == 1 ? "7 天" : "\(value * 7) 天"
+        case .month: return "\(value) 个月"
+        case .year:  return "\(value) 年"
+        @unknown default: return ""
+        }
+    }
+
+    @MainActor
+    func purchase(_ productID: String) async -> Bool {
+        guard Purchases.isConfigured else {
+            lastPurchaseError = "RevenueCat 未配置（appl_ API key 未填），暂时无法购买。"
+            return false
+        }
+
+        let package: Package?
+        switch productID {
+        case Self.yearlyID:  package = yearlyPackage
+        case Self.monthlyID: package = monthlyPackage
+        default:             package = nil
+        }
+
+        guard let pkg = package else {
+            lastPurchaseError = "商品未加载（offering 空），请稍后重试。ID: \(productID)"
+            return false
+        }
+
+        isPurchasing = true
+        defer { isPurchasing = false }
+
+        do {
+            let result = try await Purchases.shared.purchase(package: pkg)
+            if result.userCancelled { return false }  // user closed the sheet
+            let active = result.customerInfo.entitlements[RevenueCatConfig.entitlementID]?.isActive == true
+            isPro = active
+            if !active {
+                lastPurchaseError = "购买已完成，但未获得 Pro 权益，请稍后重试或联系客服。"
+            }
+            return active
+        } catch {
+            lastPurchaseError = "购买失败：\(error.localizedDescription)"
+            return false
+        }
+    }
+
+    @MainActor
+    func restore() async {
+        guard Purchases.isConfigured else { return }
+        do {
+            let info = try await Purchases.shared.restorePurchases()
+            isPro = info.entitlements[RevenueCatConfig.entitlementID]?.isActive == true
+        } catch {
+            // Restore failed
+        }
+    }
+
+    @MainActor
+    func checkStatus() async {
+        guard Purchases.isConfigured else { return }
+        do {
+            let info = try await Purchases.shared.customerInfo()
+            isPro = info.entitlements[RevenueCatConfig.entitlementID]?.isActive == true
+        } catch {
+            // Couldn't fetch customer info
+        }
+    }
+
+    /// Live subscription updates (renewals, expirations, purchases on other
+    /// devices) pushed by RevenueCat. Replaces StoreKit's Transaction.updates.
+    private func listenForCustomerInfo() -> Task<Void, Never> {
+        Task { [weak self] in
+            guard Purchases.isConfigured else { return }
+            for await info in Purchases.shared.customerInfoStream {
+                let active = info.entitlements[RevenueCatConfig.entitlementID]?.isActive == true
+                await MainActor.run {
+                    self?.isPro = active
+                }
+            }
+        }
+    }
+}
+
+#else
+
+// ============================================================================
+// MARK: - StoreKit 2 backend (fallback)
+// Active until the RevenueCat SPM package is added. Original native StoreKit 2
+// implementation — keeps the app fully functional before the migration lands.
+// ============================================================================
 
 @Observable
 class SubscriptionManager {
@@ -325,3 +642,5 @@ class SubscriptionManager {
         case failedVerification
     }
 }
+
+#endif

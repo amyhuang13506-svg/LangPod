@@ -43,7 +43,6 @@
 		A10040 /* EpisodeThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20042 /* EpisodeThumbnail.swift */; };
 		A10044 /* AllEpisodesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20046 /* AllEpisodesView.swift */; };
 		AN0001 /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AN0002 /* Analytics.swift */; };
-		RC0001 /* RemoteCommandRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC0002 /* RemoteCommandRouter.swift */; };
 		B10061 /* ep-20260319-easy-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20061 /* ep-20260319-easy-001_cover.jpg */; };
 		B10062 /* ep-20260319-hard-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20062 /* ep-20260319-hard-001_cover.jpg */; };
 		B10063 /* ep-20260319-medium-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20063 /* ep-20260319-medium-001_cover.jpg */; };
@@ -73,6 +72,7 @@
 		B10089 /* ep-20260328-hard-010_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20089 /* ep-20260328-hard-010_cover.jpg */; };
 		B30001 /* EpisodeToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30002 /* EpisodeToast.swift */; };
 		B40001 /* WordSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40002 /* WordSpeaker.swift */; };
+		BF27984632099ED9EF48F8DA /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 755E9D1EFFDDE6527A77D96B /* RevenueCat */; };
 		C10001 /* ep-20260330-easy-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C20001 /* ep-20260330-easy-001_cover.jpg */; };
 		C10004 /* ep-20260330-easy-002_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C20004 /* ep-20260330-easy-002_cover.jpg */; };
 		C10007 /* ep-20260330-hard-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C20007 /* ep-20260330-hard-001_cover.jpg */; };
@@ -91,12 +91,13 @@
 		LP0001 /* ListenedPattern.swift in Sources */ = {isa = PBXBuildFile; fileRef = LP0002 /* ListenedPattern.swift */; };
 		LR0001 /* ListenedRawPodcast.swift in Sources */ = {isa = PBXBuildFile; fileRef = LR0002 /* ListenedRawPodcast.swift */; };
 		NM0001 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = NM0002 /* NotificationManager.swift */; };
-		PS0001 /* PushService.swift in Sources */ = {isa = PBXBuildFile; fileRef = PS0002 /* PushService.swift */; };
 		P10001 /* Pattern.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20001 /* Pattern.swift */; };
 		P10002 /* PlayItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20002 /* PlayItem.swift */; };
 		P10003 /* PatternAccessGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20003 /* PatternAccessGate.swift */; };
 		P10004 /* PatternPlayerContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20004 /* PatternPlayerContent.swift */; };
 		P10005 /* PatternHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20005 /* PatternHistoryView.swift */; };
+		PS0001 /* PushService.swift in Sources */ = {isa = PBXBuildFile; fileRef = PS0002 /* PushService.swift */; };
+		RC0001 /* RemoteCommandRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC0002 /* RemoteCommandRouter.swift */; };
 		RP0001 /* RawPodcast.swift in Sources */ = {isa = PBXBuildFile; fileRef = RP0002 /* RawPodcast.swift */; };
 		RP0011 /* raw_podcasts.json in Resources */ = {isa = PBXBuildFile; fileRef = RP0012 /* raw_podcasts.json */; };
 		RP0021 /* YouTubePlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = RP0022 /* YouTubePlayerView.swift */; };
@@ -157,7 +158,6 @@
 		A20046 /* AllEpisodesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllEpisodesView.swift; sourceTree = "<group>"; };
 		A30001 /* LangPod.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LangPod.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AN0002 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
-		RC0002 /* RemoteCommandRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteCommandRouter.swift; sourceTree = "<group>"; };
 		B20061 /* ep-20260319-easy-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ep-20260319-easy-001_cover.jpg"; sourceTree = "<group>"; };
 		B20062 /* ep-20260319-hard-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ep-20260319-hard-001_cover.jpg"; sourceTree = "<group>"; };
 		B20063 /* ep-20260319-medium-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ep-20260319-medium-001_cover.jpg"; sourceTree = "<group>"; };
@@ -205,12 +205,13 @@
 		LP0002 /* ListenedPattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenedPattern.swift; sourceTree = "<group>"; };
 		LR0002 /* ListenedRawPodcast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenedRawPodcast.swift; sourceTree = "<group>"; };
 		NM0002 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
-		PS0002 /* PushService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushService.swift; sourceTree = "<group>"; };
 		P20001 /* Pattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pattern.swift; sourceTree = "<group>"; };
 		P20002 /* PlayItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayItem.swift; sourceTree = "<group>"; };
 		P20003 /* PatternAccessGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternAccessGate.swift; sourceTree = "<group>"; };
 		P20004 /* PatternPlayerContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternPlayerContent.swift; sourceTree = "<group>"; };
 		P20005 /* PatternHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternHistoryView.swift; sourceTree = "<group>"; };
+		PS0002 /* PushService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushService.swift; sourceTree = "<group>"; };
+		RC0002 /* RemoteCommandRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteCommandRouter.swift; sourceTree = "<group>"; };
 		RP0002 /* RawPodcast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawPodcast.swift; sourceTree = "<group>"; };
 		RP0012 /* raw_podcasts.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = raw_podcasts.json; sourceTree = "<group>"; };
 		RP0022 /* YouTubePlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YouTubePlayerView.swift; sourceTree = "<group>"; };
@@ -242,6 +243,7 @@
 				UM0003 /* UYuMao.xcframework in Frameworks */,
 				UM0004 /* UTDID.framework in Frameworks */,
 				UM0005 /* UMCommonLog.framework in Frameworks */,
+				BF27984632099ED9EF48F8DA /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -439,6 +441,9 @@
 			dependencies = (
 			);
 			name = LangPod;
+			packageProductDependencies = (
+				755E9D1EFFDDE6527A77D96B /* RevenueCat */,
+			);
 			productName = LangPod;
 			productReference = A30001 /* LangPod.app */;
 			productType = "com.apple.product-type.application";
@@ -469,6 +474,9 @@
 				Base,
 			);
 			mainGroup = A50001;
+			packageReferences = (
+				47B5FB07191EF60E1D903D23 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+			);
 			productRefGroup = A50005 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -829,6 +837,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		47B5FB07191EF60E1D903D23 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		755E9D1EFFDDE6527A77D96B /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 47B5FB07191EF60E1D903D23 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A90001 /* Project object */;
 }

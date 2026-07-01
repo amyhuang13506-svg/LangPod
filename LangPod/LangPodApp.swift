@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(RevenueCat)
+import RevenueCat
+#endif
 
 @Observable
 class AppState {
@@ -18,6 +21,24 @@ struct LangPodApp: App {
     @State private var appState = AppState()
     @State private var notificationManager = NotificationManager()
     @State private var subscriptionManager = SubscriptionManager()
+
+    init() {
+        #if canImport(RevenueCat)
+        // Configure RevenueCat synchronously at launch, before anything touches
+        // Purchases.shared. SubscriptionManager only accesses Purchases inside
+        // deferred Tasks, so those run after this returns. Skipped until a real
+        // `appl_` key is pasted into RevenueCatConfig (avoids configuring with a
+        // placeholder); the manager then no-ops safely via Purchases.isConfigured.
+        if RevenueCatConfig.isReady {
+            #if DEBUG
+            Purchases.logLevel = .debug
+            #else
+            Purchases.logLevel = .info
+            #endif
+            Purchases.configure(withAPIKey: RevenueCatConfig.apiKey)
+        }
+        #endif
+    }
 
     // Intentionally empty.
     // Umeng init was previously here but blocked the main thread for ~300-500ms
