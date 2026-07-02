@@ -16,6 +16,7 @@ struct VocabularyView: View {
     @State private var showPaywall = false
     @State private var filter: VocabFilter = .all
     @State private var showClearAlert = false
+    @State private var lessonStore = LessonStore()
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -25,6 +26,8 @@ struct VocabularyView: View {
                 VStack(spacing: 20) {
                     header
                     statsCards
+                    SceneLessonSection()
+                        .environment(lessonStore)
                     wordList
                 }
                 .padding(.top, 16)

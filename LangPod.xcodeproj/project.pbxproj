@@ -29,6 +29,11 @@
 		A10020 /* SubtitleOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20022 /* SubtitleOverlay.swift */; };
 		A10021 /* EpisodeCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20023 /* EpisodeCompleteView.swift */; };
 		A10022 /* SavedWord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20024 /* SavedWord.swift */; };
+		A190000 /* SceneLesson.swift in Sources */ = {isa = PBXBuildFile; fileRef = A290000 /* SceneLesson.swift */; };
+		A190001 /* LessonStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A290001 /* LessonStore.swift */; };
+		A190002 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A290002 /* LessonDetailView.swift */; };
+		A190003 /* SceneLessonSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A290003 /* SceneLessonSection.swift */; };
+		A190004 /* LessonLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A290004 /* LessonLibraryView.swift */; };
 		A10023 /* VocabularyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20025 /* VocabularyStore.swift */; };
 		A10024 /* MemoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20026 /* MemoryDetailView.swift */; };
 		A10025 /* MasteryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20027 /* MasteryDetailView.swift */; };
@@ -143,6 +148,11 @@
 		A20022 /* SubtitleOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubtitleOverlay.swift; sourceTree = "<group>"; };
 		A20023 /* EpisodeCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeCompleteView.swift; sourceTree = "<group>"; };
 		A20024 /* SavedWord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWord.swift; sourceTree = "<group>"; };
+		A290000 /* SceneLesson.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneLesson.swift; sourceTree = "<group>"; };
+		A290001 /* LessonStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonStore.swift; sourceTree = "<group>"; };
+		A290002 /* LessonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonDetailView.swift; sourceTree = "<group>"; };
+		A290003 /* SceneLessonSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneLessonSection.swift; sourceTree = "<group>"; };
+		A290004 /* LessonLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonLibraryView.swift; sourceTree = "<group>"; };
 		A20025 /* VocabularyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStore.swift; sourceTree = "<group>"; };
 		A20026 /* MemoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryDetailView.swift; sourceTree = "<group>"; };
 		A20027 /* MasteryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasteryDetailView.swift; sourceTree = "<group>"; };
@@ -281,6 +291,7 @@
 		A50003 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				A290000 /* SceneLesson.swift */,
 				A20005 /* PodcastLevel.swift */,
 				A20013 /* Episode.swift */,
 				A20024 /* SavedWord.swift */,
@@ -299,6 +310,7 @@
 		A50004 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				A290001 /* LessonStore.swift */,
 				A20004 /* DataStore.swift */,
 				A20014 /* MockDataLoader.swift */,
 				A20020 /* AudioPlayer.swift */,
@@ -329,6 +341,9 @@
 		A50006 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A290004 /* LessonLibraryView.swift */,
+				A290003 /* SceneLessonSection.swift */,
+				A290002 /* LessonDetailView.swift */,
 				A20006 /* HomeView.swift */,
 				A20007 /* VocabularyView.swift */,
 				A20008 /* StatsView.swift */,
@@ -564,6 +579,11 @@
 				A10020 /* SubtitleOverlay.swift in Sources */,
 				A10021 /* EpisodeCompleteView.swift in Sources */,
 				A10022 /* SavedWord.swift in Sources */,
+				A190000 /* SceneLesson.swift in Sources */,
+				A190001 /* LessonStore.swift in Sources */,
+				A190002 /* LessonDetailView.swift in Sources */,
+				A190003 /* SceneLessonSection.swift in Sources */,
+				A190004 /* LessonLibraryView.swift in Sources */,
 				A10023 /* VocabularyStore.swift in Sources */,
 				AN0001 /* Analytics.swift in Sources */,
 				RC0001 /* RemoteCommandRouter.swift in Sources */,

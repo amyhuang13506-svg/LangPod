@@ -238,6 +238,108 @@ actor APIService {
         return episodes
     }
 
+    // MARK: - 词汇小课堂 (Scene Lessons)
+
+    /// 拉国家列表（含各国课堂数）。失败回缓存，再失败回内置默认。
+    func fetchLessonCountries() async -> [LessonCountry] {
+        guard let url = URL(string: "\(baseURL)/lessons/countries.json") else {
+            return LessonCountry.defaults
+        }
+        do {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                return loadCachedLessonCountriesSync() ?? LessonCountry.defaults
+            }
+            let decoded = try JSONDecoder().decode(LessonCountriesResponse.self, from: rewriteURLs(data))
+            let file = cacheDirectory.appendingPathComponent("lesson_countries.json")
+            try? rewriteURLs(data).write(to: file)
+            return decoded.countries
+        } catch {
+            debugLog("⚠️ lesson countries fetch error: \(error.localizedDescription)")
+            return loadCachedLessonCountriesSync() ?? LessonCountry.defaults
+        }
+    }
+
+    nonisolated func loadCachedLessonCountriesSync() -> [LessonCountry]? {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CastlingoEpisodes", isDirectory: true)
+        let file = dir.appendingPathComponent("lesson_countries.json")
+        guard let data = try? Data(contentsOf: file),
+              let decoded = try? JSONDecoder().decode(LessonCountriesResponse.self, from: data),
+              !decoded.countries.isEmpty else { return nil }
+        return decoded.countries
+    }
+
+    /// 拉某国课堂目录。成功后写磁盘缓存（各国独立），失败返回空。
+    func fetchLessonIndex(country: String) async -> [SceneLessonIndexItem] {
+        guard let url = URL(string: "\(baseURL)/lessons/\(country)/index.json") else { return [] }
+        do {
+            debugLog("📡 Fetching lesson index: \(country)")
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                debugLog("❌ lesson index HTTP \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                return []
+            }
+            let rewritten = rewriteURLs(data)
+            let index = try JSONDecoder().decode(SceneLessonIndex.self, from: rewritten)
+            if !index.lessons.isEmpty {
+                let file = cacheDirectory.appendingPathComponent("lessons_index_\(country).json")
+                try? rewritten.write(to: file)
+            }
+            debugLog("✅ lesson index \(country): \(index.total)")
+            return index.lessons
+        } catch {
+            debugLog("⚠️ lesson index fetch error: \(error.localizedDescription)")
+            return []
+        }
+    }
+
+    nonisolated func loadCachedLessonIndexSync(country: String) -> [SceneLessonIndexItem]? {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CastlingoEpisodes", isDirectory: true)
+        let file = dir.appendingPathComponent("lessons_index_\(country).json")
+        guard let data = try? Data(contentsOf: file),
+              let index = try? JSONDecoder().decode(SceneLessonIndex.self, from: data),
+              !index.lessons.isEmpty else { return nil }
+        return index.lessons
+    }
+
+    /// 拉课堂详情。网络优先，失败回缓存（看过的课堂离线可用）。
+    func fetchLessonDetail(country: String, id: String) async -> SceneLesson? {
+        guard let url = URL(string: "\(baseURL)/lessons/\(country)/\(id)/lesson.json") else {
+            return loadCachedLessonDetailSync(id: id)
+        }
+        do {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                return loadCachedLessonDetailSync(id: id)
+            }
+            let rewritten = rewriteURLs(data)
+            let lesson = try JSONDecoder().decode(SceneLesson.self, from: rewritten)
+            let file = cacheDirectory.appendingPathComponent("lesson_\(id).json")
+            try? rewritten.write(to: file)
+            return lesson
+        } catch {
+            debugLog("⚠️ lesson detail \(id) error: \(error.localizedDescription)")
+            return loadCachedLessonDetailSync(id: id)
+        }
+    }
+
+    nonisolated func loadCachedLessonDetailSync(id: String) -> SceneLesson? {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CastlingoEpisodes", isDirectory: true)
+        let file = dir.appendingPathComponent("lesson_\(id).json")
+        guard let data = try? Data(contentsOf: file),
+              let lesson = try? JSONDecoder().decode(SceneLesson.self, from: data) else { return nil }
+        return lesson
+    }
+
     // MARK: - Caching
 
     private var cacheDirectory: URL {
