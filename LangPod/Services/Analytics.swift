@@ -42,6 +42,9 @@ enum Analytics {
         case lessonAddAll = "lesson_add_all"
         case lessonPaywallView = "lesson_paywall_view"
         case lessonCountrySwitch = "lesson_country_switch"
+        case sentenceSave = "sentence_save"
+        case sentencePracticeComplete = "sentence_practice_complete"
+        case sentenceQuizComplete = "sentence_quiz_complete"
     }
 
     // MARK: - Setup

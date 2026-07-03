@@ -14,6 +14,7 @@ struct VocabularyView: View {
     @Environment(VocabularyStore.self) private var store
     @Environment(AudioPlayer.self) private var audioPlayer
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(SentenceStore.self) private var sentenceStore
 
     @State private var lessonStore = LessonStore()
     @State private var selectedLesson: SceneLessonIndexItem?
@@ -69,6 +70,7 @@ struct VocabularyView: View {
             LessonDetailView(item: item, country: lessonStore.currentCountry)
                 .environment(store)
                 .environment(lessonStore)
+                .environment(sentenceStore)
         }
         .fullScreenCover(isPresented: $showMyVocabulary) {
             MyVocabularyView()
@@ -95,7 +97,7 @@ struct VocabularyView: View {
                 Spacer()
                 Button { showMyVocabulary = true } label: {
                     VStack(spacing: 2) {
-                        Image(systemName: "books.vertical.fill")
+                        Image(systemName: "book.fill")
                             .font(.system(size: 16))
                         Text("我的")
                             .font(.system(size: 10, weight: .medium))
@@ -104,7 +106,8 @@ struct VocabularyView: View {
                 }
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.leading, 20)
+        .padding(.trailing, 24)
         .padding(.top, 16)
     }
 

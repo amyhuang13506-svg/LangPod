@@ -14,7 +14,6 @@
 		A10005 /* PodcastLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20005 /* PodcastLevel.swift */; };
 		A10006 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20006 /* HomeView.swift */; };
 		A10007 /* VocabularyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20007 /* VocabularyView.swift */; };
-		A10008 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20008 /* StatsView.swift */; };
 		A10009 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20009 /* ProfileView.swift */; };
 		A10010 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20010 /* PrivacyInfo.xcprivacy */; };
 		A10011 /* Episode.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20013 /* Episode.swift */; };
@@ -29,6 +28,11 @@
 		A10020 /* SubtitleOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20022 /* SubtitleOverlay.swift */; };
 		A10021 /* EpisodeCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20023 /* EpisodeCompleteView.swift */; };
 		A10022 /* SavedWord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20024 /* SavedWord.swift */; };
+		A1991106 /* SentencePracticeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991106 /* SentencePracticeViews.swift */; };
+		A1991105 /* MySentencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991105 /* MySentencesView.swift */; };
+		A1991104 /* PatternsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991104 /* PatternsTabView.swift */; };
+		A1991103 /* SentenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991103 /* SentenceStore.swift */; };
+		A1991102 /* SavedSentence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991102 /* SavedSentence.swift */; };
 		A199101 /* LessonAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A299101 /* LessonAudioPlayer.swift */; };
 		A199100 /* MyVocabularyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A299100 /* MyVocabularyView.swift */; };
 		A190000 /* SceneLesson.swift in Sources */ = {isa = PBXBuildFile; fileRef = A290000 /* SceneLesson.swift */; };
@@ -36,8 +40,6 @@
 		A190002 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A290002 /* LessonDetailView.swift */; };
 		A190003 /* SceneLessonSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A290003 /* SceneLessonSection.swift */; };
 		A10023 /* VocabularyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20025 /* VocabularyStore.swift */; };
-		A10024 /* MemoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20026 /* MemoryDetailView.swift */; };
-		A10025 /* MasteryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20027 /* MasteryDetailView.swift */; };
 		A10026 /* WordMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20028 /* WordMatchView.swift */; };
 		A10027 /* FeynmanChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20029 /* FeynmanChallengeView.swift */; };
 		A10028 /* ListeningLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20030 /* ListeningLevel.swift */; };
@@ -132,7 +134,6 @@
 		A20005 /* PodcastLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastLevel.swift; sourceTree = "<group>"; };
 		A20006 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		A20007 /* VocabularyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyView.swift; sourceTree = "<group>"; };
-		A20008 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
 		A20009 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		A20010 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		A20011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -149,6 +150,11 @@
 		A20022 /* SubtitleOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubtitleOverlay.swift; sourceTree = "<group>"; };
 		A20023 /* EpisodeCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeCompleteView.swift; sourceTree = "<group>"; };
 		A20024 /* SavedWord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWord.swift; sourceTree = "<group>"; };
+		A2991106 /* SentencePracticeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentencePracticeViews.swift; sourceTree = "<group>"; };
+		A2991105 /* MySentencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySentencesView.swift; sourceTree = "<group>"; };
+		A2991104 /* PatternsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternsTabView.swift; sourceTree = "<group>"; };
+		A2991103 /* SentenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceStore.swift; sourceTree = "<group>"; };
+		A2991102 /* SavedSentence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedSentence.swift; sourceTree = "<group>"; };
 		A299101 /* LessonAudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonAudioPlayer.swift; sourceTree = "<group>"; };
 		A299100 /* MyVocabularyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVocabularyView.swift; sourceTree = "<group>"; };
 		A290000 /* SceneLesson.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneLesson.swift; sourceTree = "<group>"; };
@@ -156,8 +162,6 @@
 		A290002 /* LessonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonDetailView.swift; sourceTree = "<group>"; };
 		A290003 /* SceneLessonSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneLessonSection.swift; sourceTree = "<group>"; };
 		A20025 /* VocabularyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStore.swift; sourceTree = "<group>"; };
-		A20026 /* MemoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryDetailView.swift; sourceTree = "<group>"; };
-		A20027 /* MasteryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasteryDetailView.swift; sourceTree = "<group>"; };
 		A20028 /* WordMatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordMatchView.swift; sourceTree = "<group>"; };
 		A20029 /* FeynmanChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeynmanChallengeView.swift; sourceTree = "<group>"; };
 		A20030 /* ListeningLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningLevel.swift; sourceTree = "<group>"; };
@@ -293,6 +297,7 @@
 		A50003 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				A2991102 /* SavedSentence.swift */,
 				A290000 /* SceneLesson.swift */,
 				A20005 /* PodcastLevel.swift */,
 				A20013 /* Episode.swift */,
@@ -312,6 +317,7 @@
 		A50004 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				A2991103 /* SentenceStore.swift */,
 				A299101 /* LessonAudioPlayer.swift */,
 				A290001 /* LessonStore.swift */,
 				A20004 /* DataStore.swift */,
@@ -344,19 +350,19 @@
 		A50006 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A2991106 /* SentencePracticeViews.swift */,
+				A2991105 /* MySentencesView.swift */,
+				A2991104 /* PatternsTabView.swift */,
 				A299100 /* MyVocabularyView.swift */,
 				A290003 /* SceneLessonSection.swift */,
 				A290002 /* LessonDetailView.swift */,
 				A20006 /* HomeView.swift */,
 				A20007 /* VocabularyView.swift */,
-				A20008 /* StatsView.swift */,
 				A20009 /* ProfileView.swift */,
 				A20018 /* OnboardingView.swift */,
 				A20021 /* PlayerView.swift */,
 				A20022 /* SubtitleOverlay.swift */,
 				A20023 /* EpisodeCompleteView.swift */,
-				A20026 /* MemoryDetailView.swift */,
-				A20027 /* MasteryDetailView.swift */,
 				A20028 /* WordMatchView.swift */,
 				A20029 /* FeynmanChallengeView.swift */,
 				A20031 /* LevelUpView.swift */,
@@ -571,7 +577,6 @@
 				A10005 /* PodcastLevel.swift in Sources */,
 				A10006 /* HomeView.swift in Sources */,
 				A10007 /* VocabularyView.swift in Sources */,
-				A10008 /* StatsView.swift in Sources */,
 				A10009 /* ProfileView.swift in Sources */,
 				A10011 /* Episode.swift in Sources */,
 				A10012 /* MockDataLoader.swift in Sources */,
@@ -582,6 +587,11 @@
 				A10020 /* SubtitleOverlay.swift in Sources */,
 				A10021 /* EpisodeCompleteView.swift in Sources */,
 				A10022 /* SavedWord.swift in Sources */,
+				A1991106 /* SentencePracticeViews.swift in Sources */,
+				A1991105 /* MySentencesView.swift in Sources */,
+				A1991104 /* PatternsTabView.swift in Sources */,
+				A1991103 /* SentenceStore.swift in Sources */,
+				A1991102 /* SavedSentence.swift in Sources */,
 				A199101 /* LessonAudioPlayer.swift in Sources */,
 				A199100 /* MyVocabularyView.swift in Sources */,
 				A190000 /* SceneLesson.swift in Sources */,
@@ -596,8 +606,6 @@
 				P10003 /* PatternAccessGate.swift in Sources */,
 				P10004 /* PatternPlayerContent.swift in Sources */,
 				P10005 /* PatternHistoryView.swift in Sources */,
-				A10024 /* MemoryDetailView.swift in Sources */,
-				A10025 /* MasteryDetailView.swift in Sources */,
 				A10026 /* WordMatchView.swift in Sources */,
 				A10027 /* FeynmanChallengeView.swift in Sources */,
 				A10028 /* ListeningLevel.swift in Sources */,

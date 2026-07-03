@@ -77,9 +77,12 @@ PATTERN_EXAMPLE_SPEED = {
     "hard": 0.85,
 }
 
-# Pause budget between TTS chunks
-SECTION_SILENCE_MS = 400        # between top-level sections
-WITHIN_SECTION_SILENCE_MS = 250  # within a section, between zh/en switches
+# Pause budget between TTS chunks. Generous on purpose — listeners need a beat
+# to parse each subsentence; tight gaps make the explainer feel like a machine
+# gun. Combined with the looser trim_tts_tail (which preserves up to ~300ms of
+# natural breath at sentence ends), the perceived pause is even longer.
+SECTION_SILENCE_MS = 900        # between top-level sections
+WITHIN_SECTION_SILENCE_MS = 600  # within a section, between zh/en switches
 
 # Dedup is permanent: any template ever extracted is permanently blocked.
 # Old explainer audio + scripts are kept long-term; we never regenerate the
@@ -344,12 +347,35 @@ def extract_patterns_with_gpt(episode, recent_templates):
    "#E8DCC4" (米色) / "#D4E5D4" (淡绿) / "#E5D4E0" (淡紫) / "#DCE5F0" (淡蓝) / "#F0E0D4" (淡橙)
    不同句型用不同颜色让用户视觉区分
 
-**规则 8：pronunciation_intro_zh 只写中文导入，不嵌入完整英文句子，结尾不要加破折号**
-   完整英文示范在 pronunciation_demo_en 独立字段，intro 只写中文引导。
-   ❌ "今天我们学：Could I borrow your pen, please? 先听标准发音 ——"（嵌入完整英文 + 破折号）
-   ❌ "今天我们学一个礼貌请求句型，先听标准发音 ——"（末尾破折号 TTS 会读出杂音）
-   ✅ "今天我们学一个礼貌请求句型。先听标准发音。"（纯中文 + 句号收尾）
-   结尾必须用句号或问号，禁止用破折号（——）/ 省略号（...）结尾。
+**规则 8：pronunciation_intro_zh 必须是 3 段结构 — 句型介绍 + 例句中文预览 + 引出发音**
+   目的：在示范英文播放前，让听众先知道句型用途 + 这句英文什么意思，避免"盲听"。
+   3 段必须齐全，每段独立一句，句号结尾。
+
+   [A] 句型介绍（15-30 字）：这是个干嘛用的句型 + 引用句型骨架。骨架写法分两种：
+       · 当 template 从固定词开头（如 "Could I ___?"、"What other ___?"）：
+         用 "XXX 开头"
+         ✅ "今天我们学一个礼貌请求的句型，Could I 开头。"
+         ✅ "今天我们学一个扩展话题的问句，用 What other 开头。"
+       · 当 template 的固定词在中间或前后两侧（如 "I'd rather ___ than ___"、
+         "Not only ___ but also ___"、"It's ___ to ___"）：
+         必须读出整个骨架，**空格位置用 顿号 `、` 表示停顿**（不是 X/Y 字母）
+         ✅ "今天我们学一个表达偏好的句型，I'd rather、 than、。"
+         ✅ "今天我们学一个递进强调的句型，Not only、 but also、。"
+         ❌ "今天我们学一个表达偏好的句型，I'd rather X than Y。"（不准用字母占位）
+         ❌ "今天我们学一个表达偏好的句型，I'd rather 开头。"（中间结构不能说"开头"）
+
+   [B] 例句中文预览（15-30 字）：**固定句式** "接下来的例句意思是：XXX。"
+       XXX 是 example1.en_text 这一整句的自然中文翻译（不是字面直译）。
+       ✅ "接下来的例句意思是：我可以借一下你的笔吗？"
+       ✅ "接下来的例句意思是：珍珠奶茶到底有什么特别的？"
+       ❌ "接下来的例句意思是：礼貌请求。"（必须是 example1 的完整翻译，不是抽象描述）
+       ❌ "等下的例句意思是：..."（必须用"接下来"开头，不是"等下"）
+
+   [C] 引出发音（固定）："现在听标准发音。"
+       不要换成别的说法，统一这一句。
+
+   全长 40-70 字。结尾必须用句号或问号，禁止用破折号（——）/ 省略号（...）。
+   完整英文示范句保留在 pronunciation_demo_en 字段，不要嵌入 intro。
 
 **规则 9：meaning_zh 严格短（≤50 字），只讲字面意思**
    meaning_zh 内容限于：
@@ -380,7 +406,7 @@ def extract_patterns_with_gpt(episode, recent_templates):
       "translation_zh": "我可以...吗？（礼貌请求）",
       "scene": "餐厅 / 借东西 / 公共请求",
       "thumbnail_color": "#E8DCC4",
-      "pronunciation_intro_zh": "今天我们学一个超实用的礼貌请求句型。先听标准发音。",
+      "pronunciation_intro_zh": "今天我们学一个超实用的礼貌请求句型，Could I 开头。接下来的例句意思是：我可以借一下你的笔吗？现在听标准发音。",
       "pronunciation_demo_en": "Could I borrow your pen, please?",
       "meaning_zh": "Could I 字面意思是：我可以做某事吗？",
       "scene_and_feeling_zh": "现在你想象一个画面：你在咖啡店，店员忙得不可开交，你想点单，但又不想显得理所当然。这时候你说 Could I order a latte, please?。这个 Could I 带着一种谦卑感、一种 我知道你忙、我先试探一下、你拒绝也没关系 的口吻。它和 Can I 不一样。Can I 是默认你会答应；Could I 是先把决定权递给对方。所以越是对陌生人、长辈、服务员、上司，越要用 Could I。记住这种感觉——当你脑子里有 给对方留余地 的画面时，嘴里就会自动冒出 Could I。不要去翻译 我可以怎么样吗 这几个字，直接由感觉触发。",
@@ -402,10 +428,15 @@ def extract_patterns_with_gpt(episode, recent_templates):
 1. 每个中文段都不含 "dot dot dot" 和 "..."
 2. pronunciation_demo_en 和 example1.en_text 是 episode script 里的原文句子（字符完全一致）
 3. 3 个 pattern 的 template 不能全是同一类型（如 3 个都是问句）
+4. 每个 examples[].en_text 不超过 12 个英文单词（App 里连词成句词块拼句用，长句拼不动）
 4. 每个 scene_and_feeling_zh 段都包含 "它和 X 不一样" 的对比句
 5. 每个 scene_and_feeling_zh 都以 "记住这种感觉——" 开头的固定结尾收口
 6. 每个 example 的 scene_prefix_zh 是场景画面（"X——Y"格式），不是翻译
 7. 当前输出的任何 template 都不能出现在上面"最近已抽取过的句型"列表中（窗口内禁止重复）
+8. pronunciation_intro_zh 含 3 段（[A] 句型介绍 + [B] 例句中文预览 + [C] 现在听标准发音），[B] 段用固定句式 "接下来的例句意思是：" 开头
+9. pronunciation_intro_zh 的 [B] 段 XXX 是 example1.en_text 这一整句的中文翻译（不是抽象描述）
+10. 当 template 固定词在中间/两边时，pronunciation_intro_zh 的 [A] 段必须用顿号 `、` 表示空位（不准用 X/Y 字母）
+11. pronunciation_intro_zh 不嵌入完整英文示范句，不以破折号或省略号结尾
 
 请输出 2-3 个句型，按高频实用性排序（script 太简单时只输出 2 个）。""" % (
         level,
@@ -450,6 +481,13 @@ def trim_tts_tail(seg):
     """Trim low-energy tail artifact TTS sometimes leaves (garbled vowel or
     breath sound). Uses detect_leading_silence on reversed segment; safe —
     never touches middle.
+
+    Threshold tuned to preserve prosody:
+      - trail < 300ms: keep (this is natural sentence-end breath/decay; cutting
+        it makes the explainer feel rushed when concatenated)
+      - 300ms ≤ trail < 800ms: trim (these are the V3 garbled-vowel artifacts
+        the original rule was after — clearly longer than natural decay)
+      - trail ≥ 800ms: keep (unusual, don't risk cutting real content)
     """
     if seg is None or len(seg) < 200:
         return seg
@@ -457,7 +495,7 @@ def trim_tts_tail(seg):
         from pydub.silence import detect_leading_silence
         rev = seg.reverse()
         trail_ms = detect_leading_silence(rev, silence_threshold=-30, chunk_size=10)
-        if 30 < trail_ms < 500:
+        if 300 <= trail_ms < 800:
             return seg[:-trail_ms]
     except Exception:
         pass

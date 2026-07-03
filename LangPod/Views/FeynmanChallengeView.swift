@@ -514,8 +514,13 @@ struct FeynmanChallengeView: View {
 
     // MARK: - Logic
 
+    /// 连词成句只出 ≤12 个单词的例句（更长的句子拼起来太累，直接不进题池）
+    private static func practiceable(_ word: SavedWord) -> Bool {
+        !word.example.isEmpty && word.example.split(separator: " ").count <= 12
+    }
+
     private var hasMoreWords: Bool {
-        return store.words.filter { !$0.example.isEmpty }.count > 0
+        return store.words.filter { Self.practiceable($0) }.count > 0
     }
 
     private func startGame() {
@@ -540,7 +545,7 @@ struct FeynmanChallengeView: View {
     private let maxWordsPerSet = 8
 
     private func loadWords() {
-        let wordsWithExamples = store.words.filter { !$0.example.isEmpty }
+        let wordsWithExamples = store.words.filter { Self.practiceable($0) }
         var pool: [SavedWord] = []
 
         if sessionRound == 1 {

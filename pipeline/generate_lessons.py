@@ -41,7 +41,7 @@ Also produce for the whole lesson:
 
 RULES (all mandatory):
 - Spelling/vocabulary: use {spelling}. Use the words locals ACTUALLY use in this country (e.g. trolley vs cart, chemist vs pharmacy).
-- Every word entry: "word" (lowercase unless proper noun), "phonetic" (IPA with slashes like /ˈpæspɔːrt/), "translation_zh" (1-2 个中文释义), "example" (one natural sentence a real person would say in THIS scene, MUST contain the word), "example_zh" (自然的中文翻译), "difficulty" ("easy"|"medium"|"hard" by real-world frequency).
+- Every word entry: "word" (lowercase unless proper noun), "phonetic" (IPA with slashes like /ˈpæspɔːrt/), "translation_zh" (1-2 个中文释义), "example" (one natural sentence a real person would say in THIS scene, MUST contain the word, MAX 12 words), "example_zh" (自然的中文翻译), "difficulty" ("easy"|"medium"|"hard" by real-world frequency).
 - Brand-specific or local words (venti, paracetamol, EFTPOS) are ENCOURAGED — they are the point of this app. Mark them medium/hard.
 - Order words within each zone from easy to hard.
 - No word may repeat across zones in this lesson.

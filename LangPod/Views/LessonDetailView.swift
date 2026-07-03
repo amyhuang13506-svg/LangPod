@@ -9,6 +9,7 @@ struct LessonDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(VocabularyStore.self) private var vocabularyStore
     @Environment(LessonStore.self) private var lessonStore
+    @Environment(SentenceStore.self) private var sentenceStore
 
     @State private var lesson: SceneLesson?
     @State private var loadFailed = false
@@ -44,7 +45,6 @@ struct LessonDetailView: View {
         .sheet(item: $selectedWord) { word in
             LessonWordCard(word: word, accent: country.accent)
                 .environment(vocabularyStore)
-                .presentationDetents([.medium])
         }
     }
 
@@ -191,33 +191,65 @@ struct LessonDetailView: View {
                 .foregroundColor(Color.textPrimary)
             VStack(spacing: 8) {
                 ForEach(sentences) { sentence in
-                    Button {
-                        LessonAudioPlayer.shared.play(sentence.audio) {
-                            WordSpeaker.shared.speakSentence(sentence.english, accent: country.accent)
-                        }
-                    } label: {
-                        HStack(alignment: .top, spacing: 10) {
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(sentence.english)
-                                    .font(.system(size: 15, weight: .medium))
-                                    .foregroundColor(Color.textPrimary)
-                                    .multilineTextAlignment(.leading)
-                                Text(sentence.chinese)
-                                    .font(.system(size: 13))
-                                    .foregroundColor(Color.textSecondary)
-                            }
-                            Spacer()
-                            Image(systemName: "speaker.wave.2.fill")
-                                .font(.system(size: 13))
-                                .foregroundColor(Color.appPrimary)
-                                .padding(.top, 3)
-                        }
-                        .padding(14)
-                        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
-                    }
+                    sentenceRow(sentence)
                 }
             }
         }
+    }
+
+    private func sentenceRow(_ sentence: SceneSentence) -> some View {
+        let saved = sentenceStore.isSaved(sentence.english)
+        return HStack(alignment: .top, spacing: 10) {
+            Button {
+                LessonAudioPlayer.shared.play(sentence.audio) {
+                    WordSpeaker.shared.speakSentence(sentence.english, accent: country.accent)
+                }
+            } label: {
+                HStack(alignment: .top, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(sentence.english)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(Color.textPrimary)
+                            .multilineTextAlignment(.leading)
+                        Text(sentence.chinese)
+                            .font(.system(size: 13))
+                            .foregroundColor(Color.textSecondary)
+                            .multilineTextAlignment(.leading)
+                    }
+                    Spacer()
+                    Image(systemName: "speaker.wave.2.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color.appPrimary)
+                        .padding(.top, 3)
+                }
+            }
+            .buttonStyle(.plain)
+
+            // 加入我的句子（场景 = 课堂标题）
+            Button {
+                guard !saved, let lesson else { return }
+                let added = sentenceStore.add(SavedSentence(
+                    english: sentence.english,
+                    chinese: sentence.chinese,
+                    scene: lesson.titleZh,
+                    source: "lesson",
+                    sourceLabel: lesson.titleZh,
+                    audioUrl: sentence.audio,
+                    audioStart: nil,
+                    audioEnd: nil,
+                    savedDate: Date()
+                ))
+                if added {
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                }
+            } label: {
+                Image(systemName: saved ? "checkmark.circle.fill" : "plus.circle")
+                    .font(.system(size: 22))
+                    .foregroundColor(saved ? Color.success : Color.textQuaternary)
+            }
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
     }
 
     private func cultureTipsSection(_ tips: [String]) -> some View {
@@ -421,20 +453,21 @@ struct LessonWordCard: View {
 
     @Environment(VocabularyStore.self) private var vocabularyStore
     @State private var justAdded = false
+    @State private var contentHeight: CGFloat = 340
 
     private var isAdded: Bool {
         justAdded || vocabularyStore.words.contains { $0.word.lowercased() == word.word.lowercased() }
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
+        VStack(alignment: .leading, spacing: 14) {
+            // 单词独占一行（超长自动缩小字号，不换行拆分）
+            HStack(alignment: .center, spacing: 10) {
                 Text(word.word)
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(Color.textPrimary)
-                Text(word.phonetic)
-                    .font(.system(size: 15))
-                    .foregroundColor(Color.textTertiary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 Spacer()
                 Button {
                     playWord()
@@ -447,7 +480,11 @@ struct LessonWordCard: View {
                 }
             }
 
+            // 第二行：音标 + 释义 + 难度
             HStack(spacing: 8) {
+                Text(word.phonetic)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color.textTertiary)
                 Text(word.translationZh)
                     .font(.system(size: 17, weight: .medium))
                     .foregroundColor(Color.textPrimary)
@@ -488,8 +525,6 @@ struct LessonWordCard: View {
                 .background(RoundedRectangle(cornerRadius: 14).fill(Color.appBackground))
             }
 
-            Spacer()
-
             Button {
                 guard !isAdded else { return }
                 if vocabularyStore.addWord(word.asVocabularyItem, sourceLabel: "scene_lesson") {
@@ -510,7 +545,18 @@ struct LessonWordCard: View {
             }
         }
         .padding(20)
-        .background(Color.white)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            GeometryReader { geo in
+                Color.clear.preference(key: LessonWordCardHeightKey.self, value: geo.size.height)
+            }
+        )
+        .onPreferenceChange(LessonWordCardHeightKey.self) { height in
+            // 内容多高弹多高（去掉半屏固定高度的空白），上限 3/4 屏
+            contentHeight = min(height + 12, UIScreen.main.bounds.height * 0.75)
+        }
+        .presentationDetents([.height(contentHeight)])
+        .presentationDragIndicator(.visible)
         .onAppear { playWord() }
     }
 
@@ -518,5 +564,13 @@ struct LessonWordCard: View {
         LessonAudioPlayer.shared.play(word.audio) {
             WordSpeaker.shared.speak(word.word, accent: accent)
         }
+    }
+}
+
+/// 单词卡内容实测高度（驱动弹窗高度自适应）
+private struct LessonWordCardHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

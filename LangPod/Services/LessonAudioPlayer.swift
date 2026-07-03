@@ -9,6 +9,7 @@ final class LessonAudioPlayer: NSObject, AVAudioPlayerDelegate {
 
     private var player: AVAudioPlayer?
     private var playTask: Task<Void, Never>?
+    private var segmentStopTask: Task<Void, Never>?
 
     private let cacheDir: URL = {
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
@@ -19,13 +20,20 @@ final class LessonAudioPlayer: NSObject, AVAudioPlayerDelegate {
 
     /// 播放一段发音。urlString 为空或获取失败时执行 fallback。
     func play(_ urlString: String?, fallback: @escaping () -> Void) {
+        play(urlString, from: nil, to: nil, fallback: fallback)
+    }
+
+    /// 截段播放：从长音频（如句型讲解 mp3）里播 [from, to] 区间。
+    /// 用于句型例句发音——例句在讲解音频里被完整朗读过且有时间戳，零成本复用。
+    func play(_ urlString: String?, from start: Double?, to end: Double?, fallback: @escaping () -> Void) {
         playTask?.cancel()
+        segmentStopTask?.cancel()
         guard let urlString, !urlString.isEmpty else {
             debugLog("empty url → fallback")
             fallback()
             return
         }
-        debugLog("play: \(urlString.suffix(50))")
+        debugLog("play: \(urlString.suffix(50)) [\(start ?? 0)-\(end ?? 0)]")
         playTask = Task { [weak self] in
             guard let self else { return }
             guard let file = await self.localFile(for: urlString), !Task.isCancelled else {
@@ -40,10 +48,25 @@ final class LessonAudioPlayer: NSObject, AVAudioPlayerDelegate {
                     self.player?.stop()
                     let player = try AVAudioPlayer(contentsOf: file)
                     player.delegate = self
+                    if let start, start > 0 {
+                        player.currentTime = start
+                    }
                     let ok = player.play()
                     self.player = player
                     self.debugLog("player.play() = \(ok), duration \(player.duration)")
-                    if !ok { fallback() }
+                    if !ok {
+                        fallback()
+                        return
+                    }
+                    // 截段：到 end 时停（留 0.15s 尾巴避免吞掉最后一个音）
+                    if let end, end > (start ?? 0) {
+                        let seconds = end - (start ?? 0) + 0.15
+                        self.segmentStopTask = Task { [weak self] in
+                            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                            guard !Task.isCancelled else { return }
+                            await MainActor.run { self?.player?.stop() }
+                        }
+                    }
                 } catch {
                     self.debugLog("play error: \(error) → fallback")
                     fallback()

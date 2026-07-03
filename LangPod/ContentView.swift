@@ -16,9 +16,9 @@ struct ContentView: View {
                     .tabItem {
                         Label("词汇", systemImage: "character.book.closed")
                     }
-                StatsView()
+                PatternsTabView()
                     .tabItem {
-                        Label("记录", systemImage: "clock.arrow.circlepath")
+                        Label("句型", systemImage: "quote.bubble")
                     }
                 ProfileView()
                     .tabItem {
