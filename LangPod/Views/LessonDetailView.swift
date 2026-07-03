@@ -16,6 +16,7 @@ struct LessonDetailView: View {
     @State private var selectedWord: SceneWord?
     @State private var toast: String?
     @State private var addedAll = false
+    @State private var showRolePlay = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -42,6 +43,11 @@ struct LessonDetailView: View {
             }
         }
         .task { await loadLesson() }
+        .fullScreenCover(isPresented: $showRolePlay) {
+            if let lesson, let roleplay = lesson.roleplay {
+                LessonRolePlayView(lesson: lesson, roleplay: roleplay)
+            }
+        }
         .sheet(item: $selectedWord) { word in
             LessonWordCard(
                 word: word,
@@ -288,22 +294,49 @@ struct LessonDetailView: View {
                 startPoint: .top, endPoint: .bottom
             )
             .frame(height: 24)
-            Button(action: addAllWords) {
-                Text(allWordsAdded ? "已全部加入 ✓" : "全部加入单词本 (\(lesson?.allWords.count ?? item.wordCount))")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(allWordsAdded ? Color.textSecondary : .white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(
-                        RoundedRectangle(cornerRadius: 25)
-                            .fill(allWordsAdded ? Color.border : Color.appPrimary)
-                    )
+            HStack(spacing: 10) {
+                Button(action: addAllWords) {
+                    Text(allWordsAdded ? "已全部加入 ✓" : "全部加入单词本 (\(lesson?.allWords.count ?? item.wordCount))")
+                        .font(.system(size: hasRoleplay ? 14 : 16, weight: .semibold))
+                        .foregroundColor(allWordsAdded ? Color.textSecondary : .white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 25)
+                                .fill(allWordsAdded ? Color.border : Color.appPrimary)
+                        )
+                }
+                .disabled(allWordsAdded || lesson == nil)
+
+                if hasRoleplay {
+                    Button {
+                        showRolePlay = true
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "person.line.dotted.person.fill")
+                                .font(.system(size: 13))
+                            Text("模拟现场对话")
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(RoundedRectangle(cornerRadius: 25).fill(Color.hardOrange))
+                    }
+                }
             }
-            .disabled(allWordsAdded || lesson == nil)
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
             .background(Color.appBackground)
         }
+    }
+
+    private var hasRoleplay: Bool {
+        !(lesson?.roleplay?.dialogue.isEmpty ?? true)
     }
 
     private var failedState: some View {
@@ -617,5 +650,233 @@ private struct LessonWordCardHeightKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
+    }
+}
+
+// MARK: - 模拟现场对话（角色扮演：一句句推进，对方有声、你的台词跟着念）
+
+struct LessonRolePlayView: View {
+    let lesson: SceneLesson
+    let roleplay: LessonRoleplay
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var revealed = 0
+    @State private var finished = false
+
+    var body: some View {
+        ZStack {
+            Color.appBackground.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                header
+                setupCard
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 12) {
+                            ForEach(Array(roleplay.dialogue.prefix(revealed).enumerated()), id: \.element.id) { index, line in
+                                bubble(line)
+                                    .id(index)
+                                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                            }
+                            if finished {
+                                completionCard
+                                    .id("done")
+                                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+                        .padding(.bottom, 20)
+                    }
+                    .onChange(of: revealed) { _, newValue in
+                        withAnimation(.spring(duration: 0.35)) {
+                            proxy.scrollTo(finished ? AnyHashable("done") : AnyHashable(newValue - 1), anchor: .bottom)
+                        }
+                    }
+                }
+
+                bottomButton
+            }
+        }
+        .onAppear { advance() }
+    }
+
+    private var header: some View {
+        ZStack {
+            VStack(spacing: 2) {
+                Text("模拟现场对话")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                Text(lesson.titleZh)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.textTertiary)
+            }
+            HStack {
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.textSecondary)
+                        .frame(width: 32, height: 32)
+                        .background(Circle().fill(Color.white))
+                }
+                Spacer()
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
+    }
+
+    private var setupCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 5) {
+                Text("🎬")
+                Text(roleplay.setupZh)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.bodyText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: 10) {
+                roleTag("你", roleplay.yourRoleZh, color: Color.appPrimary)
+                roleTag("对方", roleplay.otherRoleZh, color: Color.hardOrange)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.warningLight.opacity(0.6), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func roleTag(_ label: String, _ role: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 6).padding(.vertical, 2)
+                .background(Capsule().fill(color))
+            Text(role)
+                .font(.system(size: 12))
+                .foregroundStyle(Color.textSecondary)
+        }
+    }
+
+    // MARK: - 气泡
+
+    @ViewBuilder
+    private func bubble(_ line: RoleplayLine) -> some View {
+        HStack {
+            if line.isYou { Spacer(minLength: 40) }
+            Button {
+                play(line)
+            } label: {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(line.en)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(line.isYou ? .white : Color.textPrimary)
+                        .multilineTextAlignment(.leading)
+                    Text(line.zh)
+                        .font(.system(size: 12))
+                        .foregroundStyle(line.isYou ? .white.opacity(0.85) : Color.textSecondary)
+                        .multilineTextAlignment(.leading)
+                    if line.isYou {
+                        HStack(spacing: 3) {
+                            Image(systemName: "speaker.wave.2.fill").font(.system(size: 9))
+                            Text("你的台词 · 大声念出来")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        .foregroundStyle(.white.opacity(0.8))
+                        .padding(.top, 2)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(line.isYou ? Color.appPrimary : Color.white)
+                        .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            if !line.isYou { Spacer(minLength: 40) }
+        }
+    }
+
+    private var completionCard: some View {
+        VStack(spacing: 8) {
+            Text("🎉")
+                .font(.system(size: 34))
+            Text("对话完成！")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(Color.textPrimary)
+            Text("下次走进这个场景，这些话就是条件反射")
+                .font(.system(size: 12))
+                .foregroundStyle(Color.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .background(Color.successLight.opacity(0.6), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var bottomButton: some View {
+        HStack(spacing: 10) {
+            if finished {
+                Button {
+                    withAnimation { revealed = 0; finished = false }
+                    advance()
+                } label: {
+                    Text("再来一遍")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(Color.appPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(RoundedRectangle(cornerRadius: 24).fill(Color.primaryLight))
+                }
+                Button { dismiss() } label: {
+                    Text("完成")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(RoundedRectangle(cornerRadius: 24).fill(Color.appPrimary))
+                }
+            } else {
+                Button { advance() } label: {
+                    Text(revealed == 0 ? "开始对话" : "下一句")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(RoundedRectangle(cornerRadius: 24).fill(Color.appPrimary))
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color.appBackground)
+    }
+
+    // MARK: - 推进
+
+    private func advance() {
+        guard revealed < roleplay.dialogue.count else {
+            withAnimation(.spring(duration: 0.35)) { finished = true }
+            return
+        }
+        withAnimation(.spring(duration: 0.35)) { revealed += 1 }
+        let line = roleplay.dialogue[revealed - 1]
+        play(line)
+        if revealed == roleplay.dialogue.count {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                withAnimation(.spring(duration: 0.35)) { finished = true }
+            }
+        }
+    }
+
+    private func play(_ line: RoleplayLine) {
+        LessonAudioPlayer.shared.play(line.audio) {
+            WordSpeaker.shared.speakSentence(line.en)
+        }
     }
 }

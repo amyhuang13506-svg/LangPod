@@ -97,6 +97,9 @@ def upload_lesson(bucket, json_path):
     for sentence in lesson.get("sentences", []):
         upload_audio_field(sentence, "audio")
         audio_count += 1
+    for line in (lesson.get("roleplay") or {}).get("dialogue", []):
+        upload_audio_field(line, "audio")
+        audio_count += 1
     if audio_count:
         print("   🔊 audio fields processed: %d" % audio_count)
 

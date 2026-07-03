@@ -88,9 +88,11 @@ struct SceneLesson: Codable, Identifiable {
     let zones: [SceneZone]
     let sentences: [SceneSentence]
     let cultureTipsZh: [String]?
+    /// 模拟现场对话（角色扮演，可选：老课堂没有该字段）
+    var roleplay: LessonRoleplay?
 
     enum CodingKeys: String, CodingKey {
-        case id, country, category, icon, cover, date, zones, sentences
+        case id, country, category, icon, cover, date, zones, sentences, roleplay
         case titleZh = "title_zh"
         case titleEn = "title_en"
         case categoryZh = "category_zh"
@@ -109,7 +111,33 @@ struct SceneLesson: Codable, Identifiable {
     var allAudioUrls: [String] {
         allWords.flatMap { [$0.audio, $0.exampleAudio] }.compactMap { $0 }
             + sentences.compactMap { $0.audio }
+            + (roleplay?.dialogue.compactMap { $0.audio } ?? [])
     }
+}
+
+/// 模拟现场对话：进入场景后的完整角色扮演（你 = 顾客视角，对方 = 店员/柜员等）
+struct LessonRoleplay: Codable, Hashable {
+    let setupZh: String       // 场景设定（"你走进 Chase 网点，要开一个 checking account"）
+    let yourRoleZh: String    // 你的角色（"顾客"）
+    let otherRoleZh: String   // 对方角色（"银行柜员"）
+    let dialogue: [RoleplayLine]
+
+    enum CodingKeys: String, CodingKey {
+        case dialogue
+        case setupZh = "setup_zh"
+        case yourRoleZh = "your_role_zh"
+        case otherRoleZh = "other_role_zh"
+    }
+}
+
+struct RoleplayLine: Codable, Identifiable, Hashable {
+    let speaker: String       // "you" / "other"
+    let en: String
+    let zh: String
+    let audio: String?
+    var id: String { speaker + en }
+
+    var isYou: Bool { speaker == "you" }
 }
 
 struct SceneZone: Codable, Identifiable {
