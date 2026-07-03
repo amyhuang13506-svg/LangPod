@@ -41,9 +41,12 @@ STYLE = (
 )
 
 # 性别与配音固定对应：你 = Bella 女声 → 女头像；对方 = Chris 男声 → 男头像
+# 普适性优先：纯素人造型，无帽子/围裙/制服等任何职业或场景道具
 AVATARS = {
-    "you": STYLE + " Subject: a friendly young East Asian WOMAN traveler in casual clothes.",
-    "other": STYLE + " Subject: a friendly adult MAN in smart-casual work attire (universal service staff look).",
+    "you": STYLE + " Subject: a friendly young East Asian WOMAN with shoulder-length dark hair, "
+                   "wearing a plain casual crew-neck top. No hat, no props, no occupational clothing.",
+    "other": STYLE + " Subject: a friendly clean-cut adult MAN with short dark hair, "
+                     "wearing a plain light button-up shirt. No hat, no apron, no uniform, no props.",
 }
 
 
@@ -99,8 +102,11 @@ def main():
             if not generate_image(prompt, local):
                 print("❌ %s avatar failed, abort" % who)
                 return
-        key = "lessons/avatars/%s.jpg" % who
-        bucket.put_object(key, compress_avatar(local))
+        data = compress_avatar(local)
+        # 文件名带内容 hash：换图必换 URL，客户端按 URL 缓存的旧图自动失效
+        import hashlib
+        key = "lessons/avatars/%s_%s.jpg" % (who, hashlib.md5(data).hexdigest()[:8])
+        bucket.put_object(key, data)
         urls[who] = "%s/%s" % (OSS_CDN_DOMAIN, key)
         print("   ✅ %s" % urls[who])
 
