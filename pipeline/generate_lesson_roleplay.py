@@ -14,6 +14,8 @@
   python3 generate_lesson_roleplay.py --lesson lesson_us_bank_account
   python3 generate_lesson_roleplay.py --country us
   python3 generate_lesson_roleplay.py             # 全部
+  python3 generate_lesson_roleplay.py --annotate --country us
+      # 给每句「你」的台词补 GPT 教学解析 note_zh（场景模拟解析用），改完直传 OSS
 """
 
 import argparse
@@ -39,6 +41,23 @@ LESSONS_DIR = os.path.join(OUTPUT_DIR, "lessons")
 TTS_ENDPOINT = "https://api.elevenlabs.io/v1/text-to-speech/%s"
 OUTPUT_FORMAT = "mp3_44100_64"
 OTHER_VOICE = "iP95p4xoKVk53GoZ742B"  # Chris 男声（店员/柜员等对方角色）
+
+ANNOTATE_PROMPT = """You are annotating a roleplay dialogue for Chinese learners of English.
+
+Scene: {title_en}（{title_zh}）
+Dialogue (numbered):
+{dialogue_text}
+
+For EACH line spoken by "you" listed above, write a "note_zh" — 1-2 句中文教学解析，让学习者看完能带走一个具体知识点。
+
+要求：
+- 每条只抓一个角度讲透：这句里的关键表达/固定搭配 OR 语气礼貌层级（为什么这么措辞）OR 母语者的文化习惯
+- 必须具体（引用句中的英文短语），禁止"顺着语境这样回应很自然"这类空话套话
+- 不同的行要用不同角度，全部解析读起来不能一个模子
+- 每条 ≤60 个汉字
+
+Output STRICT JSON only:
+{{"notes": [{{"index": <行号>, "note_zh": "..."}}]}}"""
 
 PROMPT = """You are writing a realistic roleplay dialogue for a Chinese learner practicing real-life English abroad.
 
@@ -199,10 +218,65 @@ def process_lesson(lesson_dir):
     return True
 
 
+def annotate_lesson(lesson_dir, bucket):
+    """给 roleplay 里每句「你」的台词补 GPT 教学解析 note_zh，改完直传 lesson.json。"""
+    json_path = os.path.join(lesson_dir, "lesson.json")
+    if not os.path.exists(json_path):
+        return False
+    with open(json_path, "r", encoding="utf-8") as f:
+        lesson = json.load(f)
+    rp = lesson.get("roleplay")
+    dialogue = (rp or {}).get("dialogue") or []
+    if not dialogue:
+        return False
+    you_missing = [
+        i for i, l in enumerate(dialogue)
+        if l.get("speaker") == "you" and not l.get("note_zh")
+    ]
+    if not you_missing:
+        print("⏭  %s notes exist" % lesson["id"])
+        return True
+
+    print("💡 %s (%s) — %d 句待解析" % (lesson["id"], lesson["title_zh"], len(you_missing)))
+    dialogue_text = "\n".join(
+        "%d. [%s] %s" % (i, l["speaker"], l["en"]) for i, l in enumerate(dialogue)
+    )
+    prompt = ANNOTATE_PROMPT.format(
+        title_en=lesson["title_en"], title_zh=lesson["title_zh"], dialogue_text=dialogue_text
+    )
+    try:
+        result = call_gpt(prompt)
+    except Exception as e:
+        print("   ❌ GPT: %s" % e)
+        return False
+    added = 0
+    for note in result.get("notes", []):
+        idx = note.get("index")
+        text = (note.get("note_zh") or "").strip()
+        if isinstance(idx, int) and 0 <= idx < len(dialogue) and text \
+                and dialogue[idx].get("speaker") == "you":
+            dialogue[idx]["note_zh"] = text
+            added += 1
+    if not added:
+        print("   ⚠️ no usable notes")
+        return False
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(lesson, f, ensure_ascii=False, indent=2)
+    # 直传 lesson.json（其余资源字段已是 OSS URL，无需全量 upload）
+    bucket.put_object(
+        "lessons/%s/%s/lesson.json" % (lesson.get("country", "us"), lesson["id"]),
+        json.dumps(lesson, ensure_ascii=False, indent=2).encode("utf-8"),
+    )
+    print("   ✅ %d notes added + uploaded" % added)
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--lesson")
     parser.add_argument("--country")
+    parser.add_argument("--annotate", action="store_true",
+                        help="给已有 roleplay 的每句你方台词补教学解析 note_zh")
     args = parser.parse_args()
 
     dirs = sorted(glob.glob(os.path.join(LESSONS_DIR, "*", "*")))
@@ -211,7 +285,16 @@ def main():
     elif args.country:
         dirs = [d for d in dirs if os.path.basename(os.path.dirname(d)) == args.country]
 
-    ok = sum(1 for d in dirs if os.path.isdir(d) and process_lesson(d))
+    if args.annotate:
+        import oss2
+        from config import (
+            OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET, OSS_BUCKET_NAME, OSS_ENDPOINT,
+        )
+        auth = oss2.Auth(OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET)
+        bucket = oss2.Bucket(auth, OSS_ENDPOINT, OSS_BUCKET_NAME)
+        ok = sum(1 for d in dirs if os.path.isdir(d) and annotate_lesson(d, bucket))
+    else:
+        ok = sum(1 for d in dirs if os.path.isdir(d) and process_lesson(d))
     print("\n🎉 %d lessons done" % ok)
 
 

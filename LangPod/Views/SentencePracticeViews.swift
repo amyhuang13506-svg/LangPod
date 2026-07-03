@@ -555,13 +555,19 @@ struct SceneQuizView: View {
     // 国家读上次浏览记录，数据直接走 APIService。
     @AppStorage("lessonCountry") private var savedCountry = "us"
 
+    /// 选项带来源场景（干扰项来自其他课堂 → 选错时能点名"那是 XX 场景的说法"）
+    private struct QuizOption: Identifiable {
+        let line: RoleplayLine
+        let sourceTitle: String
+        var id: String { line.en }
+    }
+
     private struct Question {
         let lessonTitle: String     // 在 Starbucks 点单
         let otherRole: String       // 店员
         let turns: [RoleplayLine]   // 4 句（other/you 交替）
         let blankIndex: Int         // 留白的那句（you）
-        let options: [RoleplayLine] // 4 个候选（含正确项），已打乱
-        let explanation: String     // 选完后的语境解析
+        let options: [QuizOption]   // 4 个候选（含正确项），已打乱
         var answer: RoleplayLine { turns[blankIndex] }
     }
 
@@ -624,8 +630,11 @@ struct SceneQuizView: View {
             roleplays = await Self.fetchRoleplays(items: items, country: "us")
         }
 
-        // 干扰项池：所有课堂里"你说"的台词
-        let allYouLines = roleplays.flatMap { $0.roleplay.dialogue.filter { $0.isYou } }
+        // 干扰项池：所有课堂里"你说"的台词（带来源场景标题）
+        let allYouLines: [QuizOption] = roleplays.flatMap { entry in
+            entry.roleplay.dialogue.filter { $0.isYou }
+                .map { QuizOption(line: $0, sourceTitle: entry.title) }
+        }
 
         var built: [Question] = []
         for (title, rp) in roleplays.shuffled() {
@@ -640,20 +649,19 @@ struct SceneQuizView: View {
             guard let blank = youIndexes.randomElement() else { continue }
             let answer = turns[blank]
             var distractors = allYouLines
-                .filter { $0.en != answer.en }
+                .filter { $0.line.en != answer.en }
                 .shuffled()
             // 去重
             var seen = Set<String>()
-            distractors = distractors.filter { seen.insert($0.en).inserted }
+            distractors = distractors.filter { seen.insert($0.line.en).inserted }
             guard distractors.count >= 3 else { continue }
-            let options = ([answer] + distractors.prefix(3)).shuffled()
+            let options = ([QuizOption(line: answer, sourceTitle: title)] + distractors.prefix(3)).shuffled()
             built.append(Question(
                 lessonTitle: title,
                 otherRole: rp.otherRoleZh,
                 turns: turns,
                 blankIndex: blank,
-                options: options,
-                explanation: Self.makeExplanation(turns: turns, blankIndex: blank)
+                options: options
             ))
             if built.count >= 5 { break }
         }
@@ -684,25 +692,29 @@ struct SceneQuizView: View {
         return result
     }
 
-    /// 语境解析：结合上一句对方的话 + 正确回应的意思，说明为什么这样选
-    private static func makeExplanation(turns: [RoleplayLine], blankIndex: Int) -> String {
-        let answer = turns[blankIndex]
-        if blankIndex > 0 {
-            let prev = turns[blankIndex - 1]
-            return "上一句对方说「\(prev.en)」（\(prev.zh)），顺着这个语境，自然的回应是「\(answer.en)」，意思是\(answer.zh)。"
-        } else if blankIndex + 1 < turns.count {
-            let next = turns[blankIndex + 1]
-            return "你说完后对方接「\(next.en)」（\(next.zh)），能顺下去的是「\(answer.en)」，意思是\(answer.zh)。"
-        } else {
-            return "这里正确的说法是「\(answer.en)」，意思是\(answer.zh)。"
+    /// 答题后的解析文案（1-2 条）：
+    /// 选错 → 先点名所选句来自哪个场景、为什么接不上；再展示正确句的 GPT 教学解析
+    private var explanationTexts: [String] {
+        var out: [String] = []
+        if let sel = selectedOption, sel != current.answer.en,
+           let picked = current.options.first(where: { $0.line.en == sel }) {
+            if picked.sourceTitle != current.lessonTitle {
+                out.append("「\(sel)」是〈\(picked.sourceTitle)〉场景里的说法（\(picked.line.zh)），放到这段对话里接不上。")
+            } else {
+                out.append("「\(sel)」（\(picked.line.zh)）虽然也是这个场景的话，但对不上空格处的上下文。")
+            }
         }
+        if let note = current.answer.noteZh, !note.isEmpty {
+            out.append(note)
+        }
+        return out
     }
 
-    private func choose(_ option: RoleplayLine) {
+    private func choose(_ option: QuizOption) {
         guard !revealed else { return }
-        selectedOption = option.en
+        selectedOption = option.line.en
         withAnimation(.spring(duration: 0.35)) { revealed = true }
-        if option.en == current.answer.en {
+        if option.line.en == current.answer.en {
             correctCount += 1
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             LessonAudioPlayer.shared.play(current.answer.audio) {
@@ -767,17 +779,21 @@ struct SceneQuizView: View {
                         }
                     }
 
-                    // 选完后的语境解析
-                    if revealed {
-                        HStack(alignment: .top, spacing: 8) {
-                            Image(systemName: "lightbulb.fill")
-                                .font(.system(size: 13))
-                                .foregroundStyle(Color.gold)
-                                .padding(.top, 1)
-                            Text(current.explanation)
-                                .font(.system(size: 13))
-                                .foregroundStyle(Color.bodyText)
-                                .fixedSize(horizontal: false, vertical: true)
+                    // 选完后的解析（选错先讲错在哪，再讲正确句的知识点）
+                    if revealed && !explanationTexts.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(Array(explanationTexts.enumerated()), id: \.offset) { _, text in
+                                HStack(alignment: .top, spacing: 8) {
+                                    Image(systemName: "lightbulb.fill")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.gold)
+                                        .padding(.top, 1)
+                                    Text(text)
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(Color.bodyText)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
                         }
                         .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -832,9 +848,9 @@ struct SceneQuizView: View {
         String(UnicodeScalar(65 + index)!)  // A/B/C/D
     }
 
-    private func optionRow(_ option: RoleplayLine, label: String) -> some View {
-        let isAnswer = option.en == current.answer.en
-        let isSelected = selectedOption == option.en
+    private func optionRow(_ option: QuizOption, label: String) -> some View {
+        let isAnswer = option.line.en == current.answer.en
+        let isSelected = selectedOption == option.line.en
         let bg: Color = {
             guard revealed else { return .white }
             if isAnswer { return Color.successLight }
@@ -860,7 +876,7 @@ struct SceneQuizView: View {
                             : (revealed && isSelected ? Color.dangerLight : Color.primaryLight)
                         )
                     )
-                Text(option.en)
+                Text(option.line.en)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(Color.textPrimary)
                     .multilineTextAlignment(.leading)

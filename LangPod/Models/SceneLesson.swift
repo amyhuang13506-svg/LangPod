@@ -140,7 +140,14 @@ struct RoleplayLine: Codable, Identifiable, Hashable {
     let en: String
     let zh: String
     let audio: String?
+    /// GPT 教学解析（关键表达/语气/文化习惯，场景模拟答题后展示）
+    var noteZh: String?
     var id: String { speaker + en }
+
+    enum CodingKeys: String, CodingKey {
+        case speaker, en, zh, audio
+        case noteZh = "note_zh"
+    }
 
     var isYou: Bool { speaker == "you" }
 }
