@@ -20,11 +20,7 @@ struct VocabularyView: View {
     @State private var selectedLesson: SceneLessonIndexItem?
     @State private var showPaywall = false
     @State private var showMyVocabulary = false
-
-    private let columns = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12),
-    ]
+    @State private var allTarget: LessonCategoryTarget?
 
     var body: some View {
         ZStack {
@@ -78,6 +74,16 @@ struct VocabularyView: View {
                 .environment(audioPlayer)
                 .environment(subscriptionManager)
         }
+        .fullScreenCover(item: $allTarget) { target in
+            LessonCategoryAllView(
+                title: target.title,
+                lessons: target.lessons,
+                isLocked: { isLocked($0) },
+                isCompleted: { lessonStore.isCompleted($0.id) }
+            ) { item in
+                open(item)
+            }
+        }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
                 .environment(subscriptionManager)
@@ -113,23 +119,41 @@ struct VocabularyView: View {
 
     // MARK: - Lessons
 
+    /// 分类区块：标题 + 右侧「查看更多」+ 单行横滑封面卡（与首页探索分类同构）
     private func categorySection(_ title: String, lessons: [SceneLessonIndexItem]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title)
-                .font(.system(size: 17, weight: .bold))
-                .foregroundColor(Color.textPrimary)
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(lessons) { item in
-                    LessonCoverCard(
-                        item: item,
-                        locked: isLocked(item),
-                        completed: lessonStore.isCompleted(item.id),
-                        onTap: { open(item) },
-                        width: nil
-                    )
-                    .frame(maxWidth: .infinity)
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(Color.textPrimary)
+                Spacer()
+                Button {
+                    allTarget = LessonCategoryTarget(title: title, lessons: lessons)
+                } label: {
+                    HStack(spacing: 3) {
+                        Text("查看更多")
+                            .font(.system(size: 13, weight: .medium))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundStyle(Color.appPrimary)
                 }
             }
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 12) {
+                    ForEach(lessons) { item in
+                        LessonCoverCard(
+                            item: item,
+                            locked: isLocked(item),
+                            completed: lessonStore.isCompleted(item.id),
+                            onTap: { open(item) }
+                        )
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .scrollClipDisabled()
+            .scrollTargetBehavior(.viewAligned)
         }
     }
 
@@ -169,6 +193,89 @@ struct VocabularyView: View {
         } else {
             selectedLesson = item
         }
+    }
+}
+
+/// 「查看更多」的打开目标（分类标题 + 该分类全部课堂）
+struct LessonCategoryTarget: Identifiable {
+    let title: String
+    let lessons: [SceneLessonIndexItem]
+    var id: String { title }
+}
+
+/// 查看更多：分类全部课堂网格页
+struct LessonCategoryAllView: View {
+    let title: String
+    let lessons: [SceneLessonIndexItem]
+    let isLocked: (SceneLessonIndexItem) -> Bool
+    let isCompleted: (SceneLessonIndexItem) -> Bool
+    /// 点卡片回调（父级负责打开课堂详情/付费墙，避免双层 fullScreenCover 叠加崩溃）
+    let onSelect: (SceneLessonIndexItem) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+    ]
+
+    var body: some View {
+        ZStack {
+            Color.appBackground.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                header
+
+                ScrollView(showsIndicators: false) {
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(lessons) { item in
+                            LessonCoverCard(
+                                item: item,
+                                locked: isLocked(item),
+                                completed: isCompleted(item),
+                                onTap: {
+                                    dismiss()
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                                        onSelect(item)
+                                    }
+                                },
+                                width: nil
+                            )
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                    .padding(.bottom, 60)
+                }
+            }
+        }
+    }
+
+    private var header: some View {
+        ZStack {
+            VStack(spacing: 2) {
+                Text(title)
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                Text("\(lessons.count) 个课堂")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.textTertiary)
+            }
+            HStack {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.textSecondary)
+                        .frame(width: 32, height: 32)
+                        .background(Circle().fill(Color.white))
+                }
+                Spacer()
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
     }
 }
 

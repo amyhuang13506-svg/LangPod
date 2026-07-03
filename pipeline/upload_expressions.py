@@ -52,6 +52,7 @@ def main():
     bucket = oss2.Bucket(auth, OSS_ENDPOINT, OSS_BUCKET_NAME)
 
     counts = {}
+    scene_covers = {}  # 分类 → 第一条表达的场景插画（封面即内容）
     for path in sorted(glob.glob(os.path.join(EXPR_DIR, "*.json"))):
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -95,6 +96,11 @@ def main():
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         counts[cat_id] = len(data["expressions"])
+        for e in data["expressions"]:
+            img = (e.get("scene") or {}).get("image") or ""
+            if img.startswith("http"):
+                scene_covers[cat_id] = img
+                break
         print("   ✅ %d expressions" % counts[cat_id])
 
     # 分类封面（generate_expression_covers.py 产出）
@@ -123,7 +129,8 @@ def main():
                     "zh": c["zh"],
                     "count": counts.get(c["id"], 0),
                     "is_free": c["id"] in FREE_CATEGORY_IDS,
-                    "cover": covers.get(c["id"], ""),
+                    # 封面优先用第一条表达的场景插画（封面即内容），无场景图时兜底通用封面
+                    "cover": scene_covers.get(c["id"]) or covers.get(c["id"], ""),
                 }
                 for c in g["categories"]
             ],
