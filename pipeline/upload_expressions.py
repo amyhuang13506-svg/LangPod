@@ -28,6 +28,24 @@ except ImportError:
 
 EXPR_DIR = os.path.join(OUTPUT_DIR, "expressions")
 
+# gpt-image-1 原图 ~2MB PNG，App 卡片用不到 → 上传前压成 1024 宽 JPEG（~150KB）
+IMAGE_MAX_WIDTH = 1024
+IMAGE_JPEG_QUALITY = 82
+
+
+def compress_image(local_path):
+    from io import BytesIO
+    from PIL import Image
+    img = Image.open(local_path).convert("RGB")
+    if img.width > IMAGE_MAX_WIDTH:
+        img = img.resize(
+            (IMAGE_MAX_WIDTH, int(img.height * IMAGE_MAX_WIDTH / img.width)),
+            Image.LANCZOS,
+        )
+    buf = BytesIO()
+    img.save(buf, "JPEG", quality=IMAGE_JPEG_QUALITY)
+    return buf.getvalue()
+
 
 def main():
     auth = oss2.Auth(OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET)
@@ -40,26 +58,34 @@ def main():
         cat_id = data["id"]
         print("📤 %s (%s)" % (cat_id, data["zh"]))
 
-        # 上传音频并重写 URL
-        def upload_audio(obj, field):
+        # 上传音频/图片等资源并重写 URL（rel 已是 http 则跳过）
+        def upload_asset(obj, field, clear_if_missing=True):
             rel = obj.get(field) or ""
             if not rel or rel.startswith("http"):
                 return
             local = os.path.join(EXPR_DIR, rel)
             if os.path.exists(local):
-                key = "expressions/%s" % rel
-                with open(local, "rb") as fh:
-                    bucket.put_object(key, fh)
+                if rel.endswith(".png"):
+                    key = "expressions/%s" % rel[:-4] + ".jpg"
+                    bucket.put_object(key, compress_image(local))
+                else:
+                    key = "expressions/%s" % rel
+                    with open(local, "rb") as fh:
+                        bucket.put_object(key, fh)
                 obj[field] = "%s/%s" % (OSS_CDN_DOMAIN, key)
-            else:
+            elif clear_if_missing:
                 obj[field] = ""
 
         for e in data["expressions"]:
-            upload_audio(e, "audio")
+            upload_asset(e, "audio")
             for ex in e.get("examples", []):
-                upload_audio(ex, "audio")
-            for line in (e.get("scene") or {}).get("dialogue", []):
-                upload_audio(line, "audio")
+                upload_asset(ex, "audio")
+            scene = e.get("scene") or {}
+            for line in scene.get("dialogue", []):
+                upload_asset(line, "audio")
+            # 场景插画（generate_expression_scenes.py 产出，可能还没生成 → 保留空缺不清空）
+            if scene.get("image"):
+                upload_asset(scene, "image", clear_if_missing=False)
 
         bucket.put_object(
             "expressions/%s.json" % cat_id,
@@ -71,7 +97,18 @@ def main():
         counts[cat_id] = len(data["expressions"])
         print("   ✅ %d expressions" % counts[cat_id])
 
-    # index.json：组 → 分类（含表达数、免费标记）
+    # 分类封面（generate_expression_covers.py 产出）
+    covers = {}
+    covers_dir = os.path.join(EXPR_DIR, "covers")
+    for path in sorted(glob.glob(os.path.join(covers_dir, "*.png"))):
+        cat_id = os.path.splitext(os.path.basename(path))[0]
+        key = "expressions/covers/%s.jpg" % cat_id
+        bucket.put_object(key, compress_image(path))
+        covers[cat_id] = "%s/%s" % (OSS_CDN_DOMAIN, key)
+    if covers:
+        print("🖼  %d covers uploaded" % len(covers))
+
+    # index.json：组 → 分类（含表达数、免费标记、封面）
     index = {"groups": []}
     from expression_catalog import FREE_CATEGORY_IDS
     for g in GROUPS:
@@ -86,6 +123,7 @@ def main():
                     "zh": c["zh"],
                     "count": counts.get(c["id"], 0),
                     "is_free": c["id"] in FREE_CATEGORY_IDS,
+                    "cover": covers.get(c["id"], ""),
                 }
                 for c in g["categories"]
             ],

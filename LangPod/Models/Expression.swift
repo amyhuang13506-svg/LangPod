@@ -20,9 +20,11 @@ struct ExpressionCategoryIndexItem: Codable, Identifiable, Hashable {
     let zh: String
     let count: Int
     let isFree: Bool
+    /// 分类封面插画（gpt-image-1 生成，主页网格卡 + 详情页顶部共用）
+    var cover: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, zh, count
+        case id, zh, count, cover
         case isFree = "is_free"
     }
 }
@@ -80,9 +82,11 @@ struct ExpressionExample: Codable, Identifiable, Hashable {
 struct ExpressionScene: Codable, Hashable {
     let setupZh: String
     let dialogue: [ExpressionDialogueLine]
+    /// 场景插画（A 左 B 右、上方留白，App 在图上叠加对话气泡）
+    var image: String?
 
     enum CodingKeys: String, CodingKey {
-        case dialogue
+        case dialogue, image
         case setupZh = "setup_zh"
     }
 }

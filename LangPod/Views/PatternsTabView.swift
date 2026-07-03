@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// 句型 tab = 口语表达库。结构与词汇小课堂主页同构：
-/// 4 个大组 chips → 分类标题作为分区、表达直接平铺成列表行（点行展开用法/例句/场景），
-/// 没有中间的分类卡片层。右上「我的」= 我的句子收藏。
+/// 句型 tab = 口语表达库。结构仿首页探索分类：
+/// 4 个大组 chips → 分类 = 封面插画网格卡（图片 + 标题在下）→
+/// 点卡片进分类详情页（封面图在顶部 + 表达列表行，点行展开）。
+/// 右上「我的」= 我的句子收藏。
 struct PatternsTabView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(SentenceStore.self) private var sentenceStore
@@ -10,8 +11,12 @@ struct PatternsTabView: View {
     @State private var expressionStore = ExpressionStore()
     @State private var showMySentences = false
     @State private var showPaywall = false
-    /// 手风琴：全页同时只展开一条
-    @State private var expandedId: String?
+    @State private var selectedCategory: ExpressionCategoryIndexItem?
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+    ]
 
     var body: some View {
         ZStack {
@@ -26,22 +31,32 @@ struct PatternsTabView: View {
                     .padding(.bottom, 10)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 22) {
-                        if let group = expressionStore.selectedGroup {
+                    if let group = expressionStore.selectedGroup {
+                        LazyVGrid(columns: columns, spacing: 12) {
                             ForEach(group.categories) { category in
-                                categorySection(category)
+                                ExpressionCoverCard(
+                                    item: category,
+                                    locked: isLocked(category)
+                                ) {
+                                    open(category)
+                                }
                             }
-                        } else {
-                            emptyState
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 6)
+                        .padding(.bottom, 60)
+                    } else {
+                        emptyState
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 6)
-                    .padding(.bottom, 60)
                 }
             }
         }
         .onAppear { expressionStore.loadIfNeeded() }
+        .fullScreenCover(item: $selectedCategory) { item in
+            ExpressionCategoryView(item: item, store: expressionStore)
+                .environment(sentenceStore)
+                .environment(subscriptionManager)
+        }
         .fullScreenCover(isPresented: $showMySentences) {
             MySentencesView()
                 .environment(sentenceStore)
@@ -89,7 +104,6 @@ struct PatternsTabView: View {
                     Button {
                         guard !selected else { return }
                         expressionStore.selectedGroupId = group.id
-                        expandedId = nil
                         expressionStore.loadGroupDetails(group.id)
                     } label: {
                         HStack(spacing: 5) {
@@ -113,77 +127,20 @@ struct PatternsTabView: View {
         }
     }
 
-    // MARK: - 分类分区（标题 + 表达平铺）
-
-    @ViewBuilder
-    private func categorySection(_ item: ExpressionCategoryIndexItem) -> some View {
-        let locked = isLocked(item)
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
-                Text(item.zh)
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(Color.textPrimary)
-                Text("\(item.count)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color.textTertiary)
-                if locked {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color.warning)
-                } else if item.isFree {
-                    Text("免费")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(Color.success)
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Capsule().fill(Color.successLight))
-                }
-                Spacer()
-            }
-
-            if let detail = expressionStore.details[item.id] {
-                // 一个分类一个白色容器，表达是列表行（非独立卡片）
-                VStack(spacing: 0) {
-                    ForEach(Array(detail.expressions.enumerated()), id: \.element.id) { index, expression in
-                        ExpressionRow(
-                            expression: expression,
-                            categoryZh: detail.zh,
-                            number: index + 1,
-                            expanded: expandedId == expression.id,
-                            locked: locked
-                        ) {
-                            if locked {
-                                Analytics.track(.patternPaywallView, params: [
-                                    "category": item.id, "source": "patterns_tab",
-                                ])
-                                showPaywall = true
-                            } else {
-                                withAnimation(.spring(duration: 0.3)) {
-                                    expandedId = expandedId == expression.id ? nil : expression.id
-                                }
-                            }
-                        }
-                        if expression.id != detail.expressions.last?.id {
-                            Divider().padding(.leading, 46)
-                        }
-                    }
-                }
-                .background(.white, in: RoundedRectangle(cornerRadius: 14))
-            } else {
-                HStack {
-                    ProgressView().tint(Color.appPrimary).scaleEffect(0.8)
-                    Text("加载中…")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.textTertiary)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(.white, in: RoundedRectangle(cornerRadius: 14))
-            }
-        }
-    }
-
     private func isLocked(_ item: ExpressionCategoryIndexItem) -> Bool {
         !item.isFree && !subscriptionManager.isProUser
+    }
+
+    private func open(_ item: ExpressionCategoryIndexItem) {
+        if isLocked(item) {
+            Analytics.track(.patternPaywallView, params: [
+                "category": item.id, "source": "patterns_tab",
+            ])
+            showPaywall = true
+        } else {
+            expressionStore.loadGroupDetails(expressionStore.selectedGroupId)
+            selectedCategory = item
+        }
     }
 
     private var emptyState: some View {
@@ -204,9 +161,185 @@ struct PatternsTabView: View {
     }
 }
 
+// MARK: - 分类封面网格卡（图片 + 标题在下，同课堂封面卡样式）
+
+struct ExpressionCoverCard: View {
+    let item: ExpressionCategoryIndexItem
+    let locked: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 0) {
+                ZStack(alignment: .topTrailing) {
+                    CachedAsyncImage(url: item.cover ?? "") {
+                        ZStack {
+                            Rectangle().fill(Color.primaryLighter)
+                            Image(systemName: "quote.bubble.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(Color.appPrimary.opacity(0.5))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 96)
+                    .clipped()
+
+                    if locked {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 22, height: 22)
+                            .background(Circle().fill(.black.opacity(0.55)))
+                            .padding(6)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(item.zh)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Color.textPrimary)
+                        .lineLimit(1)
+                    Text("\(item.count) 句\(item.isFree ? " · 免费" : "")")
+                        .font(.system(size: 11))
+                        .foregroundColor(item.isFree ? Color.success : Color.textTertiary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - 分类详情页（封面图在顶 + 表达列表）
+
+struct ExpressionCategoryView: View {
+    let item: ExpressionCategoryIndexItem
+    let store: ExpressionStore
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(SentenceStore.self) private var sentenceStore
+    /// 手风琴：全页同时只展开一条
+    @State private var expandedId: String?
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.appBackground.ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    heroCover
+
+                    content
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                        .padding(.bottom, 60)
+                }
+            }
+            .ignoresSafeArea(edges: .top)
+
+            closeButton
+        }
+        .task {
+            _ = await store.categoryDetail(id: item.id)
+        }
+    }
+
+    /// 顶部封面：主页网格卡同一张图放大作 hero，底部渐变压标题
+    private var heroCover: some View {
+        CachedAsyncImage(url: item.cover ?? "") {
+            ZStack {
+                Rectangle().fill(Color.primaryLighter)
+                Image(systemName: "quote.bubble.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(Color.appPrimary.opacity(0.4))
+            }
+        }
+        .frame(height: 220)
+        .frame(maxWidth: .infinity)
+        .clipped()
+        .overlay(
+            LinearGradient(
+                colors: [.clear, .clear, .black.opacity(0.55)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .overlay(alignment: .bottomLeading) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(item.zh)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.white)
+                Text("\(item.count) 句")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.85))
+                if item.isFree {
+                    Text("免费")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Capsule().fill(Color.success))
+                }
+            }
+            .padding(16)
+        }
+    }
+
+    private var closeButton: some View {
+        HStack {
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 32, height: 32)
+                    .background(Circle().fill(.black.opacity(0.35)))
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if let detail = store.details[item.id] {
+            VStack(spacing: 0) {
+                ForEach(Array(detail.expressions.enumerated()), id: \.element.id) { index, expression in
+                    ExpressionRow(
+                        expression: expression,
+                        categoryZh: detail.zh,
+                        number: index + 1,
+                        expanded: expandedId == expression.id
+                    ) {
+                        withAnimation(.spring(duration: 0.3)) {
+                            expandedId = expandedId == expression.id ? nil : expression.id
+                        }
+                    }
+                    if expression.id != detail.expressions.last?.id {
+                        Divider().padding(.leading, 46)
+                    }
+                }
+            }
+            .background(.white, in: RoundedRectangle(cornerRadius: 14))
+        } else {
+            HStack {
+                ProgressView().tint(Color.appPrimary).scaleEffect(0.8)
+                Text("加载中…")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.textTertiary)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 120)
+        }
+    }
+}
+
 // MARK: - 表达行（列表行样式，点击展开）
 
-/// 折叠态 = 编号 + 表达 + 中文意思（一行）；展开态 = 发音/收藏 + 语感注释 + 国家差异 + 例句 + 场景示例
+/// 折叠态 = 编号 + 表达 + 中文意思（一行）；展开态 = 发音/收藏 + 语感注释 + 国家差异 + 例句 + 场景插画卡
 struct ExpressionRow: View {
     let expression: Expression
     let categoryZh: String
@@ -379,6 +512,9 @@ struct ExpressionRow: View {
         }
     }
 
+    // MARK: - 场景示例
+
+    @ViewBuilder
     private func sceneBlock(_ scene: ExpressionScene) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 5) {
@@ -394,42 +530,117 @@ struct ExpressionRow: View {
                 .foregroundStyle(Color.bodyText)
                 .fixedSize(horizontal: false, vertical: true)
 
-            VStack(spacing: 6) {
-                ForEach(scene.dialogue) { line in
-                    Button {
-                        LessonAudioPlayer.shared.play(line.audio) {
-                            WordSpeaker.shared.speakSentence(line.en)
-                        }
-                    } label: {
-                        HStack(alignment: .top, spacing: 8) {
-                            Text(line.speaker)
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(.white)
-                                .frame(width: 18, height: 18)
-                                .background(Circle().fill(line.speaker == "A" ? Color.accentPurple : Color.hardOrange))
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(line.en)
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundStyle(Color.textPrimary)
-                                    .multilineTextAlignment(.leading)
-                                Text(line.zh)
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(Color.textSecondary)
-                                    .multilineTextAlignment(.leading)
-                            }
-                            Spacer()
-                            Image(systemName: "speaker.wave.2.fill")
-                                .font(.system(size: 10))
-                                .foregroundStyle(Color.appPrimary.opacity(0.7))
-                                .padding(.top, 3)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
+            if let image = scene.image, !image.isEmpty {
+                sceneImageCard(scene, imageUrl: image)
+            } else {
+                sceneDialogueList(scene)
             }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.warningLight.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    /// 场景插画卡：gpt-image-1 场景图（A 左 B 右、上方留白），对话气泡由 App 叠加在
+    /// 图片上方留白区（文字零拼错、点气泡播该句音频）。
+    private func sceneImageCard(_ scene: ExpressionScene, imageUrl: String) -> some View {
+        CachedAsyncImage(url: imageUrl) {
+            Rectangle().fill(Color.primaryLighter)
+        }
+        .aspectRatio(3.0 / 2.0, contentMode: .fit)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(alignment: .top) {
+            VStack(spacing: 6) {
+                ForEach(scene.dialogue) { line in
+                    dialogueBubble(line)
+                        .frame(maxWidth: .infinity, alignment: line.speaker == "A" ? .leading : .trailing)
+                }
+            }
+            .padding(8)
+        }
+    }
+
+    /// 叠加在插画上的对话气泡（A 靠左紫头像，B 靠右橙头像）
+    private func dialogueBubble(_ line: ExpressionDialogueLine) -> some View {
+        Button {
+            LessonAudioPlayer.shared.play(line.audio) {
+                WordSpeaker.shared.speakSentence(line.en)
+            }
+        } label: {
+            HStack(alignment: .top, spacing: 5) {
+                if line.speaker == "A" { speakerDot(line.speaker) }
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(line.en)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color.textPrimary)
+                        .multilineTextAlignment(.leading)
+                    Text(line.zh)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textSecondary)
+                        .multilineTextAlignment(.leading)
+                }
+                Image(systemName: "speaker.wave.2.fill")
+                    .font(.system(size: 9))
+                    .foregroundStyle(Color.appPrimary.opacity(0.7))
+                    .padding(.top, 3)
+                if line.speaker != "A" { speakerDot(line.speaker) }
+            }
+            .padding(.horizontal, 9)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 11)
+                    .fill(.white.opacity(0.96))
+                    .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
+            )
+            .frame(maxWidth: 260, alignment: line.speaker == "A" ? .leading : .trailing)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func speakerDot(_ speaker: String) -> some View {
+        Text(speaker)
+            .font(.system(size: 9, weight: .bold))
+            .foregroundStyle(.white)
+            .frame(width: 16, height: 16)
+            .background(Circle().fill(speaker == "A" ? Color.accentPurple : Color.hardOrange))
+            .padding(.top, 1)
+    }
+
+    /// 无插画时的纯文字对话列表（老数据回落）
+    private func sceneDialogueList(_ scene: ExpressionScene) -> some View {
+        VStack(spacing: 6) {
+            ForEach(scene.dialogue) { line in
+                Button {
+                    LessonAudioPlayer.shared.play(line.audio) {
+                        WordSpeaker.shared.speakSentence(line.en)
+                    }
+                } label: {
+                    HStack(alignment: .top, spacing: 8) {
+                        Text(line.speaker)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 18, height: 18)
+                            .background(Circle().fill(line.speaker == "A" ? Color.accentPurple : Color.hardOrange))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(line.en)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(Color.textPrimary)
+                                .multilineTextAlignment(.leading)
+                            Text(line.zh)
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.textSecondary)
+                                .multilineTextAlignment(.leading)
+                        }
+                        Spacer()
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(Color.appPrimary.opacity(0.7))
+                            .padding(.top, 3)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }
