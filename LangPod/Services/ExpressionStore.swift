@@ -9,8 +9,10 @@ class ExpressionStore {
         didSet { UserDefaults.standard.set(selectedGroupId, forKey: "expressionGroup") }
     }
 
-    private var detailCache: [String: ExpressionCategory] = [:]
+    /// 分类详情缓存（分类 id → 完整表达列表）。主页按组平铺展示，选中组的 6 个分类并发拉取。
+    private(set) var details: [String: ExpressionCategory] = [:]
     private var loaded = false
+    private var loadingGroups: Set<String> = []
 
     init() {
         self.selectedGroupId = UserDefaults.standard.string(forKey: "expressionGroup") ?? "reactions"
@@ -31,13 +33,36 @@ class ExpressionStore {
             if !remote.isEmpty { self.groups = remote }
             self.isLoading = false
             self.loaded = true
+            self.loadGroupDetails(self.selectedGroupId)
+        }
+    }
+
+    /// 拉取一个组下全部分类的表达（并发，幂等）
+    func loadGroupDetails(_ groupId: String) {
+        guard let group = groups.first(where: { $0.id == groupId }),
+              !loadingGroups.contains(groupId) else { return }
+        let missing = group.categories.filter { details[$0.id] == nil }
+        guard !missing.isEmpty else { return }
+        loadingGroups.insert(groupId)
+        Task {
+            await withTaskGroup(of: (String, ExpressionCategory?).self) { taskGroup in
+                for category in missing {
+                    taskGroup.addTask {
+                        (category.id, await APIService.shared.fetchExpressionCategory(id: category.id))
+                    }
+                }
+                for await (id, detail) in taskGroup {
+                    if let detail { self.details[id] = detail }
+                }
+            }
+            self.loadingGroups.remove(groupId)
         }
     }
 
     func categoryDetail(id: String) async -> ExpressionCategory? {
-        if let cached = detailCache[id] { return cached }
+        if let cached = details[id] { return cached }
         let detail = await APIService.shared.fetchExpressionCategory(id: id)
-        if let detail { detailCache[id] = detail }
+        if let detail { details[id] = detail }
         return detail
     }
 }

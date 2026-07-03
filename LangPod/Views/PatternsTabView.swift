@@ -1,21 +1,17 @@
 import SwiftUI
 
-/// 句型 tab = 口语表达库：4 个大组 chips（日常反应/表达自己/会话技能/进阶地道），
-/// 组内功能分类网格，点分类看表达列表（口语化 + 语感注释 + 国家差异 + 发音 + 收藏）。
-/// 不分难度，按实用频率排序。右上「我的」= 我的句子收藏。
+/// 句型 tab = 口语表达库。结构与词汇小课堂主页同构：
+/// 4 个大组 chips → 分类标题作为分区、表达直接平铺成列表行（点行展开用法/例句/场景），
+/// 没有中间的分类卡片层。右上「我的」= 我的句子收藏。
 struct PatternsTabView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(SentenceStore.self) private var sentenceStore
 
     @State private var expressionStore = ExpressionStore()
-    @State private var selectedCategory: ExpressionCategoryIndexItem?
     @State private var showMySentences = false
     @State private var showPaywall = false
-
-    private let columns = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12),
-    ]
+    /// 手风琴：全页同时只展开一条
+    @State private var expandedId: String?
 
     var body: some View {
         ZStack {
@@ -30,16 +26,10 @@ struct PatternsTabView: View {
                     .padding(.bottom, 10)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 22) {
                         if let group = expressionStore.selectedGroup {
-                            Text(group.desc)
-                                .font(.system(size: 13))
-                                .foregroundStyle(Color.textTertiary)
-
-                            LazyVGrid(columns: columns, spacing: 12) {
-                                ForEach(group.categories) { category in
-                                    categoryCard(category, groupIcon: group.icon)
-                                }
+                            ForEach(group.categories) { category in
+                                categorySection(category)
                             }
                         } else {
                             emptyState
@@ -52,11 +42,6 @@ struct PatternsTabView: View {
             }
         }
         .onAppear { expressionStore.loadIfNeeded() }
-        .sheet(item: $selectedCategory) { category in
-            ExpressionListSheet(item: category)
-                .environment(expressionStore)
-                .environment(sentenceStore)
-        }
         .fullScreenCover(isPresented: $showMySentences) {
             MySentencesView()
                 .environment(sentenceStore)
@@ -94,7 +79,7 @@ struct PatternsTabView: View {
         .padding(.top, 16)
     }
 
-    // MARK: - 大组 chips（4 个）
+    // MARK: - 大组 chips
 
     private var groupChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -104,6 +89,8 @@ struct PatternsTabView: View {
                     Button {
                         guard !selected else { return }
                         expressionStore.selectedGroupId = group.id
+                        expandedId = nil
+                        expressionStore.loadGroupDetails(group.id)
                     } label: {
                         HStack(spacing: 5) {
                             Image(systemName: group.icon)
@@ -126,57 +113,77 @@ struct PatternsTabView: View {
         }
     }
 
-    // MARK: - 分类卡
+    // MARK: - 分类分区（标题 + 表达平铺）
 
-    private func categoryCard(_ category: ExpressionCategoryIndexItem, groupIcon: String) -> some View {
-        let locked = isLocked(category)
-        return Button {
-            if locked {
-                Analytics.track(.patternPaywallView, params: [
-                    "category": category.id, "source": "patterns_tab",
-                ])
-                showPaywall = true
-            } else {
-                Analytics.track(.patternOpen, params: [
-                    "category": category.id, "source": "patterns_tab",
-                ])
-                selectedCategory = category
+    @ViewBuilder
+    private func categorySection(_ item: ExpressionCategoryIndexItem) -> some View {
+        let locked = isLocked(item)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Text(item.zh)
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(Color.textPrimary)
+                Text("\(item.count)")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Color.textTertiary)
+                if locked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.warning)
+                } else if item.isFree {
+                    Text("免费")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(Color.success)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Capsule().fill(Color.successLight))
+                }
+                Spacer()
             }
-        } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: groupIcon)
-                        .font(.system(size: 16))
-                        .foregroundStyle(Color.appPrimary)
-                    Spacer()
-                    if locked {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(Color.warning)
+
+            if let detail = expressionStore.details[item.id] {
+                // 一个分类一个白色容器，表达是列表行（非独立卡片）
+                VStack(spacing: 0) {
+                    ForEach(Array(detail.expressions.enumerated()), id: \.element.id) { index, expression in
+                        ExpressionRow(
+                            expression: expression,
+                            categoryZh: detail.zh,
+                            number: index + 1,
+                            expanded: expandedId == expression.id,
+                            locked: locked
+                        ) {
+                            if locked {
+                                Analytics.track(.patternPaywallView, params: [
+                                    "category": item.id, "source": "patterns_tab",
+                                ])
+                                showPaywall = true
+                            } else {
+                                withAnimation(.spring(duration: 0.3)) {
+                                    expandedId = expandedId == expression.id ? nil : expression.id
+                                }
+                            }
+                        }
+                        if expression.id != detail.expressions.last?.id {
+                            Divider().padding(.leading, 46)
+                        }
                     }
                 }
-                Text(category.zh)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Text("\(category.count) 条表达\(category.isFree ? " · 免费" : "")")
-                    .font(.system(size: 11))
-                    .foregroundStyle(category.isFree ? Color.success : Color.textTertiary)
+                .background(.white, in: RoundedRectangle(cornerRadius: 14))
+            } else {
+                HStack {
+                    ProgressView().tint(Color.appPrimary).scaleEffect(0.8)
+                    Text("加载中…")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.textTertiary)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(.white, in: RoundedRectangle(cornerRadius: 14))
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.white, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.border, lineWidth: 1)
-            )
         }
-        .buttonStyle(.plain)
     }
 
-    private func isLocked(_ category: ExpressionCategoryIndexItem) -> Bool {
-        !category.isFree && !subscriptionManager.isProUser
+    private func isLocked(_ item: ExpressionCategoryIndexItem) -> Bool {
+        !item.isFree && !subscriptionManager.isProUser
     }
 
     private var emptyState: some View {
@@ -197,90 +204,15 @@ struct PatternsTabView: View {
     }
 }
 
-// MARK: - 表达列表 sheet
+// MARK: - 表达行（列表行样式，点击展开）
 
-struct ExpressionListSheet: View {
-    let item: ExpressionCategoryIndexItem
-
-    @Environment(ExpressionStore.self) private var expressionStore
-    @Environment(SentenceStore.self) private var sentenceStore
-
-    @State private var category: ExpressionCategory?
-    @State private var loadFailed = false
-    /// 折叠列表：默认只显示编号+表达，点开哪条展开哪条（手风琴式）
-    @State private var expandedId: String?
-
-    var body: some View {
-        ZStack {
-            Color.appBackground.ignoresSafeArea()
-
-            if let category {
-                content(category)
-            } else if loadFailed {
-                VStack(spacing: 10) {
-                    Text("加载失败").font(.system(size: 15)).foregroundStyle(Color.textSecondary)
-                    Button("重试") { Task { await load() } }
-                        .foregroundStyle(Color.appPrimary)
-                }
-            } else {
-                ProgressView().tint(Color.appPrimary)
-            }
-        }
-        .presentationDragIndicator(.visible)
-        .task { await load() }
-    }
-
-    private func load() async {
-        loadFailed = false
-        if let loaded = await expressionStore.categoryDetail(id: item.id) {
-            category = loaded
-            LessonAudioPlayer.shared.prefetch(
-                loaded.expressions.flatMap { [$0.audio] + $0.examples.map(\.audio) }.compactMap { $0 }
-            )
-        } else {
-            loadFailed = true
-        }
-    }
-
-    private func content(_ category: ExpressionCategory) -> some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(category.zh)
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(Color.textPrimary)
-                    Text("\(category.groupZh) · 按使用频率排序 · 点开看用法和场景")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.textTertiary)
-                }
-                .padding(.bottom, 4)
-
-                ForEach(Array(category.expressions.enumerated()), id: \.element.id) { index, expression in
-                    ExpressionRow(
-                        expression: expression,
-                        categoryZh: category.zh,
-                        number: index + 1,
-                        expanded: expandedId == expression.id
-                    ) {
-                        withAnimation(.spring(duration: 0.3)) {
-                            expandedId = expandedId == expression.id ? nil : expression.id
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 24)
-            .padding(.bottom, 40)
-        }
-    }
-}
-
-/// 一条表达：折叠态 = 编号 + 表达 + 中文意思；展开态 = 语感注释 + 国家差异 + 例句 + 场景示例
+/// 折叠态 = 编号 + 表达 + 中文意思（一行）；展开态 = 发音/收藏 + 语感注释 + 国家差异 + 例句 + 场景示例
 struct ExpressionRow: View {
     let expression: Expression
     let categoryZh: String
     let number: Int
     let expanded: Bool
+    var locked: Bool = false
     let onToggle: () -> Void
 
     @Environment(SentenceStore.self) private var sentenceStore
@@ -296,18 +228,15 @@ struct ExpressionRow: View {
             if expanded {
                 expandedContent
                     .padding(.top, 12)
+                    .padding(.bottom, 4)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .padding(14)
-        .background(.white, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(expanded ? Color.appPrimary.opacity(0.4) : Color.border, lineWidth: 1)
-        )
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
     }
 
-    // MARK: - 折叠头（始终显示）
+    // MARK: - 折叠行
 
     private var collapsedHeader: some View {
         Button(action: onToggle) {
@@ -321,7 +250,7 @@ struct ExpressionRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(expression.english)
                         .font(.system(size: 16, weight: .semibold, design: .serif))
-                        .foregroundStyle(Color.textPrimary)
+                        .foregroundStyle(locked ? Color.textTertiary : Color.textPrimary)
                         .multilineTextAlignment(.leading)
                     Text(expression.meaningZh)
                         .font(.system(size: 12))
@@ -329,15 +258,21 @@ struct ExpressionRow: View {
                         .lineLimit(expanded ? nil : 1)
                 }
                 Spacer()
-                if saved && !expanded {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color.success)
+                if locked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.warning)
+                } else {
+                    if saved && !expanded {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color.success)
+                    }
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.textQuaternary)
+                        .rotationEffect(.degrees(expanded ? 180 : 0))
                 }
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.textQuaternary)
-                    .rotationEffect(.degrees(expanded ? 180 : 0))
             }
         }
         .buttonStyle(.plain)
@@ -347,7 +282,6 @@ struct ExpressionRow: View {
 
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // 发音 + 收藏操作行
             HStack(spacing: 10) {
                 Button {
                     LessonAudioPlayer.shared.play(expression.audio) {
@@ -390,13 +324,11 @@ struct ExpressionRow: View {
                 Spacer()
             }
 
-            // 语感注释
             Text(expression.usageZh)
                 .font(.system(size: 13))
                 .foregroundStyle(Color.bodyText)
                 .fixedSize(horizontal: false, vertical: true)
 
-            // 国家差异
             if expression.hasCountryNote, let note = expression.countryNoteZh {
                 HStack(alignment: .top, spacing: 5) {
                     Text("🌍").font(.system(size: 11))
@@ -410,7 +342,6 @@ struct ExpressionRow: View {
                 .background(Color.warningLight, in: RoundedRectangle(cornerRadius: 8))
             }
 
-            // 例句
             VStack(spacing: 6) {
                 ForEach(expression.examples) { example in
                     Button {
@@ -442,7 +373,6 @@ struct ExpressionRow: View {
                 }
             }
 
-            // 场景示例（例句下面：具体场景 + 一来一回对话）
             if let scene = expression.scene {
                 sceneBlock(scene)
             }

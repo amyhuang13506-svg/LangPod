@@ -16,6 +16,7 @@
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -245,10 +246,12 @@ def process_category(cat, skip_audio=False):
         ensure(e["english"], "%s.mp3" % slug, e, "audio")
         for i, ex in enumerate(e.get("examples", [])):
             ensure(ex["en"], "%s_ex%d.mp3" % (slug, i), ex, "audio")
-        # 场景对话：A 男声 / B 女声
+        # 场景对话：A 男声 / B 女声。文件名带文本哈希——
+        # 场景文字重新生成时哈希变化，旧音频不会被误复用（否则文字和录音会对不上）。
         for i, line in enumerate((e.get("scene") or {}).get("dialogue", [])):
             voice = DIALOGUE_VOICES.get(line.get("speaker", "A"), VOICE_ID)
-            ensure_voiced(line["en"], "%s_sc%d.mp3" % (slug, i), line, "audio", voice)
+            text_hash = hashlib.md5(line["en"].encode()).hexdigest()[:8]
+            ensure_voiced(line["en"], "%s_sc%d_%s.mp3" % (slug, i, text_hash), line, "audio", voice)
 
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
