@@ -45,10 +45,24 @@ CLAMP_X = (0.04, 0.96)
 CLAMP_Y = (0.06, 0.94)
 
 STYLE_TEMPLATE = (
-    "Flat vector illustration in a modern minimal style, soft warm color palette, "
-    "clean geometric shapes with subtle outlines, gentle shadows, cream background tones. "
+    "Flat vector illustration in a modern minimal style, {palette}, "
+    "clean geometric shapes with subtle outlines, gentle shadows. "
     "Like a high-quality illustration from a design-forward app. Wide scene composition. "
 )
+
+# 每个国家一套色调，避免所有图看起来一模一样。
+# 方向：清新明快、干净通透的柔和色（不是降饱和的灰调莫兰迪），底色明亮。
+# 定稿：au = 明媚草木绿。us 沿用暖奶油（已上线）。uk/ca/nz/sg 为暂定占位，跑该国前需用户确认。
+_BRIGHT = "clean and cheerful, fresh and airy tones, bright but soft — NOT greyed, NOT muddy, NOT desaturated"
+DEFAULT_PALETTE = "warm cream and soft honey color palette, " + _BRIGHT + ", light cream background"
+COUNTRY_PALETTES = {
+    "us": "warm cream and soft honey color palette, " + _BRIGHT + ", light cream background",
+    "uk": "fresh sky-blue and clear teal color palette, " + _BRIGHT + ", light cool background",
+    "au": "fresh sage-green and mint color palette, " + _BRIGHT + ", light cream background",
+    "ca": "fresh blush-pink and warm coral color palette, " + _BRIGHT + ", light cream background",
+    "nz": "fresh aqua-teal and seafoam color palette, " + _BRIGHT + ", light airy background",
+    "sg": "warm coral and golden-sand color palette, " + _BRIGHT + ", light ivory background",
+}
 
 HARD_RULES = (
     " ABSOLUTE RULES: Keep text in the image minimal. Any text that does appear MUST be a "
@@ -60,16 +74,18 @@ HARD_RULES = (
 )
 
 
-def generate_scene_image(zone, lesson, hotspot_words, output_path, variation=0):
-    """DALL-E 生成一张分区场景插画。variation 用于重试时改变构图措辞。"""
+def generate_scene_image(zone, lesson, hotspot_words, output_path, variation=0, palette=None):
+    """DALL-E 生成一张分区场景插画。variation 用于重试时改变构图措辞。
+    palette 可覆盖国家默认色调（预览/调色用）。"""
     country = COUNTRIES[lesson["country"]]
+    palette = palette or COUNTRY_PALETTES.get(lesson["country"], DEFAULT_PALETTE)
     objects = ", ".join(w["word"] for w in hotspot_words)
     variation_hint = "" if variation == 0 else (
         " Alternative composition attempt %d: use a wider camera angle and place each object "
         "on its own clear surface or area so every object is unmistakable." % variation
     )
     prompt = (
-        STYLE_TEMPLATE
+        STYLE_TEMPLATE.format(palette=palette)
         + "Scene: %s — %s, in %s. " % (zone["name_en"], lesson["title_en"], country["context"].split(".")[0])
         + "The scene must prominently contain each of these objects, one of each, clearly recognizable: %s." % objects
         + variation_hint
