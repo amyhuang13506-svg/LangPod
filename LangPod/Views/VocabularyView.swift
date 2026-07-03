@@ -94,20 +94,13 @@ struct VocabularyView: View {
             HStack {
                 Spacer()
                 Button { showMyVocabulary = true } label: {
-                    HStack(spacing: 5) {
+                    VStack(spacing: 2) {
                         Image(systemName: "books.vertical.fill")
-                            .font(.system(size: 12))
-                        Text("我的词汇")
-                            .font(.system(size: 13, weight: .semibold))
-                        if store.totalCount > 0 {
-                            Text("\(store.totalCount)")
-                                .font(.system(size: 12, weight: .bold))
-                        }
+                            .font(.system(size: 16))
+                        Text("我的")
+                            .font(.system(size: 10, weight: .medium))
                     }
                     .foregroundStyle(Color.appPrimary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(Color.primaryLight, in: Capsule())
                 }
             }
         }
