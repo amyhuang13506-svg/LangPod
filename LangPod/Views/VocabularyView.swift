@@ -7,319 +7,172 @@ enum VocabFilter: String, CaseIterable {
     case new
 }
 
+/// 词汇 tab 主页 = 场景词汇小课堂：
+/// 居中大标题 + 右上角「我的词汇」入口（统计/词表/练习都在那个页面里），
+/// 内容为 今日新场景 + 国家 chips + 分类课堂网格。
 struct VocabularyView: View {
     @Environment(VocabularyStore.self) private var store
     @Environment(AudioPlayer.self) private var audioPlayer
     @Environment(SubscriptionManager.self) private var subscriptionManager
-    @State private var showWordMatch = false
-    @State private var showFeynman = false
-    @State private var showPaywall = false
-    @State private var filter: VocabFilter = .all
-    @State private var showClearAlert = false
+
     @State private var lessonStore = LessonStore()
+    @State private var selectedLesson: SceneLessonIndexItem?
+    @State private var showPaywall = false
+    @State private var showMyVocabulary = false
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+    ]
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             Color.appBackground.ignoresSafeArea()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
-                    header
-                    statsCards
-                    SceneLessonSection()
-                        .environment(lessonStore)
-                    wordList
-                }
-                .padding(.top, 16)
-                .padding(.bottom, 140)
-            }
-
-            // Fixed bottom CTAs
             VStack(spacing: 0) {
-                LinearGradient(
-                    colors: [Color.appBackground.opacity(0), Color.appBackground],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: 16)
+                header
+                    .padding(.bottom, 10)
 
-                practiceCTAs
-                    .padding(.bottom, 16)
-                    .background(Color.appBackground)
+                CountryChipsRow()
+                    .environment(lessonStore)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 10)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 22) {
+                        if let today = lessonStore.todayLesson {
+                            TodayLessonCard(item: today, country: lessonStore.currentCountry) {
+                                open(today)
+                            }
+                        }
+
+                        ForEach(lessonStore.byCategory, id: \.category) { group in
+                            categorySection(group.category, lessons: group.lessons)
+                        }
+
+                        if !lessonStore.pastDailyLessons.isEmpty {
+                            categorySection("📅 往期每日场景", lessons: lessonStore.pastDailyLessons)
+                        }
+
+                        if lessonStore.lessons.isEmpty {
+                            emptyState
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 6)
+                    .padding(.bottom, 100)
+                }
             }
+        }
+        .onAppear { lessonStore.loadIfNeeded() }
+        .fullScreenCover(item: $selectedLesson) { item in
+            LessonDetailView(item: item, country: lessonStore.currentCountry)
+                .environment(store)
+                .environment(lessonStore)
+        }
+        .fullScreenCover(isPresented: $showMyVocabulary) {
+            MyVocabularyView()
+                .environment(store)
+                .environment(audioPlayer)
+                .environment(subscriptionManager)
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
                 .environment(subscriptionManager)
         }
-        .fullScreenCover(isPresented: $showWordMatch) {
-            WordMatchView()
-                .onAppear { if audioPlayer.isPlaying { audioPlayer.togglePlayPause() } }
-        }
-        .fullScreenCover(isPresented: $showFeynman) {
-            FeynmanChallengeView()
-                .onAppear { if audioPlayer.isPlaying { audioPlayer.togglePlayPause() } }
-        }
-        .alert("清除已掌握词汇", isPresented: $showClearAlert) {
-            Button("取消", role: .cancel) {}
-            Button("清零", role: .destructive) {
-                withAnimation {
-                    store.clearMasteredWords()
-                }
-            }
-        } message: {
-            Text("将 \(store.strongWords.count) 个已掌握的词移出词汇本。这些词你已经学会了！")
-        }
     }
 
-    // MARK: - Header
+    // MARK: - Header（居中大标题 + 右上角我的词汇入口）
 
     private var header: some View {
-        HStack {
-            Text("我的词汇")
-                .font(.system(size: 24, weight: .bold))
+        ZStack {
+            Text("词汇小课堂")
+                .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(Color.textPrimary)
-                .tracking(-0.5)
+                .tracking(-0.3)
 
-            Spacer()
-
-            Text("\(store.totalCount) 个词")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color.appPrimary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 12))
-        }
-        .padding(.horizontal, 24)
-    }
-
-    // MARK: - Stats Cards (tappable filters)
-
-    private var statsCards: some View {
-        HStack(spacing: 10) {
-            filterCard(
-                filter: .strong,
-                count: store.strongWords.count,
-                label: "已掌握",
-                textColor: Color(hex: "16A34A"),
-                bgColor: Color.successLight,
-                activeBorder: Color.success
-            )
-            filterCard(
-                filter: .fading,
-                count: store.fadingWords.count,
-                label: "复习中",
-                textColor: Color(hex: "D97706"),
-                bgColor: Color.warningLight,
-                activeBorder: Color.warning
-            )
-            filterCard(
-                filter: .new,
-                count: newWords.count,
-                label: "新词",
-                textColor: Color.appPrimary,
-                bgColor: Color.primaryLight,
-                activeBorder: Color.appPrimary
-            )
-        }
-        .padding(.horizontal, 24)
-    }
-
-    private func filterCard(filter f: VocabFilter, count: Int, label: String, textColor: Color, bgColor: Color, activeBorder: Color) -> some View {
-        let isActive = filter == f
-
-        return Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                filter = filter == f ? .all : f
-            }
-        } label: {
-            VStack(spacing: 4) {
-                Text("\(count)")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(textColor)
-                Text(label)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(textColor)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(bgColor, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(isActive ? activeBorder : Color.clear, lineWidth: 2)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Word List
-
-    private var filteredWords: [SavedWord] {
-        switch filter {
-        case .all: store.words
-        case .strong: store.strongWords
-        case .fading: store.fadingWords
-        case .new: newWords
-        }
-    }
-
-    private var newWords: [SavedWord] {
-        store.forgettingWords  // 配对 0 次的词
-    }
-
-    private var sectionTitle: String {
-        switch filter {
-        case .all: "全部词汇"
-        case .strong: "已掌握"
-        case .fading: "复习中"
-        case .new: "新词"
-        }
-    }
-
-    private var wordList: some View {
-        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(sectionTitle)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Color.textPrimary)
-
                 Spacer()
-                if filter == .strong && !filteredWords.isEmpty {
-                    Button { showClearAlert = true } label: {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(Color.danger)
-                                .frame(width: 6, height: 6)
-                            Text("清零")
-                                .font(.system(size: 13, weight: .medium))
+                Button { showMyVocabulary = true } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "books.vertical.fill")
+                            .font(.system(size: 12))
+                        Text("我的词汇")
+                            .font(.system(size: 13, weight: .semibold))
+                        if store.totalCount > 0 {
+                            Text("\(store.totalCount)")
+                                .font(.system(size: 12, weight: .bold))
                         }
-                        .foregroundStyle(Color.danger)
                     }
-                } else if filter == .strong && filteredWords.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 13))
-                        Text("已清零")
-                            .font(.system(size: 13, weight: .medium))
-                    }
-                    .foregroundStyle(Color.success)
-                } else if filter != .all {
-                    Button {
-                        withAnimation { filter = .all }
-                    } label: {
-                        Text("查看全部")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color.appPrimary)
-                    }
-                }
-            }
-
-            if filteredWords.isEmpty {
-                Text("暂无词汇")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color.textTertiary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 20)
-            } else {
-                ForEach(filteredWords) { word in
-                    wordRow(word)
+                    .foregroundStyle(Color.appPrimary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color.primaryLight, in: Capsule())
                 }
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
     }
 
-    private func wordRow(_ word: SavedWord) -> some View {
-        HStack(spacing: 12) {
-            // Play pronunciation
-            Button { WordSpeaker.shared.speak(word.word) } label: {
-                Image(systemName: "speaker.wave.2.fill")
-                    .font(.system(size: 16))
-                    .foregroundStyle(Color.appPrimary)
+    // MARK: - Lessons
+
+    private func categorySection(_ title: String, lessons: [SceneLessonIndexItem]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(Color.textPrimary)
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(lessons) { item in
+                    LessonCoverCard(
+                        item: item,
+                        locked: isLocked(item),
+                        completed: lessonStore.isCompleted(item.id),
+                        onTap: { open(item) },
+                        width: nil
+                    )
+                    .frame(maxWidth: .infinity)
+                }
             }
-
-            // Word + phonetic
-            VStack(alignment: .leading, spacing: 2) {
-                Text(word.word)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.textPrimary)
-                Text(word.phonetic)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.textTertiary)
-            }
-
-            Spacer()
-
-            Text(word.translationZh)
-                .font(.system(size: 14))
-                .foregroundStyle(Color.textSecondary)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(.white, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.border, lineWidth: 1)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            if lessonStore.isLoadingIndex {
+                ProgressView().tint(Color.appPrimary)
+                Text("加载中…")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color.textTertiary)
+            } else {
+                Image(systemName: "book.closed")
+                    .font(.system(size: 30))
+                    .foregroundColor(Color.textQuaternary)
+                Text("该国家的课堂即将上线")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color.textTertiary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 80)
+    }
+
+    private func isLocked(_ item: SceneLessonIndexItem) -> Bool {
+        !LessonAccessGate.canAccess(
+            isFree: item.isFree, isDaily: item.isDaily, date: item.date,
+            isPro: subscriptionManager.isProUser
         )
     }
 
-    // MARK: - Practice CTAs
-
-    private var practiceCTAs: some View {
-        HStack(spacing: 12) {
-            Button {
-                if subscriptionManager.isProUser || !store.dailyMatchPlayed {
-                    showWordMatch = true
-                } else {
-                    showPaywall = true
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "rectangle.on.rectangle")
-                        .font(.system(size: 15))
-                    Text("词义配对")
-                        .font(.system(size: 15, weight: .semibold))
-                    if !subscriptionManager.isProUser && store.dailyMatchPlayed {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 11))
-                    }
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(
-                    (!subscriptionManager.isProUser && store.dailyMatchPlayed) ? Color.textTertiary : Color.appPrimary,
-                    in: RoundedRectangle(cornerRadius: 14)
-                )
-            }
-
-            Button {
-                if subscriptionManager.isProUser || !store.dailySentencePlayed {
-                    showFeynman = true
-                } else {
-                    showPaywall = true
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "text.word.spacing")
-                        .font(.system(size: 15))
-                    Text("连词成句")
-                        .font(.system(size: 15, weight: .semibold))
-                    if !subscriptionManager.isProUser && store.dailySentencePlayed {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 11))
-                    }
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(
-                    (!subscriptionManager.isProUser && store.dailySentencePlayed) ? Color.textTertiary : Color.warning,
-                    in: RoundedRectangle(cornerRadius: 14)
-                )
-            }
+    private func open(_ item: SceneLessonIndexItem) {
+        if isLocked(item) {
+            Analytics.track(.lessonPaywallView, params: [
+                "lesson_id": item.id, "country": lessonStore.selectedCountry,
+            ])
+            showPaywall = true
+        } else {
+            selectedLesson = item
         }
-        .padding(.horizontal, 24)
     }
 }
 
