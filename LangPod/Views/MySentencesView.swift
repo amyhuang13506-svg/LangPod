@@ -173,27 +173,19 @@ struct MySentencesView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "theatermasks.fill")
                             .font(.system(size: 15))
-                        Text(quizUnlocked ? "场景模拟" : "场景模拟(需4句)")
-                            .font(.system(size: quizUnlocked ? 15 : 13, weight: .semibold))
+                        Text("场景模拟")
+                            .font(.system(size: 15, weight: .semibold))
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(
-                        quizUnlocked ? Color.warning : Color.textTertiary,
-                        in: RoundedRectangle(cornerRadius: 14)
-                    )
+                    .background(Color.warning, in: RoundedRectangle(cornerRadius: 14))
                 }
-                .disabled(!quizUnlocked)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 16)
             .background(Color.appBackground)
         }
-    }
-
-    private var quizUnlocked: Bool {
-        sentenceStore.totalCount >= 4
     }
 
     // MARK: - Empty

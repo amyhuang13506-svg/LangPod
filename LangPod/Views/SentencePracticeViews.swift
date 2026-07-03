@@ -1,20 +1,27 @@
 import SwiftUI
 
 // MARK: - 我的句子·连词成句
-// 轻量版（不进 SavedWord 记忆体系，无每日次数限制）：
-// 题源 = 收藏句子（≤12 词），词块打散 → 点选拼句 → 对错反馈。
+// UI/交互照搬词汇连词成句（FeynmanChallengeView），题卡从"单词+音标+释义"换成"句子中文翻译"。
+// 不进 SavedWord 记忆体系，无每日次数限制（自己收藏的句子随便练）。
 
 struct SentencePracticeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SentenceStore.self) private var sentenceStore
 
-    @State private var queue: [SavedSentence] = []
     @State private var currentIndex = 0
+    @State private var challengeSentences: [SavedSentence] = []
+    @State private var completed = false
+
+    // Sentence building
     @State private var availableTokens: [PracticeToken] = []
     @State private var selectedTokens: [PracticeToken] = []
     @State private var answerState: AnswerState = .building
-    @State private var correctCount = 0
-    @State private var completed = false
+    @State private var correctSentence = ""
+
+    // Session tracking
+    @State private var sessionPracticed: Set<String> = []
+    @State private var sessionRound = 1
+    @State private var isFirstCompletion = true
 
     enum AnswerState { case building, correct, wrong }
 
@@ -23,181 +30,542 @@ struct SentencePracticeView: View {
         let text: String
     }
 
+    private let maxPerSet = 8
+
     var body: some View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
 
             if completed {
-                PracticeCompleteView(
-                    title: "完成！",
-                    subtitle: "拼对了 \(correctCount)/\(queue.count) 句",
-                    onRestart: { startGame() },
-                    onClose: { dismiss() }
-                )
-            } else if queue.isEmpty {
+                completedContent
+            } else if challengeSentences.isEmpty {
                 emptyContent
             } else {
-                practiceContent
+                challengeContent
             }
         }
         .onAppear { startGame() }
     }
 
-    private var currentSentence: SavedSentence { queue[currentIndex] }
+    // MARK: - Challenge Content
 
-    // MARK: - Game
+    private var challengeContent: some View {
+        let sentence = challengeSentences[currentIndex]
+
+        return VStack(spacing: 20) {
+            // Header
+            HStack {
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(Color.textTertiary)
+                }
+                Spacer()
+                Text("连词成句")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                Spacer()
+                HStack(spacing: 4) {
+                    Text("\(currentIndex + 1)/\(challengeSentences.count)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.appPrimary)
+                    if sessionRound > 1 {
+                        Text("· 累计\(sessionPracticed.count)句")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+                }
+            }
+
+            // Progress bar
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.border)
+                        .frame(height: 4)
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.appPrimary)
+                        .frame(width: geo.size.width * CGFloat(currentIndex + 1) / CGFloat(challengeSentences.count), height: 4)
+                }
+            }
+            .frame(height: 4)
+
+            // 题卡：场景 tag + 中文翻译（对应词汇版的 单词+音标+释义）
+            VStack(spacing: 8) {
+                Text(sentence.scene)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color.gold)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Color.warningLight))
+                Text(sentence.chinese)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.vertical, 20)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity)
+            .background(.white, in: RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.border, lineWidth: 1)
+            )
+
+            // Prompt
+            Text("把这句话拼出来：")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Color.textSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            answerArea
+
+            tokenPool
+
+            Spacer()
+
+            bottomButton
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 16)
+        .padding(.bottom, 24)
+    }
+
+    // MARK: - Answer Area
+
+    private var answerArea: some View {
+        let borderColor: Color = switch answerState {
+        case .building: Color.border
+        case .correct: Color.success
+        case .wrong: Color.danger
+        }
+
+        let bgColor: Color = switch answerState {
+        case .building: Color.white
+        case .correct: Color(hex: "F0FDF4")
+        case .wrong: Color.dangerLight
+        }
+
+        return VStack(spacing: 8) {
+            FlowLayout(spacing: 8) {
+                ForEach(selectedTokens) { token in
+                    Button {
+                        if answerState == .building {
+                            WordSpeaker.shared.speak(token.text)
+                            removeToken(token)
+                        }
+                    } label: {
+                        Text(token.text)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(Color.textPrimary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if selectedTokens.isEmpty {
+                Text("点击下方单词组成句子")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.textQuaternary)
+                    .padding(.vertical, 12)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)
+        .padding(14)
+        .background(bgColor, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(borderColor, lineWidth: answerState == .building ? 1 : 2)
+        )
+    }
+
+    // MARK: - Token Pool
+
+    private var tokenPool: some View {
+        FlowLayout(spacing: 8) {
+            ForEach(availableTokens) { token in
+                Button {
+                    if answerState == .building {
+                        WordSpeaker.shared.speak(token.text)
+                        addToken(token)
+                    }
+                } label: {
+                    Text(token.text)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Color.textSecondary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(Color.divider, in: RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - Bottom Button
+
+    private var bottomButton: some View {
+        Group {
+            switch answerState {
+            case .building:
+                Button {
+                    checkAnswer()
+                } label: {
+                    Text("确认")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(
+                            selectedTokens.isEmpty ? Color.textQuaternary : Color.appPrimary,
+                            in: RoundedRectangle(cornerRadius: 14)
+                        )
+                }
+                .disabled(selectedTokens.isEmpty)
+
+            case .correct:
+                VStack(spacing: 12) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(Color.success)
+                        Text("正确！")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(Color.success)
+                    }
+
+                    // Play correct sentence
+                    Button { playCurrent() } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "speaker.wave.2.fill")
+                                .font(.system(size: 16))
+                                .foregroundStyle(Color.appPrimary)
+                            Text(correctSentence)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(Color.textPrimary)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(hex: "F0FDF4"), in: RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
+
+                    Text(challengeSentences[currentIndex].chinese)
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Button { advance() } label: {
+                        Text(currentIndex + 1 < challengeSentences.count ? "下一题" : "完成")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(Color.success, in: RoundedRectangle(cornerRadius: 14))
+                    }
+                }
+
+            case .wrong:
+                VStack(spacing: 12) {
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(Color.danger)
+                            Text("再试一次")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(Color.danger)
+                        }
+                        Text("正确答案：\(correctSentence)")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.textTertiary)
+                    }
+
+                    HStack(spacing: 12) {
+                        Button {
+                            setupQuestion()
+                        } label: {
+                            Text("重试")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+                        }
+
+                        Button {
+                            advance()
+                        } label: {
+                            Text("跳过")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color.textSecondary)
+                                .frame(width: 80)
+                                .frame(height: 52)
+                                .background(Color.divider, in: RoundedRectangle(cornerRadius: 14))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Completed（同词汇版：星星弹入 + 首轮彩屑 + 再来一组）
+
+    @State private var starScale: CGFloat = 0
+    @State private var textOpacity: Double = 0
+    @State private var confettiOffsets: [(CGFloat, CGFloat)] = (0..<12).map { _ in
+        (CGFloat.random(in: -150...150), CGFloat.random(in: -200...(-50)))
+    }
+    @State private var confettiVisible = false
+
+    private var completedContent: some View {
+        ZStack {
+            if confettiVisible && isFirstCompletion {
+                ForEach(0..<12, id: \.self) { i in
+                    Circle()
+                        .fill([Color.appPrimary, Color.warning, Color.success, Color.danger][i % 4])
+                        .frame(width: CGFloat.random(in: 6...10), height: CGFloat.random(in: 6...10))
+                        .offset(x: confettiOffsets[i].0, y: confettiOffsets[i].1)
+                        .opacity(confettiVisible ? 0 : 1)
+                        .animation(.easeOut(duration: 1.5).delay(Double(i) * 0.05), value: confettiVisible)
+                }
+            }
+
+            VStack(spacing: 24) {
+                Spacer()
+
+                Image(systemName: "star.circle.fill")
+                    .font(.system(size: 64))
+                    .foregroundStyle(Color.warning)
+                    .scaleEffect(starScale)
+
+                Text("本组完成！")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                    .opacity(textOpacity)
+
+                Text("完成 \(challengeSentences.count) 句连词成句练习")
+                    .font(.system(size: 16))
+                    .foregroundStyle(Color.textTertiary)
+                    .opacity(textOpacity)
+
+                if sessionPracticed.count > challengeSentences.count {
+                    Text("本次累计已练 \(sessionPracticed.count) 句")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.textSecondary)
+                        .opacity(textOpacity)
+                }
+
+                Spacer()
+
+                VStack(spacing: 12) {
+                    Button {
+                        startNextSet()
+                    } label: {
+                        HStack(spacing: 8) {
+                            Text("🔥")
+                            Text("再来一组")
+                                .font(.system(size: 16, weight: .semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(Color.warning, in: RoundedRectangle(cornerRadius: 14))
+                    }
+
+                    Button { dismiss() } label: {
+                        Text("返回我的句子")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
+                .opacity(textOpacity)
+            }
+        }
+        .onAppear { celebrateCompletion() }
+    }
+
+    private func celebrateCompletion() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1)) {
+            starScale = 1.0
+        }
+        withAnimation(.easeOut(duration: 0.4).delay(0.4)) {
+            textOpacity = 1.0
+        }
+        if isFirstCompletion {
+            confettiVisible = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation { confettiVisible = true }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
+    }
+
+    // MARK: - Empty
+
+    private var emptyContent: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(Color.textTertiary)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+
+            Spacer()
+
+            Image(systemName: "text.quote")
+                .font(.system(size: 48))
+                .foregroundStyle(Color.textQuaternary)
+                .padding(.bottom, 16)
+
+            Text("还没有可以练习的句子")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.textPrimary)
+
+            Text("在句型和小课堂里点 ＋ 收藏句子\n（句子需 ≤12 个单词）")
+                .font(.system(size: 14))
+                .foregroundStyle(Color.textTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Logic
 
     private func startGame() {
-        queue = sentenceStore.practiceableSentences.shuffled()
-        currentIndex = 0
-        correctCount = 0
+        sessionPracticed = []
+        sessionRound = 1
+        isFirstCompletion = true
+        loadSet()
+    }
+
+    private func startNextSet() {
+        sessionRound += 1
+        isFirstCompletion = false
+        starScale = 0
+        textOpacity = 0
         completed = false
-        if !queue.isEmpty { setupQuestion() }
+        currentIndex = 0
+        loadSet()
+    }
+
+    private func loadSet() {
+        let all = sentenceStore.practiceableSentences
+        // 优先没练过的，练完一轮后全体重新洗牌
+        var pool = all.filter { !sessionPracticed.contains($0.english) }.shuffled()
+        if pool.count < maxPerSet {
+            pool += all.filter { sessionPracticed.contains($0.english) }.shuffled()
+        }
+        challengeSentences = Array(pool.prefix(maxPerSet))
+        currentIndex = 0
+        completed = false
+        if !challengeSentences.isEmpty {
+            setupQuestion()
+        }
     }
 
     private func setupQuestion() {
-        let words = currentSentence.english
-            .split(separator: " ")
-            .map { $0.trimmingCharacters(in: .punctuationCharacters) }
+        let sentence = challengeSentences[currentIndex]
+        correctSentence = sentence.english
+        let words = correctSentence.split(separator: " ").map(String.init)
+        let cleanWords = words.map { $0.trimmingCharacters(in: .punctuationCharacters) }
             .filter { !$0.isEmpty }
-        availableTokens = words.shuffled().map { PracticeToken(text: $0) }
+        availableTokens = cleanWords.shuffled().map { PracticeToken(text: $0) }
         selectedTokens = []
         answerState = .building
     }
 
-    private func checkAnswer() {
-        let built = selectedTokens.map(\.text).joined(separator: " ").lowercased()
-        let target = currentSentence.english
-            .split(separator: " ")
-            .map { $0.trimmingCharacters(in: .punctuationCharacters) }
-            .filter { !$0.isEmpty }
-            .joined(separator: " ").lowercased()
+    private func addToken(_ token: PracticeToken) {
+        selectedTokens.append(token)
+        availableTokens.removeAll { $0.id == token.id }
+    }
 
-        if built == target {
-            answerState = .correct
-            correctCount += 1
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            LessonAudioPlayer.shared.play(currentSentence.audioUrl, from: currentSentence.audioStart, to: currentSentence.audioEnd) {
-                WordSpeaker.shared.speakSentence(currentSentence.english)
+    private func removeToken(_ token: PracticeToken) {
+        availableTokens.append(token)
+        selectedTokens.removeAll { $0.id == token.id }
+    }
+
+    private func normalize(_ text: String) -> String {
+        text.lowercased()
+            .components(separatedBy: CharacterSet.punctuationCharacters).joined()
+            .components(separatedBy: .whitespaces).filter { !$0.isEmpty }.joined(separator: " ")
+    }
+
+    private func checkAnswer() {
+        let userSentence = selectedTokens.map(\.text).joined(separator: " ")
+        if normalize(userSentence) == normalize(correctSentence) {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            withAnimation(.easeInOut(duration: 0.3)) {
+                answerState = .correct
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { advance() }
+            playCurrent()
+            sessionPracticed.insert(correctSentence)
         } else {
-            answerState = .wrong
             UINotificationFeedbackGenerator().notificationOccurred(.error)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
-                // 重试：词块放回
-                availableTokens = (availableTokens + selectedTokens).shuffled()
-                selectedTokens = []
-                answerState = .building
+            withAnimation(.easeInOut(duration: 0.3)) {
+                answerState = .wrong
             }
+        }
+    }
+
+    private func playCurrent() {
+        let sentence = challengeSentences[currentIndex]
+        LessonAudioPlayer.shared.play(sentence.audioUrl, from: sentence.audioStart, to: sentence.audioEnd) {
+            WordSpeaker.shared.speakSentence(sentence.english)
         }
     }
 
     private func advance() {
-        if currentIndex + 1 < queue.count {
+        if currentIndex + 1 < challengeSentences.count {
             currentIndex += 1
             setupQuestion()
         } else {
-            completed = true
             Analytics.track(.sentencePracticeComplete, params: [
-                "total": "\(queue.count)", "correct": "\(correctCount)",
+                "total": "\(challengeSentences.count)",
+                "practiced": "\(sessionPracticed.count)",
             ])
-        }
-    }
-
-    // MARK: - UI
-
-    private var practiceContent: some View {
-        VStack(spacing: 20) {
-            practiceHeader(title: "连词成句", progress: "\(currentIndex + 1)/\(queue.count)") { dismiss() }
-
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    Text(currentSentence.scene)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(Color.gold)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Capsule().fill(Color.warningLight))
-                    Spacer()
-                }
-                Text(currentSentence.chinese)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color.textPrimary)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.white, in: RoundedRectangle(cornerRadius: 14))
-            .padding(.horizontal, 20)
-
-            // 已选词块（拼句区）
-            FlowTokens(tokens: selectedTokens, style: answerStyle) { token in
-                guard answerState == .building else { return }
-                selectedTokens.removeAll { $0 == token }
-                availableTokens.append(token)
-            }
-            .frame(minHeight: 70)
-            .padding(.horizontal, 20)
-
-            Divider().padding(.horizontal, 20)
-
-            // 待选词块
-            FlowTokens(tokens: availableTokens, style: .neutral) { token in
-                guard answerState == .building else { return }
-                availableTokens.removeAll { $0 == token }
-                selectedTokens.append(token)
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                if availableTokens.isEmpty { checkAnswer() }
-            }
-            .padding(.horizontal, 20)
-
-            if answerState == .correct {
-                Text("✓ \(currentSentence.english)")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.success)
-                    .padding(.horizontal, 20)
-                    .transition(.opacity)
-            }
-
-            Spacer()
-        }
-    }
-
-    private var answerStyle: FlowTokens.Style {
-        switch answerState {
-        case .building: .selected
-        case .correct: .correct
-        case .wrong: .wrong
-        }
-    }
-
-    private var emptyContent: some View {
-        VStack(spacing: 12) {
-            practiceHeader(title: "连词成句", progress: "") { dismiss() }
-            Spacer()
-            Text("没有可练习的句子（句子需 ≤12 个单词）")
-                .font(.system(size: 14))
-                .foregroundStyle(Color.textTertiary)
-            Spacer()
+            withAnimation { completed = true }
         }
     }
 }
 
-// MARK: - 我的句子·场景模拟（场景选择题）
-// 给定使用场景 + 中文意思 → 4 个英文句子里选出该说的那句。
+// MARK: - 场景模拟（对话填空）
+// 真实场景对话（店员说 → 你说 → 店员说 → 你说，来自课堂的模拟现场对话数据），
+// 其中一句"你说"留白，从 4 个选项里选出该说的那句填进去。
 
 struct SceneQuizView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(SentenceStore.self) private var sentenceStore
+    @Environment(LessonStore.self) private var lessonStore
 
     private struct Question {
-        let answer: SavedSentence
-        let options: [SavedSentence]  // 4 个（含正确项），已打乱
+        let lessonTitle: String     // 在 Starbucks 点单
+        let otherRole: String       // 店员
+        let turns: [RoleplayLine]   // 4 句（other/you 交替）
+        let blankIndex: Int         // 留白的那句（you）
+        let options: [RoleplayLine] // 4 个候选（含正确项），已打乱
+        var answer: RoleplayLine { turns[blankIndex] }
     }
 
     @State private var questions: [Question] = []
+    @State private var loading = true
     @State private var currentIndex = 0
-    @State private var selectedOption: String?   // english of tapped option
+    @State private var selectedOption: String?   // 点中的选项 en
     @State private var revealed = false
     @State private var correctCount = 0
     @State private var completed = false
@@ -210,54 +578,108 @@ struct SceneQuizView: View {
                 PracticeCompleteView(
                     title: "场景通关！",
                     subtitle: "答对 \(correctCount)/\(questions.count) 题",
-                    onRestart: { startGame() },
+                    onRestart: { Task { await startGame() } },
                     onClose: { dismiss() }
                 )
+            } else if loading {
+                VStack(spacing: 10) {
+                    ProgressView().tint(Color.appPrimary)
+                    Text("正在准备场景…")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.textTertiary)
+                }
             } else if questions.isEmpty {
-                ProgressView().tint(Color.appPrimary)
+                emptyContent
             } else {
                 quizContent
             }
         }
-        .onAppear { startGame() }
+        .task { await startGame() }
     }
 
     private var current: Question { questions[currentIndex] }
 
-    // MARK: - Game
+    // MARK: - 出题（题源 = 课堂模拟现场对话）
 
-    private func startGame() {
-        let all = sentenceStore.sentences
-        guard all.count >= 4 else {
-            dismiss()
-            return
-        }
-        let picked = all.shuffled().prefix(min(5, all.count))
-        questions = picked.map { answer in
-            let distractors = all.filter { $0.id != answer.id }.shuffled().prefix(3)
-            return Question(answer: answer, options: ([answer] + distractors).shuffled())
-        }
+    @MainActor
+    private func startGame() async {
+        loading = true
+        completed = false
         currentIndex = 0
         correctCount = 0
         selectedOption = nil
         revealed = false
-        completed = false
+
+        // 抽最多 8 个课堂并发拉详情，取有模拟对话的
+        let candidates = lessonStore.lessons.shuffled().prefix(8)
+        let country = lessonStore.selectedCountry
+        let store = lessonStore
+        var roleplays: [(title: String, roleplay: LessonRoleplay)] = []
+        await withTaskGroup(of: (String, LessonRoleplay?).self) { group in
+            for item in candidates {
+                group.addTask {
+                    let lesson = await store.lessonDetail(country: country, id: item.id)
+                    return (item.titleZh, lesson?.roleplay)
+                }
+            }
+            for await (title, rp) in group {
+                if let rp, rp.dialogue.count >= 4 {
+                    roleplays.append((title, rp))
+                }
+            }
+        }
+
+        // 干扰项池：所有课堂里"你说"的台词
+        let allYouLines = roleplays.flatMap { $0.roleplay.dialogue.filter { $0.isYou } }
+
+        var built: [Question] = []
+        for (title, rp) in roleplays.shuffled() {
+            let dialogue = rp.dialogue
+            // 取一个 4 句窗口（从"对方"开头的偶数位起，保持 店员/你 交替）
+            let maxStart = dialogue.count - 4
+            let starts = stride(from: 0, through: maxStart, by: 2).map { $0 }
+            guard let start = starts.randomElement() else { continue }
+            let turns = Array(dialogue[start..<(start + 4)])
+            // 留白：窗口里随机一句"你说"
+            let youIndexes = turns.indices.filter { turns[$0].isYou }
+            guard let blank = youIndexes.randomElement() else { continue }
+            let answer = turns[blank]
+            var distractors = allYouLines
+                .filter { $0.en != answer.en }
+                .shuffled()
+            // 去重
+            var seen = Set<String>()
+            distractors = distractors.filter { seen.insert($0.en).inserted }
+            guard distractors.count >= 3 else { continue }
+            let options = ([answer] + distractors.prefix(3)).shuffled()
+            built.append(Question(
+                lessonTitle: title,
+                otherRole: rp.otherRoleZh,
+                turns: turns,
+                blankIndex: blank,
+                options: options
+            ))
+            if built.count >= 5 { break }
+        }
+
+        questions = built
+        loading = false
     }
 
-    private func choose(_ option: SavedSentence) {
+    private func choose(_ option: RoleplayLine) {
         guard !revealed else { return }
-        selectedOption = option.english
-        revealed = true
-        if option.id == current.answer.id {
+        selectedOption = option.en
+        withAnimation(.spring(duration: 0.35)) { revealed = true }
+        if option.en == current.answer.en {
             correctCount += 1
             UINotificationFeedbackGenerator().notificationOccurred(.success)
-            LessonAudioPlayer.shared.play(current.answer.audioUrl, from: current.answer.audioStart, to: current.answer.audioEnd) {
-                WordSpeaker.shared.speakSentence(current.answer.english)
+            LessonAudioPlayer.shared.play(current.answer.audio) {
+                WordSpeaker.shared.speakSentence(current.answer.en)
             }
         } else {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { advance() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { advance() }
     }
 
     private func advance() {
@@ -276,46 +698,119 @@ struct SceneQuizView: View {
     // MARK: - UI
 
     private var quizContent: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             practiceHeader(title: "场景模拟", progress: "\(currentIndex + 1)/\(questions.count)") { dismiss() }
 
-            // 题干：场景 + 你想表达的意思
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    Image(systemName: "theatermasks.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.gold)
-                    Text("场景：\(current.answer.scene)")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color.gold)
-                }
-                Text("你想表达：\(current.answer.chinese)")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("这时该说哪句？")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color.textSecondary)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.warningLight, in: RoundedRectangle(cornerRadius: 14))
-            .padding(.horizontal, 20)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
+                    // 场景标题
+                    HStack(spacing: 6) {
+                        Image(systemName: "theatermasks.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.gold)
+                        Text(current.lessonTitle)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Color.gold)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 4)
 
-            VStack(spacing: 10) {
-                ForEach(current.options, id: \.id) { option in
-                    optionRow(option)
-                }
-            }
-            .padding(.horizontal, 20)
+                    // 4 句对话（一句留白）
+                    VStack(spacing: 10) {
+                        ForEach(Array(current.turns.enumerated()), id: \.offset) { index, turn in
+                            if index == current.blankIndex {
+                                blankBubble(turn, filled: revealed)
+                            } else {
+                                dialogueBubble(turn)
+                            }
+                        }
+                    }
 
-            Spacer()
+                    Text("空格处该说哪句？")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Color.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 4)
+
+                    VStack(spacing: 10) {
+                        ForEach(current.options, id: \.id) { option in
+                            optionRow(option)
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 30)
+            }
         }
     }
 
-    private func optionRow(_ option: SavedSentence) -> some View {
-        let isAnswer = option.id == current.answer.id
-        let isSelected = selectedOption == option.english
+    /// 正常对话气泡：对方靠左（橙标），你靠右（蓝标）
+    private func dialogueBubble(_ turn: RoleplayLine) -> some View {
+        HStack {
+            if turn.isYou { Spacer(minLength: 40) }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(turn.isYou ? "你" : current.otherRole)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(turn.isYou ? Color.appPrimary : Color.hardOrange)
+                Text(turn.en)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.textPrimary)
+                    .multilineTextAlignment(.leading)
+                Text(turn.zh)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.textSecondary)
+                    .multilineTextAlignment(.leading)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(.white, in: RoundedRectangle(cornerRadius: 12))
+            if !turn.isYou { Spacer(minLength: 40) }
+        }
+    }
+
+    /// 留白气泡：虚线框 + 中文提示；答对后填入英文
+    private func blankBubble(_ turn: RoleplayLine, filled: Bool) -> some View {
+        HStack {
+            Spacer(minLength: 40)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("你")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Color.appPrimary)
+                if filled {
+                    Text(turn.en)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.success)
+                        .multilineTextAlignment(.leading)
+                        .transition(.opacity)
+                } else {
+                    Text("＿＿＿＿＿＿＿＿")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.appPrimary.opacity(0.6))
+                }
+                Text(turn.zh)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.textSecondary)
+                    .multilineTextAlignment(.leading)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                filled ? Color.successLight : Color.primaryLight.opacity(0.5),
+                in: RoundedRectangle(cornerRadius: 12)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        filled ? Color.success : Color.appPrimary.opacity(0.5),
+                        style: StrokeStyle(lineWidth: 1.5, dash: filled ? [] : [5, 4])
+                    )
+            )
+        }
+    }
+
+    private func optionRow(_ option: RoleplayLine) -> some View {
+        let isAnswer = option.en == current.answer.en
+        let isSelected = selectedOption == option.en
         let bg: Color = {
             guard revealed else { return .white }
             if isAnswer { return Color.successLight }
@@ -331,7 +826,7 @@ struct SceneQuizView: View {
 
         return Button { choose(option) } label: {
             HStack {
-                Text(option.english)
+                Text(option.en)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(Color.textPrimary)
                     .multilineTextAlignment(.leading)
@@ -354,6 +849,26 @@ struct SceneQuizView: View {
         }
         .buttonStyle(.plain)
         .disabled(revealed)
+    }
+
+    private var emptyContent: some View {
+        VStack(spacing: 12) {
+            practiceHeader(title: "场景模拟", progress: "") { dismiss() }
+            Spacer()
+            Image(systemName: "theatermasks")
+                .font(.system(size: 40))
+                .foregroundStyle(Color.textQuaternary)
+            Text("场景对话准备中")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.textSecondary)
+            Text("请检查网络后重试")
+                .font(.system(size: 13))
+                .foregroundStyle(Color.textTertiary)
+            Button("重试") { Task { await startGame() } }
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.appPrimary)
+            Spacer()
+        }
     }
 }
 
@@ -385,65 +900,9 @@ private func practiceHeader(title: String, progress: String, onClose: @escaping 
     .padding(.top, 12)
 }
 
-/// 自动换行词块区
-struct FlowTokens: View {
-    enum Style { case neutral, selected, correct, wrong }
-
-    let tokens: [SentencePracticeView.PracticeToken]
-    let style: Style
-    let onTap: (SentencePracticeView.PracticeToken) -> Void
-
-    var body: some View {
-        FlowLayout(spacing: 8) {
-            ForEach(tokens) { token in
-                Button { onTap(token) } label: {
-                    Text(token.text)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(textColor)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(bgColor, in: RoundedRectangle(cornerRadius: 10))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(borderColor, lineWidth: 1)
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var bgColor: Color {
-        switch style {
-        case .neutral: .white
-        case .selected: Color.primaryLight
-        case .correct: Color.successLight
-        case .wrong: Color.dangerLight
-        }
-    }
-
-    private var textColor: Color {
-        switch style {
-        case .wrong: Color.danger
-        case .correct: Color(hex: "16A34A")
-        default: Color.textPrimary
-        }
-    }
-
-    private var borderColor: Color {
-        switch style {
-        case .neutral: Color.border
-        case .selected: Color.primaryLighter
-        case .correct: Color.success
-        case .wrong: Color.danger
-        }
-    }
-}
-
 // FlowLayout 复用 FeynmanChallengeView.swift 里的现有实现
 
-/// 练习完成页（两种练习共用）
+/// 练习完成页（场景模拟用）
 struct PracticeCompleteView: View {
     let title: String
     let subtitle: String
