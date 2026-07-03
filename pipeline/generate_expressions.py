@@ -79,6 +79,19 @@ EXPRESSIONS ({cat_zh}):
 Output STRICT JSON only:
 {{"scenes": [{{"english": "<expression exactly as given>", "setup_zh": "...", "dialogue": [{{"speaker": "A", "en": "...", "zh": "..."}}, {{"speaker": "B", "en": "...", "zh": "..."}}]}}]}}"""
 
+AUGMENT_EXAMPLES_PROMPT = """You are expanding an existing spoken-English expression library for Chinese learners.
+
+For EACH expression below, write exactly 2 NEW example sentences:
+- Different situations from the existing examples listed (no overlap in topic or wording)
+- Each "en" MAX 12 words, real spoken register (how natives actually talk, contractions OK)
+- Each has "zh": 自然中文翻译（不是直译腔）
+
+EXPRESSIONS ({cat_zh}):
+{expr_list}
+
+Output STRICT JSON only:
+{{"expressions": [{{"english": "<expression exactly as given>", "examples": [{{"en": "...", "zh": "..."}}, {{"en": "...", "zh": "..."}}]}}]}}"""
+
 # 对话双声：A 男声 / B 女声（B 是表达使用者时也自然）
 DIALOGUE_VOICES = {"A": "iP95p4xoKVk53GoZ742B", "B": ELEVENLABS_LESSON_VOICES["us"]}  # Chris / Bella
 
@@ -298,6 +311,54 @@ def augment_scenes(cat, skip_audio=False):
     return process_category(cat, skip_audio=skip_audio)
 
 
+def augment_examples(cat, skip_audio=False):
+    """给已生成的分类每条表达补到 4 个例句（已有 2 个不动，新增走 ex2/ex3 音频）。"""
+    out_path = os.path.join(EXPR_DIR, "%s.json" % cat["id"])
+    if not os.path.exists(out_path):
+        return False
+    with open(out_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    todo = [e for e in data["expressions"] if len(e.get("examples") or []) < 4]
+    if todo:
+        print("\n✏️ %s — %s (%d 条待补例句)" % (cat["id"], cat["zh"], len(todo)))
+        expr_list = "\n".join(
+            "- %s (%s) | existing examples: %s" % (
+                e["english"], e["meaning_zh"],
+                " / ".join(x["en"] for x in e.get("examples") or []) or "none",
+            )
+            for e in todo
+        )
+        prompt = AUGMENT_EXAMPLES_PROMPT.format(cat_zh=cat["zh"], expr_list=expr_list)
+        try:
+            result = _call_gpt(prompt)
+        except Exception as e:
+            print("   ❌ GPT: %s" % e)
+            return False
+        by_english = {s.get("english"): s for s in result.get("expressions", [])}
+        added = 0
+        for e in todo:
+            extra = by_english.get(e["english"])
+            if not extra:
+                print("   ⚠️ no new examples for: %s" % e["english"])
+                continue
+            existing_en = {(x.get("en") or "").lower() for x in e.get("examples") or []}
+            fresh = [
+                x for x in extra.get("examples", [])
+                if x.get("en") and x.get("zh")
+                and len(x["en"].split()) <= 14
+                and x["en"].lower() not in existing_en
+            ]
+            need = 4 - len(e.get("examples") or [])
+            for x in fresh[:need]:
+                e.setdefault("examples", []).append({"en": x["en"], "zh": x["zh"]})
+                added += 1
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print("   ✅ %d examples added" % added)
+    # 补音频（幂等：只合成缺音频的 ex2/ex3）
+    return process_category(cat, skip_audio=skip_audio)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--category")
@@ -305,6 +366,8 @@ def main():
     parser.add_argument("--skip-audio", action="store_true")
     parser.add_argument("--augment-scenes", action="store_true",
                         help="给已有分类补 scene 场景示例（不重新生成表达本体）")
+    parser.add_argument("--augment-examples", action="store_true",
+                        help="给已有分类每条表达补到 4 个例句")
     args = parser.parse_args()
 
     cats = all_categories()
@@ -316,7 +379,12 @@ def main():
         print("❌ no matching categories")
         sys.exit(1)
 
-    fn = augment_scenes if args.augment_scenes else process_category
+    if args.augment_scenes:
+        fn = augment_scenes
+    elif args.augment_examples:
+        fn = augment_examples
+    else:
+        fn = process_category
     ok = sum(1 for c in cats if fn(c, skip_audio=args.skip_audio))
     print("\n🎉 %d/%d categories done" % (ok, len(cats)))
 

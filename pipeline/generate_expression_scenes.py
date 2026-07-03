@@ -38,9 +38,10 @@ STYLE = (
 COMPOSITION = (
     " Composition requirements: EXACTLY TWO people, facing each other and clearly mid-conversation. "
     "Person A stands in the LEFT third of the frame, person B in the RIGHT third. "
-    "Both drawn from roughly knee-up, heads in the lower two-thirds of the frame, "
-    "leaving generous calm open space in the upper part of the image (sky, wall, background) "
-    "where UI speech bubbles will be overlaid later. "
+    "Both drawn from roughly waist-up, with their FACES in the upper third of the frame. "
+    "Keep the lower part of the image visually simple (bodies, table, ground — no important details) "
+    "because UI speech bubbles will be overlaid over the bottom area later; faces must never sit "
+    "in the bottom half. "
     "The two people must look different from each other (hair, clothing color). "
     "ABSOLUTELY NO text, letters, numbers, speech bubbles or signage anywhere in the image. "
     "NO real brand logos."

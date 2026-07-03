@@ -474,16 +474,20 @@ struct ExpressionPageView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(expression.english)
-                        .font(.system(size: 22, weight: .bold, design: .serif))
-                        .foregroundStyle(Color.textPrimary)
-                    Text(expression.meaningZh)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color.textSecondary)
+                // 标题行：表达 + 意思，右上角 🔊 发音 / ＋ 加入我的句子（去掉文字按钮）
+                HStack(alignment: .top, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(expression.english)
+                            .font(.system(size: 22, weight: .bold, design: .serif))
+                            .foregroundStyle(Color.textPrimary)
+                        Text(expression.meaningZh)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                    Spacer()
+                    speakButton
+                    saveButton
                 }
-
-                actionButtons
 
                 Text(expression.usageZh)
                     .font(.system(size: 14))
@@ -533,7 +537,8 @@ struct ExpressionPageView: View {
             .aspectRatio(3.0 / 2.0, contentMode: .fit)
             .frame(maxWidth: .infinity)
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(alignment: .top) {
+            .overlay(alignment: .bottom) {
+                // 气泡贴图片底部，不挡人物脸部
                 VStack(spacing: 6) {
                     ForEach(scene.dialogue) { line in
                         dialogueBubble(line)
@@ -599,49 +604,45 @@ struct ExpressionPageView: View {
             .padding(.top, 1)
     }
 
-    // MARK: - 操作按钮 + 例句
+    // MARK: - 图标按钮（🔊 发音 / ＋ 加入我的句子）+ 例句
 
-    private var actionButtons: some View {
-        HStack(spacing: 10) {
-            Button {
-                LessonAudioPlayer.shared.play(expression.audio) {
-                    WordSpeaker.shared.speakSentence(expression.english.replacingOccurrences(of: "___", with: "something"))
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "speaker.wave.2.fill").font(.system(size: 12))
-                    Text("发音").font(.system(size: 13, weight: .medium))
-                }
+    private var speakButton: some View {
+        Button {
+            LessonAudioPlayer.shared.play(expression.audio) {
+                WordSpeaker.shared.speakSentence(expression.english.replacingOccurrences(of: "___", with: "something"))
+            }
+        } label: {
+            Image(systemName: "speaker.wave.2.fill")
+                .font(.system(size: 14))
                 .foregroundStyle(Color.appPrimary)
-                .padding(.horizontal, 12).padding(.vertical, 7)
-                .background(Capsule().fill(Color.primaryLight))
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(Color.primaryLight))
+        }
+    }
+
+    private var saveButton: some View {
+        Button {
+            guard !saved else { return }
+            let added = sentenceStore.add(SavedSentence(
+                english: expression.english,
+                chinese: expression.meaningZh,
+                scene: categoryZh,
+                source: "pattern",
+                sourceLabel: categoryZh,
+                audioUrl: expression.audio,
+                audioStart: nil,
+                audioEnd: nil,
+                savedDate: Date()
+            ))
+            if added {
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
             }
-            Button {
-                guard !saved else { return }
-                let added = sentenceStore.add(SavedSentence(
-                    english: expression.english,
-                    chinese: expression.meaningZh,
-                    scene: categoryZh,
-                    source: "pattern",
-                    sourceLabel: categoryZh,
-                    audioUrl: expression.audio,
-                    audioStart: nil,
-                    audioEnd: nil,
-                    savedDate: Date()
-                ))
-                if added {
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: saved ? "checkmark" : "plus").font(.system(size: 12, weight: .semibold))
-                    Text(saved ? "已加入我的句子" : "加入我的句子").font(.system(size: 13, weight: .medium))
-                }
+        } label: {
+            Image(systemName: saved ? "checkmark" : "plus")
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(saved ? Color.success : .white)
-                .padding(.horizontal, 12).padding(.vertical, 7)
-                .background(Capsule().fill(saved ? Color.successLight : Color.appPrimary))
-            }
-            Spacer()
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(saved ? Color.successLight : Color.appPrimary))
         }
     }
 
