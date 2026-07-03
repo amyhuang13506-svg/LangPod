@@ -551,7 +551,9 @@ struct SentencePracticeView: View {
 
 struct SceneQuizView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(LessonStore.self) private var lessonStore
+    // 自包含：不依赖 LessonStore 环境（此页从句型 tab 打开，环境里没有 LessonStore）。
+    // 国家读上次浏览记录，数据直接走 APIService。
+    @AppStorage("lessonCountry") private var savedCountry = "us"
 
     private struct Question {
         let lessonTitle: String     // 在 Starbucks 点单
@@ -610,23 +612,15 @@ struct SceneQuizView: View {
         selectedOption = nil
         revealed = false
 
-        // 抽最多 8 个课堂并发拉详情，取有模拟对话的
-        let candidates = lessonStore.lessons.shuffled().prefix(8)
-        let country = lessonStore.selectedCountry
-        let store = lessonStore
-        var roleplays: [(title: String, roleplay: LessonRoleplay)] = []
-        await withTaskGroup(of: (String, LessonRoleplay?).self) { group in
-            for item in candidates {
-                group.addTask {
-                    let lesson = await store.lessonDetail(country: country, id: item.id)
-                    return (item.titleZh, lesson?.roleplay)
-                }
-            }
-            for await (title, rp) in group {
-                if let rp, rp.dialogue.count >= 4 {
-                    roleplays.append((title, rp))
-                }
-            }
+        // 拉当前国家课堂列表 → 并发取有模拟对话的
+        var country = savedCountry
+        var items = await APIService.shared.fetchLessonIndex(country: country)
+        var roleplays = await Self.fetchRoleplays(items: items, country: country)
+        // 当前国家还没生成模拟对话（如英国）→ fallback 到美国，保证有内容
+        if roleplays.isEmpty && country != "us" {
+            country = "us"
+            items = await APIService.shared.fetchLessonIndex(country: "us")
+            roleplays = await Self.fetchRoleplays(items: items, country: "us")
         }
 
         // 干扰项池：所有课堂里"你说"的台词
@@ -664,6 +658,28 @@ struct SceneQuizView: View {
 
         questions = built
         loading = false
+    }
+
+    /// 并发拉课堂详情（最多 8 个），取有 ≥4 句模拟对话的
+    private static func fetchRoleplays(
+        items: [SceneLessonIndexItem], country: String
+    ) async -> [(title: String, roleplay: LessonRoleplay)] {
+        let candidates = items.shuffled().prefix(8)
+        var result: [(title: String, roleplay: LessonRoleplay)] = []
+        await withTaskGroup(of: (String, LessonRoleplay?).self) { group in
+            for item in candidates {
+                group.addTask {
+                    let lesson = await APIService.shared.fetchLessonDetail(country: country, id: item.id)
+                    return (item.titleZh, lesson?.roleplay)
+                }
+            }
+            for await (title, rp) in group {
+                if let rp, rp.dialogue.count >= 4 {
+                    result.append((title, rp))
+                }
+            }
+        }
+        return result
     }
 
     private func choose(_ option: RoleplayLine) {
