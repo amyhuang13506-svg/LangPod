@@ -771,22 +771,18 @@ struct LessonRolePlayView: View {
             Button {
                 play(line)
             } label: {
-                HStack(alignment: .top, spacing: 6) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(line.en)
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(line.isYou ? .white : Color.textPrimary)
-                            .multilineTextAlignment(.leading)
-                        Text(line.zh)
-                            .font(.system(size: 12))
-                            .foregroundStyle(line.isYou ? .white.opacity(0.85) : Color.textSecondary)
-                            .multilineTextAlignment(.leading)
-                    }
-                    // 句末喇叭：点击重听本句
-                    Image(systemName: "speaker.wave.2.fill")
-                        .font(.system(size: 10))
-                        .foregroundStyle(line.isYou ? .white.opacity(0.85) : Color.appPrimary.opacity(0.7))
-                        .padding(.top, 4)
+                VStack(alignment: .leading, spacing: 3) {
+                    // 喇叭内联在英文句子末尾（点击气泡重听）
+                    (Text(line.en + " ")
+                        + Text(Image(systemName: "speaker.wave.2.fill"))
+                            .font(.system(size: 11)))
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(line.isYou ? .white : Color.textPrimary)
+                        .multilineTextAlignment(.leading)
+                    Text(line.zh)
+                        .font(.system(size: 12))
+                        .foregroundStyle(line.isYou ? .white.opacity(0.85) : Color.textSecondary)
+                        .multilineTextAlignment(.leading)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 9)
@@ -805,13 +801,18 @@ struct LessonRolePlayView: View {
         }
     }
 
-    /// 双方头像：你 = 蓝，对方 = 橙
+    /// 双方头像：gpt-image-1 生成的人物画像（缺失回落 person 圆形图标）
     private func avatar(isYou: Bool) -> some View {
-        Image(systemName: "person.fill")
-            .font(.system(size: 13))
-            .foregroundStyle(.white)
-            .frame(width: 28, height: 28)
-            .background(Circle().fill(isYou ? Color.appPrimary : Color.hardOrange))
+        CachedAsyncImage(url: (isYou ? roleplay.youAvatar : roleplay.otherAvatar) ?? "") {
+            Image(systemName: "person.fill")
+                .font(.system(size: 13))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(isYou ? Color.appPrimary : Color.hardOrange))
+        }
+        .frame(width: 32, height: 32)
+        .clipShape(Circle())
+        .overlay(Circle().stroke(isYou ? Color.appPrimary : Color.hardOrange, lineWidth: 1.5))
     }
 
     private var completionCard: some View {

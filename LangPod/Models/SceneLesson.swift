@@ -121,12 +121,17 @@ struct LessonRoleplay: Codable, Hashable {
     let yourRoleZh: String    // 你的角色（"顾客"）
     let otherRoleZh: String   // 对方角色（"银行柜员"）
     let dialogue: [RoleplayLine]
+    /// gpt-image-1 生成的人物头像（缺失时回落 person.fill 圆形图标）
+    var youAvatar: String?
+    var otherAvatar: String?
 
     enum CodingKeys: String, CodingKey {
         case dialogue
         case setupZh = "setup_zh"
         case yourRoleZh = "your_role_zh"
         case otherRoleZh = "other_role_zh"
+        case youAvatar = "you_avatar"
+        case otherAvatar = "other_avatar"
     }
 }
 
