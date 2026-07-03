@@ -561,6 +561,7 @@ struct SceneQuizView: View {
         let turns: [RoleplayLine]   // 4 句（other/you 交替）
         let blankIndex: Int         // 留白的那句（you）
         let options: [RoleplayLine] // 4 个候选（含正确项），已打乱
+        let explanation: String     // 选完后的语境解析
         var answer: RoleplayLine { turns[blankIndex] }
     }
 
@@ -651,7 +652,8 @@ struct SceneQuizView: View {
                 otherRole: rp.otherRoleZh,
                 turns: turns,
                 blankIndex: blank,
-                options: options
+                options: options,
+                explanation: Self.makeExplanation(turns: turns, blankIndex: blank)
             ))
             if built.count >= 5 { break }
         }
@@ -680,6 +682,20 @@ struct SceneQuizView: View {
             }
         }
         return result
+    }
+
+    /// 语境解析：结合上一句对方的话 + 正确回应的意思，说明为什么这样选
+    private static func makeExplanation(turns: [RoleplayLine], blankIndex: Int) -> String {
+        let answer = turns[blankIndex]
+        if blankIndex > 0 {
+            let prev = turns[blankIndex - 1]
+            return "上一句对方说「\(prev.en)」（\(prev.zh)），顺着这个语境，自然的回应是「\(answer.en)」，意思是\(answer.zh)。"
+        } else if blankIndex + 1 < turns.count {
+            let next = turns[blankIndex + 1]
+            return "你说完后对方接「\(next.en)」（\(next.zh)），能顺下去的是「\(answer.en)」，意思是\(answer.zh)。"
+        } else {
+            return "这里正确的说法是「\(answer.en)」，意思是\(answer.zh)。"
+        }
     }
 
     private func choose(_ option: RoleplayLine) {
@@ -749,6 +765,24 @@ struct SceneQuizView: View {
                         ForEach(Array(current.options.enumerated()), id: \.element.id) { idx, option in
                             optionRow(option, label: optionLabel(idx))
                         }
+                    }
+
+                    // 选完后的语境解析
+                    if revealed {
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "lightbulb.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color.gold)
+                                .padding(.top, 1)
+                            Text(current.explanation)
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color.bodyText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.warningLight, in: RoundedRectangle(cornerRadius: 12))
+                        .transition(.opacity)
                     }
                 }
                 .padding(.horizontal, 20)
