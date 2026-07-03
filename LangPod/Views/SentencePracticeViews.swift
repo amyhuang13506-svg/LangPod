@@ -740,14 +740,14 @@ struct SceneQuizView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.white, in: RoundedRectangle(cornerRadius: 14))
 
-                    Text("空格处该说哪句？")
+                    Text("选择恰当的句子填空")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color.textSecondary)
                         .padding(.top, 2)
 
                     VStack(spacing: 10) {
-                        ForEach(current.options, id: \.id) { option in
-                            optionRow(option)
+                        ForEach(Array(current.options.enumerated()), id: \.element.id) { idx, option in
+                            optionRow(option, label: optionLabel(idx))
                         }
                     }
                 }
@@ -757,9 +757,9 @@ struct SceneQuizView: View {
         }
     }
 
-    /// 一行对话：说话人前缀 + 英文（留白行未答时下划线，答对后填入绿色英文）。纯文本，无翻译。
+    /// 一行对话：说话人用 A/B（对方=A，你=B）+ 英文。纯文本，无翻译。
     private func dialogueLine(_ turn: RoleplayLine, isBlank: Bool) -> some View {
-        let speaker = turn.isYou ? "你" : current.otherRole
+        let speaker = turn.isYou ? "B" : "A"
         return HStack(alignment: .top, spacing: 8) {
             Text("\(speaker)：")
                 .font(.system(size: 15, weight: .semibold))
@@ -779,7 +779,11 @@ struct SceneQuizView: View {
         }
     }
 
-    private func optionRow(_ option: RoleplayLine) -> some View {
+    private func optionLabel(_ index: Int) -> String {
+        String(UnicodeScalar(65 + index)!)  // A/B/C/D
+    }
+
+    private func optionRow(_ option: RoleplayLine, label: String) -> some View {
         let isAnswer = option.en == current.answer.en
         let isSelected = selectedOption == option.en
         let bg: Color = {
@@ -796,7 +800,17 @@ struct SceneQuizView: View {
         }()
 
         return Button { choose(option) } label: {
-            HStack {
+            HStack(spacing: 10) {
+                Text(label)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(revealed && isAnswer ? Color.success : (revealed && isSelected ? Color.danger : Color.appPrimary))
+                    .frame(width: 24, height: 24)
+                    .background(
+                        Circle().fill(
+                            revealed && isAnswer ? Color.successLight
+                            : (revealed && isSelected ? Color.dangerLight : Color.primaryLight)
+                        )
+                    )
                 Text(option.en)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(Color.textPrimary)
