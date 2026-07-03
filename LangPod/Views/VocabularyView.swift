@@ -103,7 +103,7 @@ struct VocabularyView: View {
                 Spacer()
                 Button { showMyVocabulary = true } label: {
                     VStack(spacing: 2) {
-                        Image(systemName: "bookmark.fill")
+                        Image(systemName: "heart.fill")
                             .font(.system(size: 16))
                         Text("我的")
                             .font(.system(size: 10, weight: .medium))

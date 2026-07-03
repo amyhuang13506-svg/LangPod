@@ -10,15 +10,15 @@ struct ContentView: View {
             TabView {
                 HomeView()
                     .tabItem {
-                        Label("首页", systemImage: "headphones")
+                        Label("首页", systemImage: "house")
                     }
                 VocabularyView()
                     .tabItem {
-                        Label("词汇", systemImage: "character.book.closed")
+                        Label("词汇", systemImage: "textformat")
                     }
                 PatternsTabView()
                     .tabItem {
-                        Label("句型", systemImage: "bubble.left.fill")
+                        Label("句型", systemImage: "text.bubble")
                     }
                 ProfileView()
                     .tabItem {
