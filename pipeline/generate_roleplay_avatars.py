@@ -1,21 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-模拟现场对话头像：gpt-image-1 生成真实人物画像当头像。
-- 「你」：全局一张（output/lessons/avatars/you.png → OSS lessons/avatars/you.jpg）
-- 「对方」：每课一张，按角色画（银行柜员/店员/医生…），存课堂目录 avatar_other.png
+模拟现场对话头像：固定两张，性别与配音一致（用户定稿：不按课生成、不批量画像）。
+- 「你」  = 女（对话配音是 Bella 女声）→ lessons/avatars/you.jpg
+- 「对方」= 男（对话配音是 Chris 男声）→ lessons/avatars/other.jpg
 
-生成后直接上传 OSS（压成 512 JPEG）并把 URL 写进 lesson.json 的
-roleplay.you_avatar / roleplay.other_avatar，同时重传 lesson.json —— 一步到位。
+生成一次后，把这两个 URL 写进所有含 roleplay 的 lesson.json（覆盖旧的按课头像）
+并重传 lesson.json。幂等：头像文件已存在则只做回写。
 
-幂等：已有 URL 或本地文件的跳过。
-
-用法:
-  python3 generate_roleplay_avatars.py --country us
-  python3 generate_roleplay_avatars.py --lesson lesson_us_bank_account
-  python3 generate_roleplay_avatars.py            # 全部有 roleplay 的课
+用法: python3 generate_roleplay_avatars.py
 """
 
-import argparse
 import base64
 import glob
 import json
@@ -46,7 +40,11 @@ STYLE = (
     "ABSOLUTELY NO text, letters or logos."
 )
 
-YOU_PROMPT = STYLE + " Subject: a friendly young East Asian traveler in casual clothes."
+# 性别与配音固定对应：你 = Bella 女声 → 女头像；对方 = Chris 男声 → 男头像
+AVATARS = {
+    "you": STYLE + " Subject: a friendly young East Asian WOMAN traveler in casual clothes.",
+    "other": STYLE + " Subject: a friendly adult MAN in smart-casual work attire (universal service staff look).",
+}
 
 
 def generate_image(prompt, output_path):
@@ -86,77 +84,48 @@ def compress_avatar(local_path, size=512):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--lesson")
-    parser.add_argument("--country")
-    args = parser.parse_args()
-
     import oss2
     auth = oss2.Auth(OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET)
     bucket = oss2.Bucket(auth, OSS_ENDPOINT, OSS_BUCKET_NAME)
 
-    # 1) 全局「你」头像
     avatars_dir = os.path.join(LESSONS_DIR, "avatars")
     os.makedirs(avatars_dir, exist_ok=True)
-    you_local = os.path.join(avatars_dir, "you.png")
-    if not (os.path.exists(you_local) and os.path.getsize(you_local) > 10000):
-        print("🧑 generating YOU avatar")
-        if not generate_image(YOU_PROMPT, you_local):
-            print("❌ you avatar failed, abort")
-            return
-    you_key = "lessons/avatars/you.jpg"
-    bucket.put_object(you_key, compress_avatar(you_local))
-    you_url = "%s/%s" % (OSS_CDN_DOMAIN, you_key)
-    print("   ✅ %s" % you_url)
 
-    # 2) 每课「对方」头像
-    dirs = sorted(glob.glob(os.path.join(LESSONS_DIR, "*", "*")))
-    if args.lesson:
-        dirs = [d for d in dirs if os.path.basename(d) == args.lesson]
-    elif args.country:
-        dirs = [d for d in dirs if os.path.basename(os.path.dirname(d)) == args.country]
+    urls = {}
+    for who, prompt in AVATARS.items():
+        local = os.path.join(avatars_dir, "%s.png" % who)
+        if not (os.path.exists(local) and os.path.getsize(local) > 10000):
+            print("🧑 generating %s avatar" % who)
+            if not generate_image(prompt, local):
+                print("❌ %s avatar failed, abort" % who)
+                return
+        key = "lessons/avatars/%s.jpg" % who
+        bucket.put_object(key, compress_avatar(local))
+        urls[who] = "%s/%s" % (OSS_CDN_DOMAIN, key)
+        print("   ✅ %s" % urls[who])
 
-    done = failed = skipped = 0
-    for lesson_dir in dirs:
-        json_path = os.path.join(lesson_dir, "lesson.json")
-        if not os.path.exists(json_path):
-            continue
+    # 写进所有含 roleplay 的课并重传 lesson.json（覆盖旧的按课头像）
+    updated = 0
+    for json_path in sorted(glob.glob(os.path.join(LESSONS_DIR, "*", "*", "lesson.json"))):
         with open(json_path, "r", encoding="utf-8") as f:
             lesson = json.load(f)
         rp = lesson.get("roleplay")
         if not rp or not rp.get("dialogue"):
             continue
-        if (rp.get("other_avatar") or "").startswith("http") and rp.get("you_avatar") == you_url:
-            skipped += 1
+        if rp.get("you_avatar") == urls["you"] and rp.get("other_avatar") == urls["other"]:
             continue
-
-        other_local = os.path.join(lesson_dir, "avatar_other.png")
-        if not (os.path.exists(other_local) and os.path.getsize(other_local) > 10000):
-            print("🎭 %s — 对方: %s" % (lesson["id"], rp["other_role_zh"]))
-            prompt = STYLE + " Subject: a %s (职业/角色: %s), in the context of: %s." % (
-                rp["other_role_zh"], rp["other_role_zh"], lesson["title_en"]
-            )
-            if not generate_image(prompt, other_local):
-                failed += 1
-                continue
-
-        country = lesson.get("country", "us")
-        other_key = "lessons/%s/%s/avatar_other.jpg" % (country, lesson["id"])
-        bucket.put_object(other_key, compress_avatar(other_local))
-        rp["you_avatar"] = you_url
-        rp["other_avatar"] = "%s/%s" % (OSS_CDN_DOMAIN, other_key)
-
+        rp["you_avatar"] = urls["you"]
+        rp["other_avatar"] = urls["other"]
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(lesson, f, ensure_ascii=False, indent=2)
-        # 直接重传 lesson.json，App 拉到即生效
         bucket.put_object(
-            "lessons/%s/%s/lesson.json" % (country, lesson["id"]),
+            "lessons/%s/%s/lesson.json" % (lesson.get("country", "us"), lesson["id"]),
             json.dumps(lesson, ensure_ascii=False, indent=2).encode("utf-8"),
         )
-        done += 1
-        print("   ✅ avatar uploaded")
+        updated += 1
+        print("   📝 %s" % lesson["id"])
 
-    print("\n=== avatars: %d done, %d skipped, %d failed ===" % (done, skipped, failed))
+    print("\n=== fixed avatars written to %d lessons ===" % updated)
 
 
 if __name__ == "__main__":
