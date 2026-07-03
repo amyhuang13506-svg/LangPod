@@ -38,6 +38,11 @@ IMAGE_ENDPOINT = "https://api.v3.cm/v1/images/generations"
 IMAGE_MODEL = "gpt-image-1"
 VISION_MODEL = "gpt-4o"
 MAX_IMAGE_ATTEMPTS = 2  # 首次 + 重试 1 次（每次 ~¥0.5，控制成本）
+# 标签最小间距：GPT-4o vision 偶尔把相邻物体标到同一处，App 里两个词标签会叠。
+# 生成后做一遍松弛，把过近的点沿连线对称推开（点仍贴着物体，只是不再重叠）。
+MIN_LABEL_SEP = 0.14
+CLAMP_X = (0.04, 0.96)
+CLAMP_Y = (0.06, 0.94)
 
 STYLE_TEMPLATE = (
     "Flat vector illustration in a modern minimal style, soft warm color palette, "
@@ -162,6 +167,44 @@ def locate_words(image_path, words):
     return {}
 
 
+def spread_close_labels(words, min_sep=MIN_LABEL_SEP, iterations=60):
+    """把坐标过近的标签沿连线对称推开，避免 App 里两个词叠在一起。
+    words: 含 x/y 的 dict 列表（原地修改）。点仍会贴着原物体，只是彼此错开。"""
+    if len(words) < 2:
+        return 0
+    moved = False
+    for _ in range(iterations):
+        overlap = False
+        for i in range(len(words)):
+            for j in range(i + 1, len(words)):
+                a, b = words[i], words[j]
+                dx, dy = b["x"] - a["x"], b["y"] - a["y"]
+                dist = (dx * dx + dy * dy) ** 0.5
+                if dist >= min_sep:
+                    continue
+                overlap = True
+                push = (min_sep - dist) / 2 + 1e-4
+                if dist < 1e-6:  # 完全重合：给一个确定的错开方向
+                    dx, dy, dist = 0.6, 0.8, 1.0
+                ux, uy = dx / dist, dy / dist
+                a["x"] = min(max(a["x"] - ux * push, CLAMP_X[0]), CLAMP_X[1])
+                a["y"] = min(max(a["y"] - uy * push, CLAMP_Y[0]), CLAMP_Y[1])
+                b["x"] = min(max(b["x"] + ux * push, CLAMP_X[0]), CLAMP_X[1])
+                b["y"] = min(max(b["y"] + uy * push, CLAMP_Y[0]), CLAMP_Y[1])
+        if not overlap:
+            break
+        moved = True
+    if moved:
+        for w in words:
+            w["x"], w["y"] = round(w["x"], 4), round(w["y"], 4)
+    return sum(
+        1
+        for i in range(len(words))
+        for j in range(i + 1, len(words))
+        if ((words[i]["x"] - words[j]["x"]) ** 2 + (words[i]["y"] - words[j]["y"]) ** 2) ** 0.5 < min_sep
+    )
+
+
 def process_zone(lesson, zone, zone_dir_rel, lesson_dir_abs):
     """一个分区的 生图→标注→重试→降级 闭环。直接修改 zone dict。"""
     image_name = "%s.jpg" % zone["id"]
@@ -205,6 +248,9 @@ def process_zone(lesson, zone, zone_dir_rel, lesson_dir_abs):
             demoted.append(w)
     if demoted:
         print("      ↓ demoted to extra_words: %s" % ", ".join(w["word"] for w in demoted))
+    remaining = spread_close_labels(kept)
+    if remaining:
+        print("      ⚠️  %d label pair(s) still under %.2f after spreading" % (remaining, MIN_LABEL_SEP))
     zone["hotspots"] = kept
     zone["extra_words"] = demoted + zone["extra_words"]
     zone["image"] = "%s/%s" % (zone_dir_rel, image_name)
