@@ -18,7 +18,7 @@ struct ContentView: View {
                     }
                 PatternsTabView()
                     .tabItem {
-                        Label("句型", systemImage: "quote.bubble")
+                        Label("句型", systemImage: "bubble.middle.bottom")
                     }
                 ProfileView()
                     .tabItem {

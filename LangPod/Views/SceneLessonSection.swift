@@ -114,8 +114,6 @@ struct LessonCoverCard: View {
 
                     if locked {
                         badge(icon: "lock.fill", color: .black.opacity(0.55))
-                    } else if completed {
-                        badge(icon: "checkmark", color: Color.success)
                     }
                 }
 

@@ -106,15 +106,11 @@ struct PatternsTabView: View {
                         expressionStore.selectedGroupId = group.id
                         expressionStore.loadGroupDetails(group.id)
                     } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: group.icon)
-                                .font(.system(size: 11))
-                            Text(group.zh)
-                                .font(.system(size: 13, weight: selected ? .semibold : .medium))
-                        }
-                        .foregroundColor(selected ? .white : Color.textSecondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
+                        Text(group.zh)
+                            .font(.system(size: 13, weight: selected ? .semibold : .medium))
+                            .foregroundColor(selected ? .white : Color.textSecondary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
                         .background(
                             Capsule().fill(selected ? Color.appPrimary : Color.white)
                         )
@@ -458,6 +454,7 @@ struct ExpressionPageView: View {
     let categoryZh: String
 
     @Environment(SentenceStore.self) private var sentenceStore
+    @State private var toast: String?
 
     private var saved: Bool {
         sentenceStore.isSaved(expression.english)
@@ -521,6 +518,18 @@ struct ExpressionPageView: View {
             .padding(.horizontal, 20)
             .padding(.top, 10)
             .padding(.bottom, 50)
+        }
+        // 顶部小横条反馈（与首页视频字幕加词同款）
+        .overlay(alignment: .top) {
+            if let toast {
+                Text(toast)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                    .background(Color.appPrimary.opacity(0.92), in: Capsule())
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
     }
 
@@ -636,6 +645,13 @@ struct ExpressionPageView: View {
             ))
             if added {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    toast = "已加入句型库"
+                }
+                Task {
+                    try? await Task.sleep(nanoseconds: 1_500_000_000)
+                    withAnimation { toast = nil }
+                }
             }
         } label: {
             Image(systemName: saved ? "checkmark" : "plus")

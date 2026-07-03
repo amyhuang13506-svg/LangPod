@@ -32,14 +32,18 @@ struct LessonDetailView: View {
 
             bottomCTA
 
+        }
+        // 顶部小横条反馈（与首页视频字幕加词同款）
+        .overlay(alignment: .top) {
             if let toast {
                 Text(toast)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 20).padding(.vertical, 10)
-                    .background(Capsule().fill(Color.black.opacity(0.75)))
-                    .padding(.bottom, 110)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                    .background(Color.appPrimary.opacity(0.92), in: Capsule())
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .task { await loadLesson() }
@@ -164,26 +168,40 @@ struct LessonDetailView: View {
                 .padding(.bottom, 6)
             VStack(spacing: 0) {
                 ForEach(words) { word in
-                    Button { tapWord(word) } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "speaker.wave.2.fill")
-                                .font(.system(size: 12))
-                                .foregroundColor(Color.appPrimary)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(word.word)
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(Color.textPrimary)
-                                Text(word.translationZh)
+                    HStack(spacing: 10) {
+                        // 行主体：打开单词卡
+                        Button { tapWord(word) } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "speaker.wave.2.fill")
                                     .font(.system(size: 12))
-                                    .foregroundColor(Color.textSecondary)
+                                    .foregroundColor(Color.appPrimary)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(word.word)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(Color.textPrimary)
+                                    Text(word.translationZh)
+                                        .font(.system(size: 12))
+                                        .foregroundColor(Color.textSecondary)
+                                }
+                                Spacer()
                             }
-                            Spacer()
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+
+                        // 加号直接可点：立即加入单词本 + 顶部横条反馈
+                        Button {
+                            addSingleWord(word)
+                        } label: {
                             Image(systemName: isAdded(word) ? "checkmark.circle.fill" : "plus.circle")
                                 .font(.system(size: 20))
                                 .foregroundColor(isAdded(word) ? Color.success : Color.textQuaternary)
+                                .frame(width: 32, height: 32)
+                                .contentShape(Rectangle())
                         }
-                        .padding(.horizontal, 14).padding(.vertical, 10)
+                        .buttonStyle(.plain)
                     }
+                    .padding(.horizontal, 14).padding(.vertical, 10)
                     if word.id != words.last?.id {
                         Divider().padding(.leading, 36)
                     }
@@ -252,6 +270,7 @@ struct LessonDetailView: View {
                 ))
                 if added {
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    showToast("已加入句型库")
                 }
             } label: {
                 Image(systemName: saved ? "checkmark.circle.fill" : "plus.circle")
@@ -383,6 +402,14 @@ struct LessonDetailView: View {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 
+    /// 加号直接加词（不开单词卡），带顶部横条反馈
+    private func addSingleWord(_ word: SceneWord) {
+        guard !isAdded(word) else { return }
+        let added = vocabularyStore.addWord(word.asVocabularyItem, sourceLabel: "scene_lesson")
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        showToast(added ? "「\(word.word)」已加入单词本" : "「\(word.word)」已在单词本")
+    }
+
     private func showToast(_ text: String) {
         withAnimation { toast = text }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -415,10 +442,7 @@ struct ZoneSceneImage: View {
                                 HotspotChip(word: spot, added: isAdded(spot)) {
                                     onTapWord(spot)
                                 }
-                                .position(
-                                    x: (spot.x ?? 0.5) * geo.size.width,
-                                    y: (spot.y ?? 0.5) * geo.size.height
-                                )
+                                .position(clampedPosition(spot, in: geo.size))
                                 .opacity(revealed ? 1 : 0)
                                 .animation(
                                     .spring(duration: 0.35).delay(Double(index) * 0.08),
@@ -439,6 +463,20 @@ struct ZoneSceneImage: View {
         .task(id: zone.image) {
             uiImage = await ImageCache.shared.image(for: zone.image)
         }
+    }
+
+    /// 长单词标签（ticket number machine 等）按实测文字宽度钳制在图内，不再溢出屏幕
+    private func clampedPosition(_ spot: SceneWord, in size: CGSize) -> CGPoint {
+        let textWidth = (spot.word as NSString).size(
+            withAttributes: [.font: UIFont.systemFont(ofSize: 12, weight: .semibold)]
+        ).width
+        let halfChip = (textWidth + 16) / 2 + 4  // 文字 + 内边距 + 安全边距
+        let rawX = (spot.x ?? 0.5) * size.width
+        let rawY = (spot.y ?? 0.5) * size.height
+        return CGPoint(
+            x: min(max(rawX, halfChip), size.width - halfChip),
+            y: min(max(rawY, 18), size.height - 14)
+        )
     }
 }
 
