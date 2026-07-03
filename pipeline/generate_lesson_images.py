@@ -52,16 +52,17 @@ STYLE_TEMPLATE = (
 
 # 每个国家一套色调，避免所有图看起来一模一样。
 # 方向：清新明快、干净通透的柔和色（不是降饱和的灰调莫兰迪），底色明亮。
-# 定稿：au = 明媚草木绿。us 沿用暖奶油（已上线）。uk/ca/nz/sg 为暂定占位，跑该国前需用户确认。
+# 定稿：au=明媚草木绿, ca=珊瑚粉, nz=薰衣草紫, sg=金橙。us 沿用暖奶油（已上线）。
+# uk 暂用天蓝占位（旧图是暖奶油，跑 uk 重跑图前需用户确认）。
 _BRIGHT = "clean and cheerful, fresh and airy tones, bright but soft — NOT greyed, NOT muddy, NOT desaturated"
 DEFAULT_PALETTE = "warm cream and soft honey color palette, " + _BRIGHT + ", light cream background"
 COUNTRY_PALETTES = {
     "us": "warm cream and soft honey color palette, " + _BRIGHT + ", light cream background",
-    "uk": "fresh sky-blue and clear teal color palette, " + _BRIGHT + ", light cool background",
+    "uk": "fresh sky-blue and cornflower color palette, " + _BRIGHT + ", light airy background",
     "au": "fresh sage-green and mint color palette, " + _BRIGHT + ", light cream background",
-    "ca": "fresh blush-pink and warm coral color palette, " + _BRIGHT + ", light cream background",
-    "nz": "fresh aqua-teal and seafoam color palette, " + _BRIGHT + ", light airy background",
-    "sg": "warm coral and golden-sand color palette, " + _BRIGHT + ", light ivory background",
+    "ca": "fresh blush-pink and rose color palette, " + _BRIGHT + ", light cream background",
+    "nz": "fresh lavender and soft periwinkle color palette, " + _BRIGHT + ", light airy background",
+    "sg": "warm golden-amber and coral color palette, " + _BRIGHT + ", light ivory background",
 }
 
 HARD_RULES = (
