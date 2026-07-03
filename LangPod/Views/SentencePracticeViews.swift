@@ -695,7 +695,7 @@ struct SceneQuizView: View {
         } else {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { advance() }
+        // 不再自动跳题，等用户点底部「下一题」
     }
 
     private func advance() {
@@ -753,6 +753,21 @@ struct SceneQuizView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 30)
+            }
+
+            // 底部「下一题」CTA：选完手动进入
+            if revealed {
+                Button { advance() } label: {
+                    Text(currentIndex + 1 < questions.count ? "下一题" : "完成")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 16)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
     }
