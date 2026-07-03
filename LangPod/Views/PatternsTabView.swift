@@ -1,15 +1,21 @@
 import SwiftUI
 
-/// 句型 tab 主页（替代原「记录」页）：每日句型讲解以文本形式集中展现。
-/// 结构仿词汇 tab：居中标题 + 右上「我的」（我的句子收藏）。
+/// 句型 tab = 口语表达库：4 个大组 chips（日常反应/表达自己/会话技能/进阶地道），
+/// 组内功能分类网格，点分类看表达列表（口语化 + 语感注释 + 国家差异 + 发音 + 收藏）。
+/// 不分难度，按实用频率排序。右上「我的」= 我的句子收藏。
 struct PatternsTabView: View {
-    @Environment(DataStore.self) private var dataStore
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(SentenceStore.self) private var sentenceStore
 
-    @State private var selected: PatternDetailTarget?
+    @State private var expressionStore = ExpressionStore()
+    @State private var selectedCategory: ExpressionCategoryIndexItem?
     @State private var showMySentences = false
     @State private var showPaywall = false
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+    ]
 
     var body: some View {
         ZStack {
@@ -17,24 +23,38 @@ struct PatternsTabView: View {
 
             VStack(spacing: 0) {
                 header
+                    .padding(.bottom, 10)
+
+                groupChips
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 10)
 
                 ScrollView(showsIndicators: false) {
-                    LazyVStack(alignment: .leading, spacing: 24) {
-                        ForEach(groupedByDate, id: \.date) { group in
-                            section(for: group)
-                        }
-                        if groupedByDate.isEmpty {
+                    VStack(alignment: .leading, spacing: 14) {
+                        if let group = expressionStore.selectedGroup {
+                            Text(group.desc)
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color.textTertiary)
+
+                            LazyVGrid(columns: columns, spacing: 12) {
+                                ForEach(group.categories) { category in
+                                    categoryCard(category, groupIcon: group.icon)
+                                }
+                            }
+                        } else {
                             emptyState
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 12)
+                    .padding(.top, 6)
                     .padding(.bottom, 60)
                 }
             }
         }
-        .sheet(item: $selected) { target in
-            PatternTextDetailView(pattern: target.pattern, parentEpisode: target.parent)
+        .onAppear { expressionStore.loadIfNeeded() }
+        .sheet(item: $selectedCategory) { category in
+            ExpressionListSheet(item: category)
+                .environment(expressionStore)
                 .environment(sentenceStore)
         }
         .fullScreenCover(isPresented: $showMySentences) {
@@ -72,104 +92,79 @@ struct PatternsTabView: View {
         .padding(.leading, 20)
         .padding(.trailing, 24)
         .padding(.top, 16)
-        .padding(.bottom, 4)
     }
 
-    // MARK: - Grouping（复用往期回顾的分组逻辑）
+    // MARK: - 大组 chips（4 个）
 
-    private struct PatternGroup {
-        let date: String
-        let dateDisplay: String
-        let items: [(pattern: Pattern, parent: Episode)]
-    }
-
-    private var groupedByDate: [PatternGroup] {
-        var byDate: [String: [(Pattern, Episode)]] = [:]
-        for ep in dataStore.episodes {
-            guard let patterns = ep.patterns, !patterns.isEmpty else { continue }
-            byDate[ep.date, default: []].append(contentsOf: patterns.map { ($0, ep) })
-        }
-        let sorted = byDate.keys.sorted(by: >)
-        let formatter = DateFormatter()
-        formatter.dateFormat = "M月d日"
-        return sorted.map { date in
-            let display = DateFormatter.episodeDate.date(from: date).map { formatter.string(from: $0) } ?? date
-            return PatternGroup(date: date, dateDisplay: display, items: byDate[date] ?? [])
-        }
-    }
-
-    // MARK: - Section & Card
-
-    @ViewBuilder
-    private func section(for group: PatternGroup) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
-                Text(group.dateDisplay)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Color.textPrimary)
-                if PatternAccessGate.isToday(group.date) {
-                    Text("今日")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 4))
+    private var groupChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(expressionStore.groups) { group in
+                    let selected = group.id == expressionStore.selectedGroupId
+                    Button {
+                        guard !selected else { return }
+                        expressionStore.selectedGroupId = group.id
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: group.icon)
+                                .font(.system(size: 11))
+                            Text(group.zh)
+                                .font(.system(size: 13, weight: selected ? .semibold : .medium))
+                        }
+                        .foregroundColor(selected ? .white : Color.textSecondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(
+                            Capsule().fill(selected ? Color.appPrimary : Color.white)
+                        )
+                        .overlay(
+                            Capsule().stroke(selected ? Color.clear : Color.border, lineWidth: 1)
+                        )
+                    }
                 }
-                Spacer()
-            }
-
-            ForEach(group.items, id: \.pattern.id) { item in
-                patternCard(pattern: item.pattern, parent: item.parent, locked: isLocked(item.pattern, item.parent))
             }
         }
     }
 
-    private func patternCard(pattern: Pattern, parent: Episode, locked: Bool) -> some View {
-        Button {
+    // MARK: - 分类卡
+
+    private func categoryCard(_ category: ExpressionCategoryIndexItem, groupIcon: String) -> some View {
+        let locked = isLocked(category)
+        return Button {
             if locked {
                 Analytics.track(.patternPaywallView, params: [
-                    "pattern_id": pattern.id, "source": "patterns_tab",
+                    "category": category.id, "source": "patterns_tab",
                 ])
                 showPaywall = true
             } else {
                 Analytics.track(.patternOpen, params: [
-                    "pattern_id": pattern.id, "episode_id": parent.id, "source": "patterns_tab",
+                    "category": category.id, "source": "patterns_tab",
                 ])
-                selected = PatternDetailTarget(pattern: pattern, parent: parent)
+                selectedCategory = category
             }
         } label: {
             VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top) {
-                    Text(pattern.template)
-                        .font(.system(size: 19, weight: .semibold, design: .serif))
-                        .foregroundStyle(Color.textPrimary)
-                        .multilineTextAlignment(.leading)
+                HStack {
+                    Image(systemName: groupIcon)
+                        .font(.system(size: 16))
+                        .foregroundStyle(Color.appPrimary)
                     Spacer()
                     if locked {
                         Image(systemName: "lock.fill")
-                            .font(.system(size: 13))
+                            .font(.system(size: 12))
                             .foregroundStyle(Color.warning)
-                    } else {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color.textQuaternary)
                     }
                 }
-                Text(pattern.translationZh)
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color.textSecondary)
-                HStack(spacing: 6) {
-                    Text(pattern.scene)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(Color.gold)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Capsule().fill(Color.warningLight))
-                        .lineLimit(1)
-                    Spacer()
-                }
+                Text(category.zh)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text("\(category.count) 条表达\(category.isFree ? " · 免费" : "")")
+                    .font(.system(size: 11))
+                    .foregroundStyle(category.isFree ? Color.success : Color.textTertiary)
             }
-            .padding(16)
+            .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.white, in: RoundedRectangle(cornerRadius: 14))
             .overlay(
@@ -180,258 +175,220 @@ struct PatternsTabView: View {
         .buttonStyle(.plain)
     }
 
-    private func isLocked(_ pattern: Pattern, _ parent: Episode) -> Bool {
-        !PatternAccessGate.canAccess(
-            pattern: pattern,
-            parentEpisode: parent,
-            isPro: subscriptionManager.isProUser,
-            playedTodayIds: dataStore.dailyPatternIDsPlayedToday
-        )
+    private func isLocked(_ category: ExpressionCategoryIndexItem) -> Bool {
+        !category.isFree && !subscriptionManager.isProUser
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "quote.bubble")
-                .font(.system(size: 36))
-                .foregroundStyle(Color.textTertiary)
-            Text("暂无句型")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Color.textSecondary)
-            Text("随着每日播客更新，句型讲解会陆续积累")
-                .font(.system(size: 12))
-                .foregroundStyle(Color.textTertiary)
+        VStack(spacing: 10) {
+            if expressionStore.isLoading {
+                ProgressView().tint(Color.appPrimary)
+            } else {
+                Image(systemName: "quote.bubble")
+                    .font(.system(size: 30))
+                    .foregroundColor(Color.textQuaternary)
+                Text("表达库即将上线")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color.textTertiary)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 80)
     }
 }
 
-/// sheet(item:) 需要 Identifiable 的组合目标
-struct PatternDetailTarget: Identifiable {
-    let pattern: Pattern
-    let parent: Episode
-    var id: String { pattern.id }
-}
+// MARK: - 表达列表 sheet
 
-// MARK: - 句型文本详情
+struct ExpressionListSheet: View {
+    let item: ExpressionCategoryIndexItem
 
-/// 句型讲解的纯文本呈现（音频为辅）：讲解正文分段 + 3 个例句
-/// （例句 🔊 = 讲解音频按时间戳截段播放，＋ = 加入我的句子）。
-struct PatternTextDetailView: View {
-    let pattern: Pattern
-    let parentEpisode: Episode
-
-    @Environment(\.dismiss) private var dismiss
+    @Environment(ExpressionStore.self) private var expressionStore
     @Environment(SentenceStore.self) private var sentenceStore
 
-    /// 例句（en + zh 前缀 + 截段时间戳），新数据从讲解稿取，老数据回落 example_sentences
-    private struct ExampleItem: Identifiable {
-        let english: String
-        let chinese: String
-        let start: Double?
-        let end: Double?
-        var id: String { english }
-    }
+    @State private var category: ExpressionCategory?
+    @State private var loadFailed = false
 
     var body: some View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
 
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 18) {
-                    headerBlock
-                    explainerBlock
-                    examplesBlock
+            if let category {
+                content(category)
+            } else if loadFailed {
+                VStack(spacing: 10) {
+                    Text("加载失败").font(.system(size: 15)).foregroundStyle(Color.textSecondary)
+                    Button("重试") { Task { await load() } }
+                        .foregroundStyle(Color.appPrimary)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 40)
+            } else {
+                ProgressView().tint(Color.appPrimary)
             }
         }
         .presentationDragIndicator(.visible)
+        .task { await load() }
     }
 
-    private var headerBlock: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(pattern.template)
-                .font(.system(size: 26, weight: .bold, design: .serif))
-                .foregroundStyle(Color.textPrimary)
-            Text(pattern.translationZh)
-                .font(.system(size: 15))
-                .foregroundStyle(Color.textSecondary)
-            HStack(spacing: 8) {
-                Text(pattern.scene)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Color.gold)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Capsule().fill(Color.warningLight))
-                Button {
-                    LessonAudioPlayer.shared.play(pattern.audioUrl) {}
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "play.fill").font(.system(size: 10))
-                        Text("播放讲解").font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundStyle(Color.appPrimary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(Color.primaryLight))
-                }
-                Spacer()
-            }
+    private func load() async {
+        loadFailed = false
+        if let loaded = await expressionStore.categoryDetail(id: item.id) {
+            category = loaded
+            LessonAudioPlayer.shared.prefetch(
+                loaded.expressions.flatMap { [$0.audio] + $0.examples.map(\.audio) }.compactMap { $0 }
+            )
+        } else {
+            loadFailed = true
         }
     }
 
-    // MARK: - 讲解正文（按 section 分段渲染）
+    private func content(_ category: ExpressionCategory) -> some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(category.zh)
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Text("\(category.groupZh) · 按使用频率排序")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textTertiary)
+                }
 
-    private var explainerBlock: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ForEach(explainerSections, id: \.section) { block in
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(block.section.label)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Color.appPrimary)
-                    ForEach(Array(block.paragraphs.enumerated()), id: \.offset) { _, para in
-                        VStack(alignment: .leading, spacing: 3) {
-                            if !para.zh.isEmpty {
-                                Text(para.zh)
-                                    .font(.system(size: 14))
-                                    .foregroundStyle(Color.bodyText)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            if !para.en.isEmpty {
-                                Text(para.en)
-                                    .font(.system(size: 15, weight: .medium))
-                                    .foregroundStyle(Color.textPrimary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
+                ForEach(category.expressions) { expression in
+                    ExpressionRow(expression: expression, categoryZh: category.zh)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
+            .padding(.bottom, 40)
+        }
+    }
+}
+
+/// 一条表达的完整卡片：表达 + 意思 + 语感注释 + 国家差异 + 例句 + 发音/收藏
+struct ExpressionRow: View {
+    let expression: Expression
+    let categoryZh: String
+
+    @Environment(SentenceStore.self) private var sentenceStore
+
+    private var saved: Bool {
+        sentenceStore.isSaved(expression.english)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // 表达本体
+            HStack(alignment: .top, spacing: 10) {
+                Button {
+                    LessonAudioPlayer.shared.play(expression.audio) {
+                        WordSpeaker.shared.speakSentence(expression.english.replacingOccurrences(of: "___", with: "something"))
+                    }
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 8) {
+                            Text(expression.english)
+                                .font(.system(size: 18, weight: .semibold, design: .serif))
+                                .foregroundStyle(Color.textPrimary)
+                                .multilineTextAlignment(.leading)
+                            Spacer()
+                            Image(systemName: "speaker.wave.2.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color.appPrimary)
+                                .padding(.top, 5)
                         }
+                        Text(expression.meaningZh)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.textPrimary)
                     }
                 }
+                .buttonStyle(.plain)
+
+                Button {
+                    guard !saved else { return }
+                    let added = sentenceStore.add(SavedSentence(
+                        english: expression.english,
+                        chinese: expression.meaningZh,
+                        scene: categoryZh,
+                        source: "pattern",
+                        sourceLabel: categoryZh,
+                        audioUrl: expression.audio,
+                        audioStart: nil,
+                        audioEnd: nil,
+                        savedDate: Date()
+                    ))
+                    if added {
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    }
+                } label: {
+                    Image(systemName: saved ? "checkmark.circle.fill" : "plus.circle")
+                        .font(.system(size: 22))
+                        .foregroundStyle(saved ? Color.success : Color.textQuaternary)
+                }
+            }
+
+            // 语感注释
+            Text(expression.usageZh)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.bodyText)
+                .fixedSize(horizontal: false, vertical: true)
+
+            // 国家差异
+            if expression.hasCountryNote, let note = expression.countryNoteZh {
+                HStack(alignment: .top, spacing: 5) {
+                    Text("🌍")
+                        .font(.system(size: 11))
+                    Text(note)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.gold)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.warningLight, in: RoundedRectangle(cornerRadius: 8))
+            }
+
+            // 例句
+            VStack(spacing: 6) {
+                ForEach(expression.examples) { example in
+                    Button {
+                        LessonAudioPlayer.shared.play(example.audio) {
+                            WordSpeaker.shared.speakSentence(example.en)
+                        }
+                    } label: {
+                        HStack(alignment: .top, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(example.en)
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(Color.textPrimary)
+                                    .multilineTextAlignment(.leading)
+                                Text(example.zh)
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color.textSecondary)
+                                    .multilineTextAlignment(.leading)
+                            }
+                            Spacer()
+                            Image(systemName: "speaker.wave.2.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(Color.appPrimary.opacity(0.7))
+                                .padding(.top, 3)
+                        }
+                        .padding(10)
+                        .background(Color.appBackground, in: RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if saved {
+                Text("✓ 已加入我的句子")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(Color.success)
             }
         }
         .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(.white, in: RoundedRectangle(cornerRadius: 14))
-    }
-
-    private struct SectionBlock {
-        let section: PatternSection
-        let paragraphs: [(zh: String, en: String)]
-    }
-
-    /// 正文只展示讲解性段落（读音/跟读/意思/场景），例句段落单独在下方成块。
-    /// 跟读段的 3 次重复在文本形态下去重只留一次。
-    private var explainerSections: [SectionBlock] {
-        let textSections: [PatternSection] = [.pronunciation, .pronunciationDrill, .meaning, .sceneAndFeeling]
-        return textSections.compactMap { section in
-            let lines = pattern.explainerScript.filter { $0.section == section }
-            guard !lines.isEmpty else { return nil }
-            var paragraphs: [(zh: String, en: String)] = []
-            var seenEn = Set<String>()
-            for line in lines {
-                let en = line.textEn.trimmingCharacters(in: .whitespaces)
-                if !en.isEmpty {
-                    if seenEn.contains(en) { continue }  // 跟读重复 3 次 → 文本只留 1 次
-                    seenEn.insert(en)
-                }
-                paragraphs.append((zh: line.textZh, en: en))
-            }
-            return SectionBlock(section: section, paragraphs: paragraphs)
-        }
-    }
-
-    // MARK: - 例句
-
-    private var examplesBlock: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("💬 例句")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Color.textPrimary)
-            ForEach(examples) { example in
-                exampleRow(example)
-            }
-        }
-    }
-
-    private func exampleRow(_ example: ExampleItem) -> some View {
-        let saved = sentenceStore.isSaved(example.english)
-        return HStack(alignment: .top, spacing: 10) {
-            Button {
-                LessonAudioPlayer.shared.play(pattern.audioUrl, from: example.start, to: example.end) {
-                    WordSpeaker.shared.speakSentence(example.english)
-                }
-            } label: {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .top, spacing: 8) {
-                        Text(example.english)
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(Color.textPrimary)
-                            .multilineTextAlignment(.leading)
-                        Spacer()
-                        Image(systemName: "speaker.wave.2.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(Color.appPrimary)
-                            .padding(.top, 3)
-                    }
-                    if !example.chinese.isEmpty {
-                        Text(example.chinese)
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color.textSecondary)
-                            .multilineTextAlignment(.leading)
-                    }
-                }
-            }
-            .buttonStyle(.plain)
-
-            Button {
-                guard !saved else { return }
-                let added = sentenceStore.add(SavedSentence(
-                    english: example.english,
-                    chinese: example.chinese,
-                    scene: pattern.scene,
-                    source: "pattern",
-                    sourceLabel: pattern.template,
-                    audioUrl: pattern.audioUrl,
-                    audioStart: example.start,
-                    audioEnd: example.end,
-                    savedDate: Date()
-                ))
-                if added {
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
-                }
-            } label: {
-                Image(systemName: saved ? "checkmark.circle.fill" : "plus.circle")
-                    .font(.system(size: 22))
-                    .foregroundStyle(saved ? Color.success : Color.textQuaternary)
-            }
-        }
-        .padding(14)
-        .background(.white, in: RoundedRectangle(cornerRadius: 14))
-    }
-
-    /// 新数据：讲解稿 example1/2/3 段（text_en + 同段 text_zh 前缀 + 时间戳截段）
-    /// 老数据：example_sentences 数组（无时间戳 → 播放走 TTS 兜底）
-    private var examples: [ExampleItem] {
-        let exampleSections: [PatternSection] = [.example1, .example2, .example3]
-        var items: [ExampleItem] = []
-        for section in exampleSections {
-            let lines = pattern.explainerScript.filter { $0.section == section }
-            guard let enLine = lines.first(where: { !$0.textEn.trimmingCharacters(in: .whitespaces).isEmpty }) else { continue }
-            let zh = lines.filter { !$0.textZh.isEmpty }.map(\.textZh).joined()
-            items.append(ExampleItem(
-                english: enLine.textEn.trimmingCharacters(in: .whitespaces),
-                chinese: zh,
-                start: enLine.start,
-                end: enLine.end
-            ))
-        }
-        if items.isEmpty {
-            items = pattern.exampleSentences.map {
-                ExampleItem(english: $0.english, chinese: $0.chinese, start: nil, end: nil)
-            }
-        }
-        return items
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.border, lineWidth: 1)
+        )
     }
 }

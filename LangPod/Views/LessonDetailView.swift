@@ -43,8 +43,13 @@ struct LessonDetailView: View {
         }
         .task { await loadLesson() }
         .sheet(item: $selectedWord) { word in
-            LessonWordCard(word: word, accent: country.accent)
-                .environment(vocabularyStore)
+            LessonWordCard(
+                word: word,
+                accent: country.accent,
+                lessonTitle: lesson?.titleZh ?? item.titleZh
+            )
+            .environment(vocabularyStore)
+            .environment(sentenceStore)
         }
     }
 
@@ -450,13 +455,19 @@ struct HotspotChip: View {
 struct LessonWordCard: View {
     let word: SceneWord
     let accent: String
+    let lessonTitle: String
 
     @Environment(VocabularyStore.self) private var vocabularyStore
+    @Environment(SentenceStore.self) private var sentenceStore
     @State private var justAdded = false
     @State private var contentHeight: CGFloat = 340
 
     private var isAdded: Bool {
         justAdded || vocabularyStore.words.contains { $0.word.lowercased() == word.word.lowercased() }
+    }
+
+    private var exampleSaved: Bool {
+        sentenceStore.isSaved(word.example)
     }
 
     var body: some View {
@@ -497,33 +508,67 @@ struct LessonWordCard: View {
                 }
             }
 
-            Button {
-                LessonAudioPlayer.shared.play(word.exampleAudio) {
-                    WordSpeaker.shared.speakSentence(word.example, accent: accent)
-                }
-            } label: {
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack(alignment: .top) {
-                        Text(word.example)
-                            .font(.system(size: 15))
-                            .foregroundColor(Color.bodyText)
-                            .multilineTextAlignment(.leading)
-                        Spacer()
-                        Image(systemName: "speaker.wave.2.fill")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color.appPrimary)
+            // 例句：点击发音，右侧 ＋ 收进我的句子
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 10) {
+                    Button {
+                        LessonAudioPlayer.shared.play(word.exampleAudio) {
+                            WordSpeaker.shared.speakSentence(word.example, accent: accent)
+                        }
+                    } label: {
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack(alignment: .top) {
+                                Text(word.example)
+                                    .font(.system(size: 15))
+                                    .foregroundColor(Color.bodyText)
+                                    .multilineTextAlignment(.leading)
+                                Spacer()
+                                Image(systemName: "speaker.wave.2.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(Color.appPrimary)
+                            }
+                            if let zh = word.exampleZh {
+                                Text(zh)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Color.textSecondary)
+                                    .multilineTextAlignment(.leading)
+                            }
+                        }
                     }
-                    if let zh = word.exampleZh {
-                        Text(zh)
-                            .font(.system(size: 13))
-                            .foregroundColor(Color.textSecondary)
-                            .multilineTextAlignment(.leading)
+                    .buttonStyle(.plain)
+
+                    Button {
+                        guard !exampleSaved else { return }
+                        let added = sentenceStore.add(SavedSentence(
+                            english: word.example,
+                            chinese: word.exampleZh ?? "",
+                            scene: lessonTitle,
+                            source: "lesson",
+                            sourceLabel: lessonTitle,
+                            audioUrl: word.exampleAudio,
+                            audioStart: nil,
+                            audioEnd: nil,
+                            savedDate: Date()
+                        ))
+                        if added {
+                            UINotificationFeedbackGenerator().notificationOccurred(.success)
+                        }
+                    } label: {
+                        Image(systemName: exampleSaved ? "checkmark.circle.fill" : "plus.circle")
+                            .font(.system(size: 22))
+                            .foregroundColor(exampleSaved ? Color.success : Color.textQuaternary)
                     }
                 }
-                .padding(14)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 14).fill(Color.appBackground))
+                if exampleSaved {
+                    Text("✓ 已加入我的句子")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(Color.success)
+                        .transition(.opacity)
+                }
             }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 14).fill(Color.appBackground))
 
             Button {
                 guard !isAdded else { return }
@@ -533,7 +578,7 @@ struct LessonWordCard: View {
                     Analytics.track(.lessonWordAdd, params: ["word": word.word])
                 }
             } label: {
-                Text(isAdded ? "已在单词本 ✓" : "加入单词本")
+                Text(isAdded ? "已加入我的单词 ✓" : "加入单词本")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(isAdded ? Color.textSecondary : .white)
                     .frame(maxWidth: .infinity)

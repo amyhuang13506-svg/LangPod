@@ -340,6 +340,72 @@ actor APIService {
         return lesson
     }
 
+    // MARK: - 口语表达库 (Expressions)
+
+    func fetchExpressionIndex() async -> [ExpressionGroup] {
+        guard let url = URL(string: "\(baseURL)/expressions/index.json") else { return [] }
+        do {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                return loadCachedExpressionIndexSync() ?? []
+            }
+            let rewritten = rewriteURLs(data)
+            let index = try JSONDecoder().decode(ExpressionIndex.self, from: rewritten)
+            if !index.groups.isEmpty {
+                let file = cacheDirectory.appendingPathComponent("expressions_index.json")
+                try? rewritten.write(to: file)
+            }
+            return index.groups
+        } catch {
+            debugLog("⚠️ expression index error: \(error.localizedDescription)")
+            return loadCachedExpressionIndexSync() ?? []
+        }
+    }
+
+    nonisolated func loadCachedExpressionIndexSync() -> [ExpressionGroup]? {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CastlingoEpisodes", isDirectory: true)
+        let file = dir.appendingPathComponent("expressions_index.json")
+        guard let data = try? Data(contentsOf: file),
+              let index = try? JSONDecoder().decode(ExpressionIndex.self, from: data),
+              !index.groups.isEmpty else { return nil }
+        return index.groups
+    }
+
+    /// 分类详情。网络优先，失败回缓存（看过的分类离线可用）。
+    func fetchExpressionCategory(id: String) async -> ExpressionCategory? {
+        guard let url = URL(string: "\(baseURL)/expressions/\(id).json") else {
+            return loadCachedExpressionCategorySync(id: id)
+        }
+        do {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                return loadCachedExpressionCategorySync(id: id)
+            }
+            let rewritten = rewriteURLs(data)
+            let category = try JSONDecoder().decode(ExpressionCategory.self, from: rewritten)
+            let file = cacheDirectory.appendingPathComponent("expressions_\(id).json")
+            try? rewritten.write(to: file)
+            return category
+        } catch {
+            debugLog("⚠️ expression category \(id) error: \(error.localizedDescription)")
+            return loadCachedExpressionCategorySync(id: id)
+        }
+    }
+
+    nonisolated func loadCachedExpressionCategorySync(id: String) -> ExpressionCategory? {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CastlingoEpisodes", isDirectory: true)
+        let file = dir.appendingPathComponent("expressions_\(id).json")
+        guard let data = try? Data(contentsOf: file),
+              let category = try? JSONDecoder().decode(ExpressionCategory.self, from: data) else { return nil }
+        return category
+    }
+
     // MARK: - Caching
 
     private var cacheDirectory: URL {

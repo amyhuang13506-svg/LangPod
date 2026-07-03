@@ -19,6 +19,7 @@ struct LangPodApp: App {
     @State private var audioPlayer = AudioPlayer()
     @State private var vocabularyStore = VocabularyStore()
     @State private var sentenceStore = SentenceStore()
+    @State private var lessonStore = LessonStore()
     @State private var appState = AppState()
     @State private var notificationManager = NotificationManager()
     @State private var subscriptionManager = SubscriptionManager()
@@ -56,6 +57,7 @@ struct LangPodApp: App {
                     .environment(audioPlayer)
                     .environment(vocabularyStore)
                     .environment(sentenceStore)
+                    .environment(lessonStore)
                     .environment(appState)
                     .environment(subscriptionManager)
 

@@ -15,8 +15,8 @@ struct VocabularyView: View {
     @Environment(AudioPlayer.self) private var audioPlayer
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(SentenceStore.self) private var sentenceStore
+    @Environment(LessonStore.self) private var lessonStore
 
-    @State private var lessonStore = LessonStore()
     @State private var selectedLesson: SceneLessonIndexItem?
     @State private var showPaywall = false
     @State private var showMyVocabulary = false
