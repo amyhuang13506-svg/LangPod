@@ -21,12 +21,15 @@ final class LessonAudioPlayer: NSObject, AVAudioPlayerDelegate {
     func play(_ urlString: String?, fallback: @escaping () -> Void) {
         playTask?.cancel()
         guard let urlString, !urlString.isEmpty else {
+            debugLog("empty url → fallback")
             fallback()
             return
         }
+        debugLog("play: \(urlString.suffix(50))")
         playTask = Task { [weak self] in
             guard let self else { return }
             guard let file = await self.localFile(for: urlString), !Task.isCancelled else {
+                self.debugLog("no local file → fallback")
                 if !Task.isCancelled { await MainActor.run { fallback() } }
                 return
             }
@@ -37,13 +40,22 @@ final class LessonAudioPlayer: NSObject, AVAudioPlayerDelegate {
                     self.player?.stop()
                     let player = try AVAudioPlayer(contentsOf: file)
                     player.delegate = self
-                    player.play()
+                    let ok = player.play()
                     self.player = player
+                    self.debugLog("player.play() = \(ok), duration \(player.duration)")
+                    if !ok { fallback() }
                 } catch {
+                    self.debugLog("play error: \(error) → fallback")
                     fallback()
                 }
             }
         }
+    }
+
+    private func debugLog(_ message: String) {
+        #if DEBUG
+        print("[LessonAudio] \(message)")
+        #endif
     }
 
     /// 进课堂时预取全部发音（静默、逐个、失败忽略），保证点击零延迟。
