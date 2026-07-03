@@ -478,9 +478,9 @@ COUNTRY_EXTRAS = {
             "title": _t("英式聊天气", "Talking About the Weather"),
             "zones": [
                 {"id": "the_smalltalk", **_t("天气开场白", "Weather Openers"),
-                 "hint": "umbrella, drizzle, grey sky, 'lovely day isn't it', bus stop chat"},
+                 "hint": "umbrella, wellington boots, grey clouds, drizzle, raincoat, bus stop, puddle"},
                 {"id": "complaining_politely", **_t("礼貌吐槽", "Polite Complaints"),
-                 "hint": "'can't complain', 'typical', heatwave at 25 degrees, forecasts"},
+                 "hint": "weather app, thermometer, TV weather forecast, electric fan, sunglasses, cup of tea"},
             ],
             "anchor": "weather as the universal British icebreaker",
         },
