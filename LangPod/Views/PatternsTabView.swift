@@ -80,7 +80,7 @@ struct PatternsTabView: View {
                 Spacer()
                 Button { showMySentences = true } label: {
                     VStack(spacing: 2) {
-                        Image(systemName: "heart.fill")
+                        Image(systemName: "book.fill")
                             .font(.system(size: 16))
                         Text("我的")
                             .font(.system(size: 10, weight: .medium))
