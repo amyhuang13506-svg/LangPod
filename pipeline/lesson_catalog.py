@@ -375,7 +375,7 @@ SCENE_TEMPLATES = [
             {"id": "front_desk", **_t("前台办卡", "The Front Desk"),
              "hint": "membership desk, free trial, monthly fee, cancellation policy, towel service"},
             {"id": "equipment", **_t("器械区", "The Equipment"),
-             "hint": "treadmill, dumbbells, squat rack, 'how many sets left', wiping down machines"},
+             "hint": "treadmill, dumbbells, squat rack, 'how many sets left', wipe down the machine"},
             {"id": "locker_room", **_t("更衣室", "The Locker Room"),
              "hint": "locker with padlock, shower, sauna, hair dryer, lost key"},
         ],
