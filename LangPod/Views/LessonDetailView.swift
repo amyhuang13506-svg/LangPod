@@ -296,7 +296,7 @@ struct LessonDetailView: View {
             .frame(height: 24)
             HStack(spacing: 10) {
                 Button(action: addAllWords) {
-                    Text(allWordsAdded ? "已全部加入 ✓" : "全部加入单词本 (\(lesson?.allWords.count ?? item.wordCount))")
+                    Text(allWordsAdded ? "已全部加入 ✓" : "全部加入单词本")
                         .font(.system(size: hasRoleplay ? 14 : 16, weight: .semibold))
                         .foregroundColor(allWordsAdded ? Color.textSecondary : .white)
                         .lineLimit(1)
@@ -314,18 +314,14 @@ struct LessonDetailView: View {
                     Button {
                         showRolePlay = true
                     } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: "person.line.dotted.person.fill")
-                                .font(.system(size: 13))
-                            Text("模拟现场对话")
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(RoundedRectangle(cornerRadius: 25).fill(Color.hardOrange))
+                        Text("模拟现场对话")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(RoundedRectangle(cornerRadius: 25).fill(Color.hardOrange))
                     }
                 }
             }
@@ -766,29 +762,31 @@ struct LessonRolePlayView: View {
 
     @ViewBuilder
     private func bubble(_ line: RoleplayLine) -> some View {
-        HStack {
-            if line.isYou { Spacer(minLength: 40) }
+        HStack(alignment: .top, spacing: 8) {
+            if line.isYou {
+                Spacer(minLength: 34)
+            } else {
+                avatar(isYou: false)
+            }
             Button {
                 play(line)
             } label: {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(line.en)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(line.isYou ? .white : Color.textPrimary)
-                        .multilineTextAlignment(.leading)
-                    Text(line.zh)
-                        .font(.system(size: 12))
-                        .foregroundStyle(line.isYou ? .white.opacity(0.85) : Color.textSecondary)
-                        .multilineTextAlignment(.leading)
-                    if line.isYou {
-                        HStack(spacing: 3) {
-                            Image(systemName: "speaker.wave.2.fill").font(.system(size: 9))
-                            Text("你的台词 · 大声念出来")
-                                .font(.system(size: 10, weight: .medium))
-                        }
-                        .foregroundStyle(.white.opacity(0.8))
-                        .padding(.top, 2)
+                HStack(alignment: .top, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(line.en)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(line.isYou ? .white : Color.textPrimary)
+                            .multilineTextAlignment(.leading)
+                        Text(line.zh)
+                            .font(.system(size: 12))
+                            .foregroundStyle(line.isYou ? .white.opacity(0.85) : Color.textSecondary)
+                            .multilineTextAlignment(.leading)
                     }
+                    // 句末喇叭：点击重听本句
+                    Image(systemName: "speaker.wave.2.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(line.isYou ? .white.opacity(0.85) : Color.appPrimary.opacity(0.7))
+                        .padding(.top, 4)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 9)
@@ -799,8 +797,21 @@ struct LessonRolePlayView: View {
                 )
             }
             .buttonStyle(.plain)
-            if !line.isYou { Spacer(minLength: 40) }
+            if line.isYou {
+                avatar(isYou: true)
+            } else {
+                Spacer(minLength: 34)
+            }
         }
+    }
+
+    /// 双方头像：你 = 蓝，对方 = 橙
+    private func avatar(isYou: Bool) -> some View {
+        Image(systemName: "person.fill")
+            .font(.system(size: 13))
+            .foregroundStyle(.white)
+            .frame(width: 28, height: 28)
+            .background(Circle().fill(isYou ? Color.appPrimary : Color.hardOrange))
     }
 
     private var completionCard: some View {

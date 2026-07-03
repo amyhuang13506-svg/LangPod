@@ -8,35 +8,29 @@ import SwiftUI
 struct CountryChipsRow: View {
     @Environment(LessonStore.self) private var lessonStore
 
-    private let columns = [
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8),
-    ]
-
     var body: some View {
-        // 两行 × 3 个大 chips（不带国旗）
-        LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(lessonStore.countries) { country in
-                let selected = country.id == lessonStore.selectedCountry
-                Button {
-                    guard !selected else { return }
-                    lessonStore.selectedCountry = country.id
-                    Analytics.track(.lessonCountrySwitch, params: ["country": country.id])
-                } label: {
-                    Text(country.nameZh)
-                        .font(.system(size: 14, weight: selected ? .semibold : .medium))
-                        .foregroundColor(selected ? .white : Color.textSecondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(selected ? Color.appPrimary : Color.white)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(selected ? Color.clear : Color.border, lineWidth: 1)
-                        )
+        // 单行横滑 chips（不带国旗）
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(lessonStore.countries) { country in
+                    let selected = country.id == lessonStore.selectedCountry
+                    Button {
+                        guard !selected else { return }
+                        lessonStore.selectedCountry = country.id
+                        Analytics.track(.lessonCountrySwitch, params: ["country": country.id])
+                    } label: {
+                        Text(country.nameZh)
+                            .font(.system(size: 13, weight: selected ? .semibold : .medium))
+                            .foregroundColor(selected ? .white : Color.textSecondary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .background(
+                                Capsule().fill(selected ? Color.appPrimary : Color.white)
+                            )
+                            .overlay(
+                                Capsule().stroke(selected ? Color.clear : Color.border, lineWidth: 1)
+                            )
+                    }
                 }
             }
         }
