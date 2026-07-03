@@ -718,7 +718,7 @@ struct SceneQuizView: View {
             practiceHeader(title: "场景模拟", progress: "\(currentIndex + 1)/\(questions.count)") { dismiss() }
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 16) {
                     // 场景标题
                     HStack(spacing: 6) {
                         Image(systemName: "theatermasks.fill")
@@ -729,24 +729,21 @@ struct SceneQuizView: View {
                             .foregroundStyle(Color.gold)
                         Spacer()
                     }
-                    .padding(.horizontal, 4)
 
-                    // 4 句对话（一句留白）
-                    VStack(spacing: 10) {
+                    // 对话：纯文本一行行列出（说话人 + 英文），留白行用下划线，无翻译无气泡
+                    VStack(alignment: .leading, spacing: 12) {
                         ForEach(Array(current.turns.enumerated()), id: \.offset) { index, turn in
-                            if index == current.blankIndex {
-                                blankBubble(turn, filled: revealed)
-                            } else {
-                                dialogueBubble(turn)
-                            }
+                            dialogueLine(turn, isBlank: index == current.blankIndex)
                         }
                     }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 14))
 
                     Text("空格处该说哪句？")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color.textSecondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.top, 4)
+                        .padding(.top, 2)
 
                     VStack(spacing: 10) {
                         ForEach(current.options, id: \.id) { option in
@@ -760,67 +757,25 @@ struct SceneQuizView: View {
         }
     }
 
-    /// 正常对话气泡：对方靠左（橙标），你靠右（蓝标）
-    private func dialogueBubble(_ turn: RoleplayLine) -> some View {
-        HStack {
-            if turn.isYou { Spacer(minLength: 40) }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(turn.isYou ? "你" : current.otherRole)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(turn.isYou ? Color.appPrimary : Color.hardOrange)
+    /// 一行对话：说话人前缀 + 英文（留白行未答时下划线，答对后填入绿色英文）。纯文本，无翻译。
+    private func dialogueLine(_ turn: RoleplayLine, isBlank: Bool) -> some View {
+        let speaker = turn.isYou ? "你" : current.otherRole
+        return HStack(alignment: .top, spacing: 8) {
+            Text("\(speaker)：")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(turn.isYou ? Color.appPrimary : Color.hardOrange)
+                .fixedSize()
+            if isBlank && !revealed {
+                Text("_______________")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Color.appPrimary.opacity(0.5))
+            } else {
                 Text(turn.en)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color.textPrimary)
-                    .multilineTextAlignment(.leading)
-                Text(turn.zh)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.textSecondary)
+                    .font(.system(size: 15, weight: isBlank ? .semibold : .regular))
+                    .foregroundStyle(isBlank ? Color.success : Color.textPrimary)
                     .multilineTextAlignment(.leading)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(.white, in: RoundedRectangle(cornerRadius: 12))
-            if !turn.isYou { Spacer(minLength: 40) }
-        }
-    }
-
-    /// 留白气泡：虚线框 + 中文提示；答对后填入英文
-    private func blankBubble(_ turn: RoleplayLine, filled: Bool) -> some View {
-        HStack {
-            Spacer(minLength: 40)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("你")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(Color.appPrimary)
-                if filled {
-                    Text(turn.en)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color.success)
-                        .multilineTextAlignment(.leading)
-                        .transition(.opacity)
-                } else {
-                    Text("＿＿＿＿＿＿＿＿")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Color.appPrimary.opacity(0.6))
-                }
-                Text(turn.zh)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.textSecondary)
-                    .multilineTextAlignment(.leading)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                filled ? Color.successLight : Color.primaryLight.opacity(0.5),
-                in: RoundedRectangle(cornerRadius: 12)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(
-                        filled ? Color.success : Color.appPrimary.opacity(0.5),
-                        style: StrokeStyle(lineWidth: 1.5, dash: filled ? [] : [5, 4])
-                    )
-            )
+            Spacer(minLength: 0)
         }
     }
 
