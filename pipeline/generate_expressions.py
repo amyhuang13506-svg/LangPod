@@ -47,7 +47,8 @@ CATEGORY: {cat_zh} — {hint}
 Produce 8-12 expressions for this category, ordered by how often natives actually use them (most common first).
 
 Each expression:
-- "english": the expression as actually spoken (can be a phrase, pattern with ___, or short sentence)
+- "english": the expression as actually spoken (a phrase, a fill-in pattern, or a short sentence).
+  For any open slot / trailing "to be continued" gap, ALWAYS use exactly three underscores `___` — NEVER use "..." or the ellipsis character "…". (e.g. write "I guess ___" not "I guess...", "So you're saying ___" not "So you're saying ...")
 - "meaning_zh": 中文意思（口语化，一句话）
 - "usage_zh": 语感注释（1-2 句中文）：谁会说、什么场合、什么语气、和相近说法差在哪。这是本 app 和词典的区别，必须具体到"画面感"。
 - "country_note_zh": 国家差异注释（可选）。只在美/英/澳等真的说法不同时才写（如"英国人更常说 Cheers；澳洲人张口就是 No worries"）。没有明显差异就输出空字符串。

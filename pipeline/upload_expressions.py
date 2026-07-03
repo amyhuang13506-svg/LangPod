@@ -8,6 +8,7 @@
 import glob
 import json
 import os
+import re
 import sys
 
 from config import (
@@ -53,11 +54,23 @@ def main():
 
     counts = {}
     scene_covers = {}  # 分类 → 第一条表达的场景插画（封面即内容）
+    # index.json / verify_ckpt.json 不是分类文件（无 id 字段），排除
+    skip_files = {"index.json", "verify_ckpt.json"}
     for path in sorted(glob.glob(os.path.join(EXPR_DIR, "*.json"))):
+        if os.path.basename(path) in skip_files:
+            continue
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
         cat_id = data["id"]
         print("📤 %s (%s)" % (cat_id, data["zh"]))
+
+        # 占位符统一为下划线 ___（禁止 ... / …）。放在上传前做，
+        # 无论 JSON 里是什么（含其他脚本写回的旧文本），发到 OSS 的一定是下划线。
+        for e in data["expressions"]:
+            en = e.get("english", "")
+            if "..." in en or "…" in en:
+                t = en.replace("…", "...").replace("...", "___")
+                e["english"] = re.sub(r"\s*___", " ___", t).strip()
 
         # 上传音频/图片等资源并重写 URL（rel 已是 http 则跳过）
         def upload_asset(obj, field, clear_if_missing=True):
