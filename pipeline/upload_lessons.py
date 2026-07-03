@@ -76,6 +76,30 @@ def upload_lesson(bucket, json_path):
     elif not (lesson.get("cover") or "").startswith("http"):
         incomplete = True
 
+    # 发音音频（ElevenLabs 预生成）：上传 audio/ 并把相对路径重写为 OSS URL。
+    # 音频缺失不算 incomplete —— 没有音频 App 会回落系统 TTS。
+    def upload_audio_field(obj, field):
+        rel = obj.get(field) or ""
+        if not rel or rel.startswith("http"):
+            return
+        local = os.path.join(lesson_dir, rel)
+        if os.path.exists(local):
+            obj[field] = upload_file(bucket, local, "%s/%s" % (prefix, rel))
+        else:
+            obj[field] = ""
+
+    audio_count = 0
+    for zone in lesson["zones"]:
+        for word in zone["hotspots"] + zone["extra_words"]:
+            upload_audio_field(word, "audio")
+            upload_audio_field(word, "example_audio")
+            audio_count += 2
+    for sentence in lesson.get("sentences", []):
+        upload_audio_field(sentence, "audio")
+        audio_count += 1
+    if audio_count:
+        print("   🔊 audio fields processed: %d" % audio_count)
+
     if incomplete:
         print("   ❌ skipped (incomplete assets)")
         return None

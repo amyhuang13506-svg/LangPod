@@ -29,6 +29,7 @@
 		A10020 /* SubtitleOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20022 /* SubtitleOverlay.swift */; };
 		A10021 /* EpisodeCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20023 /* EpisodeCompleteView.swift */; };
 		A10022 /* SavedWord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20024 /* SavedWord.swift */; };
+		A199101 /* LessonAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A299101 /* LessonAudioPlayer.swift */; };
 		A199100 /* MyVocabularyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A299100 /* MyVocabularyView.swift */; };
 		A190000 /* SceneLesson.swift in Sources */ = {isa = PBXBuildFile; fileRef = A290000 /* SceneLesson.swift */; };
 		A190001 /* LessonStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A290001 /* LessonStore.swift */; };
@@ -148,6 +149,7 @@
 		A20022 /* SubtitleOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubtitleOverlay.swift; sourceTree = "<group>"; };
 		A20023 /* EpisodeCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeCompleteView.swift; sourceTree = "<group>"; };
 		A20024 /* SavedWord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWord.swift; sourceTree = "<group>"; };
+		A299101 /* LessonAudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonAudioPlayer.swift; sourceTree = "<group>"; };
 		A299100 /* MyVocabularyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVocabularyView.swift; sourceTree = "<group>"; };
 		A290000 /* SceneLesson.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneLesson.swift; sourceTree = "<group>"; };
 		A290001 /* LessonStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonStore.swift; sourceTree = "<group>"; };
@@ -310,6 +312,7 @@
 		A50004 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				A299101 /* LessonAudioPlayer.swift */,
 				A290001 /* LessonStore.swift */,
 				A20004 /* DataStore.swift */,
 				A20014 /* MockDataLoader.swift */,
@@ -579,6 +582,7 @@
 				A10020 /* SubtitleOverlay.swift in Sources */,
 				A10021 /* EpisodeCompleteView.swift in Sources */,
 				A10022 /* SavedWord.swift in Sources */,
+				A199101 /* LessonAudioPlayer.swift in Sources */,
 				A199100 /* MyVocabularyView.swift in Sources */,
 				A190000 /* SceneLesson.swift in Sources */,
 				A190001 /* LessonStore.swift in Sources */,

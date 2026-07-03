@@ -104,6 +104,12 @@ struct SceneLesson: Codable, Identifiable {
     var allWords: [SceneWord] {
         zones.flatMap { $0.hotspots + $0.extraWords }
     }
+
+    /// 全部发音音频 URL（进课堂时预取，点击零延迟）
+    var allAudioUrls: [String] {
+        allWords.flatMap { [$0.audio, $0.exampleAudio] }.compactMap { $0 }
+            + sentences.compactMap { $0.audio }
+    }
 }
 
 struct SceneZone: Codable, Identifiable {
@@ -123,6 +129,7 @@ struct SceneZone: Codable, Identifiable {
 }
 
 /// 一个词条。hotspots 带归一化坐标 (x, y)，extra_words 无坐标。
+/// audio / exampleAudio 为 ElevenLabs 预生成发音（可能为空 → 回落系统 TTS）。
 struct SceneWord: Codable, Identifiable, Hashable {
     let word: String
     let phonetic: String
@@ -130,15 +137,18 @@ struct SceneWord: Codable, Identifiable, Hashable {
     let example: String
     let exampleZh: String?
     let difficulty: String?
+    let audio: String?
+    let exampleAudio: String?
     let x: Double?
     let y: Double?
 
     var id: String { word }
 
     enum CodingKeys: String, CodingKey {
-        case word, phonetic, example, difficulty, x, y
+        case word, phonetic, example, difficulty, audio, x, y
         case translationZh = "translation_zh"
         case exampleZh = "example_zh"
+        case exampleAudio = "example_audio"
     }
 
     var asVocabularyItem: VocabularyItem {
@@ -165,6 +175,7 @@ struct SceneWord: Codable, Identifiable, Hashable {
 struct SceneSentence: Codable, Identifiable, Hashable {
     let english: String
     let chinese: String
+    let audio: String?
     var id: String { english }
 }
 

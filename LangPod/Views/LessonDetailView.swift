@@ -55,6 +55,7 @@ struct LessonDetailView: View {
         loadFailed = false
         if let loaded = await lessonStore.lessonDetail(country: country.id, id: item.id) {
             lesson = loaded
+            LessonAudioPlayer.shared.prefetch(loaded.allAudioUrls)
         } else {
             loadFailed = true
         }
@@ -191,7 +192,9 @@ struct LessonDetailView: View {
             VStack(spacing: 8) {
                 ForEach(sentences) { sentence in
                     Button {
-                        WordSpeaker.shared.speakSentence(sentence.english, accent: country.accent)
+                        LessonAudioPlayer.shared.play(sentence.audio) {
+                            WordSpeaker.shared.speakSentence(sentence.english, accent: country.accent)
+                        }
                     } label: {
                         HStack(alignment: .top, spacing: 10) {
                             VStack(alignment: .leading, spacing: 3) {
@@ -295,8 +298,7 @@ struct LessonDetailView: View {
 
     private func tapWord(_ word: SceneWord) {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        WordSpeaker.shared.speak(word.word, accent: country.accent)
-        selectedWord = word
+        selectedWord = word  // 发音由单词卡 onAppear 触发，避免和卡片自动朗读重复
     }
 
     private func addAllWords() {
@@ -435,7 +437,7 @@ struct LessonWordCard: View {
                     .foregroundColor(Color.textTertiary)
                 Spacer()
                 Button {
-                    WordSpeaker.shared.speak(word.word, accent: accent)
+                    playWord()
                 } label: {
                     Image(systemName: "speaker.wave.2.fill")
                         .font(.system(size: 17))
@@ -459,7 +461,9 @@ struct LessonWordCard: View {
             }
 
             Button {
-                WordSpeaker.shared.speakSentence(word.example, accent: accent)
+                LessonAudioPlayer.shared.play(word.exampleAudio) {
+                    WordSpeaker.shared.speakSentence(word.example, accent: accent)
+                }
             } label: {
                 VStack(alignment: .leading, spacing: 5) {
                     HStack(alignment: .top) {
@@ -507,7 +511,11 @@ struct LessonWordCard: View {
         }
         .padding(20)
         .background(Color.white)
-        .onAppear {
+        .onAppear { playWord() }
+    }
+
+    private func playWord() {
+        LessonAudioPlayer.shared.play(word.audio) {
             WordSpeaker.shared.speak(word.word, accent: accent)
         }
     }
