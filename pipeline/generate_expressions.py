@@ -51,6 +51,10 @@ Each expression:
 - "usage_zh": 语感注释（1-2 句中文）：谁会说、什么场合、什么语气、和相近说法差在哪。这是本 app 和词典的区别，必须具体到"画面感"。
 - "country_note_zh": 国家差异注释（可选）。只在美/英/澳等真的说法不同时才写（如"英国人更常说 Cheers；澳洲人张口就是 No worries"）。没有明显差异就输出空字符串。
 - "examples": exactly 2, each {{"en": "... (MAX 12 words, real spoken register)", "zh": "自然中文翻译"}}
+- "scene": 场景示例——一个具体的生活时刻里这句话怎么被用出来：
+  {{"setup_zh": "1-2 句中文描述具体场景（谁、在哪、发生了什么，要有画面感）",
+    "dialogue": [{{"speaker": "A", "en": "...", "zh": "..."}}, {{"speaker": "B", "en": "...", "zh": "..."}}]}}
+  dialogue 恰好 2 句（一来一回），其中一句必须自然地用到本表达；每句 ≤14 words。
 
 RULES:
 - Real current usage only. If an expression sounds like a 1990s textbook (e.g. "How do you do"), skip it.
@@ -59,7 +63,23 @@ RULES:
 - No political/religious/vulgar content (mild casual slang is fine).
 
 Output STRICT JSON only:
-{{"expressions": [{{"english": "...", "meaning_zh": "...", "usage_zh": "...", "country_note_zh": "", "examples": [{{"en": "...", "zh": "..."}}, {{"en": "...", "zh": "..."}}]}}]}}"""
+{{"expressions": [{{"english": "...", "meaning_zh": "...", "usage_zh": "...", "country_note_zh": "", "examples": [{{"en": "...", "zh": "..."}}, {{"en": "...", "zh": "..."}}], "scene": {{"setup_zh": "...", "dialogue": [{{"speaker": "A", "en": "...", "zh": "..."}}, {{"speaker": "B", "en": "...", "zh": "..."}}]}}}}]}}"""
+
+# 存量补充：给已生成的表达补 scene 字段（不动已有内容和音频）
+AUGMENT_PROMPT = """You are adding "scene examples" to an existing spoken-English expression library for Chinese learners.
+
+For EACH expression below, create one vivid real-life scene showing the expression being used:
+- "setup_zh": 1-2 句中文，描述具体场景（在哪、发生了什么），用"你"的视角写（"你刚点完咖啡，看到老同学走进来"），有画面感，禁止"小明/小红"式教材人名
+- "dialogue": exactly 2 turns (A then B), one turn MUST naturally use the expression; each line ≤14 words, real spoken register; each turn {{"speaker": "A"|"B", "en": "...", "zh": "自然中文翻译"}}
+
+EXPRESSIONS ({cat_zh}):
+{expr_list}
+
+Output STRICT JSON only:
+{{"scenes": [{{"english": "<expression exactly as given>", "setup_zh": "...", "dialogue": [{{"speaker": "A", "en": "...", "zh": "..."}}, {{"speaker": "B", "en": "...", "zh": "..."}}]}}]}}"""
+
+# 对话双声：A 男声 / B 女声（B 是表达使用者时也自然）
+DIALOGUE_VOICES = {"A": "iP95p4xoKVk53GoZ742B", "B": ELEVENLABS_LESSON_VOICES["us"]}  # Chris / Bella
 
 
 def _call_gpt(prompt):
@@ -115,10 +135,10 @@ def slugify(text):
     return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")[:40]
 
 
-def synthesize(text, output_path):
+def synthesize(text, output_path, voice_id=None):
     for attempt in range(3):
         response = requests.post(
-            TTS_ENDPOINT % VOICE_ID,
+            TTS_ENDPOINT % (voice_id or VOICE_ID),
             params={"output_format": "mp3_44100_64"},
             headers={"xi-api-key": ELEVENLABS_LESSON_API_KEY, "Content-Type": "application/json"},
             json={
@@ -205,11 +225,30 @@ def process_category(cat, skip_audio=False):
         else:
             obj[field] = ""
 
+    def ensure_voiced(text, filename, obj, field, voice_id):
+        nonlocal made
+        if (obj.get(field) or "").startswith("http"):
+            return
+        path = os.path.join(audio_dir, filename)
+        rel = "audio/%s/%s" % (cat["id"], filename)
+        if os.path.exists(path) and os.path.getsize(path) > 0:
+            obj[field] = rel
+            return
+        if synthesize(tts_text(text), path, voice_id=voice_id):
+            obj[field] = rel
+            made += 1
+        else:
+            obj[field] = ""
+
     for e in data["expressions"]:
         slug = slugify(e["english"])
         ensure(e["english"], "%s.mp3" % slug, e, "audio")
         for i, ex in enumerate(e.get("examples", [])):
             ensure(ex["en"], "%s_ex%d.mp3" % (slug, i), ex, "audio")
+        # 场景对话：A 男声 / B 女声
+        for i, line in enumerate((e.get("scene") or {}).get("dialogue", [])):
+            voice = DIALOGUE_VOICES.get(line.get("speaker", "A"), VOICE_ID)
+            ensure_voiced(line["en"], "%s_sc%d.mp3" % (slug, i), line, "audio", voice)
 
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -218,11 +257,51 @@ def process_category(cat, skip_audio=False):
     return True
 
 
+def augment_scenes(cat, skip_audio=False):
+    """给已生成的分类补 scene 字段（不重新生成表达本体，已有音频不动）。"""
+    out_path = os.path.join(EXPR_DIR, "%s.json" % cat["id"])
+    if not os.path.exists(out_path):
+        return False
+    with open(out_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    missing = [e for e in data["expressions"] if not e.get("scene")]
+    if missing:
+        print("\n🎬 %s — %s (%d 条待补场景)" % (cat["id"], cat["zh"], len(missing)))
+        expr_list = "\n".join(
+            "- %s (%s)" % (e["english"], e["meaning_zh"]) for e in missing
+        )
+        prompt = AUGMENT_PROMPT.format(cat_zh=cat["zh"], expr_list=expr_list)
+        try:
+            result = _call_gpt(prompt)
+        except Exception as e:
+            print("   ❌ GPT: %s" % e)
+            return False
+        by_english = {s.get("english"): s for s in result.get("scenes", [])}
+        added = 0
+        for e in missing:
+            scene = by_english.get(e["english"])
+            if not scene or len(scene.get("dialogue", [])) < 2:
+                print("   ⚠️ no scene for: %s" % e["english"])
+                continue
+            e["scene"] = {
+                "setup_zh": scene["setup_zh"],
+                "dialogue": scene["dialogue"][:2],
+            }
+            added += 1
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print("   ✅ %d scenes added" % added)
+    # 补音频（幂等，复用 process_category 的音频闭环）
+    return process_category(cat, skip_audio=skip_audio)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--category")
     parser.add_argument("--group")
     parser.add_argument("--skip-audio", action="store_true")
+    parser.add_argument("--augment-scenes", action="store_true",
+                        help="给已有分类补 scene 场景示例（不重新生成表达本体）")
     args = parser.parse_args()
 
     cats = all_categories()
@@ -234,7 +313,8 @@ def main():
         print("❌ no matching categories")
         sys.exit(1)
 
-    ok = sum(1 for c in cats if process_category(c, skip_audio=args.skip_audio))
+    fn = augment_scenes if args.augment_scenes else process_category
+    ok = sum(1 for c in cats if fn(c, skip_audio=args.skip_audio))
     print("\n🎉 %d/%d categories done" % (ok, len(cats)))
 
 

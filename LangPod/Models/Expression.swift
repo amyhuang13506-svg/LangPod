@@ -44,7 +44,8 @@ struct ExpressionCategory: Codable, Identifiable {
     }
 }
 
-/// 一条口语表达：表达本体 + 语感注释 + 国家差异 + 例句。按实用频率排序，无难度分级。
+/// 一条口语表达：表达本体 + 语感注释 + 国家差异 + 例句 + 场景示例。
+/// 按实用频率排序，无难度分级。
 struct Expression: Codable, Identifiable, Hashable {
     let english: String
     let meaningZh: String
@@ -52,11 +53,12 @@ struct Expression: Codable, Identifiable, Hashable {
     let countryNoteZh: String?
     let audio: String?
     let examples: [ExpressionExample]
+    let scene: ExpressionScene?
 
     var id: String { english }
 
     enum CodingKeys: String, CodingKey {
-        case english, audio, examples
+        case english, audio, examples, scene
         case meaningZh = "meaning_zh"
         case usageZh = "usage_zh"
         case countryNoteZh = "country_note_zh"
@@ -72,4 +74,23 @@ struct ExpressionExample: Codable, Identifiable, Hashable {
     let zh: String
     let audio: String?
     var id: String { en }
+}
+
+/// 场景示例：具体场景描述 + 一来一回的迷你对话（其中一句用到本表达）
+struct ExpressionScene: Codable, Hashable {
+    let setupZh: String
+    let dialogue: [ExpressionDialogueLine]
+
+    enum CodingKeys: String, CodingKey {
+        case dialogue
+        case setupZh = "setup_zh"
+    }
+}
+
+struct ExpressionDialogueLine: Codable, Identifiable, Hashable {
+    let speaker: String   // "A" / "B"
+    let en: String
+    let zh: String
+    let audio: String?
+    var id: String { speaker + en }
 }

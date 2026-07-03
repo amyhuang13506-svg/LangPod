@@ -207,6 +207,8 @@ struct ExpressionListSheet: View {
 
     @State private var category: ExpressionCategory?
     @State private var loadFailed = false
+    /// 折叠列表：默认只显示编号+表达，点开哪条展开哪条（手风琴式）
+    @State private var expandedId: String?
 
     var body: some View {
         ZStack {
@@ -242,18 +244,28 @@ struct ExpressionListSheet: View {
 
     private func content(_ category: ExpressionCategory) -> some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(category.zh)
                         .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(Color.textPrimary)
-                    Text("\(category.groupZh) · 按使用频率排序")
+                    Text("\(category.groupZh) · 按使用频率排序 · 点开看用法和场景")
                         .font(.system(size: 12))
                         .foregroundStyle(Color.textTertiary)
                 }
+                .padding(.bottom, 4)
 
-                ForEach(category.expressions) { expression in
-                    ExpressionRow(expression: expression, categoryZh: category.zh)
+                ForEach(Array(category.expressions.enumerated()), id: \.element.id) { index, expression in
+                    ExpressionRow(
+                        expression: expression,
+                        categoryZh: category.zh,
+                        number: index + 1,
+                        expanded: expandedId == expression.id
+                    ) {
+                        withAnimation(.spring(duration: 0.3)) {
+                            expandedId = expandedId == expression.id ? nil : expression.id
+                        }
+                    }
                 }
             }
             .padding(.horizontal, 20)
@@ -263,10 +275,13 @@ struct ExpressionListSheet: View {
     }
 }
 
-/// 一条表达的完整卡片：表达 + 意思 + 语感注释 + 国家差异 + 例句 + 发音/收藏
+/// 一条表达：折叠态 = 编号 + 表达 + 中文意思；展开态 = 语感注释 + 国家差异 + 例句 + 场景示例
 struct ExpressionRow: View {
     let expression: Expression
     let categoryZh: String
+    let number: Int
+    let expanded: Bool
+    let onToggle: () -> Void
 
     @Environment(SentenceStore.self) private var sentenceStore
 
@@ -275,33 +290,78 @@ struct ExpressionRow: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            collapsedHeader
+
+            if expanded {
+                expandedContent
+                    .padding(.top, 12)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .padding(14)
+        .background(.white, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(expanded ? Color.appPrimary.opacity(0.4) : Color.border, lineWidth: 1)
+        )
+    }
+
+    // MARK: - 折叠头（始终显示）
+
+    private var collapsedHeader: some View {
+        Button(action: onToggle) {
+            HStack(alignment: .center, spacing: 10) {
+                Text("\(number)")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(expanded ? .white : Color.appPrimary)
+                    .frame(width: 22, height: 22)
+                    .background(Circle().fill(expanded ? Color.appPrimary : Color.primaryLight))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(expression.english)
+                        .font(.system(size: 16, weight: .semibold, design: .serif))
+                        .foregroundStyle(Color.textPrimary)
+                        .multilineTextAlignment(.leading)
+                    Text(expression.meaningZh)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textSecondary)
+                        .lineLimit(expanded ? nil : 1)
+                }
+                Spacer()
+                if saved && !expanded {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color.success)
+                }
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.textQuaternary)
+                    .rotationEffect(.degrees(expanded ? 180 : 0))
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - 展开内容
+
+    private var expandedContent: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // 表达本体
-            HStack(alignment: .top, spacing: 10) {
+            // 发音 + 收藏操作行
+            HStack(spacing: 10) {
                 Button {
                     LessonAudioPlayer.shared.play(expression.audio) {
                         WordSpeaker.shared.speakSentence(expression.english.replacingOccurrences(of: "___", with: "something"))
                     }
                 } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(alignment: .top, spacing: 8) {
-                            Text(expression.english)
-                                .font(.system(size: 18, weight: .semibold, design: .serif))
-                                .foregroundStyle(Color.textPrimary)
-                                .multilineTextAlignment(.leading)
-                            Spacer()
-                            Image(systemName: "speaker.wave.2.fill")
-                                .font(.system(size: 12))
-                                .foregroundStyle(Color.appPrimary)
-                                .padding(.top, 5)
-                        }
-                        Text(expression.meaningZh)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(Color.textPrimary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "speaker.wave.2.fill").font(.system(size: 11))
+                        Text("发音").font(.system(size: 12, weight: .medium))
                     }
+                    .foregroundStyle(Color.appPrimary)
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(Capsule().fill(Color.primaryLight))
                 }
-                .buttonStyle(.plain)
-
                 Button {
                     guard !saved else { return }
                     let added = sentenceStore.add(SavedSentence(
@@ -319,10 +379,15 @@ struct ExpressionRow: View {
                         UINotificationFeedbackGenerator().notificationOccurred(.success)
                     }
                 } label: {
-                    Image(systemName: saved ? "checkmark.circle.fill" : "plus.circle")
-                        .font(.system(size: 22))
-                        .foregroundStyle(saved ? Color.success : Color.textQuaternary)
+                    HStack(spacing: 4) {
+                        Image(systemName: saved ? "checkmark" : "plus").font(.system(size: 11, weight: .semibold))
+                        Text(saved ? "已加入我的句子" : "加入我的句子").font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundStyle(saved ? Color.success : .white)
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(Capsule().fill(saved ? Color.successLight : Color.appPrimary))
                 }
+                Spacer()
             }
 
             // 语感注释
@@ -334,8 +399,7 @@ struct ExpressionRow: View {
             // 国家差异
             if expression.hasCountryNote, let note = expression.countryNoteZh {
                 HStack(alignment: .top, spacing: 5) {
-                    Text("🌍")
-                        .font(.system(size: 11))
+                    Text("🌍").font(.system(size: 11))
                     Text(note)
                         .font(.system(size: 12))
                         .foregroundStyle(Color.gold)
@@ -378,17 +442,64 @@ struct ExpressionRow: View {
                 }
             }
 
-            if saved {
-                Text("✓ 已加入我的句子")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(Color.success)
+            // 场景示例（例句下面：具体场景 + 一来一回对话）
+            if let scene = expression.scene {
+                sceneBlock(scene)
             }
         }
-        .padding(16)
-        .background(.white, in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.border, lineWidth: 1)
-        )
+    }
+
+    private func sceneBlock(_ scene: ExpressionScene) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 5) {
+                Image(systemName: "theatermasks.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.gold)
+                Text("场景示例")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.gold)
+            }
+            Text(scene.setupZh)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.bodyText)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(spacing: 6) {
+                ForEach(scene.dialogue) { line in
+                    Button {
+                        LessonAudioPlayer.shared.play(line.audio) {
+                            WordSpeaker.shared.speakSentence(line.en)
+                        }
+                    } label: {
+                        HStack(alignment: .top, spacing: 8) {
+                            Text(line.speaker)
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 18, height: 18)
+                                .background(Circle().fill(line.speaker == "A" ? Color.accentPurple : Color.hardOrange))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(line.en)
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundStyle(Color.textPrimary)
+                                    .multilineTextAlignment(.leading)
+                                Text(line.zh)
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color.textSecondary)
+                                    .multilineTextAlignment(.leading)
+                            }
+                            Spacer()
+                            Image(systemName: "speaker.wave.2.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(Color.appPrimary.opacity(0.7))
+                                .padding(.top, 3)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.warningLight.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
     }
 }

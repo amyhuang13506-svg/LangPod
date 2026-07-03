@@ -58,6 +58,8 @@ def main():
             upload_audio(e, "audio")
             for ex in e.get("examples", []):
                 upload_audio(ex, "audio")
+            for line in (e.get("scene") or {}).get("dialogue", []):
+                upload_audio(line, "audio")
 
         bucket.put_object(
             "expressions/%s.json" % cat_id,
