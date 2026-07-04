@@ -214,7 +214,7 @@ def process_category(path):
 def main():
     only = sys.argv[1] if len(sys.argv) > 1 else None
     # index.json / verify_ckpt.json 不是分类文件（无 id 字段），排除掉
-    skip_files = {"index.json", "verify_ckpt.json"}
+    skip_files = {"index.json", "verify_ckpt.json", "today.json", "daily_state.json"}
     paths = sorted(
         p for p in glob.glob(os.path.join(EXPR_DIR, "*.json"))
         if os.path.basename(p) not in skip_files

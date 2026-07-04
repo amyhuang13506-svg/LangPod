@@ -55,7 +55,7 @@ def main():
     counts = {}
     scene_covers = {}  # 分类 → 第一条表达的场景插画（封面即内容）
     # index.json / verify_ckpt.json 不是分类文件（无 id 字段），排除
-    skip_files = {"index.json", "verify_ckpt.json"}
+    skip_files = {"index.json", "verify_ckpt.json", "today.json", "daily_state.json"}
     for path in sorted(glob.glob(os.path.join(EXPR_DIR, "*.json"))):
         if os.path.basename(path) in skip_files:
             continue

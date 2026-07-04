@@ -58,18 +58,58 @@ struct Expression: Codable, Identifiable, Hashable {
     var cover: String?
     let examples: [ExpressionExample]
     let scene: ExpressionScene?
+    /// 每日新增的「今日句型」标记（pipeline cron 产出，当天免费 + NEW 角标）
+    var isDaily: Bool?
+    var date: String?
 
     var id: String { english }
 
     enum CodingKeys: String, CodingKey {
-        case english, audio, cover, examples, scene
+        case english, audio, cover, examples, scene, date
         case meaningZh = "meaning_zh"
         case usageZh = "usage_zh"
         case countryNoteZh = "country_note_zh"
+        case isDaily = "is_daily"
     }
 
     var hasCountryNote: Bool {
         !(countryNoteZh ?? "").isEmpty
+    }
+
+    /// 是否为「当天」的每日句型（当天免费 + 显示 NEW 角标）
+    var isDailyToday: Bool {
+        (isDaily ?? false) && ExpressionAccessGate.isToday(date)
+    }
+}
+
+/// 今日句型指针（expressions/today.json）。每天由 pipeline cron 轮换分类新生成一条后重写，
+/// App 顶部固定展示当天这一条，独立于当前所选大组。
+struct ExpressionToday: Codable {
+    let date: String
+    let groupId: String
+    let groupZh: String
+    let categoryId: String
+    let categoryZh: String
+    let expression: Expression
+
+    enum CodingKeys: String, CodingKey {
+        case date, expression
+        case groupId = "group_id"
+        case groupZh = "group_zh"
+        case categoryId = "category_id"
+        case categoryZh = "category_zh"
+    }
+}
+
+/// 句型付费门控：Pro 全解锁；当天的每日句型免费；免费分类首条免费；其余 Pro。
+enum ExpressionAccessGate {
+    /// 本地时区判断（与 LessonAccessGate 同思路）
+    static func isToday(_ dateString: String?) -> Bool {
+        guard let dateString, !dateString.isEmpty else { return false }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = .current
+        return formatter.string(from: Date()) == String(dateString.prefix(10))
     }
 }
 

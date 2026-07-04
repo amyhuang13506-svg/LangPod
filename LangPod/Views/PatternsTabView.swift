@@ -28,6 +28,9 @@ struct PatternsTabView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
+                        if let today = expressionStore.todayExpression {
+                            TodayExpressionCard(today: today) { openToday(today) }
+                        }
                         if let group = expressionStore.selectedGroup {
                             ForEach(group.categories) { category in
                                 categorySection(category)
@@ -172,7 +175,7 @@ struct PatternsTabView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 12) {
                         ForEach(Array(detail.expressions.enumerated()), id: \.element.id) { index, expression in
-                            let cardLocked = exprLocked(item.id, index)
+                            let cardLocked = exprLocked(item.id, index, expression)
                             ExpressionSceneCard(
                                 expression: expression,
                                 fallbackCover: item.cover ?? "",
@@ -221,10 +224,24 @@ struct PatternsTabView: View {
         subscriptionManager.isProUser || isFreeCategory(item)
     }
 
-    /// 单条表达是否锁定：仅免费分类的第 0 条免费，其余锁
-    private func exprLocked(_ categoryId: String, _ index: Int) -> Bool {
+    /// 单条表达是否锁定：Pro / 免费分类首条 / 当天的今日句型 → 免费，其余锁
+    private func exprLocked(_ categoryId: String, _ index: Int, _ expression: Expression) -> Bool {
         if subscriptionManager.isProUser { return false }
+        if expression.isDailyToday { return false }
         return !(categoryId == freeCategoryId && index == 0)
+    }
+
+    /// 点今日句型卡：定位到它所属分类内的下标后打开翻页详情（当天免费，门控已放行）
+    private func openToday(_ today: ExpressionToday) {
+        guard let catItem = expressionStore.groups
+            .flatMap({ $0.categories })
+            .first(where: { $0.id == today.categoryId }) else { return }
+        Analytics.track(.patternOpen, params: ["source": "today_expression"])
+        Task {
+            let detail = await expressionStore.categoryDetail(id: today.categoryId)
+            let idx = detail?.expressions.firstIndex { $0.english == today.expression.english } ?? 0
+            pagerTarget = ExpressionPagerTarget(category: catItem, index: idx)
+        }
     }
 
     private func trackPaywall(_ item: ExpressionCategoryIndexItem) {
@@ -263,6 +280,69 @@ struct ExpressionPagerTarget: Identifiable {
     let category: ExpressionCategoryIndexItem
     let index: Int
     var id: String { "\(category.id)_\(index)" }
+}
+
+// MARK: - 今日句型置顶卡（每日 pipeline 新生成一条，当天免费）
+
+struct TodayExpressionCard: View {
+    let today: ExpressionToday
+    let onTap: () -> Void
+
+    private var coverUrl: String {
+        let e = today.expression
+        if let c = e.cover, !c.isEmpty { return c }
+        if let img = e.scene?.image, !img.isEmpty { return img }
+        return ""
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 14) {
+                CachedAsyncImage(url: coverUrl) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12).fill(Color.primaryLighter)
+                        Image(systemName: "quote.bubble.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(Color.appPrimary.opacity(0.5))
+                    }
+                }
+                .frame(width: 92, height: 72)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 6) {
+                        Text("今日句型")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 7).padding(.vertical, 2)
+                            .background(Capsule().fill(Color.hardOrange))
+                        Text(today.categoryZh)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(Color.textTertiary)
+                    }
+                    Text(today.expression.english)
+                        .font(.system(size: 16, weight: .semibold, design: .serif))
+                        .foregroundColor(Color.textPrimary)
+                        .lineLimit(1)
+                    Text(today.expression.meaningZh)
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.textSecondary)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Color.textQuaternary)
+            }
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.hardOrange.opacity(0.35), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 // MARK: - 表达场景卡（横滑区块 + 查看更多网格共用：场景插画 + 表达在下）
@@ -304,6 +384,15 @@ struct ExpressionSceneCard: View {
                             .foregroundColor(.white)
                             .frame(width: 22, height: 22)
                             .background(Circle().fill(.black.opacity(0.55)))
+                            .padding(6)
+                    } else if expression.isDailyToday {
+                        // 今日新增的每日句型：右上角 NEW 角标
+                        Text("NEW")
+                            .font(.system(size: 9, weight: .heavy))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Capsule().fill(Color.hardOrange))
                             .padding(6)
                     }
                 }
@@ -349,9 +438,10 @@ struct ExpressionCategoryAllView: View {
         GridItem(.flexible(), spacing: 12),
     ]
 
-    /// 仅免费分类第 0 条免费
-    private func locked(_ index: Int) -> Bool {
-        !(isPro || (item.id == freeCategoryId && index == 0))
+    /// Pro / 免费分类首条 / 当天今日句型 → 免费，其余锁
+    private func locked(_ index: Int, _ expression: Expression) -> Bool {
+        if isPro || expression.isDailyToday { return false }
+        return !(item.id == freeCategoryId && index == 0)
     }
 
     var body: some View {
@@ -365,7 +455,7 @@ struct ExpressionCategoryAllView: View {
                     if let detail = store.details[item.id] {
                         LazyVGrid(columns: columns, spacing: 12) {
                             ForEach(Array(detail.expressions.enumerated()), id: \.element.id) { index, expression in
-                                let cardLocked = locked(index)
+                                let cardLocked = locked(index, expression)
                                 ExpressionSceneCard(
                                     expression: expression,
                                     fallbackCover: item.cover ?? "",
@@ -453,7 +543,7 @@ struct ExpressionPagerView: View {
                     TabView(selection: $pageIndex) {
                         ForEach(Array(detail.expressions.enumerated()), id: \.element.id) { index, expression in
                             Group {
-                                if locked(index) {
+                                if locked(index) && !expression.isDailyToday {
                                     lockedPage
                                 } else {
                                     ExpressionPageView(expression: expression, categoryZh: detail.zh)

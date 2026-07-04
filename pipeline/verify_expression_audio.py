@@ -89,7 +89,7 @@ def check(cat_id, key, text, audio_url):
 checked = skipped = 0
 only = sys.argv[1] if len(sys.argv) > 1 else None
 # index.json / verify_ckpt.json 不是分类文件（无 expressions 字段），排除掉
-skip_files = {"index.json", "verify_ckpt.json"}
+skip_files = {"index.json", "verify_ckpt.json", "today.json", "daily_state.json"}
 for p in sorted(glob.glob(os.path.join(BASE, "*.json"))):
     if os.path.basename(p) in skip_files:
         continue
