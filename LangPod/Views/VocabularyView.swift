@@ -41,10 +41,6 @@ struct VocabularyView: View {
                             categorySection(group.category, lessons: group.lessons)
                         }
 
-                        if !lessonStore.pastDailyLessons.isEmpty {
-                            categorySection("📅 往期每日场景", lessons: lessonStore.pastDailyLessons)
-                        }
-
                         if lessonStore.lessons.isEmpty {
                             emptyState
                         }
@@ -76,7 +72,7 @@ struct VocabularyView: View {
                 title: target.title,
                 lessons: target.lessons,
                 isLocked: { isLocked($0) },
-                isFree: { lessonStore.isFreeSample($0.id) },
+                isFree: { !subscriptionManager.isProUser && lessonStore.isFreeSample($0.id) },
                 isCompleted: { lessonStore.isCompleted($0.id) }
             ) { item in
                 open(item)
@@ -143,7 +139,7 @@ struct VocabularyView: View {
                         LessonCoverCard(
                             item: item,
                             locked: isLocked(item),
-                            free: lessonStore.isFreeSample(item.id),
+                            free: !subscriptionManager.isProUser && lessonStore.isFreeSample(item.id),
                             completed: lessonStore.isCompleted(item.id),
                             onTap: { open(item) }
                         )

@@ -43,7 +43,7 @@ CATEGORIES = {
     "arrival":  {"zh": "刚落地", "icon_emoji": "🛬"},
     "food":     {"zh": "吃喝购物", "icon_emoji": "🍔"},
     "health":   {"zh": "看病买药", "icon_emoji": "💊"},
-    "settling": {"zh": "安顿下来", "icon_emoji": "🏠"},
+    "settling": {"zh": "生活必备", "icon_emoji": "🏠"},
     "social":   {"zh": "学习与社交", "icon_emoji": "🎓"},
 }
 

@@ -130,48 +130,39 @@ class LessonStore {
     /// 不随课程日期/index 顺序变——避免新增内容（如新加的 dentist）把某分类顶到最前。
     static let categoryOrder = ["arrival", "food", "health", "settling", "social"]
 
-    /// 稳定分组（分类按 categoryOrder 固定排序），仅用于判定免费样本 + 作为展示分组基底
-    private var stableByCategory: [(category: String, lessons: [SceneLessonIndexItem])] {
+    /// 按分类分组（分类按 categoryOrder 固定顺序）。含全部课堂，包括每日课：
+    /// 每日场景（今日的 + 往期的）都落在各自对应分类里，不单开「往期每日场景」区。
+    /// 分类内排序：今日每日课(NEW) → 免费样本 → 其余按当日随机（当天稳定、每天变）。
+    var byCategory: [(category: String, lessons: [SceneLessonIndexItem])] {
+        let seed = Self.dailyShuffleSeed()
+        let pinnedId = freeSampleLessonId
+        let order = Self.categoryOrder
+
         var groups: [String: [SceneLessonIndexItem]] = [:]   // key = categoryZh
         var enKey: [String: String] = [:]                    // categoryZh -> category(en)
-        for lesson in lessons where !lesson.isDaily {
+        for lesson in lessons {
             groups[lesson.categoryZh, default: []].append(lesson)
             enKey[lesson.categoryZh] = lesson.category
         }
-        let order = Self.categoryOrder
+        // 分类内排序优先级：今日每日课 0 → 免费样本 1 → 其它 2
+        func rank(_ i: SceneLessonIndexItem) -> Int {
+            if i.isDaily && LessonAccessGate.isToday(i.date) { return 0 }
+            if i.id == pinnedId { return 1 }
+            return 2
+        }
         return groups.keys.sorted { a, b in
             let ia = order.firstIndex(of: enKey[a] ?? "") ?? order.count
             let ib = order.firstIndex(of: enKey[b] ?? "") ?? order.count
             if ia != ib { return ia < ib }
             return a < b
-        }.map { ($0, groups[$0] ?? []) }
-    }
-
-    /// 按分类分组：分类顺序稳定，分类内课程「按当日随机」排序（当天稳定、每天变），
-    /// 让用户每天切分类都看到不一样的排布。不含今日课堂和往期每日。
-    /// 免费样本课（未订阅用户唯一免费的那一课）钉死在显示第一位，不随每日随机漂移。
-    var byCategory: [(category: String, lessons: [SceneLessonIndexItem])] {
-        let seed = Self.dailyShuffleSeed()
-        let pinnedId = freeSampleLessonId
-        // 今日更新的每日课：作为普通课卡插到它所属分类最前（封面右上角带 NEW 角标）
-        let daily = lessons.first { $0.isDaily && LessonAccessGate.isToday($0.date) }
-        var result = stableByCategory.map { group -> (category: String, lessons: [SceneLessonIndexItem]) in
-            var shuffled = group.lessons.sorted {
-                Self.stableHash("\($0.id)|\(seed)") < Self.stableHash("\($1.id)|\(seed)")
+        }.map { cat in
+            let items = (groups[cat] ?? []).sorted { a, b in
+                let ra = rank(a), rb = rank(b)
+                if ra != rb { return ra < rb }
+                return Self.stableHash("\(a.id)|\(seed)") < Self.stableHash("\(b.id)|\(seed)")
             }
-            if let pinnedId, let idx = shuffled.firstIndex(where: { $0.id == pinnedId }) {
-                shuffled.insert(shuffled.remove(at: idx), at: 0)
-            }
-            if let daily, daily.categoryZh == group.category {
-                shuffled.insert(daily, at: 0)
-            }
-            return (group.category, shuffled)
+            return (cat, items)
         }
-        // 每日课的分类在当前国家没有其它课时，补一个分类组置顶
-        if let daily, !result.contains(where: { $0.category == daily.categoryZh }) {
-            result.insert((daily.categoryZh, [daily]), at: 0)
-        }
-        return result
     }
 
     /// 当日随机种子：本地时区 yyyy-MM-dd（当天所有排序稳定，跨天变化）
