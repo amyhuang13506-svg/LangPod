@@ -54,13 +54,15 @@ struct Expression: Codable, Identifiable, Hashable {
     let usageZh: String
     let countryNoteZh: String?
     let audio: String?
+    /// 卡片封面插画（按句意生成的视觉隐喻图，区别于详情页的对话场景图）
+    var cover: String?
     let examples: [ExpressionExample]
     let scene: ExpressionScene?
 
     var id: String { english }
 
     enum CodingKeys: String, CodingKey {
-        case english, audio, examples, scene
+        case english, audio, cover, examples, scene
         case meaningZh = "meaning_zh"
         case usageZh = "usage_zh"
         case countryNoteZh = "country_note_zh"

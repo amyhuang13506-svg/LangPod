@@ -83,6 +83,23 @@ class LessonStore {
         lessons.first { $0.isDaily && LessonAccessGate.isToday($0.date) }
     }
 
+    // MARK: - 免费闸门
+    // 只有「第一个国家（默认美国）」的「第一课」免费体验，其余全部需订阅。
+
+    /// 第一个国家 = 国家 chips 里的第一个（默认美国）
+    var freeCountryId: String { countries.first?.id ?? "us" }
+
+    /// 免费样本课堂 id：仅当停留在第一个国家时，取展示顺序的第一课（不含每日课）
+    var freeSampleLessonId: String? {
+        guard selectedCountry == freeCountryId else { return nil }
+        return byCategory.first?.lessons.first?.id ?? lessons.first { !$0.isDaily }?.id
+    }
+
+    /// 该课堂是否为免费样本
+    func isFreeSample(_ id: String) -> Bool {
+        id == freeSampleLessonId
+    }
+
     /// 按分类分组（保持首次出现顺序），不含今日课堂和往期每日
     var byCategory: [(category: String, lessons: [SceneLessonIndexItem])] {
         var order: [String] = []

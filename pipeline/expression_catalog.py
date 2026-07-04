@@ -83,8 +83,8 @@ GROUPS = [
     },
 ]
 
-# 每组第一个分类免费，其余 Pro（服务器可调）
-FREE_CATEGORY_IDS = {"greetings", "opinions", "requests", "slang"}
+# 闸门：只有第一个组（日常反应）的第一个分类（寒暄开场）免费体验，其余全部 Pro
+FREE_CATEGORY_IDS = {"greetings"}
 
 
 def all_categories():

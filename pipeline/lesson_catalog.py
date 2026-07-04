@@ -47,8 +47,10 @@ CATEGORIES = {
     "social":   {"zh": "学习与社交", "icon_emoji": "🎓"},
 }
 
-# 每分类免费课堂（每国相同规则）
-FREE_SLUGS = {"customs", "supermarket", "otc_meds", "bank_account", "campus"}
+# 闸门：只有第一个国家（美国）的第一课（Chase 开户 bank_account）免费体验，其余全部 Pro。
+# App 端最终以「第一国第一课」判定免费，此处仅保证生成内容的 is_free 标记与之一致。
+FREE_COUNTRY = "us"
+FREE_SLUGS = {"bank_account"}
 
 
 def _t(zh, en):
@@ -720,7 +722,7 @@ def all_lessons():
                 "title_en": local["title"]["en"],
                 "anchor": local["anchor"],
                 "zones": tpl["zones"],
-                "is_free": tpl["slug"] in FREE_SLUGS,
+                "is_free": cc == FREE_COUNTRY and tpl["slug"] in FREE_SLUGS,
             })
     for cc, extras in COUNTRY_EXTRAS.items():
         for ex in extras:

@@ -38,7 +38,7 @@ struct VocabularyView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 22) {
                         if let today = lessonStore.todayLesson {
-                            TodayLessonCard(item: today, country: lessonStore.currentCountry) {
+                            TodayLessonCard(item: today, country: lessonStore.currentCountry, locked: isLocked(today)) {
                                 open(today)
                             }
                         }
@@ -79,6 +79,7 @@ struct VocabularyView: View {
                 title: target.title,
                 lessons: target.lessons,
                 isLocked: { isLocked($0) },
+                isFree: { lessonStore.isFreeSample($0.id) },
                 isCompleted: { lessonStore.isCompleted($0.id) }
             ) { item in
                 open(item)
@@ -145,6 +146,7 @@ struct VocabularyView: View {
                         LessonCoverCard(
                             item: item,
                             locked: isLocked(item),
+                            free: lessonStore.isFreeSample(item.id),
                             completed: lessonStore.isCompleted(item.id),
                             onTap: { open(item) }
                         )
@@ -178,10 +180,8 @@ struct VocabularyView: View {
     }
 
     private func isLocked(_ item: SceneLessonIndexItem) -> Bool {
-        !LessonAccessGate.canAccess(
-            isFree: item.isFree, isDaily: item.isDaily, date: item.date,
-            isPro: subscriptionManager.isProUser
-        )
+        if subscriptionManager.isProUser { return false }
+        return !lessonStore.isFreeSample(item.id)
     }
 
     private func open(_ item: SceneLessonIndexItem) {
@@ -208,6 +208,7 @@ struct LessonCategoryAllView: View {
     let title: String
     let lessons: [SceneLessonIndexItem]
     let isLocked: (SceneLessonIndexItem) -> Bool
+    let isFree: (SceneLessonIndexItem) -> Bool
     let isCompleted: (SceneLessonIndexItem) -> Bool
     /// 点卡片回调（父级负责打开课堂详情/付费墙，避免双层 fullScreenCover 叠加崩溃）
     let onSelect: (SceneLessonIndexItem) -> Void
@@ -232,6 +233,7 @@ struct LessonCategoryAllView: View {
                             LessonCoverCard(
                                 item: item,
                                 locked: isLocked(item),
+                                free: isFree(item),
                                 completed: isCompleted(item),
                                 onTap: {
                                     dismiss()

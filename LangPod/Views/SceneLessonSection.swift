@@ -42,6 +42,7 @@ struct CountryChipsRow: View {
 struct TodayLessonCard: View {
     let item: SceneLessonIndexItem
     let country: LessonCountry
+    var locked: Bool = false
     let onTap: () -> Void
 
     var body: some View {
@@ -67,14 +68,14 @@ struct TodayLessonCard: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(Color.textPrimary)
                         .lineLimit(1)
-                    Text("\(item.wordCount) 词 · \(item.zoneCount) 个场景 · 今日免费")
+                    Text("\(item.wordCount) 词 · \(item.zoneCount) 个场景\(locked ? " · Pro" : "")")
                         .font(.system(size: 12))
                         .foregroundColor(Color.textSecondary)
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
+                Image(systemName: locked ? "lock.fill" : "chevron.right")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(Color.textQuaternary)
+                    .foregroundColor(locked ? Color.warning : Color.textQuaternary)
             }
             .padding(12)
             .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
@@ -91,6 +92,8 @@ struct TodayLessonCard: View {
 struct LessonCoverCard: View {
     let item: SceneLessonIndexItem
     let locked: Bool
+    /// 是否免费样本（闸门收紧后不再读 item.isFree，由调用方按「第一国第一课」判定）
+    var free: Bool = false
     let completed: Bool
     let onTap: () -> Void
     var width: CGFloat? = 158
@@ -122,9 +125,9 @@ struct LessonCoverCard: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Color.textPrimary)
                         .lineLimit(1)
-                    Text("\(item.wordCount) 词\(item.isFree ? " · 免费" : "")")
+                    Text("\(item.wordCount) 词\(free ? " · 免费" : "")")
                         .font(.system(size: 11))
-                        .foregroundColor(item.isFree ? Color.success : Color.textTertiary)
+                        .foregroundColor(free ? Color.success : Color.textTertiary)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)

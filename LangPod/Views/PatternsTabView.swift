@@ -137,7 +137,7 @@ struct PatternsTabView: View {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 11))
                         .foregroundStyle(Color.warning)
-                } else if item.isFree {
+                } else if isFreeCategory(item) {
                     Text("免费")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(Color.success)
@@ -201,8 +201,18 @@ struct PatternsTabView: View {
         }
     }
 
+    /// 免费闸门：只有第一个组的第一个分类（寒暄开场）免费，其余需订阅
+    private var freeCategoryId: String? {
+        expressionStore.groups.first?.categories.first?.id
+    }
+
+    private func isFreeCategory(_ item: ExpressionCategoryIndexItem) -> Bool {
+        item.id == freeCategoryId
+    }
+
     private func isLocked(_ item: ExpressionCategoryIndexItem) -> Bool {
-        !item.isFree && !subscriptionManager.isProUser
+        if subscriptionManager.isProUser { return false }
+        return !isFreeCategory(item)
     }
 
     private func trackPaywall(_ item: ExpressionCategoryIndexItem) {
@@ -246,6 +256,8 @@ struct ExpressionSceneCard: View {
     var width: CGFloat? = 200
 
     private var coverUrl: String {
+        // 优先按句意的隐喻封面，其次对话场景图，最后分类通用封面
+        if let cover = expression.cover, !cover.isEmpty { return cover }
         if let img = expression.scene?.image, !img.isEmpty { return img }
         return fallbackCover
     }
