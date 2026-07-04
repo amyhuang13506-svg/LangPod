@@ -420,6 +420,8 @@ struct LangPodApp: App {
             hasNewEpisodeToday: newEpisode != nil,
             forgottenWordsCount: forgottenCount,
             recentEncounteredWords: recentEncounters,
+            tasksCompletedToday: TaskEngine.shared.completedCount,
+            tasksTotalToday: TaskEngine.shared.totalCount,
             reminderHour: reminderHour,
             reminderMinute: reminderMinute
         )
