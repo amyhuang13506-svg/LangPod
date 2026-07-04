@@ -112,11 +112,13 @@ class LessonStore {
     /// 第一个国家 = 国家 chips 里的第一个（默认美国）
     var freeCountryId: String { countries.first?.id ?? "us" }
 
-    /// 免费样本课堂 id：仅当停留在第一个国家时，取「稳定顺序」的第一课（不含每日课）。
-    /// 用稳定分组而非每日随机分组，保证免费课固定不漂移。
+    /// 免费样本课堂 id：仅当停留在第一个国家时，取标了 is_free 的那一课（catalog 里
+    /// 只有美国 bank_account 为 true）。用 is_free 标记而非顺序，保证免费课固定不漂移，
+    /// 不受新增内容/日期排序影响（否则新加的 dentist 会因日期最新而抢占）。
     var freeSampleLessonId: String? {
         guard selectedCountry == freeCountryId else { return nil }
-        return stableByCategory.first?.lessons.first?.id ?? lessons.first { !$0.isDaily }?.id
+        return lessons.first { $0.isFree && !$0.isDaily }?.id
+            ?? lessons.first { !$0.isDaily }?.id
     }
 
     /// 该课堂是否为免费样本
@@ -124,15 +126,25 @@ class LessonStore {
         id == freeSampleLessonId
     }
 
-    /// 稳定分组（服务器 index 顺序，不随每日随机变），仅用于判定免费样本
+    /// 分类固定展示顺序（对应 lesson_catalog.CATEGORIES 的产品顺序），
+    /// 不随课程日期/index 顺序变——避免新增内容（如新加的 dentist）把某分类顶到最前。
+    static let categoryOrder = ["arrival", "food", "health", "settling", "social"]
+
+    /// 稳定分组（分类按 categoryOrder 固定排序），仅用于判定免费样本 + 作为展示分组基底
     private var stableByCategory: [(category: String, lessons: [SceneLessonIndexItem])] {
-        var order: [String] = []
-        var groups: [String: [SceneLessonIndexItem]] = [:]
+        var groups: [String: [SceneLessonIndexItem]] = [:]   // key = categoryZh
+        var enKey: [String: String] = [:]                    // categoryZh -> category(en)
         for lesson in lessons where !lesson.isDaily {
-            if groups[lesson.categoryZh] == nil { order.append(lesson.categoryZh) }
             groups[lesson.categoryZh, default: []].append(lesson)
+            enKey[lesson.categoryZh] = lesson.category
         }
-        return order.map { ($0, groups[$0] ?? []) }
+        let order = Self.categoryOrder
+        return groups.keys.sorted { a, b in
+            let ia = order.firstIndex(of: enKey[a] ?? "") ?? order.count
+            let ib = order.firstIndex(of: enKey[b] ?? "") ?? order.count
+            if ia != ib { return ia < ib }
+            return a < b
+        }.map { ($0, groups[$0] ?? []) }
     }
 
     /// 按分类分组：分类顺序稳定，分类内课程「按当日随机」排序（当天稳定、每天变），
