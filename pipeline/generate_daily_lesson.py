@@ -181,6 +181,11 @@ def main():
         print("   (dry-run，不生成)")
         return
 
+    # 每天最多一节：当天已产出则跳过（手动跑 + cron 同日不会重复）
+    if state.get("last_date") == today:
+        print("📅 今天（%s）已产出每日课，跳过。" % today)
+        return
+
     out_dir = os.path.join(LESSONS_DIR, cc, lid)
     out_path = os.path.join(out_dir, "lesson.json")
 
