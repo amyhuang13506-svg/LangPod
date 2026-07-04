@@ -18,6 +18,22 @@ class SentenceStore {
         sentences.filter { $0.isPracticeable }
     }
 
+    // MARK: - 掌握分类（仿 VocabularyStore：已掌握 / 复习中 / 新句）
+
+    /// 已掌握：连词成句答对 ≥2（30 天内练过）
+    var strongSentences: [SavedSentence] { sentences.filter { $0.memoryState == .strong } }
+    /// 复习中：答对 1 次
+    var fadingSentences: [SavedSentence] { sentences.filter { $0.memoryState == .fading } }
+    /// 新句：还没练过（答对 0 次）
+    var newSentences: [SavedSentence] { sentences.filter { $0.memoryState == .forgetting } }
+
+    /// 连词成句答对一句 → 记账（推进 复习中 / 已掌握）。SentencePracticeView.checkAnswer 调用。
+    func recordPracticeCorrect(_ english: String) {
+        guard let i = sentences.firstIndex(where: { $0.english == english }) else { return }
+        sentences[i].recordPracticeCorrect()
+        persist()
+    }
+
     func isSaved(_ english: String) -> Bool {
         sentences.contains { $0.english == english }
     }

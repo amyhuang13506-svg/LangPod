@@ -516,6 +516,8 @@ struct SentencePracticeView: View {
             }
             playCurrent()
             sessionPracticed.insert(correctSentence)
+            // 记账：答对一句 → 推进该句掌握状态（新句 → 复习中 → 已掌握）
+            sentenceStore.recordPracticeCorrect(correctSentence)
         } else {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             withAnimation(.easeInOut(duration: 0.3)) {

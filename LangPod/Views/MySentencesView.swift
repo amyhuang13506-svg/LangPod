@@ -9,6 +9,9 @@ struct MySentencesView: View {
     @State private var showPractice = false
     @State private var showQuiz = false
 
+    private enum SentenceFilter { case all, strong, fading, new }
+    @State private var filter: SentenceFilter = .all
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.appBackground.ignoresSafeArea()
@@ -19,6 +22,9 @@ struct MySentencesView: View {
                 if sentenceStore.sentences.isEmpty {
                     emptyState
                 } else {
+                    statsCards
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 10)
                     sentenceList
                 }
             }
@@ -67,22 +73,78 @@ struct MySentencesView: View {
         .padding(.bottom, 8)
     }
 
+    // MARK: - 掌握分类统计卡（参照「我的单词」，可点筛选列表）
+
+    private var statsCards: some View {
+        HStack(spacing: 10) {
+            filterCard(.strong, count: sentenceStore.strongSentences.count, label: "已掌握",
+                       textColor: Color(hex: "16A34A"), bgColor: Color.successLight, activeBorder: Color.success)
+            filterCard(.fading, count: sentenceStore.fadingSentences.count, label: "复习中",
+                       textColor: Color(hex: "D97706"), bgColor: Color.warningLight, activeBorder: Color.warning)
+            filterCard(.new, count: sentenceStore.newSentences.count, label: "新句",
+                       textColor: Color.appPrimary, bgColor: Color.primaryLight, activeBorder: Color.appPrimary)
+        }
+    }
+
+    private func filterCard(_ f: SentenceFilter, count: Int, label: String, textColor: Color, bgColor: Color, activeBorder: Color) -> some View {
+        let isActive = filter == f
+        return Button {
+            withAnimation(.easeInOut(duration: 0.2)) { filter = filter == f ? .all : f }
+        } label: {
+            VStack(spacing: 4) {
+                Text("\(count)")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(textColor)
+                Text(label)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(textColor)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(bgColor, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(isActive ? activeBorder : Color.clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var filteredSentences: [SavedSentence] {
+        switch filter {
+        case .all: sentenceStore.sentences
+        case .strong: sentenceStore.strongSentences
+        case .fading: sentenceStore.fadingSentences
+        case .new: sentenceStore.newSentences
+        }
+    }
+
     // MARK: - List（左滑删除）
 
     private var sentenceList: some View {
         List {
-            ForEach(sentenceStore.sentences) { sentence in
-                sentenceRow(sentence)
+            if filteredSentences.isEmpty {
+                Text(filter == .strong ? "还没有已掌握的句子，多练几轮连词成句" : "这个分类暂时没有句子")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 30)
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            withAnimation { sentenceStore.remove(sentence) }
-                        } label: {
-                            Label("删除", systemImage: "trash")
+            } else {
+                ForEach(filteredSentences) { sentence in
+                    sentenceRow(sentence)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                withAnimation { sentenceStore.remove(sentence) }
+                            } label: {
+                                Label("删除", systemImage: "trash")
+                            }
                         }
-                    }
+                }
             }
             // 给底部固定 CTA 留空间
             Color.clear.frame(height: 90)

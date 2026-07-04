@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(DataStore.self) private var dataStore
     @Environment(VocabularyStore.self) private var vocabularyStore
+    @Environment(SentenceStore.self) private var sentenceStore
     @Environment(AudioPlayer.self) private var audioPlayer
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(AppState.self) private var appState
@@ -40,10 +41,10 @@ struct ProfileView: View {
                     // Profile card
                     profileCard
 
-                    // 战绩区：Streak 卡（带今日任务进度环，点击重开任务弹窗）+ 三格统计 + 本周进度
+                    // 战绩区：Streak 卡（带今日任务进度环，点击重开任务弹窗）+ 本周进度 + 三格统计
                     streakCard
-                    statsRow
                     weekProgress
+                    statsRow
 
                     // Learning settings
                     settingsSection
@@ -53,6 +54,10 @@ struct ProfileView: View {
 
                     // Legal
                     legalSection
+
+                    #if DEBUG
+                    debugTaskSection
+                    #endif
 
                     // Version
                     Text("Castlingo v\(appVersionDisplay)")
@@ -198,9 +203,9 @@ struct ProfileView: View {
 
     private var statsRow: some View {
         HStack(spacing: 10) {
-            statCard(value: dataStore.totalListeningTimeDisplay, label: "总时长")
-            statCard(value: "\(dataStore.episodesCompleted)", label: "已听集数")
-            statCard(value: "\(vocabularyStore.strongWords.count)", label: "已掌握词汇")
+            statCard(value: dataStore.totalListeningTimeDisplay, label: "学习时长")
+            statCard(value: "\(vocabularyStore.strongWords.count)", label: "掌握词汇")
+            statCard(value: "\(sentenceStore.strongSentences.count)", label: "掌握句型")
         }
     }
 
@@ -239,6 +244,62 @@ struct ProfileView: View {
                 .stroke(Color.border, lineWidth: 1)
         )
     }
+
+    #if DEBUG
+    // MARK: - Debug · 每日任务（仅开发版，release 包里不出现）
+
+    private var debugTaskSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("🐛 Debug · 每日任务")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(Color.textSecondary)
+
+            Text("今日 \(TaskEngine.shared.completedCount)/\(TaskEngine.shared.totalCount)：\(taskDebugSummary)")
+                .font(.system(size: 11))
+                .foregroundStyle(Color.textTertiary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            debugButton("完成下一格（测横条 / 火苗）") {
+                TaskEngine.shared.debugCompleteNext()
+            }
+            debugButton("完成全部（测 4/4 庆祝）") {
+                TaskEngine.shared.debugCompleteAll()
+            }
+            debugButton("重置今日任务（清弹窗标记）") {
+                TaskEngine.shared.debugResetToday()
+            }
+            debugButton("打开任务弹窗") {
+                appState.showDailyTasks = true
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.warningLight.opacity(0.5), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.warning.opacity(0.4), lineWidth: 1)
+        )
+    }
+
+    private var taskDebugSummary: String {
+        TaskEngine.shared.todayTasks
+            .map { "\($0.type.title)\($0.done ? "✓" : "")" }
+            .joined(separator: " · ")
+    }
+
+    private func debugButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color.textPrimary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .background(.white, in: RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
+    }
+    #endif
 
     private var profileCard: some View {
         HStack(spacing: 14) {
