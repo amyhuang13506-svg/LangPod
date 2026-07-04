@@ -152,7 +152,7 @@ struct SentencePracticeView: View {
                 ForEach(selectedTokens) { token in
                     Button {
                         if answerState == .building {
-                            WordSpeaker.shared.speak(token.text)
+                            WordSpeaker.shared.speakToken(token.text)
                             removeToken(token)
                         }
                     } label: {
@@ -190,7 +190,7 @@ struct SentencePracticeView: View {
             ForEach(availableTokens) { token in
                 Button {
                     if answerState == .building {
-                        WordSpeaker.shared.speak(token.text)
+                        WordSpeaker.shared.speakToken(token.text)
                         addToken(token)
                     }
                 } label: {

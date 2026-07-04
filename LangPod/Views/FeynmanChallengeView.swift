@@ -101,7 +101,7 @@ struct FeynmanChallengeView: View {
                     Text(word.word)
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(Color.textPrimary)
-                    Button { WordSpeaker.shared.speak(word.word) } label: {
+                    Button { WordSpeaker.shared.speakToken(word.word) } label: {
                         Image(systemName: "speaker.wave.2.fill")
                             .font(.system(size: 18))
                             .foregroundStyle(Color.appPrimary)
@@ -164,7 +164,7 @@ struct FeynmanChallengeView: View {
                 ForEach(selectedTokens) { token in
                     Button {
                         if answerState == .building {
-                            WordSpeaker.shared.speak(token.text)
+                            WordSpeaker.shared.speakToken(token.text)
                             removeToken(token)
                         }
                     } label: {
@@ -202,7 +202,7 @@ struct FeynmanChallengeView: View {
             ForEach(availableTokens) { token in
                 Button {
                     if answerState == .building {
-                        WordSpeaker.shared.speak(token.text)
+                        WordSpeaker.shared.speakToken(token.text)
                         addToken(token)
                     }
                 } label: {

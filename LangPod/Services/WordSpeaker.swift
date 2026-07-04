@@ -25,11 +25,36 @@ class WordSpeaker: NSObject, AVSpeechSynthesizerDelegate {
         speakText(word, rate: 0.45, usePhoneticsMap: true, accent: accent)
     }
 
+    /// 连词成句词块专用：动态挑选系统最高音质嗓音（premium > enhanced > default），
+    /// 比默认 compact 自然。仅此方法启用高音质分支，不影响其它模块的发音。
+    func speakToken(_ word: String) {
+        speakText(word, rate: 0.45, usePhoneticsMap: true, preferHighQuality: true)
+    }
+
+    /// 缓存各语言的最高音质嗓音（枚举 speechVoices 一次）
+    private var cachedBestVoice: [String: AVSpeechSynthesisVoice] = [:]
+
+    private func bestQualityVoice(_ language: String) -> AVSpeechSynthesisVoice? {
+        if let v = cachedBestVoice[language] { return v }
+        func rank(_ q: AVSpeechSynthesisVoiceQuality) -> Int {
+            switch q {
+            case .premium: return 3
+            case .enhanced: return 2
+            default: return 1
+            }
+        }
+        let best = AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language == language }
+            .max { rank($0.quality) < rank($1.quality) }
+        if let best { cachedBestVoice[language] = best }
+        return best
+    }
+
     func speakSentence(_ sentence: String, accent: String) {
         speakText(sentence, rate: 0.48, usePhoneticsMap: false, accent: accent)
     }
 
-    private func speakText(_ text: String, rate: Float, usePhoneticsMap: Bool = true, accent: String? = nil) {
+    private func speakText(_ text: String, rate: Float, usePhoneticsMap: Bool = true, accent: String? = nil, preferHighQuality: Bool = false) {
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .duckOthers)
             try AVAudioSession.sharedInstance().setActive(true)
@@ -66,7 +91,10 @@ class WordSpeaker: NSObject, AVSpeechSynthesizerDelegate {
 
         let utterance = AVSpeechUtterance(string: spokenText)
 
-        if let accent, accent != "en-US", let voice = AVSpeechSynthesisVoice(language: accent) {
+        if preferHighQuality, let best = bestQualityVoice(accent ?? "en-US") {
+            // 连词成句词块：系统最高音质嗓音（若设备装了 enhanced/premium 则用）
+            utterance.voice = best
+        } else if let accent, accent != "en-US", let voice = AVSpeechSynthesisVoice(language: accent) {
             utterance.voice = voice
         } else if let enhanced = AVSpeechSynthesisVoice(identifier: "com.apple.voice.enhanced.en-US.Samantha")
             ?? AVSpeechSynthesisVoice(identifier: "com.apple.ttsbundle.Samantha-premium") {
