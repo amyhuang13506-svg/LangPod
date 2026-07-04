@@ -30,6 +30,15 @@ struct VocabularyView: View {
                 header
                     .padding(.bottom, 10)
 
+                // 全局今日卡：跨国家，置于国家 chips 之上
+                if let today = lessonStore.todayCard {
+                    TodayLessonCard(item: today.item, country: today.country, locked: isLocked(today.item)) {
+                        open(today.item, country: today.country)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
+                }
+
                 CountryChipsRow()
                     .environment(lessonStore)
                     .padding(.horizontal, 20)
@@ -37,12 +46,6 @@ struct VocabularyView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 22) {
-                        if let today = lessonStore.todayCard {
-                            TodayLessonCard(item: today.item, country: today.country, locked: isLocked(today.item)) {
-                                open(today.item, country: today.country)
-                            }
-                        }
-
                         ForEach(lessonStore.byCategory, id: \.category) { group in
                             categorySection(group.category, lessons: group.lessons)
                         }
