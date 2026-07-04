@@ -918,6 +918,8 @@ struct LessonRolePlayView: View {
         let line = roleplay.dialogue[revealed - 1]
         play(line)
         if revealed == roleplay.dialogue.count {
+            // 每日任务：模拟对话首次走完（guard 分支和「再来一遍」会二次触发，TaskEngine 按日去重）
+            NotificationCenter.default.post(name: .taskEventRoleplayFinished, object: nil)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 withAnimation(.spring(duration: 0.35)) { finished = true }
             }

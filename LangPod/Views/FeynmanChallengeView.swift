@@ -647,6 +647,8 @@ struct FeynmanChallengeView: View {
             Analytics.track(.feynmanComplete, params: [
                 "words_practiced": "\(sessionPracticedWords.count)"
             ])
+            // 每日任务：连词成句完成一轮
+            NotificationCenter.default.post(name: .taskEventSentenceBuildDone, object: nil)
             withAnimation { completed = true }
         }
     }

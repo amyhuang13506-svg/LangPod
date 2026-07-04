@@ -45,6 +45,11 @@ enum Analytics {
         case sentenceSave = "sentence_save"
         case sentencePracticeComplete = "sentence_practice_complete"
         case sentenceQuizComplete = "sentence_quiz_complete"
+        case dailyTaskPopupView = "daily_task_popup_view"
+        case dailyTaskPopupDismiss = "daily_task_popup_dismiss"
+        case dailyTaskComplete = "daily_task_complete"
+        case dailyTaskAllComplete = "daily_task_all_complete"
+        case dailyTaskEntryTap = "daily_task_entry_tap"
     }
 
     // MARK: - Setup

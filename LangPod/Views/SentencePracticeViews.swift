@@ -736,6 +736,8 @@ struct SceneQuizView: View {
             Analytics.track(.sentenceQuizComplete, params: [
                 "total": "\(questions.count)", "correct": "\(correctCount)",
             ])
+            // 每日任务：场景模拟完成一轮
+            NotificationCenter.default.post(name: .taskEventSceneQuizDone, object: nil)
         }
     }
 

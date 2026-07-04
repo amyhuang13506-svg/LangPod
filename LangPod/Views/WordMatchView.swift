@@ -477,6 +477,8 @@ struct WordMatchView: View {
                 "words_practiced": "\(sessionPracticedWords.count)",
                 "duration_sec": "\(Int(timer))"
             ])
+            // 每日任务：词义配对完成一轮（TaskEngine 独立记账，与免费限次的 markDailyMatchPlayed 语义不同）
+            NotificationCenter.default.post(name: .taskEventWordMatchDone, object: nil)
             withAnimation { gameComplete = true }
         } else {
             round += 1

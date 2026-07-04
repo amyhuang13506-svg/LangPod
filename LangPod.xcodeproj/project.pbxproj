@@ -31,6 +31,7 @@
 		A1991111 /* ExpressionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991111 /* ExpressionStore.swift */; };
 		A1991110 /* Expression.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991110 /* Expression.swift */; };
 		A1991106 /* SentencePracticeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991106 /* SentencePracticeViews.swift */; };
+		A1991107 /* TaskEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991107 /* TaskEngine.swift */; };
 		A1991105 /* MySentencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991105 /* MySentencesView.swift */; };
 		A1991104 /* PatternsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991104 /* PatternsTabView.swift */; };
 		A1991103 /* SentenceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991103 /* SentenceStore.swift */; };
@@ -155,6 +156,7 @@
 		A2991111 /* ExpressionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpressionStore.swift; sourceTree = "<group>"; };
 		A2991110 /* Expression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Expression.swift; sourceTree = "<group>"; };
 		A2991106 /* SentencePracticeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentencePracticeViews.swift; sourceTree = "<group>"; };
+		A2991107 /* TaskEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskEngine.swift; sourceTree = "<group>"; };
 		A2991105 /* MySentencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySentencesView.swift; sourceTree = "<group>"; };
 		A2991104 /* PatternsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternsTabView.swift; sourceTree = "<group>"; };
 		A2991103 /* SentenceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceStore.swift; sourceTree = "<group>"; };
@@ -323,6 +325,7 @@
 			isa = PBXGroup;
 			children = (
 				A2991111 /* ExpressionStore.swift */,
+				A2991107 /* TaskEngine.swift */,
 				A2991103 /* SentenceStore.swift */,
 				A299101 /* LessonAudioPlayer.swift */,
 				A290001 /* LessonStore.swift */,
@@ -596,6 +599,7 @@
 				A1991111 /* ExpressionStore.swift in Sources */,
 				A1991110 /* Expression.swift in Sources */,
 				A1991106 /* SentencePracticeViews.swift in Sources */,
+				A1991107 /* TaskEngine.swift in Sources */,
 				A1991105 /* MySentencesView.swift in Sources */,
 				A1991104 /* PatternsTabView.swift in Sources */,
 				A1991103 /* SentenceStore.swift in Sources */,

@@ -317,6 +317,13 @@ class DataStore {
             "total_completed": "\(episodesCompleted)",
             "level_up": didLevelUp ? "1" : "0"
         ])
+
+        // 每日任务：完整听完一集（挂方法体内，不挂 onEpisodeFinished 闭包——那有 3 份副本互相覆盖）
+        NotificationCenter.default.post(
+            name: .taskEventEpisodeCompleted,
+            object: nil,
+            userInfo: ["episode_id": (episode ?? currentEpisode)?.id ?? ""]
+        )
     }
 
     func isChannelUnlocked(_ channel: PodcastLevel) -> Bool {
@@ -324,6 +331,10 @@ class DataStore {
     }
 
     // MARK: - Streak
+
+    /// TaskEngine 用的公开包装：任务达成（含练习/课堂/句型等非听力任务）也点火苗。
+    /// lastListenDate 同步更新，推送仲裁不会误报断连。
+    func markStreakActivity() { updateStreak() }
 
     private func updateStreak() {
         let calendar = Calendar.current

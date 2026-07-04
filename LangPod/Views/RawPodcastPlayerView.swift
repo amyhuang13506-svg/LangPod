@@ -927,6 +927,15 @@ final class RawAudioController {
             self.currentTime = seconds
             // 每 0.5s 同步一次锁屏信息（进度条 + 播放状态）
             self.updateNowPlayingTime()
+            // 每日任务：真实播客收听秒数。必须用 timeControlStatus 过滤（seek 也触发 observer），
+            // 固定增量 0.5s 而非 time 差值；仅 audio 类型计入。
+            if self.podcast.mediaType == .audio, self.player.timeControlStatus == .playing {
+                NotificationCenter.default.post(
+                    name: .taskEventRawListenTick,
+                    object: nil,
+                    userInfo: ["seconds": 0.5]
+                )
+            }
             // 进度持久化：节流为 5s 一次，避免频繁 IO
             if seconds > 0 && abs(seconds - self.lastSavedTime) >= 5.0 {
                 Self.savePosition(seconds, for: self.podcast.id)

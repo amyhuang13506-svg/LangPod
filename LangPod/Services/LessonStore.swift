@@ -151,6 +151,12 @@ class LessonStore {
         guard !completedLessonIds.contains(lessonId) else { return }
         completedLessonIds.insert(lessonId)
         UserDefaults.standard.set(Array(completedLessonIds), forKey: "completedLessonIds")
+        // 每日任务：课堂学完（guard 已按 lessonId 去重，不会重复 fire）
+        NotificationCenter.default.post(
+            name: .taskEventLessonCompleted,
+            object: nil,
+            userInfo: ["lesson_id": lessonId]
+        )
     }
 
     func isCompleted(_ lessonId: String) -> Bool {
