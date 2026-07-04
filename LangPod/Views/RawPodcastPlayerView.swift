@@ -928,8 +928,9 @@ final class RawAudioController {
             // 每 0.5s 同步一次锁屏信息（进度条 + 播放状态）
             self.updateNowPlayingTime()
             // 每日任务：真实播客收听秒数。必须用 timeControlStatus 过滤（seek 也触发 observer），
-            // 固定增量 0.5s 而非 time 差值；仅 audio 类型计入。
-            if self.podcast.mediaType == .audio, self.player.timeControlStatus == .playing {
+            // 固定增量 0.5s 而非 time 差值。audio 和 video 都走这个 AVPlayer（OSS mp4），进度都拿得到，
+            // 所以两类都计；纯 iframe（无 audioUrl）没有 controller，天然不会触发这里。
+            if self.player.timeControlStatus == .playing {
                 NotificationCenter.default.post(
                     name: .taskEventRawListenTick,
                     object: nil,

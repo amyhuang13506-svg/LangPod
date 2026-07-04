@@ -42,7 +42,7 @@ enum DailyTaskType: String, Codable, CaseIterable {
     case practiceSceneQuiz = "practice_scene_quiz"
     case learnLesson = "learn_lesson"
     case roleplayLesson = "roleplay_lesson"
-    case rawPodcast10Min = "raw_podcast_10min"
+    case rawPodcast10Min = "raw_podcast_10min"   // 达标 5 分钟；case 名 / rawValue 保留，避免破坏已持久化的 record
 
     var title: String {
         switch self {
@@ -53,7 +53,7 @@ enum DailyTaskType: String, Codable, CaseIterable {
         case .practiceSceneQuiz: return "场景模拟一轮"
         case .learnLesson: return "学一篇场景课堂"
         case .roleplayLesson: return "走一遍模拟对话"
-        case .rawPodcast10Min: return "听 10 分钟真实播客"
+        case .rawPodcast10Min: return "听 5 分钟真实播客"
         }
     }
 
@@ -77,7 +77,7 @@ enum DailyTaskType: String, Codable, CaseIterable {
         case .practiceWordMatch, .practiceSentence, .practiceSceneQuiz: return 2
         case .learnLesson: return 3
         case .roleplayLesson: return 2
-        case .rawPodcast10Min: return 10
+        case .rawPodcast10Min: return 5
         }
     }
 
@@ -233,7 +233,7 @@ final class TaskEngine {
             pool.append(.learnLesson)
             pool.append(.roleplayLesson)
         }
-        if hasAudioRawPodcastToday() {
+        if hasRawPodcastForTask() {
             pool.append(.rawPodcast10Min)
         }
         pool += practices.filter { !usedPractices.contains($0) }   // 第二种练习
@@ -264,14 +264,12 @@ final class TaskEngine {
         return ds.episodes.contains { $0.date == today && ($0.patterns?.isEmpty == false) }
     }
 
-    /// 仅 audio 类型且当日有更新（publishedAt/crawledAt 是今天）。
-    private func hasAudioRawPodcastToday() -> Bool {
+    /// 是否有可作为「听真实播客」任务的原声。纳入 video —— audio 和 video 都走 AVPlayer（OSS mp4），
+    /// 进度都拿得到，能精确统计达标。判据用 audioUrl != nil（有它才走 AVPlayer；纯 iframe 拿不到进度，
+    /// 排除）。不要求「当日更新」：video 供给是历史 keynote，不会每天新增，卡当日更新等于永远不出现。
+    private func hasRawPodcastForTask() -> Bool {
         guard let ds = dataStore else { return false }
-        let today = Self.todayKey()
-        return ds.rawPodcasts.contains {
-            $0.mediaType == .audio &&
-            ($0.publishedAt == today || ($0.crawledAt?.hasPrefix(today) ?? false))
-        }
+        return ds.rawPodcasts.contains { $0.audioUrl != nil }
     }
 
     /// 确定性抽取：按 stableHash(id|seed) 排序取第一个。当天稳定、跨天变化、跨启动一致。
@@ -328,7 +326,7 @@ final class TaskEngine {
         NotificationCenter.default.post(name: .dailyTasksChanged, object: nil)
     }
 
-    /// 真实播客收听秒数：只在 audio 类型 + 确认在播时由挂点 post。累计 ≥600s 达标。
+    /// 真实播客收听秒数：audio / video 都走 AVPlayer，确认在播时由挂点 post。累计 ≥300s（5 分钟）达标。
     /// 落盘节流：每满 10s 整体写一次（杀进程最多丢 10s，可接受）。
     private func accumulateRawListen(seconds: Double) {
         ensureTodayRecord()
@@ -341,7 +339,7 @@ final class TaskEngine {
         record = r
         persist()
 
-        if r.rawListenSeconds >= 600 {
+        if r.rawListenSeconds >= 300 {
             complete(.rawPodcast10Min)
         }
     }
@@ -409,3 +407,33 @@ final class TaskEngine {
         LessonStore.dailyShuffleSeed()
     }
 }
+
+// MARK: - Debug helpers（仅开发版；#if DEBUG 包住，release 不编译）
+
+#if DEBUG
+extension TaskEngine {
+    /// 清空今日任务并重抽，同时清掉「弹窗已弹」「onboarding 当天不弹」两个闸门。
+    /// 之后切后台再回前台（或杀进程重启）即可复现「自动弹清单」。
+    func debugResetToday() {
+        record = nil
+        UserDefaults.standard.removeObject(forKey: storageKey)
+        UserDefaults.standard.removeObject(forKey: "onboardingCompletedDay")
+        pendingRawSeconds = 0
+        ensureTodayRecord()
+    }
+
+    /// 完成下一个未完成任务格——走真实 complete 流程（横条 + 火苗 + 进度环 + 4/4 庆祝），
+    /// 跳过等音频 / 免费额度。
+    func debugCompleteNext() {
+        guard let next = nextIncompleteTask() else { return }
+        complete(next)
+    }
+
+    /// 完成全部剩余任务格 → 触发 4/4 大庆祝。
+    func debugCompleteAll() {
+        while let next = nextIncompleteTask() {
+            complete(next)
+        }
+    }
+}
+#endif

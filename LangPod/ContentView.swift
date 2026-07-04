@@ -143,12 +143,13 @@ struct ContentView: View {
 
         case .rawPodcast10Min:
             selectedTab = 0
-            // 优先今日更新的 audio 类型，fallback 最新一条 audio；复用 pendingRawPodcastId 深链管道
+            // 纳入 video：只要有 audioUrl（走 AVPlayer，能统计进度）即可。优先今日更新，否则第一条。
+            // 复用 pendingRawPodcastId 深链管道。
+            let playable = dataStore.rawPodcasts.filter { $0.audioUrl != nil }
             let today = TaskEngine.todayKey()
-            let target = dataStore.rawPodcasts.first(where: {
-                $0.mediaType == .audio &&
-                ($0.publishedAt == today || ($0.crawledAt?.hasPrefix(today) ?? false))
-            }) ?? dataStore.rawPodcasts.first(where: { $0.mediaType == .audio })
+            let target = playable.first(where: {
+                $0.publishedAt == today || ($0.crawledAt?.hasPrefix(today) ?? false)
+            }) ?? playable.first
             if let podcast = target {
                 dataStore.pendingRawPodcastId = podcast.id
             }
