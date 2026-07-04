@@ -346,6 +346,13 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     private func advancePhase() {
         switch phase {
         case .englishRound(1):
+            // 每日任务：第 1 遍英语原音播完即达标（免费用户没有第 5 遍，不能以 5 遍为线）。
+            // skipCurrentRound / 播放失败 / mock 也会走到这里，误差可接受；TaskEngine 按日去重。
+            NotificationCenter.default.post(
+                name: .taskEventFirstRoundFinished,
+                object: nil,
+                userInfo: ["episode_id": currentEpisode?.id ?? ""]
+            )
             phase = .englishRound(2)
             startAfterDelay(1.0)
         case .englishRound(2):
@@ -558,6 +565,12 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                 "pattern_id": pattern.id,
                 "episode_id": parent.id,
             ])
+            // 每日任务：句型听完（repeatOne 会反复 fire，TaskEngine 按日去重）
+            NotificationCenter.default.post(
+                name: .taskEventPatternFinished,
+                object: nil,
+                userInfo: ["pattern_id": pattern.id]
+            )
             // Patterns are single-pass: just go to the next queue item.
             // repeatOne is honored by replaying the same pattern.
             if playOrder == .repeatOne {
@@ -608,6 +621,11 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             userPaused.toggle()
             isPlaying = !userPaused
         }
+        // 立刻把新状态推给锁屏 widget，否则要等下一次 0.5s 定时刷新才更新，
+        // 用户会觉得"按了没反应"。同时确保自己是 active —— 任何外部触发的
+        // toggle 都意味着用户期望我们继续主导锁屏控制。
+        RemoteCommandRouter.shared.active = self
+        updateNowPlayingInfo()
     }
 
     /// True if this user is entitled to play a given queue item right now.
@@ -822,6 +840,9 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = progress
         info[MPMediaItemPropertyPlaybackDuration] = duration
         info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? Double(playbackRate) : 0.0
+        info[MPNowPlayingInfoPropertyDefaultPlaybackRate] = 1.0
+        // 告诉 iOS 我们是纯音频，锁屏渲染对应的 play/pause/seek 控件而不是 video chrome
+        info[MPNowPlayingInfoPropertyMediaType] = MPNowPlayingInfoMediaType.audio.rawValue
 
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
