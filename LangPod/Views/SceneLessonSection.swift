@@ -117,6 +117,15 @@ struct LessonCoverCard: View {
 
                     if locked {
                         badge(icon: "lock.fill", color: .black.opacity(0.55))
+                    } else if item.isDaily && LessonAccessGate.isToday(item.date) {
+                        // 今日更新的每日课：右上角 NEW 角标
+                        Text("NEW")
+                            .font(.system(size: 9, weight: .heavy))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Capsule().fill(Color.hardOrange))
+                            .padding(6)
                     }
                 }
 
@@ -125,9 +134,9 @@ struct LessonCoverCard: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Color.textPrimary)
                         .lineLimit(1)
-                    Text("\(item.wordCount) 词\(free ? " · 免费" : "")")
+                    Text("\(item.wordCount) 词")
                         .font(.system(size: 11))
-                        .foregroundColor(free ? Color.success : Color.textTertiary)
+                        .foregroundColor(Color.textTertiary)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)

@@ -137,14 +137,29 @@ class LessonStore {
 
     /// 按分类分组：分类顺序稳定，分类内课程「按当日随机」排序（当天稳定、每天变），
     /// 让用户每天切分类都看到不一样的排布。不含今日课堂和往期每日。
+    /// 免费样本课（未订阅用户唯一免费的那一课）钉死在显示第一位，不随每日随机漂移。
     var byCategory: [(category: String, lessons: [SceneLessonIndexItem])] {
         let seed = Self.dailyShuffleSeed()
-        return stableByCategory.map { group in
-            let shuffled = group.lessons.sorted {
+        let pinnedId = freeSampleLessonId
+        // 今日更新的每日课：作为普通课卡插到它所属分类最前（封面右上角带 NEW 角标）
+        let daily = lessons.first { $0.isDaily && LessonAccessGate.isToday($0.date) }
+        var result = stableByCategory.map { group -> (category: String, lessons: [SceneLessonIndexItem]) in
+            var shuffled = group.lessons.sorted {
                 Self.stableHash("\($0.id)|\(seed)") < Self.stableHash("\($1.id)|\(seed)")
+            }
+            if let pinnedId, let idx = shuffled.firstIndex(where: { $0.id == pinnedId }) {
+                shuffled.insert(shuffled.remove(at: idx), at: 0)
+            }
+            if let daily, daily.categoryZh == group.category {
+                shuffled.insert(daily, at: 0)
             }
             return (group.category, shuffled)
         }
+        // 每日课的分类在当前国家没有其它课时，补一个分类组置顶
+        if let daily, !result.contains(where: { $0.category == daily.categoryZh }) {
+            result.insert((daily.categoryZh, [daily]), at: 0)
+        }
+        return result
     }
 
     /// 当日随机种子：本地时区 yyyy-MM-dd（当天所有排序稳定，跨天变化）
