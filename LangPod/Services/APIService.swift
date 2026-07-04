@@ -298,6 +298,22 @@ actor APIService {
         }
     }
 
+    /// 拉全局今日每日课（lessons/today.json）。跨国家，独立于当前所选国家。失败返回 nil。
+    func fetchTodayLesson() async -> SceneLessonToday? {
+        guard let url = URL(string: "\(baseURL)/lessons/today.json") else { return nil }
+        do {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
+            let rewritten = rewriteURLs(data)
+            return try JSONDecoder().decode(SceneLessonToday.self, from: rewritten)
+        } catch {
+            debugLog("⚠️ today lesson fetch error: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
     nonisolated func loadCachedLessonIndexSync(country: String) -> [SceneLessonIndexItem]? {
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("CastlingoEpisodes", isDirectory: true)

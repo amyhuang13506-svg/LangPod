@@ -24,8 +24,9 @@ import sys
 from datetime import datetime
 
 from config import OUTPUT_DIR
-from lesson_catalog import DAILY_SCENE_BACKLOG, CATEGORIES
+from lesson_catalog import DAILY_SCENE_BACKLOG, CATEGORIES, COUNTRIES
 from generate_lessons import _call_gpt, generate_lesson_content
+from upload_lessons import get_bucket
 
 LESSONS_DIR = os.path.join(OUTPUT_DIR, "lessons")
 STATE_PATH = os.path.join(LESSONS_DIR, "daily_state.json")
@@ -128,6 +129,31 @@ def build_lesson_def(entry, lid, zones):
     }
 
 
+def write_today_pointer(cc, lid, today):
+    """从重建好的 index.json 取该课 item，写全局 lessons/today.json 并上传 OSS。
+    App 顶部读它做跨国家「今日」置顶卡，不依赖当前所选国家。"""
+    bucket = get_bucket()
+    idx = json.loads(bucket.get_object("lessons/%s/index.json" % cc).read())
+    item = next((l for l in idx.get("lessons", []) if l["id"] == lid), None)
+    if item is None:
+        print("   ⚠️  today.json: 未在 index 找到 %s，跳过" % lid)
+        return
+    meta = COUNTRIES[cc]
+    today_obj = {
+        "country": cc,
+        "country_zh": meta["zh"],
+        "flag": meta["flag"],
+        "accent": meta["accent"],
+        "date": today,
+        "lesson": item,
+    }
+    bucket.put_object(
+        "lessons/today.json",
+        json.dumps(today_obj, ensure_ascii=False, indent=2).encode("utf-8"),
+    )
+    print("   📌 lessons/today.json → %s（%s）" % (lid, cc))
+
+
 def run_step(argv):
     print("   $ %s" % " ".join(argv))
     r = subprocess.run([sys.executable] + argv, cwd=HERE)
@@ -191,6 +217,13 @@ def main():
     run_step(["generate_lesson_audio.py", "--lesson", lid])
     print("☁️  上传 + 重建索引...")
     run_step(["upload_lessons.py", "--country", cc])
+
+    # 4b. 写全局今日指针（跨国家置顶卡）
+    print("📌 更新全局今日指针...")
+    try:
+        write_today_pointer(cc, lid, today)
+    except Exception as e:
+        print("   ⚠️  today.json 写入失败（不影响课堂本身）: %s" % e)
 
     # 5. 记录 state（成功后才记，失败可重跑同一课）
     state.setdefault("produced", []).append(lid)

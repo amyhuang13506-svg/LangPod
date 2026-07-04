@@ -45,6 +45,22 @@ struct SceneLessonIndex: Codable {
     }
 }
 
+/// 全局今日每日课指针（lessons/today.json）。每天由 pipeline 轮换国家产出后重写，
+/// App 不依赖当前所选国家，顶部固定展示当天这一课。
+struct SceneLessonToday: Codable {
+    let country: String
+    let countryZh: String
+    let flag: String
+    let accent: String?
+    let date: String
+    let lesson: SceneLessonIndexItem
+
+    enum CodingKeys: String, CodingKey {
+        case country, flag, accent, date, lesson
+        case countryZh = "country_zh"
+    }
+}
+
 struct SceneLessonIndexItem: Codable, Identifiable, Hashable {
     let id: String
     let titleZh: String

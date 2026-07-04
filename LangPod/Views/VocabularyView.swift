@@ -17,7 +17,7 @@ struct VocabularyView: View {
     @Environment(SentenceStore.self) private var sentenceStore
     @Environment(LessonStore.self) private var lessonStore
 
-    @State private var selectedLesson: SceneLessonIndexItem?
+    @State private var selectedLesson: LessonOpenTarget?
     @State private var showPaywall = false
     @State private var showMyVocabulary = false
     @State private var allTarget: LessonCategoryTarget?
@@ -37,9 +37,9 @@ struct VocabularyView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 22) {
-                        if let today = lessonStore.todayLesson {
-                            TodayLessonCard(item: today, country: lessonStore.currentCountry, locked: isLocked(today)) {
-                                open(today)
+                        if let today = lessonStore.todayCard {
+                            TodayLessonCard(item: today.item, country: today.country, locked: isLocked(today.item)) {
+                                open(today.item, country: today.country)
                             }
                         }
 
@@ -61,9 +61,12 @@ struct VocabularyView: View {
                 }
             }
         }
-        .onAppear { lessonStore.loadIfNeeded() }
-        .fullScreenCover(item: $selectedLesson) { item in
-            LessonDetailView(item: item, country: lessonStore.currentCountry)
+        .onAppear {
+            lessonStore.loadIfNeeded()
+            lessonStore.loadTodayIfNeeded()
+        }
+        .fullScreenCover(item: $selectedLesson) { target in
+            LessonDetailView(item: target.item, country: target.country)
                 .environment(store)
                 .environment(lessonStore)
                 .environment(sentenceStore)
@@ -181,19 +184,29 @@ struct VocabularyView: View {
 
     private func isLocked(_ item: SceneLessonIndexItem) -> Bool {
         if subscriptionManager.isProUser { return false }
+        // 今日每日课当天免费（与 LessonAccessGate.canAccess 一致）
+        if item.isDaily && LessonAccessGate.isToday(item.date) { return false }
         return !lessonStore.isFreeSample(item.id)
     }
 
-    private func open(_ item: SceneLessonIndexItem) {
+    /// 打开课堂。country 缺省用当前所选国家；今日全局卡传该课自己的国家。
+    private func open(_ item: SceneLessonIndexItem, country: LessonCountry? = nil) {
         if isLocked(item) {
             Analytics.track(.lessonPaywallView, params: [
                 "lesson_id": item.id, "country": lessonStore.selectedCountry,
             ])
             showPaywall = true
         } else {
-            selectedLesson = item
+            selectedLesson = LessonOpenTarget(item: item, country: country ?? lessonStore.currentCountry)
         }
     }
+}
+
+/// 打开课堂详情的目标（课堂条目 + 所属国家，支持跨国家打开今日全局卡）
+struct LessonOpenTarget: Identifiable {
+    let item: SceneLessonIndexItem
+    let country: LessonCountry
+    var id: String { item.id }
 }
 
 /// 「查看更多」的打开目标（分类标题 + 该分类全部课堂）

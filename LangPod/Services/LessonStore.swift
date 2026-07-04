@@ -8,6 +8,10 @@ class LessonStore {
     var lessons: [SceneLessonIndexItem] = []
     var isLoadingIndex = false
 
+    /// 全局今日每日课（跨国家，独立于所选国家），来自 lessons/today.json
+    var globalToday: SceneLessonToday?
+    private var loadedToday = false
+
     /// 上次浏览的国家（默认美国）。非锁定，只是下次默认停留。
     var selectedCountry: String {
         didSet {
@@ -34,9 +38,19 @@ class LessonStore {
     func loadIfNeeded() {
         guard lessons.isEmpty && !isLoadingIndex else { return }
         loadIndex(for: selectedCountry)
+        loadTodayIfNeeded()
         Task {
             let remote = await APIService.shared.fetchLessonCountries()
             if !remote.isEmpty { self.countries = remote }
+        }
+    }
+
+    /// 拉全局今日课（每次会话一次）。跨国家置顶展示用。
+    func loadTodayIfNeeded() {
+        guard !loadedToday else { return }
+        loadedToday = true
+        Task {
+            if let t = await APIService.shared.fetchTodayLesson() { self.globalToday = t }
         }
     }
 
@@ -81,6 +95,15 @@ class LessonStore {
     /// 每日课堂轮换国家产出，所以也在其它国家缓存里找不到时以当前国家为准。
     var todayLesson: SceneLessonIndexItem? {
         lessons.first { $0.isDaily && LessonAccessGate.isToday($0.date) }
+    }
+
+    /// 全局今日课卡（跨国家置顶）：仅当 today.json 日期是今天才展示；带该课自己的国家（含口音）。
+    var todayCard: (item: SceneLessonIndexItem, country: LessonCountry)? {
+        guard let t = globalToday, LessonAccessGate.isToday(t.date) else { return nil }
+        let country = countries.first { $0.id == t.country }
+            ?? LessonCountry.defaults.first { $0.id == t.country }
+            ?? currentCountry
+        return (t.lesson, country)
     }
 
     // MARK: - 免费闸门
