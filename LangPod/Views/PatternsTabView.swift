@@ -148,12 +148,6 @@ struct PatternsTabView: View {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 11))
                         .foregroundStyle(Color.warning)
-                } else if isFreeCategory(item) && !subscriptionManager.isProUser {
-                    Text("首条免费")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(Color.success)
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Capsule().fill(Color.successLight))
                 }
                 Spacer()
                 Button {
