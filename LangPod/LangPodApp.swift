@@ -10,6 +10,14 @@ class AppState {
     var toastTitle = ""
     var toastWordCount = 0
     var completedEpisode: Episode?
+
+    // 每日任务系统
+    var showDailyTasks = false            // 任务清单弹窗（根部 overlay，非 fullScreenCover，避免多 cover 冲突）
+    var showTaskCelebration = false       // 4/4 点火大庆祝
+    var pendingTaskCelebration = false    // 完成页/LevelUp 占用时排队，等 dismiss 再弹
+    var taskToast: TaskToastData?         // 中途横条（完成的任务 + 下一个任务）
+    var taskToastGeneration = 0           // 自动消失的代际闸门（新横条出现时旧定时器作废）
+    var showTaskShareCard = false         // 里程碑日庆祝页「炫耀一下」→ 分享海报
 }
 
 @main
@@ -74,6 +82,66 @@ struct LangPodApp: App {
                     .padding(.bottom, 100)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+
+                // 每日任务横条（顶部滑入，3.5s 自动消失，点击直达下一任务）
+                if let toast = appState.taskToast {
+                    TaskToastBar(data: toast) {
+                        withAnimation { appState.taskToast = nil }
+                        if let next = toast.nextType {
+                            Analytics.track(.dailyTaskEntryTap, params: ["source": "toast"])
+                            NotificationCenter.default.post(
+                                name: .dailyTaskDeepLink,
+                                object: nil,
+                                userInfo: ["type": next.rawValue]
+                            )
+                        }
+                    }
+                    .padding(.top, 8)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(2)
+                }
+
+                // 每日任务清单弹窗（全天最多自动弹 1 次；「我的」页 Streak 卡可随时重开）
+                if appState.showDailyTasks {
+                    DailyTaskPopupView(
+                        onClose: {
+                            Analytics.track(.dailyTaskPopupDismiss, params: [
+                                "done_count": "\(TaskEngine.shared.completedCount)"
+                            ])
+                            withAnimation(.easeOut(duration: 0.2)) { appState.showDailyTasks = false }
+                        },
+                        onTapTask: { type in
+                            Analytics.track(.dailyTaskEntryTap, params: ["source": "popup"])
+                            withAnimation(.easeOut(duration: 0.2)) { appState.showDailyTasks = false }
+                            NotificationCenter.default.post(
+                                name: .dailyTaskDeepLink,
+                                object: nil,
+                                userInfo: ["type": type.rawValue]
+                            )
+                        }
+                    )
+                    .environment(dataStore)
+                    .transition(.opacity)
+                    .zIndex(3)
+                }
+
+                // 4/4 点火大庆祝（完成页/LevelUp 优先，占用时排队）
+                if appState.showTaskCelebration {
+                    TaskCelebrationView(
+                        onShare: {
+                            appState.showTaskCelebration = false
+                            appState.showTaskShareCard = true
+                        },
+                        onContinue: {
+                            withAnimation(.easeOut(duration: 0.25)) { appState.showTaskCelebration = false }
+                        }
+                    )
+                    .environment(dataStore)
+                    .environment(vocabularyStore)
+                    .transition(.opacity)
+                    .zIndex(4)
+                }
             }
             .fullScreenCover(isPresented: $appState.showCompletePage) {
                 if let episode = appState.completedEpisode {
@@ -102,8 +170,24 @@ struct LangPodApp: App {
                     .environment(subscriptionManager)
                 }
             }
+            .sheet(isPresented: Binding(
+                get: { appState.showTaskShareCard },
+                set: { appState.showTaskShareCard = $0 }
+            )) {
+                ShareCardView()
+                    .environment(dataStore)
+                    .environment(vocabularyStore)
+            }
             .task {
                 setupPlayGate()
+                // 每日任务引擎：注入依赖 + 抽取今日任务（等 episodes 加载稳定后）
+                TaskEngine.shared.configure(
+                    dataStore: dataStore,
+                    vocabularyStore: vocabularyStore,
+                    lessonStore: lessonStore,
+                    subscriptionManager: subscriptionManager
+                )
+                setupTaskEngineCallbacks()
                 // 锁屏 / 控制中心 handler 全局注册一次，谁在播谁就是 active。
                 RemoteCommandRouter.shared.setup()
                 // Deferred analytics bootstrap: runs after first frame.
@@ -118,13 +202,17 @@ struct LangPodApp: App {
                     PushService.shared.requestPushAuthorization()
                 }
                 refreshDailyNotification()
+                await autoShowDailyTasksIfNeeded()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 dataStore.loadEpisodes()
+                // 跨 0 点回前台 → 任务整体作废重抽（同一天不动）
+                TaskEngine.shared.checkDayRollover()
                 refreshDailyNotification()
                 // Re-register on every foreground in case the user just turned
                 // on permission in Settings (system holds the prompt for life).
                 PushService.shared.registerIfAuthorized()
+                Task { await autoShowDailyTasksIfNeeded() }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
                 // Most important refresh: we just closed the app, so state is
@@ -134,6 +222,17 @@ struct LangPodApp: App {
             }
             .onReceive(NotificationCenter.default.publisher(for: .reminderTimeChanged)) { _ in
                 refreshDailyNotification()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .dailyTasksChanged)) { _ in
+                // 任务完成/重抽 → 重排每日推送（「只差 1 个」档要用最新进度）
+                refreshDailyNotification()
+            }
+            .onChange(of: appState.showCompletePage) { _, showing in
+                // 完成页关闭 → 补发排队中的 4/4 庆祝（优先级：完成页/LevelUp > 任务庆祝）
+                if !showing { dequeuePendingCelebrationIfPossible() }
+            }
+            .onChange(of: dataStore.pendingLevelUp) { _, pending in
+                if pending == nil { dequeuePendingCelebrationIfPossible() }
             }
             .onChange(of: dataStore.selectedLevel) { _, newLevel in
                 // Re-register so server-side level filter stays accurate after
@@ -147,8 +246,84 @@ struct LangPodApp: App {
                 if completed {
                     notificationManager.requestPermission()
                     PushService.shared.requestPushAuthorization()
+                    // 记录 onboarding 完成日：当天不自动弹任务清单（不打断新用户首体验）
+                    UserDefaults.standard.set(TaskEngine.todayKey(), forKey: "onboardingCompletedDay")
                 }
             }
+        }
+    }
+
+    // MARK: - Daily Tasks
+
+    /// TaskEngine → UI 的两个回调：中途横条 + 4/4 大庆祝。主线程调用（TaskEngine 事件订阅在 main queue）。
+    private func setupTaskEngineCallbacks() {
+        TaskEngine.shared.onTaskCompleted = { [self] completed, next in
+            // 4/4 时不出横条（大庆祝接管）；清单弹窗打开时也不出（清单自身实时打勾）
+            guard next != nil, !appState.showDailyTasks else { return }
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                appState.taskToast = TaskToastData(completedTitle: completed.title, nextType: next)
+            }
+            // 3.5s 自动消失；同刻多任务达成会覆盖为最新一条，代际闸门防旧定时器误关新横条
+            appState.taskToastGeneration += 1
+            let gen = appState.taskToastGeneration
+            Task {
+                try? await Task.sleep(nanoseconds: 3_500_000_000)
+                if appState.taskToastGeneration == gen {
+                    withAnimation { appState.taskToast = nil }
+                }
+            }
+        }
+
+        TaskEngine.shared.onAllCompleted = { [self] in
+            withAnimation { appState.taskToast = nil }
+            // 完成页 / LevelUp 正在展示 → 排队等其关闭（陷阱：同 view 多 cover 同时置 true 会静默丢）
+            if appState.showCompletePage || dataStore.pendingLevelUp != nil {
+                appState.pendingTaskCelebration = true
+            } else {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    appState.showDailyTasks = false
+                    appState.showTaskCelebration = true
+                }
+            }
+        }
+    }
+
+    private func dequeuePendingCelebrationIfPossible() {
+        guard appState.pendingTaskCelebration,
+              !appState.showCompletePage,
+              dataStore.pendingLevelUp == nil else { return }
+        appState.pendingTaskCelebration = false
+        // 等完成页 dismiss 动画走完再弹，避免转场撞车
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                appState.showTaskCelebration = true
+            }
+        }
+    }
+
+    /// 冷启动 / 回前台自动弹任务清单。条件（全部满足）：已 onboarding 且非 onboarding 当天、
+    /// 今日没自动弹过、没在播放、完成页/庆祝没在展示。首页渲染后延迟 1.5s。
+    private func autoShowDailyTasksIfNeeded() async {
+        guard dataStore.hasCompletedOnboarding else { return }
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
+
+        let engine = TaskEngine.shared
+        // 对账：各挂点事件实时落盘（锁屏听完的已带 ✓），这里只需保证今日记录已抽取
+        engine.ensureTodayRecord()
+
+        let onboardingDay = UserDefaults.standard.string(forKey: "onboardingCompletedDay")
+        guard onboardingDay != TaskEngine.todayKey(),
+              !engine.popupShownToday,
+              !audioPlayer.isPlaying,
+              !appState.showCompletePage,
+              !appState.showTaskCelebration,
+              !appState.showDailyTasks else { return }
+
+        engine.markPopupShown()
+        Analytics.track(.dailyTaskPopupView)
+        withAnimation(.easeOut(duration: 0.25)) {
+            appState.showDailyTasks = true
         }
     }
 

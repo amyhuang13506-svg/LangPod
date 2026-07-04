@@ -4,26 +4,43 @@ struct ContentView: View {
     @Environment(DataStore.self) private var dataStore
     @Environment(AudioPlayer.self) private var audioPlayer
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(VocabularyStore.self) private var vocabularyStore
+    @Environment(LessonStore.self) private var lessonStore
+    @Environment(SentenceStore.self) private var sentenceStore
+
+    @State private var selectedTab = 0
+
+    /// 每日任务 deep link 拉起的练习页（直接从 ContentView present，避免嵌套跳转链）
+    private enum TaskPracticeTarget: String, Identifiable {
+        case wordMatch, sentenceBuild, sceneQuiz
+        var id: String { rawValue }
+    }
+    @State private var taskPractice: TaskPracticeTarget?
+    @State private var taskLesson: SceneLessonIndexItem?
 
     var body: some View {
         if dataStore.hasCompletedOnboarding {
-            TabView {
+            TabView(selection: $selectedTab) {
                 HomeView()
                     .tabItem {
                         Label("首页", systemImage: "house")
                     }
+                    .tag(0)
                 VocabularyView()
                     .tabItem {
                         Label("词汇", systemImage: "textformat")
                     }
+                    .tag(1)
                 PatternsTabView()
                     .tabItem {
                         Label("句型", systemImage: "text.bubble")
                     }
+                    .tag(2)
                 ProfileView()
                     .tabItem {
                         Label("我的", systemImage: "person")
                     }
+                    .tag(3)
             }
             .tint(.accent)
             .onChange(of: subscriptionManager.isProUser, initial: true) {
@@ -46,8 +63,95 @@ struct ContentView: View {
                 let level = note.userInfo?["level"] as? String ?? ""
                 openEpisodeFromPush(episodeId: episodeId, levelHint: level)
             }
+            .onReceive(NotificationCenter.default.publisher(for: .dailyTaskDeepLink)) { note in
+                guard let raw = note.userInfo?["type"] as? String,
+                      let type = DailyTaskType(rawValue: raw) else { return }
+                handleTaskDeepLink(type)
+            }
+            .fullScreenCover(item: $taskPractice) { target in
+                switch target {
+                case .wordMatch:
+                    WordMatchView()
+                        .environment(vocabularyStore)
+                        .environment(subscriptionManager)
+                        .onAppear { if audioPlayer.isPlaying { audioPlayer.togglePlayPause() } }
+                case .sentenceBuild:
+                    FeynmanChallengeView()
+                        .environment(vocabularyStore)
+                        .environment(subscriptionManager)
+                        .onAppear { if audioPlayer.isPlaying { audioPlayer.togglePlayPause() } }
+                case .sceneQuiz:
+                    SceneQuizView()
+                        .environment(sentenceStore)
+                }
+            }
+            .fullScreenCover(item: $taskLesson) { item in
+                LessonDetailView(item: item, country: lessonStore.currentCountry)
+                    .environment(vocabularyStore)
+                    .environment(lessonStore)
+                    .environment(sentenceStore)
+            }
         } else {
             OnboardingView()
+        }
+    }
+
+    // MARK: - 每日任务 deep link（弹窗任务格 / 中途横条 → 直达对应功能）
+
+    private func handleTaskDeepLink(_ type: DailyTaskType) {
+        switch type {
+        case .listenEpisode:
+            selectedTab = 0
+            // 播今日第一集（走 playGate，免费额度照常生效）
+            let today = DateFormatter.episodeDate.string(from: Date())
+            let target = dataStore.episodes.last(where: { $0.date == today })
+                ?? dataStore.currentEpisode
+                ?? dataStore.episodes.last
+            if let ep = target {
+                _ = audioPlayer.playEpisode(ep, in: dataStore.episodes)
+            }
+
+        case .listenPattern:
+            selectedTab = 0
+            // 播今日第一个句型（今日句型免费；被额度 gate 挡下就停在首页，由今日句型卡走付费墙）
+            let today = DateFormatter.episodeDate.string(from: Date())
+            let pairs: [(Pattern, Episode)] = dataStore.episodes
+                .filter { $0.date == today }
+                .flatMap { ep in (ep.patterns ?? []).map { ($0, ep) } }
+            if let first = pairs.first {
+                let items: [PlayItem] = pairs.map { .pattern($0.0, parentEpisode: $0.1) }
+                _ = audioPlayer.playPattern(first.0, parentEpisode: first.1, in: items)
+            }
+
+        case .practiceWordMatch:
+            selectedTab = 1
+            taskPractice = .wordMatch
+
+        case .practiceSentence:
+            selectedTab = 1
+            taskPractice = .sentenceBuild
+
+        case .practiceSceneQuiz:
+            selectedTab = 1
+            taskPractice = .sceneQuiz
+
+        case .learnLesson, .roleplayLesson:
+            selectedTab = 1
+            // 开今日课（无今日课时退回第一篇课堂）；模拟对话在课堂详情页内
+            lessonStore.loadIfNeeded()
+            taskLesson = lessonStore.todayLesson ?? lessonStore.lessons.first
+
+        case .rawPodcast10Min:
+            selectedTab = 0
+            // 优先今日更新的 audio 类型，fallback 最新一条 audio；复用 pendingRawPodcastId 深链管道
+            let today = TaskEngine.todayKey()
+            let target = dataStore.rawPodcasts.first(where: {
+                $0.mediaType == .audio &&
+                ($0.publishedAt == today || ($0.crawledAt?.hasPrefix(today) ?? false))
+            }) ?? dataStore.rawPodcasts.first(where: { $0.mediaType == .audio })
+            if let podcast = target {
+                dataStore.pendingRawPodcastId = podcast.id
+            }
         }
     }
 
