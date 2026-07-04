@@ -89,10 +89,11 @@ class LessonStore {
     /// 第一个国家 = 国家 chips 里的第一个（默认美国）
     var freeCountryId: String { countries.first?.id ?? "us" }
 
-    /// 免费样本课堂 id：仅当停留在第一个国家时，取展示顺序的第一课（不含每日课）
+    /// 免费样本课堂 id：仅当停留在第一个国家时，取「稳定顺序」的第一课（不含每日课）。
+    /// 用稳定分组而非每日随机分组，保证免费课固定不漂移。
     var freeSampleLessonId: String? {
         guard selectedCountry == freeCountryId else { return nil }
-        return byCategory.first?.lessons.first?.id ?? lessons.first { !$0.isDaily }?.id
+        return stableByCategory.first?.lessons.first?.id ?? lessons.first { !$0.isDaily }?.id
     }
 
     /// 该课堂是否为免费样本
@@ -100,8 +101,8 @@ class LessonStore {
         id == freeSampleLessonId
     }
 
-    /// 按分类分组（保持首次出现顺序），不含今日课堂和往期每日
-    var byCategory: [(category: String, lessons: [SceneLessonIndexItem])] {
+    /// 稳定分组（服务器 index 顺序，不随每日随机变），仅用于判定免费样本
+    private var stableByCategory: [(category: String, lessons: [SceneLessonIndexItem])] {
         var order: [String] = []
         var groups: [String: [SceneLessonIndexItem]] = [:]
         for lesson in lessons where !lesson.isDaily {
@@ -109,6 +110,33 @@ class LessonStore {
             groups[lesson.categoryZh, default: []].append(lesson)
         }
         return order.map { ($0, groups[$0] ?? []) }
+    }
+
+    /// 按分类分组：分类顺序稳定，分类内课程「按当日随机」排序（当天稳定、每天变），
+    /// 让用户每天切分类都看到不一样的排布。不含今日课堂和往期每日。
+    var byCategory: [(category: String, lessons: [SceneLessonIndexItem])] {
+        let seed = Self.dailyShuffleSeed()
+        return stableByCategory.map { group in
+            let shuffled = group.lessons.sorted {
+                Self.stableHash("\($0.id)|\(seed)") < Self.stableHash("\($1.id)|\(seed)")
+            }
+            return (group.category, shuffled)
+        }
+    }
+
+    /// 当日随机种子：本地时区 yyyy-MM-dd（当天所有排序稳定，跨天变化）
+    static func dailyShuffleSeed() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = .current
+        return f.string(from: Date())
+    }
+
+    /// 确定性哈希（FNV-1a）：不用 Swift 随机化的 hashValue，保证跨启动/跨设备一致
+    static func stableHash(_ s: String) -> UInt64 {
+        var h: UInt64 = 1469598103934665603
+        for b in s.utf8 { h ^= UInt64(b); h = h &* 1099511628211 }
+        return h
     }
 
     /// 往期每日场景（已过期，Pro）
