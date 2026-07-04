@@ -254,7 +254,7 @@ struct PaywallView: View {
                 .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(Color.bodyText)
 
-            Text("轻松提升英语听力")
+            Text("听力 · 词汇 · 口语，一站搞定")
                 .font(.system(size: 14))
                 .foregroundStyle(Color.textTertiary)
         }
@@ -270,12 +270,12 @@ struct PaywallView: View {
     }
 
     private let comparisons: [ComparisonRow] = [
-        ComparisonRow(freeText: "仅英文字幕",  proText: "油管播客·双语+查词"),
-        ComparisonRow(freeText: "每日 2 集",  proText: "每日无限集数"),
-        ComparisonRow(freeText: "仅前 4 遍",  proText: "完整 5 遍循环播放法"),
-        ComparisonRow(freeText: "❌ 不可用",  proText: "AI 学习播客双语字幕"),
-        ComparisonRow(freeText: "每集 3 个",  proText: "每集全部生词卡片"),
-        ComparisonRow(freeText: "每日 1 轮",  proText: "词义配对+连词成句无限制"),
+        ComparisonRow(freeText: "仅开户第1课",  proText: "6国场景60+课，天天上新"),
+        ComparisonRow(freeText: "仅寒暄第1句",  proText: "227条地道表达，张口就来"),
+        ComparisonRow(freeText: "每日2集4遍",  proText: "集数不限，完整5遍磨耳朵"),
+        ComparisonRow(freeText: "仅英文字幕",  proText: "双语字幕，点哪个词查哪个"),
+        ComparisonRow(freeText: "每集限3词",   proText: "整集生词一个不落"),
+        ComparisonRow(freeText: "每天限1轮",   proText: "配对造句，想练就练"),
     ]
 
     private var featureCard: some View {
