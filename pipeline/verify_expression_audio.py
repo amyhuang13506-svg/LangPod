@@ -19,6 +19,7 @@ import time
 import requests
 
 from config import GROQ_API_KEY, GROQ_WHISPER_ENDPOINT, GROQ_WHISPER_MODEL, OUTPUT_DIR
+from generate_expressions import tts_text
 
 BASE = os.path.join(OUTPUT_DIR, "expressions")
 CKPT = os.path.join(BASE, "verify_ckpt.json")
@@ -96,11 +97,12 @@ for p in sorted(glob.glob(os.path.join(BASE, "*.json"))):
     if only and d["id"] != only:
         continue
     for e in d["expressions"]:
-        check(d["id"], "%s|%s|expr" % (d["id"], e["english"]), e["english"], e.get("audio"))
+        # 期望文本用 tts_text（音频就是按它合成的：___→something、缩写→完整口语版）
+        check(d["id"], "%s|%s|expr" % (d["id"], e["english"]), tts_text(e["english"]), e.get("audio"))
         for i, ex in enumerate(e.get("examples") or []):
-            check(d["id"], "%s|%s|ex%d" % (d["id"], e["english"], i), ex["en"], ex.get("audio"))
+            check(d["id"], "%s|%s|ex%d" % (d["id"], e["english"], i), tts_text(ex["en"]), ex.get("audio"))
         for i, line in enumerate((e.get("scene") or {}).get("dialogue", [])):
-            check(d["id"], "%s|%s|sc%d" % (d["id"], e["english"], i), line["en"], line.get("audio"))
+            check(d["id"], "%s|%s|sc%d" % (d["id"], e["english"], i), tts_text(line["en"]), line.get("audio"))
 
 json.dump(results, open(CKPT, "w"))
 bad = {k: v for k, v in results.items() if v["status"] != "ok"}

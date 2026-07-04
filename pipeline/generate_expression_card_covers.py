@@ -60,6 +60,11 @@ GROUP_PALETTE = {
         "background and large shapes), accented with fresh mint green and soft butter yellow "
         "on clothing, plants and small props. Light pink-cream background. "
     ),
+    "social": (
+        "Color palette: dominant soft lavender and lilac purple tones (about 60% of the image, "
+        "background and large shapes), accented with sweet peach pink and soft butter yellow "
+        "on clothing, plants and small props. Very light lavender-cream background. "
+    ),
     "express": (
         "Color palette: dominant bright sky blue and powder blue tones (about 60% of the image, "
         "background and large shapes), accented with warm coral pink and soft lemon yellow "

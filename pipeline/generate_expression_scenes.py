@@ -44,9 +44,10 @@ STYLE_BASE = (
     "Like a high-quality illustration from a design-forward app. "
 )
 
-# 4 大组各一套色系 —— 让首页四个区块一眼区分开
+# 各大组一套色系 —— 让首页各区块一眼区分开
 GROUP_PALETTE = {
     "reactions": "Color palette: warm coral, peach and soft orange tones on a light peachy-cream background. Lively, friendly mood. ",
+    "social":    "Color palette: soft lavender, lilac and blush pink tones on a light lavender-cream background. Playful, cheeky mood. ",
     "express":   "Color palette: soft lavender, plum and dusty violet tones on a light lilac-cream background. Calm, introspective mood. ",
     "skills":    "Color palette: fresh teal, sky blue and aqua tones on a light misty-blue background. Clean, collaborative mood. ",
     "native":    "Color palette: warm amber, mustard and olive-green tones on a light warm-sand background. Rich, characterful mood. ",

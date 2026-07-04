@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-口语表达库（句型 tab）目录 —— 4 个大组 × 24 个功能分类（人工定稿）。
+口语表达库（句型 tab）目录 —— 5 个大组 × 31 个功能分类（人工定稿）。
 
 设计原则（用户确认）：
 - 按功能分类，不按国家/场景（国家差异写进每条表达的 country_note_zh）
@@ -25,6 +25,26 @@ GROUPS = [
              "hint": "keeping conversation flowing: fair enough, tell me about it, totally, same here, that makes sense"},
             {"id": "goodbyes", "zh": "告别",
              "hint": "natural goodbyes: take care, catch you later, I'd better get going, it was great seeing you"},
+        ],
+    },
+    {
+        "id": "social", "zh": "玩梗社交", "icon": "face.smiling.fill",
+        "desc": "年轻人怎么聊天",
+        "categories": [
+            {"id": "venting", "zh": "吐槽抱怨",
+             "hint": "venting and complaining (mild, humorous register): cover exactly these: Ugh, not again / I can't even / This is ridiculous / You've got to be kidding me / I'm so done with this / What a pain / Why is it always me? / Today is not my day / That's the last thing I need"},
+            {"id": "compliments", "zh": "彩虹屁夸人",
+             "hint": "hyping people up, modern compliments: cover exactly these: You killed it! / You crushed it / You're a natural / I'm obsessed with this / You never miss / Chef's kiss / That's next level / You make it look easy / Looking sharp! (do NOT include 'that's fire', it lives in the slang category)"},
+            {"id": "self_deprecating", "zh": "幽默自嘲",
+             "hint": "humorous self-deprecation: cover exactly these: I'm a mess / Story of my life / Don't judge me / I have no idea what I'm doing / That's so me / I'm not a morning person / My brain isn't working today / Send help / It's fine, I'm fine"},
+            {"id": "texting", "zh": "网络与短信用语",
+             "hint": "internet & texting language young natives use, teach both the abbreviation and the spoken full form: cover exactly these: ngl (not gonna lie) / tbh (to be honest) / lowkey and highkey / no cap / it's giving ___ / fr (for real) / bet / I'm dead / it's a vibe"},
+            {"id": "dating", "zh": "约会与暧昧",
+             "hint": "dating and flirting: cover exactly these: We hit it off / I'm into you / Are you seeing anyone? / Wanna grab a drink sometime? / He's my type (or She's my type) / Things are getting serious / I got ghosted / It's not you, it's me / Playing hard to get"},
+            {"id": "arguing", "zh": "争论与立场",
+             "hint": "arguing and standing your ground (casual, not hostile): cover exactly these: Hear me out / That's not the point / Agree to disagree / Says who? / That's on you / You're missing the point / Where's this coming from? / Fine, you win / Let's just drop it"},
+            {"id": "gossip", "zh": "八卦吃瓜",
+             "hint": "gossiping and juicy news: cover exactly these: Guess what? / Spill the tea / You didn't hear this from me / My lips are sealed / Keep me posted / Word travels fast / Wait, back up / So much drama / I heard it through the grapevine"},
         ],
     },
     {

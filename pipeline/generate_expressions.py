@@ -175,9 +175,33 @@ def synthesize(text, output_path, voice_id=None):
     return False
 
 
+# 网络缩写：TTS 直接念缩写会瞎读（ngl→"and Mel"、lowkey→"Loki"）。
+# 表达本体音频 = 先读字母再读完整口语版；例句/对话里出现时 = 直接读完整口语版。
+TTS_SPOKEN = {
+    "ngl": "not gonna lie",
+    "tbh": "to be honest",
+    "fr": "for real",
+    "lowkey": "low-key",
+    "highkey": "high-key",
+}
+TTS_EXPR_OVERRIDE = {
+    "ngl": "N G L — not gonna lie",
+    "tbh": "T B H — to be honest",
+    "fr": "F R — for real",
+    "lowkey": "low-key",
+    "highkey": "high-key",
+}
+
+
 def tts_text(english):
-    """挖空模板的 ___ 读成 something，别让 TTS 念下划线。"""
-    return english.replace("___", "something")
+    """挖空模板的 ___ 读成 something，别让 TTS 念下划线；缩写读完整口语版。"""
+    t = english.replace("___", "something")
+    override = TTS_EXPR_OVERRIDE.get(t.strip().lower())
+    if override:
+        return override
+    for abbr, spoken in TTS_SPOKEN.items():
+        t = re.sub(r"\b%s\b" % abbr, spoken, t, flags=re.IGNORECASE)
+    return t
 
 
 def process_category(cat, skip_audio=False):
