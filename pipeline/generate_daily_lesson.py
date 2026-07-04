@@ -189,18 +189,26 @@ def main():
     out_dir = os.path.join(LESSONS_DIR, cc, lid)
     out_path = os.path.join(out_dir, "lesson.json")
 
-    # 1. 设计分区
-    print("🧩 设计分区...")
-    zones = design_zones(entry)
-    for z in zones:
-        print("   ▸ %s (%s)" % (z["id"], z["zh"]))
-
-    # 2. 生成内容
-    print("📝 生成词表/例句/句型/贴士...")
-    lesson_def = build_lesson_def(entry, lid, zones)
-    result = generate_lesson_content(lesson_def)
+    # 1+2. 设计分区 + 生成内容；内容不达标就换一套分区重试（分区拆法是随机的，
+    # 某些拆法某个分区凑不够 5-8 个可画物体，换一套通常就过）
+    result = None
+    for attempt in range(3):
+        print("🧩 设计分区...（第 %d 次）" % (attempt + 1))
+        try:
+            zones = design_zones(entry)
+        except Exception as e:
+            print("   ⚠️  分区设计失败: %s，重试" % e)
+            continue
+        for z in zones:
+            print("   ▸ %s (%s)" % (z["id"], z["zh"]))
+        print("📝 生成词表/例句/句型/贴士...")
+        lesson_def = build_lesson_def(entry, lid, zones)
+        result = generate_lesson_content(lesson_def)
+        if result is not None:
+            break
+        print("   ↻ 换一套分区重试")
     if result is None:
-        print("❌ 内容生成失败（重试后仍不达标），今日跳过，不消耗轮换。")
+        print("❌ 内容生成失败（多次重试后仍不达标），今日跳过，不消耗轮换。")
         sys.exit(1)
 
     # 3. 标每日 + 日期
