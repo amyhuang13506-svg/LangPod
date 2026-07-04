@@ -23,17 +23,74 @@ import sys
 import requests
 
 from config import GPT_API_KEY, OUTPUT_DIR
+import expression_catalog
 
 EXPR_DIR = os.path.join(OUTPUT_DIR, "expressions")
 SCENES_DIR = os.path.join(EXPR_DIR, "scenes")
 IMAGE_ENDPOINT = "https://api.v3.cm/v1/images/generations"
 IMAGE_MODEL = "gpt-image-1"
 
-STYLE = (
-    "Flat vector illustration in a modern minimal style, soft warm color palette, "
-    "clean geometric shapes with subtle outlines, gentle shadows, cream background tones. "
+# 分类 id → 大组 id（色系按大组走）
+CAT_TO_GROUP = {
+    c["id"]: g["id"] for g in expression_catalog.GROUPS for c in g["categories"]
+}
+
+# 风格版本号：参与 hash，一改此值旧图自动作废、全量按新风格重生成
+STYLE_VERSION = "v2-grouppalette-diverse"
+
+STYLE_BASE = (
+    "Flat vector illustration in a modern minimal style, "
+    "clean geometric shapes with subtle outlines, gentle shadows. "
     "Like a high-quality illustration from a design-forward app. "
 )
+
+# 4 大组各一套色系 —— 让首页四个区块一眼区分开
+GROUP_PALETTE = {
+    "reactions": "Color palette: warm coral, peach and soft orange tones on a light peachy-cream background. Lively, friendly mood. ",
+    "express":   "Color palette: soft lavender, plum and dusty violet tones on a light lilac-cream background. Calm, introspective mood. ",
+    "skills":    "Color palette: fresh teal, sky blue and aqua tones on a light misty-blue background. Clean, collaborative mood. ",
+    "native":    "Color palette: warm amber, mustard and olive-green tones on a light warm-sand background. Rich, characterful mood. ",
+}
+
+# 人物/场景多样性池 —— 按每条表达的 hash 稳定派生，消除"同一批年轻人"雷同感
+V_AGES = [
+    "two young adults in their 20s",
+    "two adults in their early 30s",
+    "a young adult and a middle-aged adult",
+    "two adults in their 40s",
+]
+V_PAIRS = [
+    "a man on the left and a woman on the right",
+    "two women",
+    "two men",
+    "a woman on the left and a man on the right",
+]
+V_SETTINGS = [
+    "in a cozy café",
+    "in a bright modern office",
+    "on a city street",
+    "in a warm living room at home",
+    "in a green park",
+    "in a small cozy shop",
+]
+V_OUTFITS = [
+    "casual everyday clothes",
+    "smart-casual outfits",
+    "cozy knitwear",
+    "business-casual attire",
+    "relaxed streetwear",
+]
+
+
+def variation_clause(expression_en):
+    """按表达文本 hash 稳定派生人物/场景组合（同一条永远一致，彼此多样）。"""
+    h = hashlib.md5(expression_en.encode("utf-8")).digest()
+    return (
+        "The two people are %s, %s, wearing %s, %s. "
+        "Give them clearly distinct skin tones, hairstyles and hair colors. "
+        % (V_PAIRS[h[1] % len(V_PAIRS)], V_AGES[h[0] % len(V_AGES)],
+           V_OUTFITS[h[3] % len(V_OUTFITS)], V_SETTINGS[h[2] % len(V_SETTINGS)])
+    )
 
 COMPOSITION = (
     " Composition requirements: EXACTLY TWO people, facing each other and clearly mid-conversation. "
@@ -53,19 +110,23 @@ def slugify(text):
     return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")[:40]
 
 
-def scene_hash(scene):
-    src = (scene.get("setup_zh") or "") + "|".join(l.get("en", "") for l in scene.get("dialogue", []))
+def scene_hash(scene, extra=""):
+    # STYLE_VERSION + 大组色系 + 人物多样性种子（extra）都纳入 —— 风格一变旧图作废重生成
+    src = (STYLE_VERSION + "|" + extra + "|" + (scene.get("setup_zh") or "")
+           + "|".join(l.get("en", "") for l in scene.get("dialogue", [])))
     return hashlib.md5(src.encode("utf-8")).hexdigest()[:8]
 
 
-def generate_scene_image(expression, scene, output_path):
+def generate_scene_image(expression, scene, output_path, group_id):
     dialogue_ctx = " ".join(
         "%s says: \"%s\"." % (l["speaker"], l["en"]) for l in scene.get("dialogue", [])
     )
     prompt = (
-        STYLE
+        STYLE_BASE
+        + GROUP_PALETTE.get(group_id, "")
         + "Scene (described in Chinese): %s " % scene["setup_zh"]
-        + "The moment being depicted: %s Their poses and expressions should match this exchange." % dialogue_ctx
+        + "The moment being depicted: %s Their poses and expressions should match this exchange. " % dialogue_ctx
+        + variation_clause(expression["english"])
         + COMPOSITION
     )
     response = requests.post(
@@ -105,9 +166,11 @@ def process_category(path):
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     cat_id = data["id"]
+    group_id = CAT_TO_GROUP.get(cat_id, "")
     cat_dir = os.path.join(SCENES_DIR, cat_id)
     os.makedirs(cat_dir, exist_ok=True)
-    print("📂 %s (%s)" % (cat_id, data["zh"]))
+    print("📂 %s (%s) [%s]" % (cat_id, data["zh"], group_id))
+    limit = int(os.environ.get("SCENE_LIMIT", "0"))  # >0 时每分类只跑前 N 条（出示例用）
 
     done = failed = skipped = 0
     changed = False
@@ -115,7 +178,8 @@ def process_category(path):
         scene = e.get("scene")
         if not scene or not scene.get("dialogue"):
             continue
-        filename = "%s_%s.png" % (slugify(e["english"]), scene_hash(scene))
+        extra = group_id + "|" + e["english"]  # 大组色系 + 人物多样性种子都进 hash
+        filename = "%s_%s.png" % (slugify(e["english"]), scene_hash(scene, extra))
         rel = "scenes/%s/%s" % (cat_id, filename)
         local = os.path.join(EXPR_DIR, rel)
         existing = scene.get("image") or ""
@@ -129,8 +193,10 @@ def process_category(path):
                 changed = True
             skipped += 1
             continue
+        if limit and done >= limit:
+            break
         print("   🖼  %s" % e["english"])
-        if generate_scene_image(e, scene, local):
+        if generate_scene_image(e, scene, local, group_id):
             scene["image"] = rel
             changed = True
             done += 1
@@ -146,7 +212,12 @@ def process_category(path):
 
 def main():
     only = sys.argv[1] if len(sys.argv) > 1 else None
-    paths = sorted(glob.glob(os.path.join(EXPR_DIR, "*.json")))
+    # index.json / verify_ckpt.json 不是分类文件（无 id 字段），排除掉
+    skip_files = {"index.json", "verify_ckpt.json"}
+    paths = sorted(
+        p for p in glob.glob(os.path.join(EXPR_DIR, "*.json"))
+        if os.path.basename(p) not in skip_files
+    )
     if only:
         paths = [p for p in paths if os.path.basename(p) == "%s.json" % only]
     totals = [0, 0, 0]

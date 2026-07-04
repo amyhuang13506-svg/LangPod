@@ -92,6 +92,9 @@ def main():
 
         for e in data["expressions"]:
             upload_asset(e, "audio")
+            # 卡片封面（generate_expression_card_covers.py 产出，按句意的隐喻图）
+            if e.get("cover"):
+                upload_asset(e, "cover", clear_if_missing=False)
             for ex in e.get("examples", []):
                 upload_asset(ex, "audio")
             scene = e.get("scene") or {}
@@ -110,7 +113,8 @@ def main():
             json.dump(data, f, ensure_ascii=False, indent=2)
         counts[cat_id] = len(data["expressions"])
         for e in data["expressions"]:
-            img = (e.get("scene") or {}).get("image") or ""
+            # 分类封面优先用第一条表达的卡片封面（隐喻图），其次场景插画
+            img = e.get("cover") or (e.get("scene") or {}).get("image") or ""
             if img.startswith("http"):
                 scene_covers[cat_id] = img
                 break
