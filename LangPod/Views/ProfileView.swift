@@ -5,6 +5,7 @@ struct ProfileView: View {
     @Environment(VocabularyStore.self) private var vocabularyStore
     @Environment(AudioPlayer.self) private var audioPlayer
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(AppState.self) private var appState
     @State private var showPaywall = false
     @State private var showShareCard = false
     @State private var showClearAlert = false
@@ -38,6 +39,11 @@ struct ProfileView: View {
 
                     // Profile card
                     profileCard
+
+                    // 战绩区：Streak 卡（带今日任务进度环，点击重开任务弹窗）+ 三格统计 + 本周进度
+                    streakCard
+                    statsRow
+                    weekProgress
 
                     // Learning settings
                     settingsSection
@@ -77,6 +83,162 @@ struct ProfileView: View {
     }
 
     // MARK: - Profile Card
+
+    // MARK: - 战绩区（从旧 StatsView 恢复：streakCard + statsRow + weekProgress）
+
+    /// Streak 卡：🔥 + 连续天数 + 状态文案 + 今日任务进度环。点击 → 重开任务清单弹窗（二次入口）。
+    private var streakCard: some View {
+        Button {
+            Analytics.track(.dailyTaskEntryTap, params: ["source": "profile_card"])
+            Analytics.track(.dailyTaskPopupView)
+            TaskEngine.shared.ensureTodayRecord()
+            withAnimation(.easeOut(duration: 0.25)) { appState.showDailyTasks = true }
+        } label: {
+            VStack(spacing: 8) {
+                HStack {
+                    Text("🔥")
+                        .font(.system(size: 28))
+                        .opacity(listenedToday ? 1 : 0.4)
+                    Text("连续 \(dataStore.streakDays) 天")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Spacer()
+                    taskProgressRing
+                }
+
+                HStack {
+                    Text(streakMessage)
+                        .font(.system(size: 14))
+                        .foregroundStyle(streakColor)
+                    Spacer()
+                }
+
+                // Degradation warning
+                if daysSinceLastListen >= 5 {
+                    HStack {
+                        Text("再不回来等级要降了")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Color.danger)
+                        Spacer()
+                    }
+                    .padding(.top, 2)
+                }
+            }
+            .padding(18)
+            .background(.white, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(streakBorderColor, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// 今日任务 2/4 进度环
+    private var taskProgressRing: some View {
+        let done = TaskEngine.shared.completedCount
+        let total = max(TaskEngine.shared.totalCount, 1)
+        return ZStack {
+            Circle()
+                .stroke(Color.border, lineWidth: 4)
+            Circle()
+                .trim(from: 0, to: CGFloat(done) / CGFloat(total))
+                .stroke(done >= total ? Color.success : Color.appPrimary,
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Text("\(done)/\(total)")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(done >= total ? Color.success : Color.appPrimary)
+        }
+        .frame(width: 40, height: 40)
+    }
+
+    private var daysSinceLastListen: Int {
+        guard let last = dataStore.lastListenDate else { return 999 }
+        return Calendar.current.dateComponents([.day], from: last, to: Date()).day ?? 999
+    }
+
+    private var listenedToday: Bool {
+        guard let last = dataStore.lastListenDate else { return false }
+        return Calendar.current.isDateInToday(last)
+    }
+
+    private var hoursUntilReset: Int {
+        let calendar = Calendar.current
+        guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: Date())) else { return 0 }
+        return max(0, Int(tomorrow.timeIntervalSinceNow / 3600))
+    }
+
+    private var streakMessage: String {
+        if listenedToday {
+            let done = TaskEngine.shared.completedCount
+            let total = TaskEngine.shared.totalCount
+            if total > 0 && done >= total { return "完美一天！\(total) 个任务全部完成" }
+            return "今日已点亮！完成 \(total)/\(total) 任务解锁完美一天"
+        }
+        if hoursUntilReset <= 3 {
+            return "即将清零！还有 \(hoursUntilReset)h"
+        }
+        return "今天还没听！\(hoursUntilReset)h 后记录清零"
+    }
+
+    private var streakColor: Color {
+        if listenedToday { return Color.success }
+        if hoursUntilReset <= 3 { return Color.danger }
+        return Color.warning
+    }
+
+    private var streakBorderColor: Color {
+        if listenedToday { return Color.success.opacity(0.3) }
+        if hoursUntilReset <= 3 { return Color.danger.opacity(0.3) }
+        return Color.border
+    }
+
+    // MARK: - Stats Row
+
+    private var statsRow: some View {
+        HStack(spacing: 10) {
+            statCard(value: dataStore.totalListeningTimeDisplay, label: "总时长")
+            statCard(value: "\(dataStore.episodesCompleted)", label: "已听集数")
+            statCard(value: "\(vocabularyStore.strongWords.count)", label: "已掌握词汇")
+        }
+    }
+
+    private func statCard(value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(Color.textPrimary)
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Color.textTertiary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(.white, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.border, lineWidth: 1)
+        )
+    }
+
+    // MARK: - Week Progress（组件与任务清单弹窗共用）
+
+    private var weekProgress: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("本周进度")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(Color.textPrimary)
+
+            TaskWeekProgressView()
+        }
+        .padding(16)
+        .background(.white, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.border, lineWidth: 1)
+        )
+    }
 
     private var profileCard: some View {
         HStack(spacing: 14) {
