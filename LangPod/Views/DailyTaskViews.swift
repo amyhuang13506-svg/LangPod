@@ -127,7 +127,6 @@ struct DailyTaskPopupView: View {
     }
 
     private var header: some View {
-        let engine = TaskEngine.shared
         let litToday = dataStore.lastListenDate.map { Calendar.current.isDateInToday($0) } ?? false
 
         return HStack(spacing: 12) {
@@ -139,20 +138,12 @@ struct DailyTaskPopupView: View {
                 Text("连续 \(dataStore.streakDays) 天")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(Color.textPrimary)
-                Text(subtitle(litToday: litToday, engine: engine))
+                Text("每天任务打卡，滴水穿石！")
                     .font(.system(size: 12.5))
                     .foregroundStyle(litToday ? Color.success : Color.textTertiary)
             }
             Spacer()
         }
-    }
-
-    private func subtitle(litToday: Bool, engine: TaskEngine) -> String {
-        let done = engine.completedCount
-        let total = engine.totalCount
-        if done >= total && total > 0 { return "完美一天！\(total) 个任务全部完成" }
-        if litToday { return "今日已点亮 · 完成 \(total)/\(total) 解锁完美一天" }
-        return "完成任意 1 个任务点亮今日火苗"
     }
 
     private var taskList: some View {
@@ -174,7 +165,6 @@ struct DailyTaskPopupView: View {
                             Text(item.type.title)
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundStyle(item.done ? Color.textTertiary : Color.textPrimary)
-                                .strikethrough(item.done, color: Color.textQuaternary)
                             Text("约 \(item.type.estimatedMinutes) 分钟")
                                 .font(.system(size: 12))
                                 .foregroundStyle(Color.textQuaternary)
@@ -182,14 +172,25 @@ struct DailyTaskPopupView: View {
 
                         Spacer()
 
+                        // 游戏打卡样式：未完成蓝色「去完成」胶囊（点整行跳转），已完成绿色「已完成」标签
                         if item.done {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 22))
-                                .foregroundStyle(Color.success)
+                            HStack(spacing: 3) {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 10, weight: .bold))
+                                Text("已完成")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                            .foregroundStyle(Color.success)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.successLight, in: Capsule())
                         } else {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color.textQuaternary)
+                            Text("去完成")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 6)
+                                .background(Color.appPrimary, in: Capsule())
                         }
                     }
                     .padding(.horizontal, 14)
