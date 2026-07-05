@@ -28,7 +28,7 @@ struct ContentView: View {
                     .tag(0)
                 VocabularyView()
                     .tabItem {
-                        Label("词汇", systemImage: "textformat")
+                        Label("词汇", systemImage: "textformat.abc")
                     }
                     .tag(1)
                 PatternsTabView()
