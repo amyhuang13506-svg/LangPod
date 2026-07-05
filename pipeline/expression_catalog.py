@@ -10,7 +10,18 @@
 
 GROUPS = [
     {
-        "id": "reactions", "zh": "日常反应", "icon": "bubble.left.and.bubble.right.fill",
+        # 今日句型：内容来自每日播客自动提取的句型（patterns），按级别 easy/medium/hard
+        # 分初/中/高级，每级保留最近 15 天。由 build_pattern_expressions.py 产出（不走 GPT 造句）。
+        "id": "daily", "zh": "今天", "icon": "sparkles",
+        "desc": "每日播客同款句型",
+        "categories": [
+            {"id": "daily_easy", "zh": "初级", "hint": "(from podcast easy patterns — not GPT-generated)"},
+            {"id": "daily_medium", "zh": "中级", "hint": "(from podcast medium patterns — not GPT-generated)"},
+            {"id": "daily_hard", "zh": "高级", "hint": "(from podcast hard patterns — not GPT-generated)"},
+        ],
+    },
+    {
+        "id": "reactions", "zh": "日常", "icon": "bubble.left.and.bubble.right.fill",
         "desc": "脱口而出的短句",
         "categories": [
             {"id": "greetings", "zh": "寒暄开场",
@@ -28,7 +39,7 @@ GROUPS = [
         ],
     },
     {
-        "id": "social", "zh": "玩梗社交", "icon": "face.smiling.fill",
+        "id": "social", "zh": "玩梗", "icon": "face.smiling.fill",
         "desc": "年轻人怎么聊天",
         "categories": [
             {"id": "venting", "zh": "吐槽抱怨",
@@ -48,7 +59,7 @@ GROUPS = [
         ],
     },
     {
-        "id": "express", "zh": "表达自己", "icon": "person.wave.2.fill",
+        "id": "express", "zh": "观点", "icon": "person.wave.2.fill",
         "desc": "把想法说出来",
         "categories": [
             {"id": "opinions", "zh": "表达观点",
@@ -66,7 +77,7 @@ GROUPS = [
         ],
     },
     {
-        "id": "skills", "zh": "会话技能", "icon": "arrow.triangle.2.circlepath",
+        "id": "skills", "zh": "会话技巧", "icon": "arrow.triangle.2.circlepath",
         "desc": "让对话顺畅进行",
         "categories": [
             {"id": "requests", "zh": "请求与帮忙",
@@ -104,7 +115,7 @@ GROUPS = [
 ]
 
 # 闸门：只有第一个组（日常反应）的第一个分类（寒暄开场）免费体验，其余全部 Pro
-FREE_CATEGORY_IDS = {"greetings"}
+FREE_CATEGORY_IDS = {"daily_easy"}  # 免费位移：今日句型·初级 的第一条免费，其余全部 Pro
 
 
 def all_categories():

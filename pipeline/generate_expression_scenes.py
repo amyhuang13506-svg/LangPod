@@ -46,6 +46,7 @@ STYLE_BASE = (
 
 # 各大组一套色系 —— 让首页各区块一眼区分开
 GROUP_PALETTE = {
+    "daily":     "Color palette: warm sunny gold, honey and soft amber tones on a light cream background. Fresh, bright, daily-highlight mood. ",
     "reactions": "Color palette: warm coral, peach and soft orange tones on a light peachy-cream background. Lively, friendly mood. ",
     "social":    "Color palette: soft lavender, lilac and blush pink tones on a light lavender-cream background. Playful, cheeky mood. ",
     "express":   "Color palette: soft lavender, plum and dusty violet tones on a light lilac-cream background. Calm, introspective mood. ",

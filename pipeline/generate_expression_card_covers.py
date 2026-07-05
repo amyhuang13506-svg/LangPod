@@ -55,6 +55,11 @@ STYLE = (
 
 # 三色方案：每组主色 ~60%（背景+大面积）+ 两个点缀色（衣服/植物/小物件）
 GROUP_PALETTE = {
+    "daily": (
+        "Color palette: dominant warm sunny gold and honey tones (about 60% of the image, "
+        "background and large shapes), accented with soft coral pink and fresh mint green "
+        "on clothing, plants and small props. Very light warm-cream background. "
+    ),
     "reactions": (
         "Color palette: dominant sweet peach pink and blush tones (about 60% of the image, "
         "background and large shapes), accented with fresh mint green and soft butter yellow "
@@ -110,8 +115,10 @@ def cover_hash(concept):
     return hashlib.md5(src.encode("utf-8")).hexdigest()[:8]
 
 
-def gpt_concepts(expressions):
-    """一次调用为整个分类的表达生成视觉概念。"""
+CONCEPT_CHUNK = 12  # 单次 GPT 最多几条 —— 太多会返回超长/截断 JSON 解析失败
+
+
+def _gpt_concepts_chunk(expressions):
     listing = "\n".join(
         "%d. %s — %s" % (i + 1, e["english"], e.get("meaning_zh", ""))
         for i, e in enumerate(expressions)
@@ -138,6 +145,14 @@ def gpt_concepts(expressions):
         except (KeyError, ValueError, json.JSONDecodeError):
             time.sleep(3)
     return {}
+
+
+def gpt_concepts(expressions):
+    """为一个分类的表达生成视觉概念，分块调用（防大批量返回超长 JSON 解析失败）。"""
+    out = {}
+    for i in range(0, len(expressions), CONCEPT_CHUNK):
+        out.update(_gpt_concepts_chunk(expressions[i:i + CONCEPT_CHUNK]))
+    return out
 
 
 def generate_cover_image(concept, group_id, output_path):
