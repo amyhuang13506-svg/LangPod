@@ -130,10 +130,12 @@ struct LangPodApp: App {
                 if appState.showTaskCelebration {
                     TaskCelebrationView(
                         onShare: {
+                            TaskEngine.shared.markCelebrationShown()
                             appState.showTaskCelebration = false
                             appState.showTaskShareCard = true
                         },
                         onContinue: {
+                            TaskEngine.shared.markCelebrationShown()
                             withAnimation(.easeOut(duration: 0.25)) { appState.showTaskCelebration = false }
                         }
                     )
@@ -201,6 +203,8 @@ struct LangPodApp: App {
                     notificationManager.requestPermission()
                     PushService.shared.requestPushAuthorization()
                 }
+                // 晚间内容推送要用今日新场景课（today.json）——提前拉，保证进后台重排时已就绪。
+                lessonStore.loadTodayIfNeeded()
                 refreshDailyNotification()
                 await autoShowDailyTasksIfNeeded()
             }
@@ -208,6 +212,8 @@ struct LangPodApp: App {
                 dataStore.loadEpisodes()
                 // 跨 0 点回前台 → 任务整体作废重抽（同一天不动）
                 TaskEngine.shared.checkDayRollover()
+                // 恢复被吞掉的 4/4 庆祝（如锁屏听完最后一格、或在练习全屏页里完成第 4 格）
+                TaskEngine.shared.presentCelebrationIfNeeded()
                 refreshDailyNotification()
                 // Re-register on every foreground in case the user just turned
                 // on permission in Settings (system holds the prompt for life).
@@ -312,6 +318,13 @@ struct LangPodApp: App {
         // 对账：各挂点事件实时落盘（锁屏听完的已带 ✓），这里只需保证今日记录已抽取
         engine.ensureTodayRecord()
 
+        // 今日已 4/4 但庆祝还没弹过（如后台/锁屏听完最后一格）→ 弹庆祝，不再弹清单
+        if engine.totalCount > 0, engine.completedCount >= engine.totalCount,
+           !appState.showCompletePage, !appState.showTaskCelebration {
+            engine.presentCelebrationIfNeeded()
+            return
+        }
+
         let onboardingDay = UserDefaults.standard.string(forKey: "onboardingCompletedDay")
         guard onboardingDay != TaskEngine.todayKey(),
               !engine.popupShownToday,
@@ -412,6 +425,14 @@ struct LangPodApp: App {
         let reminderHour = UserDefaults.standard.object(forKey: "reminderHour") as? Int ?? 20
         let reminderMinute = UserDefaults.standard.object(forKey: "reminderMinute") as? Int ?? 0
 
+        // 晚间内容推送数据源：今日第一个句型 + 今日新场景课（跨国家置顶的 today.json）。
+        let todayPattern: Pattern? = dataStore.episodes
+            .filter { $0.date == todayString }
+            .compactMap { $0.patterns }
+            .flatMap { $0 }
+            .first
+        let todayCard = lessonStore.todayCard   // (item, country)，仅当 today.json 日期是今天
+
         return NotificationContext(
             streakDays: dataStore.streakDays,
             lastListenDate: dataStore.lastListenDate,
@@ -423,7 +444,14 @@ struct LangPodApp: App {
             tasksCompletedToday: TaskEngine.shared.completedCount,
             tasksTotalToday: TaskEngine.shared.totalCount,
             reminderHour: reminderHour,
-            reminderMinute: reminderMinute
+            reminderMinute: reminderMinute,
+            todayPatternTemplate: todayPattern?.template,
+            todayPatternTranslationZh: todayPattern?.translationZh,
+            todayPatternScene: todayPattern?.scene,
+            todayLessonTitle: todayCard?.item.titleZh,
+            todayLessonCountryZh: todayCard?.country.nameZh,
+            todayLessonFlag: todayCard?.country.flag,
+            todayLessonWordCount: todayCard?.item.wordCount
         )
     }
 }

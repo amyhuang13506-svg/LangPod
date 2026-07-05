@@ -21,6 +21,15 @@ struct NotificationContext {
     let tasksTotalToday: Int           // 每日任务总格数（3-4）
     let reminderHour: Int
     let reminderMinute: Int
+
+    // 晚间 20:00 内容推送（句型 / 单词按天交替）的数据源。缺内容时该类不发、回退另一类。
+    let todayPatternTemplate: String?   // 今日第一个句型的模板文字
+    let todayPatternTranslationZh: String?
+    let todayPatternScene: String?
+    let todayLessonTitle: String?       // 今日新场景课标题（titleZh）
+    let todayLessonCountryZh: String?
+    let todayLessonFlag: String?
+    let todayLessonWordCount: Int?
 }
 
 @Observable
@@ -63,6 +72,18 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
                         "episode_id": episodeId,
                         "level": level ?? ""
                     ]
+                )
+            }
+        }
+
+        // 晚间内容推送（今日句型 / 今日单词）：deeplink 携带 DailyTaskType.rawValue，
+        // 复用 ContentView 已有的任务深链管道（listen_pattern 播今日句型 / learn_lesson 开今日场景课）。
+        if let deeplink = userInfo["deeplink"] as? String, !deeplink.isEmpty {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .dailyTaskDeepLink,
+                    object: nil,
+                    userInfo: ["type": deeplink]
                 )
             }
         }
@@ -114,7 +135,9 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         content.title = intent.title
         content.body = intent.body
         content.sound = .default
-        content.userInfo = ["intent": intent.type]
+        var info: [String: Any] = ["intent": intent.type]
+        if let dl = intent.deeplink { info["deeplink"] = dl }
+        content.userInfo = info
 
         var components = DateComponents()
         if intent.fireTomorrow,
@@ -153,80 +176,137 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         let type: String
         let title: String
         let body: String
-        var fireTomorrow = false   // true = 排到明天 reminderHour（streak_risk 预排场景）
+        var deeplink: String? = nil   // DailyTaskType.rawValue，点击时深链到对应页面
+        var fireTomorrow = false       // true = 排到明天 reminderHour（streak_risk 预排 / 内容跨天场景）
     }
 
+    /// 晚间 20:00 单条推送的仲裁：
+    ///   1. streak 快断 → 救火（最高优先，保留原逻辑）
+    ///   2. 否则按日期奇偶交替：单数日今日句型 / 双数日今日单词场景课（缺内容回退另一类）
+    ///   3. 都没有 → 朴素提醒
+    /// 内容新鲜度：排「今天」嵌真实标题；排「明天」（当天 reminder 时间已过）用常青文案，
+    /// 因为设备还不知道明天凌晨 cron 产的新内容。点击深链在点击那一刻实时解析最新内容。
     private func pickIntent(context c: NotificationContext) -> Intent? {
-        // 1. Streak about to break — days == 1 才是「今晚不听就断」的准确时点。
-        //    旧条件 days >= 2 有 bug：火苗隔 1 天就重置（DataStore 断连置 1），发出时火苗已死。
-        if let last = c.lastListenDate {
-            let days = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: last), to: Calendar.current.startOfDay(for: Date())).day ?? 0
+        let firesTomorrow = reminderPassedToday(hour: c.reminderHour, minute: c.reminderMinute)
+        let targetDate = firesTomorrow
+            ? (Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date())
+            : Date()
+
+        // 1. Streak about to break — 最高优先（留存）。
+        if firesTomorrow {
+            // 「今天听了、明天没开 app」是最该救的场景：排程只在 app 活跃时发生，
+            // 所以趁现在把明天 20:00 的 streak_risk 排上（fire 时 days 恰为 1）。
+            if c.listenedToday && c.streakDays >= 1 {
+                return streakIntent(streakDays: c.streakDays, fireTomorrow: true)
+            }
+        } else if let last = c.lastListenDate {
+            // days == 1 才是「今晚不听就断」的准确时点（DataStore 断连即置 1）。
+            let days = Calendar.current.dateComponents(
+                [.day],
+                from: Calendar.current.startOfDay(for: last),
+                to: Calendar.current.startOfDay(for: Date())
+            ).day ?? 0
             if days == 1 && c.streakDays >= 2 {
-                return Intent(
-                    type: "streak_risk",
-                    title: "再不听就要清零了",
-                    body: "\(c.streakDays) 天的连续记录就快断了，3 分钟就能续上"
-                )
+                return streakIntent(streakDays: c.streakDays, fireTomorrow: false)
             }
         }
 
-        // 2. 今日任务只差 1 个（进 push_opened 的 intent 漏斗，无需改埋点）
-        if c.tasksTotalToday > 0 && c.tasksCompletedToday == c.tasksTotalToday - 1 {
-            return Intent(
-                type: "task_almost_done",
-                title: "今日任务只差 1 个",
-                body: "已完成 \(c.tasksCompletedToday)/\(c.tasksTotalToday)，再做 1 个点亮完美一天"
-            )
+        // 2. 内容推送：句型 / 单词按天自动交替（无需用户选择，默认常驻）。
+        //    奇偶交替：用 era 内的绝对天序号，跨月/跨年边界也严格交替。
+        let dayNumber = Calendar.current.ordinality(of: .day, in: .era, for: targetDate) ?? 0
+        let preferPattern = dayNumber % 2 == 1
+
+        let pattern = patternIntent(c, evergreen: firesTomorrow)
+        let word = wordIntent(c, evergreen: firesTomorrow)
+        let ordered = preferPattern ? [pattern, word] : [word, pattern]
+        for candidate in ordered {
+            if var intent = candidate {
+                intent.fireTomorrow = firesTomorrow
+                return intent
+            }
         }
 
-        // 3. Haven't listened today + new episode exists
-        if !c.listenedToday, c.hasNewEpisodeToday, let title = c.newestEpisodeTitle {
-            return Intent(
-                type: "new_episode",
-                title: "今天的新集",
-                body: title
-            )
-        }
-
-        // 4. Old words reappeared in recently played content
-        if let word = c.recentEncounteredWords.first {
-            return Intent(
-                type: "encountered_words",
-                title: "你的旧词又出现了",
-                body: "「\(word)」在新一集里又出现，多听几遍就记住了"
-            )
-        }
-
-        // 5. Words that are fading (≥3 items stale)
-        if c.forgottenWordsCount >= 3 {
-            return Intent(
-                type: "forgotten_words",
-                title: "几个词快忘了",
-                body: "有 \(c.forgottenWordsCount) 个词超过 30 天没练，30 秒救回来"
-            )
-        }
-
-        // 6. Fallback: plain nudge if user hasn't listened today
+        // 3. 兜底：还没听 → 朴素提醒。
         if !c.listenedToday {
             return Intent(
                 type: "daily_reminder",
                 title: "今日的 3 分钟",
-                body: "打开 Castlingo，继续你的听力训练"
-            )
-        }
-
-        // 7. 今天听过、火苗存活 → 预排「明天」的 streak_risk。
-        //    「昨天听了今天没开 app」是最该救的场景，但排程只在 app 活跃时发生——
-        //    所以趁现在把明天的排上（fire 时 days 恰为 1）。明天若打开 app 会被重排覆盖。
-        if c.listenedToday && c.streakDays >= 1 {
-            return Intent(
-                type: "streak_risk",
-                title: "再不听就要清零了",
-                body: "\(c.streakDays) 天的连续记录就快断了，3 分钟就能续上",
-                fireTomorrow: true
+                body: "打开 Castlingo，继续你的听力训练",
+                fireTomorrow: firesTomorrow
             )
         }
 
         return nil
+    }
+
+    private func streakIntent(streakDays: Int, fireTomorrow: Bool) -> Intent {
+        Intent(
+            type: "streak_risk",
+            title: "再不听就要清零了",
+            body: "\(streakDays) 天的连续记录就快断了，3 分钟就能续上",
+            fireTomorrow: fireTomorrow
+        )
+    }
+
+    /// 今日句型 intent。evergreen=true（排明天）时用常青文案；否则需有今日句型才返回。
+    private func patternIntent(_ c: NotificationContext, evergreen: Bool) -> Intent? {
+        if evergreen {
+            return Intent(
+                type: "daily_pattern",
+                title: "今日句型讲解已更新",
+                body: "跟读三遍，把一个地道句型变成条件反射",
+                deeplink: DailyTaskType.listenPattern.rawValue
+            )
+        }
+        guard let template = c.todayPatternTemplate else { return nil }
+        let scene = c.todayPatternScene ?? ""
+        let body: String = {
+            guard let zh = c.todayPatternTranslationZh, !zh.isEmpty else {
+                return "点开学一个地道句型"
+            }
+            return scene.isEmpty ? zh : "\(zh)｜\(scene)"
+        }()
+        return Intent(
+            type: "daily_pattern",
+            title: "今日句型 · \(template)",
+            body: body,
+            deeplink: DailyTaskType.listenPattern.rawValue
+        )
+    }
+
+    /// 今日单词（新场景课）intent。evergreen=true（排明天）时用常青文案。
+    private func wordIntent(_ c: NotificationContext, evergreen: Bool) -> Intent? {
+        if evergreen {
+            return Intent(
+                type: "daily_word",
+                title: "今日新场景已上线",
+                body: "几个地道说法 + 真实场景，3 分钟学会",
+                deeplink: DailyTaskType.learnLesson.rawValue
+            )
+        }
+        guard let title = c.todayLessonTitle else { return nil }
+        let flag = c.todayLessonFlag ?? ""
+        let country = c.todayLessonCountryZh ?? ""
+        let body: String = {
+            if let wc = c.todayLessonWordCount {
+                return "\(flag)\(country)｜\(wc) 个地道说法，3 分钟学会"
+            }
+            return "\(flag)\(country) 场景对话，学几个地道说法"
+        }()
+        return Intent(
+            type: "daily_word",
+            title: "今日新场景 · \(title)",
+            body: body,
+            deeplink: DailyTaskType.learnLesson.rawValue
+        )
+    }
+
+    /// 当前时刻是否已过今天的 reminder 时间（是 → 下一次 fire 落在明天）。
+    private func reminderPassedToday(hour: Int, minute: Int) -> Bool {
+        let now = Date()
+        guard let fire = Calendar.current.date(
+            bySettingHour: hour, minute: minute, second: 0, of: now
+        ) else { return false }
+        return now >= fire
     }
 }
