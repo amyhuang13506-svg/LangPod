@@ -4,7 +4,7 @@ Defer push delivery: instead of firing APNs the moment content lands on OSS
 (which can happen at midnight or 4 AM and wakes users up), the pipelines call
 `enqueue_episode()` / `enqueue_raw_podcast()` here.
 
-A separate cron (`flush_pending_pushes.py` at 07:50 CST) drains the queue and
+A separate cron (`flush_pending_pushes.py` at 07:30 CST) drains the queue and
 fires the actual APNs requests, so users get notified at a polite hour even
 though the content has been sitting on OSS for hours.
 

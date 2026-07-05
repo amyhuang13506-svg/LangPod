@@ -4,8 +4,11 @@ Drain the pending-push queue and fire APNs.
 
 Two cron slots, one type each, so a given user gets at most TWO buzzes per day:
 
-    50 7 * * *  flush_pending_pushes.py --type raw_podcast    # morning YouTube
-    0  17 * * * flush_pending_pushes.py --type episode        # afternoon GPT
+    30 7 * * *  flush_pending_pushes.py --type raw_podcast    # morning YouTube (07:30 CST)
+
+Note: the afternoon GPT-episode flush is intentionally NOT scheduled — users get
+exactly two buzzes a day: the 07:30 YouTube push (server) and the 20:00 evening
+content push (on-device local arbiter: 今日句型 / 今日单词, alternating by date).
 
 Behaviour with `--type`:
   - Only items of that type are flushed and removed from the queue.
@@ -16,6 +19,10 @@ Episode flush dedups to ONE push per level. The pipeline normally writes 2
 episodes per level per night (`*-001` and `*-002`); we send the user only the
 earliest-queued one (= `*-001` = the day's primary). The other ~5 still appear
 in the app's daily list — they just don't ring everyone's phone.
+
+Raw-podcast flush also dedups to ONE push total (earliest queued wins). The
+YouTube monitor may enqueue 1–3 videos per day; users still see all of them in
+the app's video list, but only get one morning buzz.
 """
 from __future__ import annotations
 
@@ -49,6 +56,13 @@ def _select_episode_winners(items: list[dict]) -> list[dict]:
     return list(by_level.values())
 
 
+def _select_raw_podcast_winner(items: list[dict]) -> list[dict]:
+    """At most one raw_podcast push — earliest queued wins."""
+    if not items:
+        return []
+    return [sorted(items, key=_ts)[0]]
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument(
@@ -78,8 +92,9 @@ def main() -> None:
     else:
         targets = fresh
 
-    # Per-type post-processing: episodes get deduped to one-per-level so users
-    # don't get two pushes for their own track.
+    # Per-type post-processing: episodes get deduped to one-per-level, raw
+    # podcasts to one-total, so a single morning/afternoon cron fires at most a
+    # handful of notifications per user (not one per item enqueued that day).
     if args.type == "episode" or (args.type is None and any(t.get("type") == "episode" for t in targets)):
         episodes = [t for t in targets if t.get("type") == "episode"]
         winners = _select_episode_winners(episodes)
@@ -88,6 +103,15 @@ def main() -> None:
             print(f"[flush] dedup: keeping 1 episode per level ({len(winners)} kept, {dropped} skipped)")
         non_episodes = [t for t in targets if t.get("type") != "episode"]
         targets = non_episodes + winners
+
+    if args.type == "raw_podcast" or (args.type is None and any(t.get("type") == "raw_podcast" for t in targets)):
+        raws = [t for t in targets if t.get("type") == "raw_podcast"]
+        winners = _select_raw_podcast_winner(raws)
+        dropped = len(raws) - len(winners)
+        if dropped:
+            print(f"[flush] dedup: keeping 1 raw_podcast total ({len(winners)} kept, {dropped} skipped)")
+        non_raws = [t for t in targets if t.get("type") != "raw_podcast"]
+        targets = non_raws + winners
 
     sent = 0
     failed = 0
