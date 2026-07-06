@@ -318,6 +318,16 @@ class DataStore {
             "level_up": didLevelUp ? "1" : "0"
         ])
 
+        // 首次完播 = 真·Aha 时刻，作为 FB 投放的激活信号（幂等，每台设备只报一次）。
+        // 现有 episode_complete 每次都打，这个只报首次，CPI 质量分层更纯。
+        let firstCompleteKey = "analytics_first_episode_complete_sent"
+        if !UserDefaults.standard.bool(forKey: firstCompleteKey) {
+            UserDefaults.standard.set(true, forKey: firstCompleteKey)
+            Analytics.track(.firstEpisodeComplete, params: [
+                "level": (episode ?? currentEpisode)?.level ?? "unknown"
+            ])
+        }
+
         // 每日任务：完整听完一集（挂方法体内，不挂 onEpisodeFinished 闭包——那有 3 份副本互相覆盖）
         NotificationCenter.default.post(
             name: .taskEventEpisodeCompleted,

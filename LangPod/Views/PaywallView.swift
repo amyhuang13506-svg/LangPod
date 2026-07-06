@@ -552,13 +552,20 @@ struct PaywallView: View {
                     ? SubscriptionManager.yearlyID
                     : SubscriptionManager.monthlyID
                 Analytics.track(.purchaseAttempt, params: ["product": productID])
+                let startsTrial = hasActiveTrial
                 Task {
                     let success = await subscriptionManager.purchase(productID)
                     Analytics.track(success ? .purchaseSuccess : .purchaseFail, params: ["product": productID])
                     if success {
-                        // Adjust 收入回传（带 value + currency，FB ROAS 出价依赖这条）
-                        let price = subscriptionManager.priceInfo(for: productID)
-                        AdjustTracker.trackRevenue(.purchaseSuccess, amount: price.value, currency: price.currency)
+                        if startsTrial {
+                            // 试用开始：报 trial_start（无金额——此刻未扣费，FB 投放的主优化目标）。
+                            // 真实扣费在 7 天后转正，那笔收入由续订监听/服务端通知另行回传。
+                            Analytics.track(.trialStart, params: ["product": productID])
+                        } else {
+                            // 直接扣费：Adjust 收入回传（带 value + currency，FB ROAS 出价依赖这条）
+                            let price = subscriptionManager.priceInfo(for: productID)
+                            AdjustTracker.trackRevenue(.purchaseSuccess, amount: price.value, currency: price.currency)
+                        }
                         dismiss()
                     }
                 }

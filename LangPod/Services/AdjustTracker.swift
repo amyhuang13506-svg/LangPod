@@ -18,13 +18,16 @@ enum AdjustTracker {
 
     static let appToken = "yjnimmmpcjr4"
 
-    /// Adjust 事件 Token —— 在 Adjust 后台逐个建事件后把 6 位 token 填进来。
+    /// Adjust 事件 Token —— 在 Adjust 后台（Castlingo）逐个建这 5 个事件后把 6 位 token 填进来。
     /// 没填（空字符串）的事件 = 只打友盟，不上报 Adjust，不会崩。
+    ///
+    /// 投放阶段切换优化目标：起量期 onboarding_complete → 提质期 trial_start → ROAS 期 purchase。
     private static let eventTokens: [Analytics.Event: String] = [
-        .purchaseSuccess:    "",   // 重点：订阅成功（ROAS 出价用）
-        .onboardingComplete: "",   // 激活（CPI 质量分层用）
-        .episodeComplete:    "",   // 深度激活：完整听完一集
-        .paywallView:        "",   // 付费意向前兆
+        .onboardingComplete:   "",   // 起量期优化目标（浅漏斗，量最大）→ FB CompleteRegistration
+        .firstEpisodeComplete: "",   // 真·Aha，CPI 质量分层（幂等，首次完播）
+        .paywallView:          "",   // 付费意向前兆 → FB InitiateCheckout
+        .trialStart:           "",   // 提质期主优化目标（强付费意向）→ FB StartTrial
+        .purchaseSuccess:      "",   // ROAS 期：订阅扣费，走 trackRevenue 带金额 → FB Subscribe
     ]
 
     private static var isTrackingGateResolved = false
