@@ -23,11 +23,11 @@ enum AdjustTracker {
     ///
     /// 投放阶段切换优化目标：起量期 onboarding_complete → 提质期 trial_start → ROAS 期 purchase。
     private static let eventTokens: [Analytics.Event: String] = [
-        .onboardingComplete:   "",   // 起量期优化目标（浅漏斗，量最大）→ FB CompleteRegistration
-        .firstEpisodeComplete: "",   // 真·Aha，CPI 质量分层（幂等，首次完播）
-        .paywallView:          "",   // 付费意向前兆 → FB InitiateCheckout
-        .trialStart:           "",   // 提质期主优化目标（强付费意向）→ FB StartTrial
-        .purchaseSuccess:      "",   // ROAS 期：订阅扣费，走 trackRevenue 带金额 → FB Subscribe
+        .onboardingComplete:   "syr47n",   // 起量期优化目标（浅漏斗，量最大）→ FB CompleteRegistration
+        .firstEpisodeComplete: "pkfpqp",   // 真·Aha，CPI 质量分层（幂等，首次完播）
+        .paywallView:          "j6vl3g",   // 付费意向前兆 → FB InitiateCheckout
+        .trialStart:           "p8bw19",   // 提质期主优化目标（强付费意向）→ FB StartTrial
+        .purchaseSuccess:      "js1zzh",   // ROAS 期：订阅扣费，走 trackRevenue 带金额 → FB Subscribe
     ]
 
     private static var isTrackingGateResolved = false
