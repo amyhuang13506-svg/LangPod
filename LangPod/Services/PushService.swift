@@ -32,7 +32,10 @@ class PushService: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        true
+        // Adjust 必须在 didFinishLaunching 里初始化（first-session-delay 模式，
+        // 首包等 ATT 决策后由 AdjustTracker.requestATTIfNeeded 放行）。
+        AdjustTracker.initialize()
+        return true
     }
 
     /// Ask iOS for permission, then register for remote pushes if granted.

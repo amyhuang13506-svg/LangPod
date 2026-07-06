@@ -555,7 +555,12 @@ struct PaywallView: View {
                 Task {
                     let success = await subscriptionManager.purchase(productID)
                     Analytics.track(success ? .purchaseSuccess : .purchaseFail, params: ["product": productID])
-                    if success { dismiss() }
+                    if success {
+                        // Adjust 收入回传（带 value + currency，FB ROAS 出价依赖这条）
+                        let price = subscriptionManager.priceInfo(for: productID)
+                        AdjustTracker.trackRevenue(.purchaseSuccess, amount: price.value, currency: price.currency)
+                        dismiss()
+                    }
                 }
             } label: {
                 Group {

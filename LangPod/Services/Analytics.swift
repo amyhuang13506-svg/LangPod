@@ -94,6 +94,9 @@ enum Analytics {
             MobClick.event(event.rawValue, attributes: params)
         }
         #endif
+
+        // 镜像到 Adjust（FB 投放归因用；只有 AdjustTracker.eventTokens 配了 token 的事件才上报）
+        AdjustTracker.mirror(event, params: params)
     }
 
     /// Attach a stable user identifier so Umeng can thread events together

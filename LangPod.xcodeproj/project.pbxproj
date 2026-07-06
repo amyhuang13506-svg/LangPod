@@ -55,6 +55,8 @@
 		A10040 /* EpisodeThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20042 /* EpisodeThumbnail.swift */; };
 		A10044 /* AllEpisodesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20046 /* AllEpisodesView.swift */; };
 		AN0001 /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AN0002 /* Analytics.swift */; };
+		AJ0001 /* AdjustTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AJ0002 /* AdjustTracker.swift */; };
+		AA53B5824034DAC2B4BB0CAA /* AdjustSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 7C5F8C060DA074F2F06B3CE1 /* AdjustSdk */; };
 		B10061 /* ep-20260319-easy-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20061 /* ep-20260319-easy-001_cover.jpg */; };
 		B10062 /* ep-20260319-hard-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20062 /* ep-20260319-hard-001_cover.jpg */; };
 		B10063 /* ep-20260319-medium-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B20063 /* ep-20260319-medium-001_cover.jpg */; };
@@ -182,6 +184,7 @@
 		A20046 /* AllEpisodesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AllEpisodesView.swift; sourceTree = "<group>"; };
 		A30001 /* LangPod.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LangPod.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AN0002 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
+		AJ0002 /* AdjustTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdjustTracker.swift; sourceTree = "<group>"; };
 		B20061 /* ep-20260319-easy-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ep-20260319-easy-001_cover.jpg"; sourceTree = "<group>"; };
 		B20062 /* ep-20260319-hard-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ep-20260319-hard-001_cover.jpg"; sourceTree = "<group>"; };
 		B20063 /* ep-20260319-medium-001_cover.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ep-20260319-medium-001_cover.jpg"; sourceTree = "<group>"; };
@@ -268,6 +271,7 @@
 				UM0004 /* UTDID.framework in Frameworks */,
 				UM0005 /* UMCommonLog.framework in Frameworks */,
 				BF27984632099ED9EF48F8DA /* RevenueCat in Frameworks */,
+				AA53B5824034DAC2B4BB0CAA /* AdjustSdk in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -342,6 +346,7 @@
 				SM0002 /* SubscriptionManager.swift */,
 				IC0002 /* ImageCache.swift */,
 				AN0002 /* Analytics.swift */,
+				AJ0002 /* AdjustTracker.swift */,
 				RC0002 /* RemoteCommandRouter.swift */,
 				P20003 /* PatternAccessGate.swift */,
 				RP0072 /* WordLookupService.swift */,
@@ -479,6 +484,7 @@
 			name = LangPod;
 			packageProductDependencies = (
 				755E9D1EFFDDE6527A77D96B /* RevenueCat */,
+				7C5F8C060DA074F2F06B3CE1 /* AdjustSdk */,
 			);
 			productName = LangPod;
 			productReference = A30001 /* LangPod.app */;
@@ -512,6 +518,7 @@
 			mainGroup = A50001;
 			packageReferences = (
 				47B5FB07191EF60E1D903D23 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+				45B14284A2ED40A4F1E26BEF /* XCRemoteSwiftPackageReference "ios_sdk" */,
 			);
 			productRefGroup = A50005 /* Products */;
 			projectDirPath = "";
@@ -616,6 +623,7 @@
 				A190003 /* SceneLessonSection.swift in Sources */,
 				A10023 /* VocabularyStore.swift in Sources */,
 				AN0001 /* Analytics.swift in Sources */,
+				AJ0001 /* AdjustTracker.swift in Sources */,
 				RC0001 /* RemoteCommandRouter.swift in Sources */,
 				P10001 /* Pattern.swift in Sources */,
 				P10002 /* PlayItem.swift in Sources */,
@@ -887,6 +895,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		45B14284A2ED40A4F1E26BEF /* XCRemoteSwiftPackageReference "ios_sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adjust/ios_sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.6.0;
+			};
+		};
 		47B5FB07191EF60E1D903D23 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
@@ -898,6 +914,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		7C5F8C060DA074F2F06B3CE1 /* AdjustSdk */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45B14284A2ED40A4F1E26BEF /* XCRemoteSwiftPackageReference "ios_sdk" */;
+			productName = AdjustSdk;
+		};
 		755E9D1EFFDDE6527A77D96B /* RevenueCat */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 47B5FB07191EF60E1D903D23 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;

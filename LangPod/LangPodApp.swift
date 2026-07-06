@@ -252,8 +252,18 @@ struct LangPodApp: App {
                 if completed {
                     notificationManager.requestPermission()
                     PushService.shared.requestPushAuthorization()
+                    // ATT 授权（FB 投放归因）：跟在推送授权后面排队弹出。
+                    // 无论同意/拒绝都会放行 Adjust 首包（拒绝走 SKAdNetwork 归因）。
+                    AdjustTracker.requestATTIfNeeded()
                     // 记录 onboarding 完成日：当天不自动弹任务清单（不打断新用户首体验）
                     UserDefaults.standard.set(TaskEngine.todayKey(), forKey: "onboardingCompletedDay")
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                // 老用户（已过 onboarding）：每次激活时机会性地弹 ATT / 放行 Adjust 首包。
+                // 已决策过则内部直接放行，不会重复弹框。新用户等 onboarding 完成再弹。
+                if dataStore.hasCompletedOnboarding {
+                    AdjustTracker.requestATTIfNeeded()
                 }
             }
         }

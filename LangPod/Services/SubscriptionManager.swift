@@ -114,6 +114,15 @@ class SubscriptionManager {
         return "¥48/月"
     }
 
+    /// 订阅成功后给 Adjust 回传收入用（ROAS 出价）。商店未加载时回退写死 CNY 定价。
+    func priceInfo(for productID: String) -> (value: Double, currency: String) {
+        let pkg = productID == Self.yearlyID ? yearlyPackage : monthlyPackage
+        if let product = pkg?.storeProduct {
+            return ((product.price as NSDecimalNumber).doubleValue, product.currencyCode ?? "CNY")
+        }
+        return (productID == Self.yearlyID ? 298 : 48, "CNY")
+    }
+
     private static func formatPriceWithPeriod(_ product: StoreProduct) -> String {
         guard let period = product.subscriptionPeriod else { return product.localizedPriceString }
         return "\(product.localizedPriceString)/\(periodUnitDisplay(period))"
@@ -408,6 +417,15 @@ class SubscriptionManager {
             return Self.formatPriceWithPeriod(product)
         }
         return "¥48/月"
+    }
+
+    /// 订阅成功后给 Adjust 回传收入用（ROAS 出价）。商店未加载时回退写死 CNY 定价。
+    func priceInfo(for productID: String) -> (value: Double, currency: String) {
+        if let product = products.first(where: { $0.id == productID }) {
+            let currency = product.priceFormatStyle.currencyCode
+            return ((product.price as NSDecimalNumber).doubleValue, currency)
+        }
+        return (productID == Self.yearlyID ? 298 : 48, "CNY")
     }
 
     private static func formatPriceWithPeriod(_ product: Product) -> String {
