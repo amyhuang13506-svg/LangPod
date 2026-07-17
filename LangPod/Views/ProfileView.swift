@@ -41,6 +41,9 @@ struct ProfileView: View {
                     // Profile card
                     profileCard
 
+                    // 学习计划卡：onboarding 生成的专属计划常驻入口 + 累计活跃进度
+                    planCard
+
                     // 战绩区：Streak 卡（带今日任务进度环，点击重开任务弹窗）+ 本周进度 + 三格统计
                     streakCard
                     weekProgress
@@ -85,6 +88,62 @@ struct ProfileView: View {
     }
 
     // MARK: - Profile Card
+
+    // MARK: - 学习计划卡
+
+    /// 计划来自 onboarding 落盘答案；级别跟随 dataStore.selectedLevel（用户改级别自动变）。
+    private var plan: LearningPlan {
+        LearningPlan.persisted(level: dataStore.selectedLevel)
+    }
+
+    /// 进度提示：距离下一个里程碑还有几天；全部达成 → 完成态。
+    private var planProgressCaption: String {
+        let days = dataStore.activeDays
+        if let next = plan.nextMilestone(activeDays: days) {
+            return "累计活跃 \(days) 天 · 还有 \(next.day - days) 天到「\(next.title)」"
+        }
+        return "累计活跃 \(days) 天 · 90 天里程碑全部达成 🎉"
+    }
+
+    /// 「我的学习计划」卡：整卡可点，进计划详情页。累计活跃 ≠ streakCard 的连续天数。
+    private var planCard: some View {
+        NavigationLink {
+            LearningPlanPage()
+                .environment(dataStore)
+        } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("我的学习计划")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.textQuaternary)
+                }
+
+                HStack(spacing: 8) {
+                    ForEach(plan.chips, id: \.self) { PlanChip($0) }
+                }
+
+                PlanProgressBar(activeDays: dataStore.activeDays)
+
+                Text(planProgressCaption)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.textTertiary)
+            }
+            .padding(16)
+            .background(.white, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .simultaneousGesture(TapGesture().onEnded {
+            Analytics.track(.planCardTap, params: [
+                "active_days": "\(dataStore.activeDays)",
+                "goal": plan.goal?.rawValue ?? "none"
+            ])
+        })
+    }
 
     // MARK: - 战绩区（从旧 StatsView 恢复：streakCard + statsRow + weekProgress）
 
@@ -554,6 +613,9 @@ struct ProfileView: View {
     private func clearAllData() {
         guard let domain = Bundle.main.bundleIdentifier else { return }
         UserDefaults.standard.removePersistentDomain(forName: domain)
+        // domain 已清盘，但内存里的 @Observable 值还在、下次写入会重新落盘。
+        // 显式归零累计活跃天数，避免清数据后新账号继承旧进度（seed 只在 init 跑，不重启不会重种）。
+        dataStore.activeDays = 0
         dataStore.hasCompletedOnboarding = false
     }
 }

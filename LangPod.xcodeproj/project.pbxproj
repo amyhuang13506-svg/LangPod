@@ -22,6 +22,7 @@
 		A10014 /* episodes_medium.json in Resources */ = {isa = PBXBuildFile; fileRef = A20016 /* episodes_medium.json */; };
 		A10015 /* episodes_hard.json in Resources */ = {isa = PBXBuildFile; fileRef = A20017 /* episodes_hard.json */; };
 		A10016 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20018 /* OnboardingView.swift */; };
+		A1991303 /* LearningPlanViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991303 /* LearningPlanViews.swift */; };
 		A10017 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20019 /* Theme.swift */; };
 		A10018 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20020 /* AudioPlayer.swift */; };
 		A10019 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20021 /* PlayerView.swift */; };
@@ -30,6 +31,7 @@
 		A10022 /* SavedWord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20024 /* SavedWord.swift */; };
 		A1991111 /* ExpressionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991111 /* ExpressionStore.swift */; };
 		A1991110 /* Expression.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991110 /* Expression.swift */; };
+		A1991301 /* LearningPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991301 /* LearningPlan.swift */; };
 		A1991106 /* SentencePracticeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991106 /* SentencePracticeViews.swift */; };
 		A1991107 /* TaskEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991107 /* TaskEngine.swift */; };
 		A1991108 /* DailyTaskViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991108 /* DailyTaskViews.swift */; };
@@ -145,6 +147,7 @@
 		A20016 /* episodes_medium.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = episodes_medium.json; sourceTree = "<group>"; };
 		A20017 /* episodes_hard.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = episodes_hard.json; sourceTree = "<group>"; };
 		A20018 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		A2991303 /* LearningPlanViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningPlanViews.swift; sourceTree = "<group>"; };
 		A20019 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		A20020 /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
 		A20021 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
@@ -153,6 +156,7 @@
 		A20024 /* SavedWord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWord.swift; sourceTree = "<group>"; };
 		A2991111 /* ExpressionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpressionStore.swift; sourceTree = "<group>"; };
 		A2991110 /* Expression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Expression.swift; sourceTree = "<group>"; };
+		A2991301 /* LearningPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningPlan.swift; sourceTree = "<group>"; };
 		A2991106 /* SentencePracticeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentencePracticeViews.swift; sourceTree = "<group>"; };
 		A2991107 /* TaskEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskEngine.swift; sourceTree = "<group>"; };
 		A2991108 /* DailyTaskViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTaskViews.swift; sourceTree = "<group>"; };
@@ -299,6 +303,7 @@
 		A50003 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				A2991301 /* LearningPlan.swift */,
 				A2991110 /* Expression.swift */,
 				A2991102 /* SavedSentence.swift */,
 				A290000 /* SceneLesson.swift */,
@@ -367,6 +372,7 @@
 				A20007 /* VocabularyView.swift */,
 				A20009 /* ProfileView.swift */,
 				A20018 /* OnboardingView.swift */,
+				A2991303 /* LearningPlanViews.swift */,
 				A20021 /* PlayerView.swift */,
 				A20022 /* SubtitleOverlay.swift */,
 				A20023 /* EpisodeCompleteView.swift */,
@@ -590,6 +596,7 @@
 				A10011 /* Episode.swift in Sources */,
 				A10012 /* MockDataLoader.swift in Sources */,
 				A10016 /* OnboardingView.swift in Sources */,
+				A1991303 /* LearningPlanViews.swift in Sources */,
 				A10017 /* Theme.swift in Sources */,
 				A10018 /* AudioPlayer.swift in Sources */,
 				A10019 /* PlayerView.swift in Sources */,
@@ -598,6 +605,7 @@
 				A10022 /* SavedWord.swift in Sources */,
 				A1991111 /* ExpressionStore.swift in Sources */,
 				A1991110 /* Expression.swift in Sources */,
+				A1991301 /* LearningPlan.swift in Sources */,
 				A1991106 /* SentencePracticeViews.swift in Sources */,
 				A1991107 /* TaskEngine.swift in Sources */,
 				A1991108 /* DailyTaskViews.swift in Sources */,

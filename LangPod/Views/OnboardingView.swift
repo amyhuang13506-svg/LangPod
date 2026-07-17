@@ -453,71 +453,7 @@ struct OnboardingView: View {
     }
 
     // MARK: - Page 2: Goal question
-
-    enum LearningGoal: String, CaseIterable {
-        case travel = "travel"
-        case study = "study"
-        case living = "overseas_living"
-        case work = "work"
-        case video = "video"
-        case selfGrowth = "self_growth"
-
-        var icon: String {
-            switch self {
-            case .travel: return "airplane"
-            case .study: return "graduationcap.fill"
-            case .living: return "house.fill"
-            case .work: return "briefcase.fill"
-            case .video: return "play.rectangle.fill"
-            case .selfGrowth: return "sparkles"
-            }
-        }
-
-        var label: String {
-            switch self {
-            case .travel: return "出国旅行"
-            case .study: return "留学生活"
-            case .living: return "在国外生活"
-            case .work: return "工作需要"
-            case .video: return "刷懂英文原声视频"
-            case .selfGrowth: return "提升自己"
-            }
-        }
-
-        var color: Color {
-            switch self {
-            case .travel: return Color(hex: "F59E0B")
-            case .study: return Color(hex: "8B5CF6")
-            case .living: return Color(hex: "10B981")
-            case .work: return Color(hex: "3B82F6")
-            case .video: return Color(hex: "FF0000")
-            case .selfGrowth: return Color(hex: "EC4899")
-            }
-        }
-
-        var bgColor: Color {
-            switch self {
-            case .travel: return Color(hex: "FFFBEB")
-            case .study: return Color(hex: "F5F3FF")
-            case .living: return Color(hex: "ECFDF5")
-            case .work: return Color(hex: "EFF6FF")
-            case .video: return Color(hex: "FEF2F2")
-            case .selfGrowth: return Color(hex: "FDF2F8")
-            }
-        }
-
-        /// 计划页里 90 天效果预期的文案
-        var outcome90d: String {
-            switch self {
-            case .travel: return "旅行常用场景对话不慌不忙，点单问路都能自己来"
-            case .study: return "课堂内外的日常交流跟得上，社交场合敢开口"
-            case .living: return "办事、就医、社交都能自己搞定，不用再靠翻译软件"
-            case .work: return "职场高频表达张口就来，开会邮件不再卡壳"
-            case .video: return "不开字幕也能跟上英文原声播客和视频"
-            case .selfGrowth: return "英语听力形成条件反射，把'学过'变成'用得上'"
-            }
-        }
-    }
+    // LearningGoal 已移到顶层 Models/LearningPlan.swift（color/bgColor 走视图层扩展）。
 
     @State private var selectedGoal: LearningGoal? = nil
 
@@ -843,73 +779,17 @@ struct OnboardingView: View {
     /// 0 = 生成中，1-3 = 第 N 条已完成，4 = 计划揭示
     @State private var planStage = 0
 
-    private var levelDisplayName: String {
-        switch selectedLevel {
-        case .easy: return "初级"
-        case .medium: return "中级"
-        case .hard: return "高级"
-        }
+    /// 当前答案拼出的计划 —— 条目/里程碑/文案全来自 LearningPlan（与「我的」页同源）
+    private var plan: LearningPlan {
+        LearningPlan(level: selectedLevel, goal: selectedGoal, dailyMinutes: selectedMinutes ?? LearningPlan.defaultMinutes)
     }
 
     private var planBuildSteps: [String] {
         [
-            "分析听力水平 · \(levelDisplayName)",
-            "按目标匹配学习内容 · \(selectedGoal?.label ?? "实用口语")",
-            "生成每日 \(selectedMinutes ?? 15) 分钟计划",
+            "分析听力水平 · \(plan.level.tabName)",
+            "按目标匹配学习内容 · \(plan.goal?.label ?? "实用口语")",
+            "生成每日 \(plan.dailyMinutes) 分钟计划",
         ]
-    }
-
-    // MARK: 计划条目 —— 按目标和时长拼装，不是人人相同
-
-    private struct PlanItem: Identifiable {
-        let icon: String
-        let color: Color
-        let title: String
-        let detail: String
-        var id: String { title }
-    }
-
-    /// 场景课堂一行的说明，跟随用户目标侧重
-    private var lessonDetailText: String {
-        switch selectedGoal {
-        case .travel: return "机场、酒店、餐厅，旅行场景课优先安排"
-        case .study: return "校园、社交、日常琐事，留学场景课优先安排"
-        case .living: return "租房、看病、办事，海外生活场景课优先安排"
-        case .work: return "职场沟通高频场景课优先安排"
-        default: return "点单、租房、看病，按真实场景分类的实用课"
-        }
-    }
-
-    private var planItems: [PlanItem] {
-        var items: [PlanItem] = [
-            PlanItem(icon: "headphones", color: Color.appPrimary,
-                     title: "每天 1 集\(levelDisplayName)播客",
-                     detail: "英语 ×3 → 中文 ×1 → 英语 ×1，重复成本能"),
-            PlanItem(icon: "text.bubble.fill", color: Color(hex: "F59E0B"),
-                     title: "高频句型讲解",
-                     detail: "从当天播客拆出来，讲透场景和语感"),
-        ]
-
-        let youtubeItem = PlanItem(icon: "play.rectangle.fill", color: Color(hex: "FF0000"),
-                                   title: "YouTube 原声播客",
-                                   detail: "中英双语字幕，检验真实语速听力")
-        let lessonItem = PlanItem(icon: "graduationcap.fill", color: Color(hex: "10B981"),
-                                  title: "出国场景课堂",
-                                  detail: lessonDetailText)
-
-        // 目标决定第三块的侧重；时间充裕（≥20 分钟）则两块都排进来
-        if selectedGoal == .video {
-            items.append(youtubeItem)
-            if (selectedMinutes ?? 15) >= 20 { items.append(lessonItem) }
-        } else {
-            items.append(lessonItem)
-            if (selectedMinutes ?? 15) >= 20 { items.append(youtubeItem) }
-        }
-
-        items.append(PlanItem(icon: "flame.fill", color: Color(hex: "F97316"),
-                              title: "每日任务打卡",
-                              detail: "词汇 + 句型练习，连续打卡不断档"))
-        return items
     }
 
     private var planPage: some View {
@@ -986,11 +866,7 @@ struct OnboardingView: View {
                             .foregroundStyle(Color.textPrimary)
 
                         HStack(spacing: 8) {
-                            planChip(levelDisplayName)
-                            planChip("每天 \(selectedMinutes ?? 15) 分钟")
-                            if let goal = selectedGoal {
-                                planChip(goal.label)
-                            }
+                            ForEach(plan.chips, id: \.self) { PlanChip($0) }
                         }
                     }
 
@@ -998,10 +874,9 @@ struct OnboardingView: View {
 
                     // 每天做什么 —— 条目由级别、目标、时长拼装
                     VStack(spacing: 0) {
-                        ForEach(Array(planItems.enumerated()), id: \.element.id) { index, item in
-                            if index > 0 { planDivider }
-                            planRow(icon: item.icon, color: item.color,
-                                    title: item.title, detail: item.detail)
+                        ForEach(Array(plan.items.enumerated()), id: \.element.id) { index, item in
+                            if index > 0 { Divider().padding(.leading, 70) }
+                            PlanItemRow(item: item)
                         }
                     }
                     .background(.white, in: RoundedRectangle(cornerRadius: 16))
@@ -1019,26 +894,9 @@ struct OnboardingView: View {
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(Color.textPrimary)
 
-                        milestoneRow(
-                            day: "第 7 天",
-                            title: "耳朵热起来",
-                            desc: "适应 5 遍精听的节奏，能从整句里抓到关键词，英语不再是一片模糊的背景音"
-                        )
-                        milestoneRow(
-                            day: "第 21 天",
-                            title: "句型上口",
-                            desc: "高频句型开始形成条件反射，听到熟悉的场景，能直接反应出该说的那句话"
-                        )
-                        milestoneRow(
-                            day: "第 30 天",
-                            title: "跟上对话",
-                            desc: "日常对话不用暂停回放也能跟上大意，敢在真实场景里开口回应"
-                        )
-                        milestoneRow(
-                            day: "第 90 天",
-                            title: "真的用得上",
-                            desc: selectedGoal?.outcome90d ?? "英语听力形成条件反射，把'学过'变成'用得上'"
-                        )
+                        ForEach(plan.milestones) { milestone in
+                            PlanMilestoneRow(milestone: milestone)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(18)
@@ -1065,65 +923,8 @@ struct OnboardingView: View {
         }
     }
 
-    private var planDivider: some View {
-        Divider().padding(.leading, 70)
-    }
-
-    private func planRow(icon: String, color: Color, title: String, detail: String) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(color.opacity(0.12))
-                    .frame(width: 40, height: 40)
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                    .foregroundStyle(color)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.textPrimary)
-                Text(detail)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.textTertiary)
-            }
-
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
-
-    private func planChip(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(Color.appPrimary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.primaryLight, in: Capsule())
-    }
-
-    private func milestoneRow(day: String, title: String, desc: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text(day)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(Color.appPrimary)
-                .frame(width: 52, alignment: .leading)
-                .padding(.top, 1)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color.textPrimary)
-                Text(desc)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.textTertiary)
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
+    // 计划页的行组件（PlanChip / PlanItemRow / PlanMilestoneRow）已移到
+    // LearningPlanViews.swift，与「我的」计划详情页共用。
 
     // MARK: - Page 6: User Source
 

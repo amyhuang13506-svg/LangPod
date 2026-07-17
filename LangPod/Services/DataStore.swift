@@ -35,6 +35,11 @@ class DataStore {
     var streakDays: Int {
         didSet { UserDefaults.standard.set(streakDays, forKey: "streakDays") }
     }
+    /// 累计活跃天数（任意活动即算，跨天不清零）——与 streakDays（连续，断则归 1）是两个指标。
+    /// 驱动「我的」页学习计划的进度条 + 7/21/30/90 天里程碑。
+    var activeDays: Int {
+        didSet { UserDefaults.standard.set(activeDays, forKey: "totalActiveDays") }
+    }
     var lastListenDate: Date? {
         didSet { UserDefaults.standard.set(lastListenDate?.timeIntervalSince1970 ?? 0, forKey: "lastListenDate") }
     }
@@ -99,6 +104,7 @@ class DataStore {
         self.listeningLevel = ListeningLevel(rawValue: UserDefaults.standard.integer(forKey: "listeningLevel")) ?? .lv1
         self.episodesCompleted = UserDefaults.standard.integer(forKey: "episodesCompleted")
         self.streakDays = UserDefaults.standard.integer(forKey: "streakDays")
+        self.activeDays = UserDefaults.standard.integer(forKey: "totalActiveDays")
         let lastTs = UserDefaults.standard.double(forKey: "lastListenDate")
         self.lastListenDate = lastTs > 0 ? Date(timeIntervalSince1970: lastTs) : nil
         self.totalListeningSeconds = UserDefaults.standard.integer(forKey: "totalListeningSeconds")
@@ -113,6 +119,7 @@ class DataStore {
         loadListenHistory()
         loadPatternHistory()
         loadRawPodcastHistory()
+        seedActiveDaysIfNeeded()   // 依赖三个 history 数组已加载 + checkStreakContinuity 已跑
         loadEpisodes()
         loadRawPodcasts()
     }
@@ -368,6 +375,12 @@ class DataStore {
             streakDays = 1
         }
 
+        // 累计活跃天数：早退保证这里每个自然日最多到达一次，两条入口路径都汇流至此。
+        activeDays += 1
+        if LearningPlan.milestoneDays.contains(activeDays) {
+            Analytics.track(.planMilestoneReached, params: ["day": "\(activeDays)"])
+        }
+
         lastListenDate = Date()
 
         // Check milestones
@@ -375,6 +388,23 @@ class DataStore {
         if milestones.contains(streakDays) {
             streakMilestone = streakDays
         }
+    }
+
+    /// 老用户种子迁移：首次装到带 activeDays 的版本时，估一个下界，避免看到 0 天。
+    /// 只用 max(streakDays, 历史去重天数)——两者都是真实下界；不用 episodesCompleted
+    /// （它是天数的上界，一天连听多集会虚高，可能凭空盖上里程碑 ✓）。
+    private func seedActiveDaysIfNeeded() {
+        let seededKey = "totalActiveDaysSeeded"
+        guard !UserDefaults.standard.bool(forKey: seededKey) else { return }
+        UserDefaults.standard.set(true, forKey: seededKey)
+        // 从未活跃 → 0，不种（init 把 streakDays 兜底成 1，不能被误当成 1 天活跃）
+        guard lastListenDate != nil else { return }
+        let cal = Calendar.current
+        var days = Set<Date>()
+        listenHistory.forEach { days.insert(cal.startOfDay(for: $0.listenedAt)) }
+        patternHistory.forEach { days.insert(cal.startOfDay(for: $0.listenedAt)) }
+        rawPodcastHistory.forEach { days.insert(cal.startOfDay(for: $0.listenedAt)) }
+        activeDays = max(activeDays, max(streakDays, days.count))
     }
 
     // MARK: - Listen History
@@ -530,3 +560,22 @@ class DataStore {
         }
     }
 }
+
+#if DEBUG
+extension DataStore {
+    /// 直接改累计活跃天数（验证进度条 / 里程碑 ✓ 各档）。不触发 planMilestoneReached 埋点。
+    func debugSetActiveDays(_ n: Int) { activeDays = max(0, n) }
+
+    /// 把 lastListenDate 设成昨天 → 下一次任务完成/听一集即 activeDays +1（验证每日只 +1）。
+    func debugSimulateYesterday() {
+        let cal = Calendar.current
+        lastListenDate = cal.date(byAdding: .day, value: -1, to: cal.startOfDay(for: Date()))
+    }
+
+    /// 清种子标记 + 归零，重启后重跑 seedActiveDaysIfNeeded（验证迁移逻辑）。
+    func debugClearActiveDaysSeed() {
+        UserDefaults.standard.removeObject(forKey: "totalActiveDaysSeeded")
+        activeDays = 0
+    }
+}
+#endif

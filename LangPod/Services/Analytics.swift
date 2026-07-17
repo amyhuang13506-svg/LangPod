@@ -57,6 +57,8 @@ enum Analytics {
         case sentenceSave = "sentence_save"
         case sentencePracticeComplete = "sentence_practice_complete"
         case sentenceQuizComplete = "sentence_quiz_complete"
+        case planCardTap = "plan_card_tap"
+        case planMilestoneReached = "plan_milestone_reached"
         case dailyTaskPopupView = "daily_task_popup_view"
         case dailyTaskPopupDismiss = "daily_task_popup_dismiss"
         case dailyTaskComplete = "daily_task_complete"
