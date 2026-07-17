@@ -44,14 +44,30 @@ STYLE_BASE = (
     "Like a high-quality illustration from a design-forward app. "
 )
 
-# 各大组一套色系 —— 让首页各区块一眼区分开
+# 各大组一套色系 —— 让各区块一眼区分开。
+# 商务区复用同一套色系（两个区块不会同屏），每组一色，避免商务页一片死板。
+_S_GOLD     = "Color palette: warm sunny gold, honey and soft amber tones on a light cream background. Fresh, bright mood. "
+_S_CORAL    = "Color palette: warm coral, peach and soft orange tones on a light peachy-cream background. Lively, friendly mood. "
+_S_LAVENDER = "Color palette: soft lavender, lilac and blush pink tones on a light lavender-cream background. Playful mood. "
+_S_VIOLET   = "Color palette: soft lavender, plum and dusty violet tones on a light lilac-cream background. Calm, introspective mood. "
+_S_TEAL     = "Color palette: fresh teal, sky blue and aqua tones on a light misty-blue background. Clean, collaborative mood. "
+_S_AMBER    = "Color palette: warm amber, mustard and olive-green tones on a light warm-sand background. Rich, characterful mood. "
+
 GROUP_PALETTE = {
-    "daily":     "Color palette: warm sunny gold, honey and soft amber tones on a light cream background. Fresh, bright, daily-highlight mood. ",
-    "reactions": "Color palette: warm coral, peach and soft orange tones on a light peachy-cream background. Lively, friendly mood. ",
-    "social":    "Color palette: soft lavender, lilac and blush pink tones on a light lavender-cream background. Playful, cheeky mood. ",
-    "express":   "Color palette: soft lavender, plum and dusty violet tones on a light lilac-cream background. Calm, introspective mood. ",
-    "skills":    "Color palette: fresh teal, sky blue and aqua tones on a light misty-blue background. Clean, collaborative mood. ",
-    "native":    "Color palette: warm amber, mustard and olive-green tones on a light warm-sand background. Rich, characterful mood. ",
+    # 日常社交区
+    "daily":     _S_GOLD,
+    "reactions": _S_CORAL,
+    "social":    _S_LAVENDER,
+    "express":   _S_VIOLET,
+    "skills":    _S_TEAL,
+    "native":    _S_AMBER,
+    # 商务英语区
+    "biz_meeting":   _S_TEAL,      # 会议
+    "biz_email":     _S_GOLD,      # 邮件
+    "biz_negotiate": _S_AMBER,     # 谈判
+    "biz_interview": _S_LAVENDER,  # 面试
+    "biz_present":   _S_VIOLET,    # 汇报
+    "biz_social":    _S_CORAL,     # 职场社交
 }
 
 # 人物/场景多样性池 —— 按每条表达的 hash 稳定派生，消除"同一批年轻人"雷同感

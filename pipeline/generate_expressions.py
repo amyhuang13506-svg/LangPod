@@ -67,6 +67,39 @@ RULES:
 Output STRICT JSON only:
 {{"expressions": [{{"english": "...", "meaning_zh": "...", "usage_zh": "...", "country_note_zh": "", "examples": [{{"en": "...", "zh": "..."}}, {{"en": "...", "zh": "..."}}], "scene": {{"setup_zh": "...", "dialogue": [{{"speaker": "A", "en": "...", "zh": "..."}}, {{"speaker": "B", "en": "...", "zh": "..."}}]}}}}]}}"""
 
+# 补足模式：把一个分类累积到目标条数（商务线每分类 25 条）。
+# 一次 GPT 出 25 条会返回超长 JSON 被截断，所以每轮只要 8 条 + 带 avoid-list 去重累积。
+TOPUP_BATCH = 8
+
+TOPUP_PROMPT = """You are expanding a spoken-English expression library for Chinese learners. The app's promise: everything is REAL spoken English natives actually say — practical, register-accurate, immediately usable. NOT textbook English.
+
+CATEGORY: {cat_zh} — {hint}
+
+Produce {n} NEW expressions for this category, ordered by how often natives actually use them.
+
+MUST NOT duplicate or paraphrase any of these already-covered expressions:
+{avoid}
+
+Each expression:
+- "english": the expression as actually spoken (a phrase, a fill-in pattern, or a short sentence).
+  For any open slot, ALWAYS use exactly three underscores `___` — NEVER "..." or "…".
+- "meaning_zh": 中文意思（口语化，一句话）
+- "usage_zh": 语感注释（1-2 句中文）：谁会说、什么场合、什么语气、和相近说法差在哪。要有画面感。
+- "country_note_zh": 国家差异注释（可选，没有明显差异就输出空字符串）
+- "examples": exactly 2, each {{"en": "... (MAX 12 words, real spoken register)", "zh": "自然中文翻译"}}
+- "scene": {{"setup_zh": "1-2 句中文描述具体场景（谁、在哪、发生了什么，有画面感，用'你'的视角）",
+    "dialogue": [{{"speaker": "A", "en": "...", "zh": "..."}}, {{"speaker": "B", "en": "...", "zh": "..."}}]}}
+  dialogue 恰好 2 句（一来一回），其中一句必须自然用到本表达；每句 ≤14 words。
+
+RULES:
+- Real current usage only. No 1990s-textbook phrases.
+- usage_zh 必须口语化中文，禁止论文腔。
+- No political/religious/vulgar content.
+
+Output STRICT JSON only:
+{{"expressions": [{{"english": "...", "meaning_zh": "...", "usage_zh": "...", "country_note_zh": "", "examples": [{{"en": "...", "zh": "..."}}, {{"en": "...", "zh": "..."}}], "scene": {{"setup_zh": "...", "dialogue": [{{"speaker": "A", "en": "...", "zh": "..."}}, {{"speaker": "B", "en": "...", "zh": "..."}}]}}}}]}}"""
+
+
 # 存量补充：给已生成的表达补 scene 字段（不动已有内容和音频）
 AUGMENT_PROMPT = """You are adding "scene examples" to an existing spoken-English expression library for Chinese learners.
 
@@ -202,6 +235,74 @@ def tts_text(english):
     for abbr, spoken in TTS_SPOKEN.items():
         t = re.sub(r"\b%s\b" % abbr, spoken, t, flags=re.IGNORECASE)
     return t
+
+
+def _norm_en(s):
+    return "".join(c for c in (s or "").lower() if c.isalnum())
+
+
+def _valid_one(e):
+    """单条最小校验（validate 是按整分类 6-14 条设计的，补足模式不适用）。"""
+    if not all(e.get(f) for f in ("english", "meaning_zh", "usage_zh")):
+        return False
+    if len(e.get("examples") or []) < 2:
+        return False
+    return True
+
+
+def topup_category(cat, skip_audio=False):
+    """把分类累积到 cat['target_count'] 条：每轮 GPT 出 TOPUP_BATCH 条 + avoid-list 去重。
+    已有内容/媒体原样保留，只追加新条目。之后由音频/图脚本补媒体（幂等）。"""
+    target = cat.get("target_count") or 10
+    out_path = os.path.join(EXPR_DIR, "%s.json" % cat["id"])
+    if os.path.exists(out_path):
+        with open(out_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        data = {"id": cat["id"], "zh": cat["zh"], "expressions": []}
+    # 归属信息按 catalog 刷新（迁移过来的分类 group 会变）
+    data["group_id"] = cat["group_id"]
+    data["group_zh"] = cat["group_zh"]
+    data["is_free"] = cat["is_free"]
+
+    exprs = data.get("expressions") or []
+    seen = {_norm_en(e.get("english")) for e in exprs}
+    print("📝 %s (%s): 现有 %d 条 → 目标 %d 条" % (cat["id"], cat["zh"], len(exprs), target))
+
+    stall = 0
+    while len(exprs) < target and stall < 3:
+        need = min(TOPUP_BATCH, target - len(exprs))
+        avoid = "\n".join("- %s" % e["english"] for e in exprs) or "- (none yet)"
+        prompt = TOPUP_PROMPT.format(cat_zh=cat["zh"], hint=cat["hint"], n=need, avoid=avoid)
+        try:
+            got = (_call_gpt(prompt) or {}).get("expressions") or []
+        except Exception as e:
+            print("   ⚠️ GPT: %s" % e)
+            got = []
+        added = 0
+        for e in got:
+            k = _norm_en(e.get("english"))
+            if not k or k in seen or not _valid_one(e):
+                continue
+            seen.add(k)
+            exprs.append(e)
+            added += 1
+            if len(exprs) >= target:
+                break
+        print("   +%d → %d/%d" % (added, len(exprs), target))
+        stall = stall + 1 if added == 0 else 0
+
+    data["expressions"] = exprs
+    os.makedirs(EXPR_DIR, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    if len(exprs) < target:
+        print("   ⚠️ 只到 %d/%d 条（GPT 连续无新内容）" % (len(exprs), target))
+
+    # 补音频（复用 process_category 的幂等音频段）
+    if not skip_audio:
+        return process_category(cat, skip_audio=False)
+    return True
 
 
 def process_category(cat, skip_audio=False):
@@ -393,6 +494,10 @@ def main():
                         help="给已有分类补 scene 场景示例（不重新生成表达本体）")
     parser.add_argument("--augment-examples", action="store_true",
                         help="给已有分类每条表达补到 4 个例句")
+    parser.add_argument("--top-up", action="store_true",
+                        help="把分类累积到 catalog 的 target_count 条（商务线 25）")
+    parser.add_argument("--section", choices=["social", "business"],
+                        help="按区块筛选分类")
     args = parser.parse_args()
 
     cats = all_categories()
@@ -400,6 +505,8 @@ def main():
         cats = [c for c in cats if c["id"] == args.category]
     elif args.group:
         cats = [c for c in cats if c["group_id"] == args.group]
+    elif args.section:
+        cats = [c for c in cats if c["section"] == args.section]
     if not cats:
         print("❌ no matching categories")
         sys.exit(1)
@@ -408,6 +515,8 @@ def main():
         fn = augment_scenes
     elif args.augment_examples:
         fn = augment_examples
+    elif args.top_up:
+        fn = topup_category
     else:
         fn = process_category
     ok = sum(1 for c in cats if fn(c, skip_audio=args.skip_audio))

@@ -133,13 +133,15 @@ def main():
 
     # index.json：组 → 分类（含表达数、免费标记、封面）
     index = {"groups": []}
-    from expression_catalog import FREE_CATEGORY_IDS
+    from expression_catalog import FREE_CATEGORY_IDS, section_of
     for g in GROUPS:
         index["groups"].append({
             "id": g["id"],
             "zh": g["zh"],
             "icon": g["icon"],
             "desc": g["desc"],
+            # 双区块：句型 tab 顶部「日常社交 | 商务英语」按此字段分流
+            "section": section_of(g["id"]),
             "categories": [
                 {
                     "id": c["id"],

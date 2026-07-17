@@ -45,6 +45,7 @@ enum Analytics {
         case patternOpen = "pattern_open"
         case patternListenComplete = "pattern_listen_complete"
         case patternPaywallView = "pattern_paywall_view"
+        case patternSectionSwitch = "pattern_section_switch"
         case lessonOpen = "lesson_open"
         case lessonWordAdd = "lesson_word_add"
         case lessonAddAll = "lesson_add_all"

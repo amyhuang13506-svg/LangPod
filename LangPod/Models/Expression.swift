@@ -19,12 +19,38 @@ struct ExpressionIndex: Codable {
     let groups: [ExpressionGroup]
 }
 
+/// 句型 tab 顶部双区块：日常社交 | 商务英语
+enum ExpressionSection: String, CaseIterable {
+    case social
+    case business
+
+    var zh: String {
+        switch self {
+        case .social: "日常社交"
+        case .business: "商务英语"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .social: "bubble.left.and.bubble.right.fill"
+        case .business: "briefcase.fill"
+        }
+    }
+}
+
 struct ExpressionGroup: Codable, Identifiable, Hashable {
-    let id: String        // reactions / express / skills / native
-    let zh: String        // 日常反应 / 表达自己 / 会话技能 / 进阶地道
+    let id: String        // daily / reactions / social / express / skills / native / biz_*
+    let zh: String        // 今天 / 日常 / 玩梗 / 观点 / 会话技巧 / 进阶地道 / 会议…
     let icon: String
     let desc: String
+    /// 所属区块（social / business）。老数据没这个字段 → 默认 social。
+    let section: String?
     let categories: [ExpressionCategoryIndexItem]
+
+    var sectionValue: ExpressionSection {
+        ExpressionSection(rawValue: section ?? "") ?? .social
+    }
 }
 
 struct ExpressionCategoryIndexItem: Codable, Identifiable, Hashable {

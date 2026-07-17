@@ -54,37 +54,54 @@ STYLE = (
 )
 
 # 三色方案：每组主色 ~60%（背景+大面积）+ 两个点缀色（衣服/植物/小物件）
+_P_GOLD = (
+    "Color palette: dominant warm sunny gold and honey tones (about 60% of the image, "
+    "background and large shapes), accented with soft coral pink and fresh mint green "
+    "on clothing, plants and small props. Very light warm-cream background. "
+)
+_P_PEACH = (
+    "Color palette: dominant sweet peach pink and blush tones (about 60% of the image, "
+    "background and large shapes), accented with fresh mint green and soft butter yellow "
+    "on clothing, plants and small props. Light pink-cream background. "
+)
+_P_LAVENDER = (
+    "Color palette: dominant soft lavender and lilac purple tones (about 60% of the image, "
+    "background and large shapes), accented with sweet peach pink and soft butter yellow "
+    "on clothing, plants and small props. Very light lavender-cream background. "
+)
+_P_BLUE = (
+    "Color palette: dominant bright sky blue and powder blue tones (about 60% of the image, "
+    "background and large shapes), accented with warm coral pink and soft lemon yellow "
+    "on clothing, plants and small props. Very light airy blue background. "
+)
+_P_MINT = (
+    "Color palette: dominant fresh mint green and seafoam tones (about 60% of the image, "
+    "background and large shapes), accented with soft peach pink and warm sandy yellow "
+    "on clothing, plants and small props. Very light minty background. "
+)
+_P_YELLOW = (
+    "Color palette: dominant sunny lemon yellow and warm golden tones (about 60% of the image, "
+    "background and large shapes), accented with coral pink and fresh teal green "
+    "on clothing, plants and small props. Very light buttery-yellow background. "
+)
+
+# 每个大组一个主色系。商务区复用同一套色系（两个区块不会同屏，颜色可重复），
+# 每组一色 —— 商务页面才不会一片死板。
 GROUP_PALETTE = {
-    "daily": (
-        "Color palette: dominant warm sunny gold and honey tones (about 60% of the image, "
-        "background and large shapes), accented with soft coral pink and fresh mint green "
-        "on clothing, plants and small props. Very light warm-cream background. "
-    ),
-    "reactions": (
-        "Color palette: dominant sweet peach pink and blush tones (about 60% of the image, "
-        "background and large shapes), accented with fresh mint green and soft butter yellow "
-        "on clothing, plants and small props. Light pink-cream background. "
-    ),
-    "social": (
-        "Color palette: dominant soft lavender and lilac purple tones (about 60% of the image, "
-        "background and large shapes), accented with sweet peach pink and soft butter yellow "
-        "on clothing, plants and small props. Very light lavender-cream background. "
-    ),
-    "express": (
-        "Color palette: dominant bright sky blue and powder blue tones (about 60% of the image, "
-        "background and large shapes), accented with warm coral pink and soft lemon yellow "
-        "on clothing, plants and small props. Very light airy blue background. "
-    ),
-    "skills": (
-        "Color palette: dominant fresh mint green and seafoam tones (about 60% of the image, "
-        "background and large shapes), accented with soft peach pink and warm sandy yellow "
-        "on clothing, plants and small props. Very light minty background. "
-    ),
-    "native": (
-        "Color palette: dominant sunny lemon yellow and warm golden tones (about 60% of the image, "
-        "background and large shapes), accented with coral pink and fresh teal green "
-        "on clothing, plants and small props. Very light buttery-yellow background. "
-    ),
+    # 日常社交区
+    "daily":     _P_GOLD,
+    "reactions": _P_PEACH,
+    "social":    _P_LAVENDER,
+    "express":   _P_BLUE,
+    "skills":    _P_MINT,
+    "native":    _P_YELLOW,
+    # 商务英语区
+    "biz_meeting":   _P_BLUE,       # 会议
+    "biz_email":     _P_MINT,       # 邮件
+    "biz_negotiate": _P_GOLD,       # 谈判
+    "biz_interview": _P_LAVENDER,   # 面试
+    "biz_present":   _P_YELLOW,     # 汇报
+    "biz_social":    _P_PEACH,      # 职场社交
 }
 
 CONCEPT_PROMPT = """You are an art director for an English-learning app. For each spoken expression below, invent ONE striking visual concept for its cover illustration card.

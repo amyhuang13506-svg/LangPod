@@ -106,16 +106,115 @@ GROUPS = [
              "hint": "high-frequency idioms in real speech: piece of cake, under the weather, hit the road, call it a day, on the same page"},
             {"id": "phrasal_verbs", "zh": "高频短语动词",
              "hint": "phrasal verbs natives use constantly: figure out, put up with, run into, end up, come up with, deal with"},
-            {"id": "workplace", "zh": "职场表达",
-             "hint": "workplace English: let's circle back, I'll loop you in, take this offline, bandwidth, touch base, EOD"},
-            {"id": "formal", "zh": "正式与礼貌场合",
+        ],
+    },
+
+    # ===== 商务英语区（section: business）=====
+    # 每分类目标 25 条（TARGET_COUNT），密度是日常线的 2.5 倍 —— 靠 generate_expressions --top-up 累积生成
+    {
+        "id": "biz_meeting", "zh": "会议", "icon": "person.3.fill",
+        "desc": "开会时怎么开口",
+        "categories": [
+            {"id": "biz_meeting_open", "zh": "开场与主持",
+             "hint": "opening and chairing a meeting: let's get started, thanks everyone for joining, quick round of intros, let's run through the agenda, I'll keep this brief, can everyone hear me"},
+            {"id": "biz_meeting_speak", "zh": "发言与插话",
+             "hint": "taking the floor and interrupting politely in meetings: can I jump in here, building on that, if I could add one thing, sorry to interrupt, just to piggyback on that, let me finish my thought"},
+            {"id": "biz_meeting_stance", "zh": "表态与异议",
+             "hint": "agreeing, pushing back and hedging in a work setting: I'm on board with that, I see it differently, I have some reservations, let's park that, I'd push back on that slightly, that's a fair point but"},
+            {"id": "biz_meeting_wrap", "zh": "收尾与行动项",
+             "hint": "wrapping up with action items: let's recap the takeaways, who owns this, what's the timeline, I'll follow up with notes, let's take this offline, any blockers"},
+        ],
+    },
+    {
+        "id": "biz_email", "zh": "邮件", "icon": "envelope.fill",
+        "desc": "写得专业又不生硬",
+        "categories": [
+            {"id": "biz_email_open", "zh": "开头与结尾",
+             "hint": "email openers and sign-offs: I hope this finds you well, quick question for you, thanks for the quick turnaround, looking forward to hearing from you, best regards, happy to discuss further"},
+            {"id": "biz_email_ask", "zh": "请求与跟进",
+             "hint": "making requests and following up by email: would you be able to, just circling back on this, gentle nudge on the below, when you get a chance, any update on, per my last email"},
+            {"id": "biz_email_delay", "zh": "延期与致歉",
+             "hint": "apologizing and buying time professionally: apologies for the delay, this slipped through the cracks, we're running behind on, I take full responsibility, we're doing our best to expedite"},
+            {"id": "formal", "zh": "正式与礼貌",
              "hint": "polite formal register: I'd appreciate it if, would it be possible to, I was wondering if, at your earliest convenience"},
+        ],
+    },
+    {
+        "id": "biz_negotiate", "zh": "谈判", "icon": "arrow.left.arrow.right",
+        "desc": "把条件谈下来",
+        "categories": [
+            {"id": "biz_nego_price", "zh": "报价与议价",
+             "hint": "quoting and haggling in business: our ballpark is, is there any flexibility on price, that's outside our budget, what would it take to get there, can you do better on that"},
+            {"id": "biz_nego_concede", "zh": "让步与条件",
+             "hint": "trading concessions: if you can do X, we can do Y, that works on one condition, I can meet you halfway, we'd need something in return, let's find a middle ground"},
+            {"id": "biz_nego_refuse", "zh": "拒绝与守底线",
+             "hint": "saying no and holding your ground professionally: that doesn't work for us, we're not in a position to, that's a hard no on our side, I'm afraid that's our final offer, we'd have to walk away"},
+            {"id": "biz_nego_close", "zh": "推进与成交",
+             "hint": "moving a deal forward: are we aligned on this, let's get this over the line, what are the next steps, I'll send over the paperwork, do we have a deal"},
+        ],
+    },
+    {
+        "id": "biz_interview", "zh": "面试", "icon": "person.badge.key.fill",
+        "desc": "拿下这份 offer",
+        "categories": [
+            {"id": "biz_itv_intro", "zh": "自我介绍",
+             "hint": "introducing yourself in interviews: thanks for having me, a bit about my background, I've spent the last X years, what drew me to this role, I'm currently based in"},
+            {"id": "biz_itv_strength", "zh": "经历与优势",
+             "hint": "presenting experience and strengths with STAR-ish framing: I led a team of, my biggest win was, what I bring to the table, I'd say my strength is, I thrive in environments where"},
+            {"id": "biz_itv_ask", "zh": "反问面试官",
+             "hint": "questions candidates ask interviewers: what does success look like in this role, how would you describe the team culture, what are the biggest challenges, what are the next steps in the process"},
+            {"id": "biz_itv_salary", "zh": "薪资谈判",
+             "hint": "discussing compensation: what's the range for this role, based on my experience I'm targeting, is there flexibility on the base, I'd like to consider the whole package, can I have a few days to think it over"},
+        ],
+    },
+    {
+        "id": "biz_present", "zh": "汇报", "icon": "chart.bar.fill",
+        "desc": "讲清楚，讲得动人",
+        "categories": [
+            {"id": "biz_pre_open", "zh": "开场与结构",
+             "hint": "opening a presentation and signposting: today I'll walk you through, here's what we'll cover, by the end you'll know, let me set the scene, I'll take questions at the end"},
+            {"id": "biz_pre_data", "zh": "讲数据",
+             "hint": "presenting numbers: as you can see here, this is up X percent quarter over quarter, the headline number is, what jumps out is, to put that in perspective"},
+            {"id": "biz_pre_flow", "zh": "过渡与强调",
+             "hint": "transitions and emphasis in talks: which brings me to, the key takeaway here is, I want to zoom in on, moving on to, if you remember one thing"},
+            {"id": "biz_pre_qa", "zh": "Q&A 应对",
+             "hint": "handling Q&A: great question, let me come back to you on that, I don't have that number offhand, to your point, does that answer your question"},
+        ],
+    },
+    {
+        "id": "biz_social", "zh": "职场社交", "icon": "briefcase.fill",
+        "desc": "同事之间怎么处",
+        "categories": [
+            {"id": "biz_soc_smalltalk", "zh": "Small talk",
+             "hint": "workplace small talk: how was your weekend, crazy week huh, how's the new role treating you, any plans for the long weekend, keeping busy"},
+            {"id": "biz_soc_network", "zh": "Networking 破冰",
+             "hint": "networking and breaking the ice at work events: what brings you here, what do you do at X, we should stay in touch, mind if I add you on LinkedIn, I'd love to pick your brain sometime"},
+            {"id": "biz_soc_thanks", "zh": "感谢与致意",
+             "hint": "professional thanks and credit-giving: I really appreciate you jumping on this, shout out to X for, couldn't have done it without you, thanks for having my back, kudos to the team"},
+            {"id": "workplace", "zh": "职场黑话",
+             "hint": "workplace English: let's circle back, I'll loop you in, take this offline, bandwidth, touch base, EOD"},
         ],
     },
 ]
 
+# 每个分类的目标条数：日常线沿用生成器默认 8-12；商务线要 25（页面要填满）
+TARGET_COUNT_DEFAULT = 10
+TARGET_COUNT_BY_SECTION = {"business": 25}
+
 # 闸门：只有第一个组（日常反应）的第一个分类（寒暄开场）免费体验，其余全部 Pro
 FREE_CATEGORY_IDS = {"daily_easy"}  # 免费位移：今日句型·初级 的第一条免费，其余全部 Pro
+
+# 双区块：句型 tab 顶部「日常社交 | 商务英语」。business 组 id 以 biz_ 开头。
+BUSINESS_GROUP_IDS = {"biz_meeting", "biz_email", "biz_negotiate", "biz_interview", "biz_present", "biz_social"}
+
+
+def section_of(group_id):
+    return "business" if group_id in BUSINESS_GROUP_IDS else "social"
+
+
+def target_count(group_id):
+    """该组下每个分类的目标条数（商务线 25，日常线沿用生成器默认）。"""
+    return TARGET_COUNT_BY_SECTION.get(section_of(group_id), TARGET_COUNT_DEFAULT)
 
 
 def all_categories():
@@ -125,6 +224,8 @@ def all_categories():
             out.append({
                 "group_id": group["id"],
                 "group_zh": group["zh"],
+                "section": section_of(group["id"]),
+                "target_count": target_count(group["id"]),
                 "id": cat["id"],
                 "zh": cat["zh"],
                 "hint": cat["hint"],
@@ -136,5 +237,9 @@ def all_categories():
 if __name__ == "__main__":
     cats = all_categories()
     print("groups: %d, categories: %d" % (len(GROUPS), len(cats)))
-    for g in GROUPS:
-        print("  %s %s: %s" % (g["icon"], g["zh"], ", ".join(c["zh"] for c in g["categories"])))
+    for sec in ("social", "business"):
+        gs = [g for g in GROUPS if section_of(g["id"]) == sec]
+        n = sum(len(g["categories"]) for g in gs)
+        print("\n[%s] %d 组 / %d 分类" % (sec, len(gs), n))
+        for g in gs:
+            print("  %s %s: %s" % (g["icon"], g["zh"], ", ".join(c["zh"] for c in g["categories"])))

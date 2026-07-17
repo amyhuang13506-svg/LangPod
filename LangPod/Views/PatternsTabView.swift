@@ -22,6 +22,10 @@ struct PatternsTabView: View {
                 header
                     .padding(.bottom, 10)
 
+                sectionSwitcher
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
+
                 groupChips
                     .padding(.horizontal, 20)
                     .padding(.bottom, 10)
@@ -29,7 +33,8 @@ struct PatternsTabView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
                         if let group = expressionStore.selectedGroup {
-                            ForEach(group.categories) { category in
+                            // 只渲染有内容的分类：未产出的分类 JSON 还是 404，渲染出来会永久转圈
+                            ForEach(group.categories.filter { $0.count > 0 }) { category in
                                 categorySection(category)
                             }
                         } else {
@@ -114,12 +119,49 @@ struct PatternsTabView: View {
         .padding(.top, 16)
     }
 
+    // MARK: - 双区块切换（日常社交 | 商务英语，左右等宽）
+
+    private var sectionSwitcher: some View {
+        HStack(spacing: 10) {
+            sectionButton(.social)
+            sectionButton(.business)
+        }
+    }
+
+    private func sectionButton(_ section: ExpressionSection) -> some View {
+        let selected = expressionStore.section == section
+        return Button {
+            guard !selected else { return }
+            expressionStore.section = section
+            Analytics.track(.patternSectionSwitch, params: ["section": section.rawValue])
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: section.icon)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(section.zh)
+                    .font(.system(size: 14, weight: selected ? .bold : .medium))
+            }
+            .foregroundColor(selected ? .white : Color.textSecondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 11)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(selected ? Color.appPrimary : Color.white)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(selected ? Color.clear : Color.border, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - 大组 chips
 
     private var groupChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(expressionStore.groups) { group in
+                ForEach(expressionStore.groupsInSection) { group in
                     let selected = group.id == expressionStore.selectedGroupId
                     Button {
                         guard !selected else { return }

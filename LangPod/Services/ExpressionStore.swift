@@ -9,17 +9,40 @@ class ExpressionStore {
         didSet { UserDefaults.standard.set(selectedGroupId, forKey: "expressionGroup") }
     }
 
+    /// 顶部双区块（日常社交 | 商务英语）。切换时自动跳到该区块第一个组。
+    var section: ExpressionSection {
+        didSet {
+            UserDefaults.standard.set(section.rawValue, forKey: "patternSection")
+            if let first = groupsInSection.first, first.sectionValue == section,
+               !groupsInSection.contains(where: { $0.id == selectedGroupId }) {
+                selectedGroupId = first.id
+                loadGroupDetails(first.id)
+            }
+        }
+    }
+
+    /// 当前区块下的组（老数据无 section → 归 social）。
+    /// 只保留有内容的组 —— 内容分批上线时，未产出的分类 JSON 在 OSS 上还是 404，
+    /// 展示出来会永久转圈；按 index 的 count 过滤掉，内容一上线自动出现。
+    var groupsInSection: [ExpressionGroup] {
+        groups.filter { $0.sectionValue == section && $0.categories.contains { $0.count > 0 } }
+    }
+
     /// 分类详情缓存（分类 id → 完整表达列表）。主页按组平铺展示，选中组的 6 个分类并发拉取。
     private(set) var details: [String: ExpressionCategory] = [:]
     private var loaded = false
     private var loadingGroups: Set<String> = []
 
     init() {
-        self.selectedGroupId = UserDefaults.standard.string(forKey: "expressionGroup") ?? "reactions"
+        self.selectedGroupId = UserDefaults.standard.string(forKey: "expressionGroup") ?? "daily"
+        self.section = ExpressionSection(
+            rawValue: UserDefaults.standard.string(forKey: "patternSection") ?? ""
+        ) ?? .social
     }
 
+    /// 选中的组：必须落在当前区块内，否则回退到该区块第一个组
     var selectedGroup: ExpressionGroup? {
-        groups.first { $0.id == selectedGroupId } ?? groups.first
+        groupsInSection.first { $0.id == selectedGroupId } ?? groupsInSection.first
     }
 
     func loadIfNeeded() {
