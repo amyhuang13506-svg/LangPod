@@ -22,7 +22,7 @@ import json
 import os
 import re
 
-from generate_lessons import _call_gpt
+from generate_lessons import _call_gpt, FABRICATED_CONTRAST
 from upload_lessons import get_bucket, rebuild_country_index
 
 LESSONS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", "lessons")
@@ -33,9 +33,11 @@ LESSON: {title_zh} ({title_en})
 THIS LESSON'S WORDS: {words}
 
 Write 2-3 tips in Chinese. RULES:
-- EVERY tip must be about a word from THIS LESSON'S WORDS above, and must name that word.
-- Useful angles: where English splits a word Chinese doesn't (or the reverse), the collocation or measure word a Chinese learner gets wrong, a false friend, two words that look interchangeable but aren't, a word Chinese speakers routinely misuse.
-- Practical only — never encyclopedia facts, never travel advice.
+- EVERY tip must name a word from THIS LESSON'S WORDS above.
+- Teach how that ENGLISH word actually behaves: the collocation or object it takes, the structure it needs, its connotation or register, or how to choose between two English words in this lesson.
+- Chinese is for explaining the point, NOT for contrasting the two languages.
+- FORBIDDEN: claiming the Chinese equivalent is broader/narrower than the English word (that angle invites invented contrasts); explaining Chinese usage to Chinese speakers; encyclopedia facts; travel advice; tips that state the obvious.
+- Every claim must be TRUE of real English. If a word has no real pitfall, write about a different word.
 - Each tip is one sentence, natural spoken Chinese, max 45 字.
 
 Output STRICT JSON only:
@@ -58,8 +60,13 @@ def _norm(w):
 
 
 def tip_is_bad(tip, words):
-    """贴士里的英文词没有一个是本课的 → 判为举例泄漏。
-    逐词比对（不是整串）：贴士里的 'a cup of tea' 要能匹配上词表里的 'tea bag'。"""
+    """两种坏贴士：
+    1. 举例泄漏 —— 贴士里的英文词没有一个是本课的（prompt 的举例被照抄进无关课）。
+       逐词比对（不是整串）：贴士里的 'a cup of tea' 要能匹配上词表里的 'tea bag'。
+    2. 造假对比 —— 套「中文更宽/英文更窄」的句式硬编一个不存在的差异。词是对的，
+       所以泄漏检测抓不到，但话是错的（"英语里 hot 仅指温度高"）。"""
+    if FABRICATED_CONTRAST.search(tip):
+        return True
     vocab = set()
     for w in words:
         vocab.update(_norm(t) for t in re.findall(r"[a-zA-Z]{3,}", w.lower()))
@@ -99,19 +106,29 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--country", default="daily")
     ap.add_argument("--lesson")
+    ap.add_argument("--lessons", help="逗号分隔的多个 lesson id")
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--force", action="store_true",
+                    help="点名重写，不过泄漏检测。用于贴士没泄漏但内容是编的（中英宽窄对比那类）")
     args = ap.parse_args()
 
+    named = {s.strip() for s in args.lessons.split(",")} if args.lessons else None
     pattern = os.path.join(LESSONS_DIR, args.country, args.lesson or "lesson_*", "lesson.json")
     files = sorted(glob.glob(pattern))
     targets = []
     for p in files:
         lesson = json.load(open(p, encoding="utf-8"))
+        if named is not None and lesson["id"] not in named:
+            continue
         bad = bad_tips(lesson)
+        # --force：泄漏检测只抓「贴士里没有本课的词」，抓不到「词对但话是编的」。
+        # 后者靠人工点名，这里给个占位理由，好让打印和返回结构一致。
+        if args.force and not bad:
+            bad = ["(force 重写)"]
         if bad:
             targets.append((p, lesson, bad))
 
-    print("扫描 %d 课，%d 课贴士有问题\n" % (len(files), len(targets)))
+    print("扫描 %d 课，%d 课贴士待重写\n" % (len(files), len(targets)))
     for _, lesson, bad in targets:
         print("  %-14s %s" % (lesson["title_zh"], bad[0][:50]))
     if args.check or not targets:

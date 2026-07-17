@@ -80,7 +80,7 @@ BOARDS:
 
 Also produce for the whole lesson:
 - "sentences": 5 short sentences a learner would actually SAY in daily life using these words. Real spoken register, not textbook style.
-- "culture_tips_zh": 2-3 用法小贴士 in Chinese. EVERY tip must be about a word that actually appears in THIS lesson's word list, and must name that word. Useful angles: where English splits a word that Chinese doesn't (or the reverse), the collocation or measure word a Chinese learner gets wrong, a false friend, a word pair that looks interchangeable but isn't. NEVER encyclopedia facts. NEVER reuse an example word from these instructions — write tips about this lesson's own words only.
+- "culture_tips_zh": 2-3 用法小贴士 in Chinese. EVERY tip must name a word from THIS lesson's word list and teach how that ENGLISH word actually behaves — the collocation or object it takes, the structure it needs, its connotation or register, or how to choose between two English words in this lesson. Chinese is for explaining the point, NOT for contrasting the two languages. FORBIDDEN: claiming the Chinese equivalent is broader/narrower than the English word (that angle invites invented contrasts); explaining Chinese usage to Chinese speakers; encyclopedia facts; tips that state the obvious. Every claim must be TRUE of real English — if a word has no real pitfall, write about a different word. NEVER reuse an example word from these instructions — write tips about this lesson's own words only.
 
 RULES (all mandatory):
 - Spelling/vocabulary: American English. Pick the HIGHEST-FREQUENCY everyday word for each item (pants not trousers).
@@ -119,7 +119,7 @@ BOARDS:
 
 Also produce for the whole lesson:
 - "sentences": 5 short sentences a learner would actually SAY in daily life using these verbs. Real spoken register.
-- "culture_tips_zh": 2-3 用法小贴士 in Chinese. EVERY tip must be about a verb that actually appears in THIS lesson's word list, and must name it. Useful angles: two verbs Chinese speakers mix up, the object a verb usually takes, a verb whose Chinese equivalent is broader or narrower. NEVER encyclopedia facts. NEVER reuse an example word from these instructions.
+- "culture_tips_zh": 2-3 用法小贴士 in Chinese. EVERY tip must name a verb from THIS lesson's word list and teach how that ENGLISH verb actually behaves — the object it usually takes, the preposition or structure it needs, its register, or how to choose between two verbs in this lesson. Chinese is for explaining the point, NOT for contrasting the two languages. FORBIDDEN: claiming the Chinese equivalent is broader/narrower than the English verb (that angle invites invented contrasts); explaining Chinese usage to Chinese speakers; encyclopedia facts; tips that state the obvious. Every claim must be TRUE of real English — if a verb has no real pitfall, write about a different verb. NEVER reuse an example word from these instructions.
 
 RULES (all mandatory):
 - Spelling/vocabulary: American English. Pick the HIGHEST-FREQUENCY everyday verb for each action.
@@ -158,7 +158,7 @@ BOARDS:
 
 Also produce for the whole lesson:
 - "sentences": 5 short sentences a learner would actually SAY in daily life using these words. Real spoken register.
-- "culture_tips_zh": 2-3 用法小贴士 in Chinese. EVERY tip must be about a word that actually appears in THIS lesson's word list, and must name it. Useful angles: two words Chinese speakers mix up, where the Chinese equivalent is broader or narrower, the preposition or structure the word takes. NEVER encyclopedia facts. NEVER reuse an example word from these instructions.
+- "culture_tips_zh": 2-3 用法小贴士 in Chinese. EVERY tip must name a word from THIS lesson's word list and teach how that ENGLISH word actually behaves — the preposition or structure it takes, the noun it pairs with, its connotation or register, or how to choose between two words in this lesson. Chinese is for explaining the point, NOT for contrasting the two languages. FORBIDDEN: claiming the Chinese equivalent is broader/narrower than the English word (that angle invites invented contrasts); explaining Chinese usage to Chinese speakers; encyclopedia facts; tips that state the obvious. Every claim must be TRUE of real English — if a word has no real pitfall, write about a different word. NEVER reuse an example word from these instructions.
 
 RULES (all mandatory):
 - Spelling/vocabulary: American English. Pick the HIGHEST-FREQUENCY everyday word for each idea.
@@ -248,6 +248,16 @@ def build_prompt(lesson):
     )
 
 
+# 贴士造假模板：「中文的 X 更宽 / 而英语的 Y 更窄」。没有真差异时 GPT 会套这个句式硬编一个
+# （"英语里 hot 仅指温度高"—— 其实 hot 也指辣；"left/right 不能加 side"—— side 明明能加）。
+# 好贴士讲的是英语词自身怎么用（搭配/结构/语感），中文只用来解释，不摆上台做对比。
+# 抽象课（金钱/方位/数量/大小）没多少真陷阱可讲，最容易回落到这个句式，命中率是具象课的 5 倍。
+FABRICATED_CONTRAST = re.compile(
+    r"(中文|汉语|中国).{0,30}(而英|但英|在英语|英文里|英语中)"
+    r"|(在英语|英文里|英语中).{0,30}(而中文|但中文)"
+)
+
+
 def validate_content(lesson, content):
     """自动质检：结构、词数、例句含词。返回问题列表（空 = 通过）。"""
     problems = []
@@ -301,6 +311,8 @@ def validate_content(lesson, content):
         tokens = {_norm(t) for t in re.findall(r"[a-zA-Z]{3,}", tip.lower())}
         if tokens and not (tokens & vocab):
             problems.append("tip cites no word from this lesson (prompt example leak?): %s" % tip[:40])
+        if FABRICATED_CONTRAST.search(tip):
+            problems.append("tip fabricates a 中文-vs-英文 宽窄对比: %s" % tip[:40])
     return problems
 
 
