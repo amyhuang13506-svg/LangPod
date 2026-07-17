@@ -128,6 +128,16 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     private var userPaused = false
     private var recentlyPlayed: [String] = []  // track last 3 episode IDs for shuffle
 
+    // Listen-session funnel tracking (listen_30s / episode_abandon).
+    // A session spans one episode from play start until completion or abandon;
+    // patterns don't participate (sessionEpisodeId is nil while they play).
+    private var listenSessionEpisodeId: String?
+    private var listenSessionLevel = ""
+    private var listenAccumSeconds: Double = 0
+    private var listenSent30s = false
+    private var listenLastPersisted: Double = 0
+    private static let danglingListenSessionKey = "analytics_dangling_listen_session"
+
     // Queue of episodes (legacy view; mirrors `playQueue` filtered to episodes only)
     var episodeQueue: [Episode] = []
 
@@ -146,9 +156,9 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
     /// Whether to interleave a parent episode's patterns into the queue after its 5 rounds.
-    /// Persisted; read by `buildPlayQueue()`. User can flip in Profile → 学习设置.
+    /// 句型混播已固定默认开启（设置里不再提供开关）——忽略历史存储值，始终返回 true。
     var playPatternsAlongside: Bool {
-        get { UserDefaults.standard.object(forKey: "playPatternsAlongside") as? Bool ?? true }
+        get { true }
         set { UserDefaults.standard.set(newValue, forKey: "playPatternsAlongside") }
     }
 
@@ -204,6 +214,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                 return false
             }
         }
+        beginListenSession(episode)
         currentPlayItem = .episode(episode)  // syncs currentEpisode via didSet
         if !queue.isEmpty {
             episodeQueue = queue
@@ -353,6 +364,11 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                 object: nil,
                 userInfo: ["episode_id": currentEpisode?.id ?? ""]
             )
+            Analytics.track(.episodeRound1Complete, params: [
+                "episode_id": currentEpisode?.id ?? "",
+                "level": currentEpisode?.level ?? "",
+                "listened_seconds": "\(Int(listenAccumSeconds))"
+            ])
             phase = .englishRound(2)
             startAfterDelay(1.0)
         case .englishRound(2):
@@ -389,6 +405,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             phase = .finished
             isPlaying = false
             stopTimer()
+            endListenSessionCompleted()
             onEpisodeFinished?()
         case .finished:
             break
@@ -404,6 +421,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         phase = .finished
         isPlaying = false
         stopTimer()
+        endListenSessionCompleted()
         onEpisodeFinished?()
     }
 
@@ -492,6 +510,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             if let d = self.streamPlayer?.currentItem?.duration, d.isNumeric, d.seconds > 0 {
                 self.duration = d.seconds
             }
+            self.accumulateListenTime(0.5)
             self.updateNowPlayingInfo()
         }
 
@@ -539,6 +558,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             guard let self else { return }
             let elapsed = Date().timeIntervalSince(startTime)
             self.progress = min(elapsed, self.duration)
+            self.accumulateListenTime(0.1)
             if elapsed >= self.duration {
                 self.stopTimer()
                 self.advancePhase()
@@ -626,6 +646,8 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         // toggle 都意味着用户期望我们继续主导锁屏控制。
         RemoteCommandRouter.shared.active = self
         updateNowPlayingInfo()
+        // Snapshot on pause so a kill-after-pause still reports accurate abandon data.
+        if !isPlaying { persistListenSession() }
     }
 
     /// True if this user is entitled to play a given queue item right now.
@@ -747,6 +769,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
     func stop() {
+        reportListenAbandon(reason: "stop")
         stopTimer()
         stopStreamPlayer()
         player?.stop()
@@ -984,6 +1007,102 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         }
     }
 
+    // MARK: - Listen Session Analytics
+
+    private var analyticsPhaseLabel: String {
+        switch phase {
+        case .englishRound(let n): return "en\(n)"
+        case .translationRound: return "translation"
+        case .proUpsell: return "upsell"
+        case .finished: return "finished"
+        }
+    }
+
+    /// Start tracking a new episode session. If a different episode's session
+    /// is still open (user switched mid-play), report it as abandoned first.
+    private func beginListenSession(_ episode: Episode) {
+        if let prevId = listenSessionEpisodeId {
+            if prevId == episode.id { return }  // restart/repeat keeps the session
+            reportListenAbandon(reason: "switch")
+        }
+        listenSessionEpisodeId = episode.id
+        listenSessionLevel = episode.level
+        listenAccumSeconds = 0
+        listenSent30s = false
+        listenLastPersisted = 0
+        persistListenSession()
+    }
+
+    /// Called from every playback tick with the tick interval.
+    /// Accumulates real listening seconds and fires listen_30s once per session.
+    private func accumulateListenTime(_ delta: Double) {
+        guard listenSessionEpisodeId != nil, isPlaying else { return }
+        listenAccumSeconds += delta
+        if !listenSent30s, listenAccumSeconds >= 30 {
+            listenSent30s = true
+            Analytics.track(.listen30s, params: [
+                "episode_id": listenSessionEpisodeId ?? "",
+                "level": listenSessionLevel
+            ])
+        }
+        // Keep the persisted snapshot fresh so a force-kill can be reported
+        // as abandon on the next launch. Throttled to one write per 10s.
+        if listenAccumSeconds - listenLastPersisted >= 10 {
+            persistListenSession()
+        }
+    }
+
+    private func endListenSessionCompleted() {
+        listenSessionEpisodeId = nil
+        listenAccumSeconds = 0
+        listenSent30s = false
+        UserDefaults.standard.removeObject(forKey: Self.danglingListenSessionKey)
+    }
+
+    private func reportListenAbandon(reason: String) {
+        guard let id = listenSessionEpisodeId else { return }
+        // Under 3s is a mis-tap, not signal — clear silently.
+        if listenAccumSeconds >= 3 {
+            Analytics.track(.episodeAbandon, params: [
+                "episode_id": id,
+                "level": listenSessionLevel,
+                "listened_seconds": "\(Int(listenAccumSeconds))",
+                "phase": analyticsPhaseLabel,
+                "reason": reason
+            ])
+        }
+        listenSessionEpisodeId = nil
+        listenAccumSeconds = 0
+        listenSent30s = false
+        UserDefaults.standard.removeObject(forKey: Self.danglingListenSessionKey)
+    }
+
+    private func persistListenSession() {
+        guard let id = listenSessionEpisodeId else { return }
+        listenLastPersisted = listenAccumSeconds
+        UserDefaults.standard.set([
+            "episode_id": id,
+            "level": listenSessionLevel,
+            "seconds": "\(Int(listenAccumSeconds))",
+            "phase": analyticsPhaseLabel
+        ], forKey: Self.danglingListenSessionKey)
+    }
+
+    /// Call once at app launch (after Analytics.setup). If the previous run was
+    /// killed mid-episode, the persisted snapshot becomes an abandon event.
+    func reportDanglingSessionFromPreviousRun() {
+        guard let saved = UserDefaults.standard.dictionary(forKey: Self.danglingListenSessionKey)
+                as? [String: String] else { return }
+        UserDefaults.standard.removeObject(forKey: Self.danglingListenSessionKey)
+        Analytics.track(.episodeAbandon, params: [
+            "episode_id": saved["episode_id"] ?? "",
+            "level": saved["level"] ?? "",
+            "listened_seconds": saved["seconds"] ?? "0",
+            "phase": saved["phase"] ?? "",
+            "reason": "app_killed"
+        ])
+    }
+
     // MARK: - Timer
 
     private func startTimer() {
@@ -991,6 +1110,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             guard let self, let p = self.player else { return }
             self.progress = p.currentTime
+            self.accumulateListenTime(0.5)
             self.updateNowPlayingInfo()
         }
     }
