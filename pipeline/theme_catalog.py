@@ -65,9 +65,9 @@ THEME_BOARDS = [
         "title": _t("数字与时间", "Numbers & Time"),
         "zones": [
             {"id": "telling_time", **_t("看时间", "Telling Time"),
-             "hint": "clock, hour hand, minute hand, alarm clock, watch, calendar, schedule; expressions like o'clock, half past, quarter to, a.m./p.m. go to extra_words"},
+             "hint": "clock, hour hand, minute hand, alarm clock, watch, calendar, schedule; single-word expressions like noon, midnight, o'clock go to extra_words (avoid words with slashes or dots like a.m.)"},
             {"id": "numbers_in_life", **_t("生活中的数字", "Numbers in Life"),
-             "hint": "price tag, receipt, elevator buttons, phone keypad, scale, thermometer, house number; dozens/percent/date expressions in extra_words"},
+             "hint": "price tag, receipt, elevator button, keypad, scale, thermometer, house number; dozen/percent/date expressions in extra_words"},
         ],
     },
     {
@@ -138,9 +138,9 @@ THEME_BOARDS = [
         "title": _t("鞋帽与配饰", "Shoes & Accessories"),
         "zones": [
             {"id": "shoes", **_t("鞋", "Shoes"),
-             "hint": "sneakers, boots, sandals, slippers, high heels, flip-flops, shoelace"},
+             "hint": "sneakers, boots, sandals, slippers, high heels, flip-flops"},
             {"id": "accessories", **_t("配饰", "Accessories"),
-             "hint": "hat, cap, scarf, gloves, belt, tie, backpack, sunglasses, earrings"},
+             "hint": "hat, cap, scarf, gloves, belt, necktie, backpack, sunglasses, earrings (use 'tie' only once in the whole lesson)"},
         ],
     },
     # ---------- 户外与自然 ----------
