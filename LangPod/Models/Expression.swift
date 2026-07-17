@@ -3,15 +3,23 @@ import Foundation
 // MARK: - 口语表达库（句型 tab 数据模型）
 // 4 个大组 × 24 个功能分类，全局一套内容（国家差异写在 country_note_zh 里）。
 
-// MARK: - 免费闸门（按日轮换）
+// MARK: - 免费闸门
 
 enum ExpressionFreeGate {
-    /// 免费分类当天免费那条的下标：按本地日期在 [0, count) 内轮换，
-    /// 每天换一条、轮完一圈从头再来 —— 免费用户每天都有新内容可看。
-    static func freeIndex(count: Int) -> Int {
-        guard count > 0 else { return 0 }
+    /// 每个分类免费开放的卡数 —— 所有小分类通用（含商务英语），不再有「免费分类」特判。
+    /// 免费范围固定不漂移：昨天能看的今天还能看（移动的付费墙会被当成 bug）。
+    /// 每天换新由每日任务的轮换负责，不靠移动闸门。
+    static let freePerCategory = 2
+
+    /// 分类内前 freePerCategory 条免费
+    static func isFree(index: Int) -> Bool { index < freePerCategory }
+
+    /// 每日任务「学一个句型」的轮换位：把「全部分类 × 免费位」摊平成一条序列，
+    /// 按本地日期取一个 —— 每天换一张，轮完一圈从头再来。
+    static func dailySlot(total: Int) -> Int {
+        guard total > 0 else { return 0 }
         let days = Calendar.current.ordinality(of: .day, in: .era, for: Date()) ?? 0
-        return days % count
+        return days % total
     }
 }
 

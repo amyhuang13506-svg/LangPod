@@ -64,7 +64,6 @@ struct PatternsTabView: View {
                 startIndex: target.index,
                 store: expressionStore,
                 isPro: subscriptionManager.isProUser,
-                freeCategoryId: freeCategoryId,
                 onSubscribe: { requestPaywallAfterDismiss() }
             )
             .environment(sentenceStore)
@@ -74,7 +73,6 @@ struct PatternsTabView: View {
                 item: item,
                 store: expressionStore,
                 isPro: subscriptionManager.isProUser,
-                freeCategoryId: freeCategoryId,
                 onSelect: { index in
                     pagerTarget = ExpressionPagerTarget(category: item, index: index)
                 },
@@ -259,37 +257,30 @@ struct PatternsTabView: View {
         }
     }
 
-    /// 免费闸门：只有第一个组第一个分类（寒暄开场）的【第一条表达】免费，其余全部需订阅
-    private var freeCategoryId: String? {
-        expressionStore.groups.first?.categories.first?.id
-    }
-
-    /// 每日任务「学一个句型」深链：打开免费分类「当日轮换那条」（免费用户可看的那条）。
-    /// index 还没加载到时保留 flag，等 groups onChange 再消费。
+    /// 每日任务「学一个句型」深链：按日在「全部分类 × 免费位」里轮换一张免费卡。
+    /// 分类还没加载到时保留 flag，等 groups onChange 再消费。
     private func consumeExpressionTaskDeepLinkIfNeeded() {
         guard TaskEngine.shared.pendingExpressionDeepLink else { return }
-        guard let category = expressionStore.groups.first?.categories.first else { return }
+        // 顺序与 groups 一致即可（内容变动时轮换位会漂，但每天仍是免费卡，可接受）
+        let cats = expressionStore.groups.flatMap(\.categories).filter { $0.count > 0 }
+        guard !cats.isEmpty else { return }
         TaskEngine.shared.pendingExpressionDeepLink = false
+
+        let slot = ExpressionFreeGate.dailySlot(total: cats.count * ExpressionFreeGate.freePerCategory)
+        let category = cats[slot / ExpressionFreeGate.freePerCategory]
+        // 分类内容不足免费位数时收敛到最后一条
         let count = expressionStore.details[category.id]?.expressions.count ?? category.count
-        pagerTarget = ExpressionPagerTarget(category: category, index: ExpressionFreeGate.freeIndex(count: count))
+        let index = min(slot % ExpressionFreeGate.freePerCategory, max(count - 1, 0))
+        pagerTarget = ExpressionPagerTarget(category: category, index: index)
     }
 
-    private func isFreeCategory(_ item: ExpressionCategoryIndexItem) -> Bool {
-        item.id == freeCategoryId
-    }
+    /// 每个分类都含免费卡 → 分类恒可进入（锁只落在单条上）
+    private func categoryHasAccess(_ item: ExpressionCategoryIndexItem) -> Bool { true }
 
-    /// 分类是否可进入（Pro 或 免费分类——因其含免费首条）
-    private func categoryHasAccess(_ item: ExpressionCategoryIndexItem) -> Bool {
-        subscriptionManager.isProUser || isFreeCategory(item)
-    }
-
-    /// 单条表达是否锁定：仅免费分类的「当日轮换那条」免费，其余锁
+    /// 单条表达是否锁定：每个分类前 freePerCategory 条免费，其余需订阅
     private func exprLocked(_ categoryId: String, _ index: Int) -> Bool {
         if subscriptionManager.isProUser { return false }
-        guard let freeId = freeCategoryId, categoryId == freeId else { return true }
-        let count = expressionStore.details[freeId]?.expressions.count
-            ?? expressionStore.groups.first?.categories.first?.count ?? 0
-        return index != ExpressionFreeGate.freeIndex(count: count)
+        return !ExpressionFreeGate.isFree(index: index)
     }
 
     private func trackPaywall(_ item: ExpressionCategoryIndexItem) {
@@ -401,7 +392,6 @@ struct ExpressionCategoryAllView: View {
     let item: ExpressionCategoryIndexItem
     let store: ExpressionStore
     let isPro: Bool
-    let freeCategoryId: String?
     /// 点卡片回调（父级负责打开翻页详情，避免双层 fullScreenCover 叠加崩溃）
     let onSelect: (Int) -> Void
     /// 点锁定卡回调（父级弹付费墙）
@@ -414,12 +404,9 @@ struct ExpressionCategoryAllView: View {
         GridItem(.flexible(), spacing: 12),
     ]
 
-    /// 仅免费分类的「当日轮换那条」免费
+    /// 每个分类前 freePerCategory 条免费
     private func locked(_ index: Int) -> Bool {
-        if isPro { return false }
-        guard item.id == freeCategoryId else { return true }
-        let count = store.details[item.id]?.expressions.count ?? item.count
-        return index != ExpressionFreeGate.freeIndex(count: count)
+        isPro ? false : !ExpressionFreeGate.isFree(index: index)
     }
 
     var body: some View {
@@ -497,7 +484,6 @@ struct ExpressionPagerView: View {
     let startIndex: Int
     let store: ExpressionStore
     let isPro: Bool
-    let freeCategoryId: String?
     let onSubscribe: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -505,12 +491,9 @@ struct ExpressionPagerView: View {
     @State private var pageIndex: Int = 0
     @State private var appeared = false
 
-    /// 仅免费分类的「当日轮换那条」免费；其余页显示付费墙占位（防左右滑绕过闸门）
+    /// 每个分类前 freePerCategory 条免费；其余页显示付费墙占位（防左右滑绕过闸门）
     private func locked(_ index: Int) -> Bool {
-        if isPro { return false }
-        guard item.id == freeCategoryId else { return true }
-        let count = store.details[item.id]?.expressions.count ?? item.count
-        return index != ExpressionFreeGate.freeIndex(count: count)
+        isPro ? false : !ExpressionFreeGate.isFree(index: index)
     }
 
     var body: some View {

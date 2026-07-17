@@ -12,8 +12,32 @@ enum LessonSection: String {
 @Observable
 class LessonStore {
     var countries: [LessonCountry] = LessonCountry.defaults
-    var lessons: [SceneLessonIndexItem] = []
+    var lessons: [SceneLessonIndexItem] = [] {
+        didSet { freeSceneIds = Self.computeFreeIds(lessons) }
+    }
     var isLoadingIndex = false
+
+    // MARK: - 免费闸门（每个分类前 N 课免费）
+
+    /// 每个小分类免费开放的课数 —— 日常词汇 / 生活场景 通用。
+    /// 与句型的 ExpressionFreeGate.freePerCategory 对齐。
+    static let freePerCategory = 2
+
+    /// 免费课 id（分类内按 id 稳定排序取前 freePerCategory 个）。
+    /// 随 lessons / themeLessons 重算：切国家 → 重算当前国家的免费集。
+    private(set) var freeSceneIds: Set<String> = []
+    private(set) var freeThemeIds: Set<String> = []
+
+    /// 分类内稳定顺序取前 N 个。用 id 哈希而非当日 seed —— 免费范围固定不漂移，
+    /// 昨天能看的今天还能看；每日课不占名额（走当天免费逻辑）。
+    private static func computeFreeIds(_ items: [SceneLessonIndexItem]) -> Set<String> {
+        var result: Set<String> = []
+        for (_, list) in Dictionary(grouping: items.filter { !$0.isDaily }, by: \.category) {
+            let ranked = list.sorted { stableHash($0.id) < stableHash($1.id) }
+            result.formUnion(ranked.prefix(freePerCategory).map(\.id))
+        }
+        return result
+    }
 
     // MARK: - 日常词汇（主题图解）
 
@@ -22,7 +46,9 @@ class LessonStore {
         didSet { UserDefaults.standard.set(section.rawValue, forKey: "vocabSection") }
     }
 
-    var themeLessons: [SceneLessonIndexItem] = []
+    var themeLessons: [SceneLessonIndexItem] = [] {
+        didSet { freeThemeIds = Self.computeFreeIds(themeLessons) }
+    }
     var isLoadingThemeIndex = false
     private var loadedTheme = false
 
@@ -166,14 +192,25 @@ class LessonStore {
         return (t.lesson, country)
     }
 
-    // MARK: - 免费闸门
-    // 免费课以内容 is_free 标记为准（场景课只在美国版标 free：bank_account /
-    // coffee_order / supermarket；主题课标 3 门），每日课的当天免费另由
-    // LessonAccessGate 判定。不再有「第一国第一课」特判。
-
-    /// 该课堂是否为免费样本（每日课不算，它走当天免费逻辑）
+    /// 该课堂是否免费（每日课不算，它走当天免费逻辑）。
+    /// 客户端按「每个分类前 freePerCategory 课」派生，不再读内容里的 is_free 标记
+    /// —— 免费范围跟着内容自动扩展，pipeline 加课不用改标记也不用发版。
     func isFreeSample(_ item: SceneLessonIndexItem) -> Bool {
-        item.isFree && !item.isDaily
+        if item.isDaily { return false }
+        return freeSceneIds.contains(item.id) || freeThemeIds.contains(item.id)
+    }
+
+    /// 每日任务「学一篇词汇小课堂」的目标：今日课优先（当天免费、天天新），
+    /// 没有今日课时按日在免费课池里轮换 —— 保证任务每天都有内容可给。
+    var dailyTaskLesson: (item: SceneLessonIndexItem, country: LessonCountry)? {
+        if let today = todayCard { return today }
+        var pool: [(item: SceneLessonIndexItem, country: LessonCountry)] = []
+        pool += themeLessons.filter { freeThemeIds.contains($0.id) }.map { ($0, Self.themeCountry) }
+        pool += lessons.filter { freeSceneIds.contains($0.id) }.map { ($0, currentCountry) }
+        guard !pool.isEmpty else { return nil }
+        let sorted = pool.sorted { $0.item.id < $1.item.id }
+        let days = Calendar.current.ordinality(of: .day, in: .era, for: Date()) ?? 0
+        return sorted[days % sorted.count]
     }
 
     // MARK: - 日常词汇派生
@@ -208,7 +245,8 @@ class LessonStore {
         let seed = Self.dailyShuffleSeed()
         return themeLessons.filter { $0.category == selectedThemeCategory }
             .sorted { a, b in
-                if a.isFree != b.isFree { return a.isFree }
+                let fa = freeThemeIds.contains(a.id), fb = freeThemeIds.contains(b.id)
+                if fa != fb { return fa }
                 return Self.stableHash("\(a.id)|\(seed)") < Self.stableHash("\(b.id)|\(seed)")
             }
     }
