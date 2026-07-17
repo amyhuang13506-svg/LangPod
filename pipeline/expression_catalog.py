@@ -112,7 +112,7 @@ GROUPS = [
     # ===== 商务英语区（section: business）=====
     # 每分类目标 25 条（TARGET_COUNT），密度是日常线的 2.5 倍 —— 靠 generate_expressions --top-up 累积生成
     {
-        "id": "biz_meeting", "zh": "会议", "icon": "person.3.fill",
+        "id": "biz_meeting", "zh": "会议沟通", "icon": "person.3.fill",
         "desc": "开会时怎么开口",
         "categories": [
             {"id": "biz_meeting_open", "zh": "开场与主持",
@@ -126,7 +126,7 @@ GROUPS = [
         ],
     },
     {
-        "id": "biz_email", "zh": "邮件", "icon": "envelope.fill",
+        "id": "biz_email", "zh": "商务邮件", "icon": "envelope.fill",
         "desc": "写得专业又不生硬",
         "categories": [
             {"id": "biz_email_open", "zh": "开头与结尾",
@@ -140,7 +140,7 @@ GROUPS = [
         ],
     },
     {
-        "id": "biz_negotiate", "zh": "谈判", "icon": "arrow.left.arrow.right",
+        "id": "biz_negotiate", "zh": "商务谈判", "icon": "arrow.left.arrow.right",
         "desc": "把条件谈下来",
         "categories": [
             {"id": "biz_nego_price", "zh": "报价与议价",
@@ -154,7 +154,7 @@ GROUPS = [
         ],
     },
     {
-        "id": "biz_interview", "zh": "面试", "icon": "person.badge.key.fill",
+        "id": "biz_interview", "zh": "求职面试", "icon": "person.badge.key.fill",
         "desc": "拿下这份 offer",
         "categories": [
             {"id": "biz_itv_intro", "zh": "自我介绍",
@@ -168,7 +168,7 @@ GROUPS = [
         ],
     },
     {
-        "id": "biz_present", "zh": "汇报", "icon": "chart.bar.fill",
+        "id": "biz_present", "zh": "工作汇报", "icon": "chart.bar.fill",
         "desc": "讲清楚，讲得动人",
         "categories": [
             {"id": "biz_pre_open", "zh": "开场与结构",
