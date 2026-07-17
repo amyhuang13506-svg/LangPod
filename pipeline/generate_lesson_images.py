@@ -64,10 +64,11 @@ COUNTRY_PALETTES = {
     "nz": "fresh lavender and soft periwinkle color palette, " + _BRIGHT + ", light airy background",
     "sg": "warm golden-amber and coral color palette, " + _BRIGHT + ", light ivory background",
     # 日常词汇主题板（伪国家 daily）：浅青背景做区块辨识度，但物体必须保持
-    # 真实自然色（图解词典靠颜色认物：香蕉是黄的、草莓是红的，禁止整图单色调）
-    "daily": ("light airy pale-aqua background; every object keeps its NATURAL "
-              "real-world color (a banana is yellow, a strawberry is red, jeans are blue) "
-              "— only the background is tinted, " + _BRIGHT),
+    # 真实自然色（图解词典靠颜色认物，禁止整图单色调）。
+    # ⚠️ 这里绝不能写具体物体举例——生图模型会把例子画进图里（曾把
+    # "a banana is yellow" 的香蕉画进了身体部位板）。
+    "daily": ("light airy pale-aqua background; every depicted item keeps its natural "
+              "true-to-life colors — only the background is tinted, " + _BRIGHT),
 }
 
 # 伪国家 daily（日常词汇主题板）的展示元数据（review 页用）
@@ -161,20 +162,8 @@ def generate_scene_image(zone, lesson, hotspot_words, output_path, variation=0, 
     return True
 
 
-def locate_words(image_path, words):
-    """GPT-4o vision 定位每个词的物体，返回 {word: {found, x, y}}。坐标归一化 0-1。"""
-    with open(image_path, "rb") as f:
-        b64 = base64.b64encode(f.read()).decode()
-    word_list = "\n".join("- %s" % w for w in words)
-    prompt = (
-        "This is a flat illustration. For EACH object listed below, decide if it is clearly "
-        "visible in the image, and if so give the normalized center coordinates of that object "
-        "(x from 0.0 left to 1.0 right, y from 0.0 top to 1.0 bottom). Be precise — the point "
-        "should land ON the object itself.\n\nObjects:\n%s\n\n"
-        "Output STRICT JSON only:\n"
-        '{"objects": [{"word": "...", "found": true, "x": 0.42, "y": 0.55}, '
-        '{"word": "...", "found": false, "x": 0, "y": 0}]}' % word_list
-    )
+def _vision_json(prompt, b64_image):
+    """一次 GPT-4o vision 调用，返回解析后的 JSON（失败返回 None）。"""
     for attempt in range(3):
         response = requests.post(
             GPT_API_ENDPOINT,
@@ -185,7 +174,7 @@ def locate_words(image_path, words):
                     "role": "user",
                     "content": [
                         {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": "data:image/png;base64,%s" % b64}},
+                        {"type": "image_url", "image_url": {"url": "data:image/png;base64,%s" % b64_image}},
                     ],
                 }],
                 "temperature": 0,
@@ -198,32 +187,142 @@ def locate_words(image_path, words):
             continue
         if response.status_code != 200:
             print("      ❌ vision %d: %s" % (response.status_code, response.text[:200]))
-            return {}
+            return None
         content = response.json()["choices"][0]["message"]["content"].strip()
         if content.startswith("```"):
             content = content.split("\n", 1)[1].rsplit("```", 1)[0]
         try:
-            parsed = json.loads(content.strip())
+            return json.loads(content.strip())
         except json.JSONDecodeError:
             print("      ⚠️ vision returned non-JSON, retrying")
             continue
-        result = {}
-        for obj in parsed.get("objects", []):
-            w = (obj.get("word") or "").lower()
-            result[w] = {
-                "found": bool(obj.get("found")),
-                "x": min(max(float(obj.get("x") or 0), 0.04), 0.96),
-                "y": min(max(float(obj.get("y") or 0), 0.06), 0.94),
-            }
-        return result
-    return {}
+    return None
 
 
-def spread_close_labels(words, min_sep=MIN_LABEL_SEP, iterations=60):
+def locate_words(image_path, words):
+    """GPT-4o vision 定位每个词的物体，返回 {word: {found, x, y}}。坐标归一化 0-1。
+    用紧致边界框取中心（比直接猜点准），对身体/五官这类"整体的局部"强调贴准部位。"""
+    with open(image_path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    word_list = "\n".join("- %s" % w for w in words)
+    prompt = (
+        "This is a flat illustration. For EACH item listed below, decide if it is clearly "
+        "visible in the image. If visible, give a TIGHT bounding box in normalized coordinates "
+        "(x_min, y_min, x_max, y_max; x from 0.0 left to 1.0 right, y from 0.0 top to 1.0 bottom). "
+        "The box must cover exactly that item and nothing else. "
+        "If the items are parts of one whole (body parts, face features), anchor each box "
+        "precisely ON that specific part: 'shoulder' is only the small joint area between neck "
+        "and upper arm (NOT the torso), 'hand' is only the hand, 'chest' is the upper torso "
+        "(NOT the belly).\n\nItems:\n%s\n\n"
+        "Output STRICT JSON only:\n"
+        '{"objects": [{"word": "...", "found": true, "x_min": 0.31, "y_min": 0.42, "x_max": 0.45, "y_max": 0.58}, '
+        '{"word": "...", "found": false, "x_min": 0, "y_min": 0, "x_max": 0, "y_max": 0}]}' % word_list
+    )
+    parsed = _vision_json(prompt, b64)
+    if not parsed:
+        return {}
+    result = {}
+    for obj in parsed.get("objects", []):
+        w = (obj.get("word") or "").lower()
+        try:
+            cx = (float(obj.get("x_min") or 0) + float(obj.get("x_max") or 0)) / 2
+            cy = (float(obj.get("y_min") or 0) + float(obj.get("y_max") or 0)) / 2
+        except (TypeError, ValueError):
+            continue
+        result[w] = {
+            "found": bool(obj.get("found")),
+            "x": min(max(cx, CLAMP_X[0]), CLAMP_X[1]),
+            "y": min(max(cy, CLAMP_Y[0]), CLAMP_Y[1]),
+        }
+    return result
+
+
+def verify_and_fix_locations(image_path, placed, max_rounds=2):
+    """标注回验：把已定位的点画到图上编号，让视觉模型逐个检查是否落在正确物体上，
+    错的按返回坐标修正。直接消灭"肩膀的点标到肚子上"这类偏移。placed 原地修改。"""
+    from PIL import Image, ImageDraw, ImageFont
+
+    for round_i in range(max_rounds):
+        img = Image.open(image_path).convert("RGB")
+        draw = ImageDraw.Draw(img)
+        W, H = img.size
+        try:
+            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", max(22, W // 60))
+        except OSError:
+            try:
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", max(22, W // 60))
+            except OSError:
+                font = ImageFont.load_default()
+        r = max(7, W // 160)
+        for i, w in enumerate(placed, 1):
+            cx, cy = w["x"] * W, w["y"] * H
+            draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(230, 30, 30), outline="white", width=3)
+            draw.text((cx + r + 4, cy - r - 4), str(i), fill=(230, 30, 30), font=font)
+        import io
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=88)
+        b64 = base64.b64encode(buf.getvalue()).decode()
+
+        legend = "\n".join("%d = %s" % (i, w["word"]) for i, w in enumerate(placed, 1))
+        prompt = (
+            "This illustration has numbered red dot markers. Each marker must sit exactly ON the "
+            "item it labels (legend below). Judge STRICTLY — for body/face parts the dot must be "
+            "on that specific anatomical part (a 'shoulder' dot on the belly is wrong; a 'nail' "
+            "dot floating next to the fingertip is wrong).\n\n"
+            "Legend:\n%s\n\n"
+            "For EACH marker: ok=true if it clearly sits on the correct item; otherwise ok=false "
+            "with the corrected normalized center (x, y) of the correct item. If the image shows "
+            "several instances of the item (e.g. multiple hands), you may point to whichever "
+            "instance is furthest from other markers.\n"
+            "Output STRICT JSON only:\n"
+            '{"markers": [{"index": 1, "ok": true, "x": 0, "y": 0}, '
+            '{"index": 2, "ok": false, "x": 0.62, "y": 0.31}]}' % legend
+        )
+        parsed = _vision_json(prompt, b64)
+        if not parsed:
+            return
+        fixes = 0
+        for m in parsed.get("markers", []):
+            try:
+                idx = int(m.get("index")) - 1
+            except (TypeError, ValueError):
+                continue
+            if not (0 <= idx < len(placed)) or m.get("ok"):
+                continue
+            try:
+                nx, ny = float(m.get("x")), float(m.get("y"))
+            except (TypeError, ValueError):
+                continue
+            placed[idx]["x"] = round(min(max(nx, CLAMP_X[0]), CLAMP_X[1]), 4)
+            placed[idx]["y"] = round(min(max(ny, CLAMP_Y[0]), CLAMP_Y[1]), 4)
+            fixes += 1
+        if fixes:
+            print("      🎯 verify round %d: fixed %d marker(s)" % (round_i + 1, fixes))
+        if not fixes:
+            return
+
+
+def spread_close_labels(words, min_sep=MIN_LABEL_SEP, iterations=60, max_shift=None):
     """把坐标过近的标签沿连线对称推开，避免 App 里两个词叠在一起。
-    words: 含 x/y 的 dict 列表（原地修改）。点仍会贴着原物体，只是彼此错开。"""
+    words: 含 x/y 的 dict 列表（原地修改）。
+    max_shift: 每个点离初始位置的最大位移（归一化距离）。人体/五官这类热点密集的
+    图解板必须限制位移，否则"肩膀"会被推到肚子上——准确性优先于标签不重叠。"""
     if len(words) < 2:
         return 0
+    orig = [(w["x"], w["y"]) for w in words]
+
+    def clamp_shift(idx):
+        if max_shift is None:
+            return
+        w = words[idx]
+        ox, oy = orig[idx]
+        dx, dy = w["x"] - ox, w["y"] - oy
+        d = (dx * dx + dy * dy) ** 0.5
+        if d > max_shift:
+            scale = max_shift / d
+            w["x"] = min(max(ox + dx * scale, CLAMP_X[0]), CLAMP_X[1])
+            w["y"] = min(max(oy + dy * scale, CLAMP_Y[0]), CLAMP_Y[1])
+
     moved = False
     for _ in range(iterations):
         overlap = False
@@ -243,6 +342,8 @@ def spread_close_labels(words, min_sep=MIN_LABEL_SEP, iterations=60):
                 a["y"] = min(max(a["y"] - uy * push, CLAMP_Y[0]), CLAMP_Y[1])
                 b["x"] = min(max(b["x"] + ux * push, CLAMP_X[0]), CLAMP_X[1])
                 b["y"] = min(max(b["y"] + uy * push, CLAMP_Y[0]), CLAMP_Y[1])
+                clamp_shift(i)
+                clamp_shift(j)
         if not overlap:
             break
         moved = True
@@ -300,9 +401,21 @@ def process_zone(lesson, zone, zone_dir_rel, lesson_dir_abs):
             demoted.append(w)
     if demoted:
         print("      ↓ demoted to extra_words: %s" % ", ".join(w["word"] for w in demoted))
-    remaining = spread_close_labels(kept)
+    # 主题图解板（daily）热点密集：更小的目标间距 + 更紧的位移上限，准确性优先
+    # （标签重叠是小瑕疵，点标错部位是硬伤）
+    dense = lesson["country"] == "daily"
+    min_sep = 0.07 if dense else MIN_LABEL_SEP
+    max_shift = 0.03 if dense else 0.05
+    spread_close_labels(kept, min_sep=min_sep, max_shift=max_shift)
+    # 标注回验：让视觉模型检查每个点是否落在正确物体/部位上，错的修正
+    try:
+        verify_and_fix_locations(image_path, kept)
+    except Exception as e:
+        print("      ⚠️  verify pass failed: %s" % e)
+    # 修正后再轻推一次（更小位移上限），避免修正点重新叠上其它标签
+    remaining = spread_close_labels(kept, min_sep=min_sep, max_shift=0.02)
     if remaining:
-        print("      ⚠️  %d label pair(s) still under %.2f after spreading" % (remaining, MIN_LABEL_SEP))
+        print("      ⚠️  %d label pair(s) still under %.2f after spreading" % (remaining, min_sep))
     zone["hotspots"] = kept
     zone["extra_words"] = demoted + zone["extra_words"]
     zone["image"] = "%s/%s" % (zone_dir_rel, image_name)
