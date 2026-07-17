@@ -7,9 +7,11 @@ enum VocabFilter: String, CaseIterable {
     case new
 }
 
-/// 词汇 tab 主页 = 场景词汇小课堂：
-/// 居中大标题 + 右上角「我的词汇」入口（统计/词表/练习都在那个页面里），
-/// 内容为 今日新场景 + 国家 chips + 分类课堂网格。
+/// 词汇 tab 主页 = 词汇小课堂：
+/// 居中大标题 + 右上角「我的词汇」入口（统计/词表/练习都在那个页面里）。
+/// 顶部「日常词汇 | 生活场景」双区块：
+/// - 日常词汇：主题分类 chips + 主题课网格（OSS lessons/daily/）
+/// - 生活场景：国家 chips + 分类课堂横滑（原样保留）
 struct VocabularyView: View {
     @Environment(VocabularyStore.self) private var store
     @Environment(AudioPlayer.self) private var audioPlayer
@@ -30,7 +32,11 @@ struct VocabularyView: View {
                 header
                     .padding(.bottom, 10)
 
-                // 全局今日课置顶卡（跨国家）：今日课国家每天轮换，只靠分类网格
+                sectionSwitcher
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 10)
+
+                // 全局今日课置顶卡（跨区块跨国家）：今日课国家每天轮换，只靠分类网格
                 // 展示的话，选中国家对不上就完全看不到 —— 免费用户唯一的当日免费
                 // 内容必须一进来就可见。
                 if let today = lessonStore.todayCard {
@@ -41,30 +47,17 @@ struct VocabularyView: View {
                     .padding(.bottom, 10)
                 }
 
-                CountryChipsRow()
-                    .environment(lessonStore)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 10)
-
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 22) {
-                        ForEach(lessonStore.byCategory, id: \.category) { group in
-                            categorySection(group.category, lessons: group.lessons)
-                        }
-
-                        if lessonStore.lessons.isEmpty {
-                            emptyState
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 6)
-                    .padding(.bottom, 100)
+                if lessonStore.section == .daily {
+                    themeSection
+                } else {
+                    sceneSection
                 }
             }
         }
         .onAppear {
             lessonStore.loadIfNeeded()
             lessonStore.loadTodayIfNeeded()
+            lessonStore.loadThemeIfNeeded()
         }
         .fullScreenCover(item: $selectedLesson) { target in
             LessonDetailView(item: target.item, country: target.country)
@@ -83,7 +76,7 @@ struct VocabularyView: View {
                 title: target.title,
                 lessons: target.lessons,
                 isLocked: { isLocked($0) },
-                isFree: { !subscriptionManager.isProUser && lessonStore.isFreeSample($0.id) },
+                isFree: { !subscriptionManager.isProUser && lessonStore.isFreeSample($0) },
                 isCompleted: { lessonStore.isCompleted($0.id) }
             ) { item in
                 open(item)
@@ -122,6 +115,154 @@ struct VocabularyView: View {
         .padding(.top, 16)
     }
 
+    // MARK: - 双区块切换（日常词汇 | 生活场景，左右等宽）
+
+    private var sectionSwitcher: some View {
+        HStack(spacing: 10) {
+            sectionButton(.daily, title: "日常词汇", icon: "square.grid.2x2.fill")
+            sectionButton(.scene, title: "生活场景", icon: "map.fill")
+        }
+    }
+
+    private func sectionButton(_ section: LessonSection, title: String, icon: String) -> some View {
+        let selected = lessonStore.section == section
+        return Button {
+            guard !selected else { return }
+            lessonStore.section = section
+            Analytics.track(.vocabSectionSwitch, params: ["section": section.rawValue])
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 15, weight: selected ? .bold : .semibold))
+            }
+            .foregroundColor(selected ? .white : Color.textSecondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(selected ? Color.appPrimary : Color.white)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(selected ? Color.clear : Color.border, lineWidth: 1)
+            )
+        }
+    }
+
+    // MARK: - 生活场景区（原有内容原样：国家 chips + 分类横滑）
+
+    private var sceneSection: some View {
+        Group {
+            CountryChipsRow()
+                .environment(lessonStore)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 10)
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 22) {
+                    ForEach(lessonStore.byCategory, id: \.category) { group in
+                        categorySection(group.category, lessons: group.lessons)
+                    }
+
+                    if lessonStore.lessons.isEmpty {
+                        emptyState
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 6)
+                .padding(.bottom, 100)
+            }
+        }
+    }
+
+    // MARK: - 日常词汇区（主题分类 chips + 主题课网格）
+
+    private let themeColumns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+    ]
+
+    @ViewBuilder
+    private var themeSection: some View {
+        if lessonStore.themeLessons.isEmpty {
+            VStack(spacing: 10) {
+                if lessonStore.isLoadingThemeIndex {
+                    ProgressView().tint(Color.appPrimary)
+                    Text("加载中…")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color.textTertiary)
+                } else {
+                    Image(systemName: "square.grid.2x2")
+                        .font(.system(size: 30))
+                        .foregroundColor(Color.textQuaternary)
+                    Text("日常词汇即将上线")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.textTertiary)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 80)
+            Spacer()
+        } else {
+            themeCategoryChips
+                .padding(.horizontal, 20)
+                .padding(.bottom, 10)
+
+            ScrollView(showsIndicators: false) {
+                LazyVGrid(columns: themeColumns, spacing: 12) {
+                    ForEach(lessonStore.themeLessonsInSelectedCategory) { item in
+                        LessonCoverCard(
+                            item: item,
+                            locked: isLocked(item),
+                            free: !subscriptionManager.isProUser && lessonStore.isFreeSample(item),
+                            completed: lessonStore.isCompleted(item.id),
+                            onTap: {
+                                Analytics.track(.themeLessonOpen, params: [
+                                    "lesson_id": item.id, "category": item.category,
+                                ])
+                                open(item, country: LessonStore.themeCountry)
+                            },
+                            width: nil
+                        )
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 6)
+                .padding(.bottom, 100)
+            }
+        }
+    }
+
+    private var themeCategoryChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(lessonStore.themeCategories, id: \.id) { cat in
+                    let selected = cat.id == lessonStore.selectedThemeCategory
+                    Button {
+                        guard !selected else { return }
+                        lessonStore.selectedThemeCategory = cat.id
+                        Analytics.track(.themeCategoryFilter, params: ["category": cat.id])
+                    } label: {
+                        Text(cat.zh)
+                            .font(.system(size: 13, weight: selected ? .semibold : .medium))
+                            .foregroundColor(selected ? .white : Color.textSecondary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .background(
+                                Capsule().fill(selected ? Color.appPrimary : Color.white)
+                            )
+                            .overlay(
+                                Capsule().stroke(selected ? Color.clear : Color.border, lineWidth: 1)
+                            )
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Lessons
 
     /// 分类区块：标题 + 右侧「查看更多」+ 单行横滑封面卡（与首页探索分类同构）
@@ -150,7 +291,7 @@ struct VocabularyView: View {
                         LessonCoverCard(
                             item: item,
                             locked: isLocked(item),
-                            free: !subscriptionManager.isProUser && lessonStore.isFreeSample(item.id),
+                            free: !subscriptionManager.isProUser && lessonStore.isFreeSample(item),
                             completed: lessonStore.isCompleted(item.id),
                             onTap: { open(item) }
                         )
@@ -187,14 +328,15 @@ struct VocabularyView: View {
         if subscriptionManager.isProUser { return false }
         // 今日每日课当天免费（与 LessonAccessGate.canAccess 一致）
         if item.isDaily && LessonAccessGate.isToday(item.date) { return false }
-        return !lessonStore.isFreeSample(item.id)
+        return !lessonStore.isFreeSample(item)
     }
 
-    /// 打开课堂。country 缺省用当前所选国家；今日全局卡传该课自己的国家。
+    /// 打开课堂。country 缺省用当前所选国家；今日全局卡/主题课传各自的国家。
     private func open(_ item: SceneLessonIndexItem, country: LessonCountry? = nil) {
         if isLocked(item) {
             Analytics.track(.lessonPaywallView, params: [
-                "lesson_id": item.id, "country": lessonStore.selectedCountry,
+                "lesson_id": item.id,
+                "country": (country ?? lessonStore.currentCountry).id,
             ])
             showPaywall = true
         } else {

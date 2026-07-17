@@ -1,12 +1,42 @@
 import Foundation
 import SwiftUI
 
-/// 词汇小课堂数据层。国家是平级分类（随时切换），@AppStorage 只记住上次看的国家。
+/// 词汇 tab 顶部大区块：日常词汇（主题图解）/ 生活场景（国家维度）
+enum LessonSection: String {
+    case daily
+    case scene
+}
+
+/// 词汇小课堂数据层。生活场景区国家是平级分类（随时切换）；
+/// 日常词汇区是主题图解课，走 OSS 伪国家目录 lessons/daily/（复用同一套接口与模型）。
 @Observable
 class LessonStore {
     var countries: [LessonCountry] = LessonCountry.defaults
     var lessons: [SceneLessonIndexItem] = []
     var isLoadingIndex = false
+
+    // MARK: - 日常词汇（主题图解）
+
+    /// 当前所在大区块，记住上次停留
+    var section: LessonSection {
+        didSet { UserDefaults.standard.set(section.rawValue, forKey: "vocabSection") }
+    }
+
+    var themeLessons: [SceneLessonIndexItem] = []
+    var isLoadingThemeIndex = false
+    private var loadedTheme = false
+
+    /// 日常词汇选中的主题大类（不持久化，默认第一个有内容的大类）
+    var selectedThemeCategory: String = ""
+
+    /// 主题大类固定产品顺序（对应 pipeline theme_catalog.THEME_CATEGORIES）
+    static let themeCategoryOrder = ["body", "basics", "home", "grocery", "clothing", "outdoor"]
+
+    /// 伪国家 daily 的元数据：详情页发音口音固定美音。
+    /// ⚠️ 不进 countries.json（老版本会把它当国家渲染），App 端直接引用这个常量。
+    static let themeCountry = LessonCountry(
+        id: "daily", nameZh: "日常词汇", flag: "📖", accent: "en-US", lessonCount: 0
+    )
 
     /// 全局今日每日课（跨国家，独立于所选国家），来自 lessons/today.json
     var globalToday: SceneLessonToday?
@@ -30,6 +60,7 @@ class LessonStore {
     init() {
         self.selectedCountry = UserDefaults.standard.string(forKey: "lessonCountry") ?? "us"
         self.completedLessonIds = Set(UserDefaults.standard.stringArray(forKey: "completedLessonIds") ?? [])
+        self.section = LessonSection(rawValue: UserDefaults.standard.string(forKey: "vocabSection") ?? "") ?? .scene
     }
 
     // MARK: - Loading
@@ -83,6 +114,25 @@ class LessonStore {
         return lesson
     }
 
+    /// 日常词汇主题课 index（lessons/daily/，缓存优先 + 后台拉取，与国家 index 同模式）
+    func loadThemeIfNeeded() {
+        guard !loadedTheme else { return }
+        loadedTheme = true
+        if let cached = APIService.shared.loadCachedLessonIndexSync(country: LessonSection.daily.rawValue) {
+            themeLessons = cached
+            ensureThemeCategorySelection()
+        }
+        isLoadingThemeIndex = true
+        Task {
+            let remote = await APIService.shared.fetchLessonIndex(country: LessonSection.daily.rawValue)
+            if !remote.isEmpty {
+                self.themeLessons = remote
+                self.ensureThemeCategorySelection()
+            }
+            self.isLoadingThemeIndex = false
+        }
+    }
+
     // MARK: - Derived
 
     var currentCountry: LessonCountry {
@@ -107,23 +157,50 @@ class LessonStore {
     }
 
     // MARK: - 免费闸门
-    // 只有「第一个国家（默认美国）」的「第一课」免费体验，其余全部需订阅。
+    // 免费课以内容 is_free 标记为准（场景课只在美国版标 free：bank_account /
+    // coffee_order / supermarket；主题课标 3 门），每日课的当天免费另由
+    // LessonAccessGate 判定。不再有「第一国第一课」特判。
 
-    /// 第一个国家 = 国家 chips 里的第一个（默认美国）
-    var freeCountryId: String { countries.first?.id ?? "us" }
-
-    /// 免费样本课堂 id：仅当停留在第一个国家时，取标了 is_free 的那一课（catalog 里
-    /// 只有美国 bank_account 为 true）。用 is_free 标记而非顺序，保证免费课固定不漂移，
-    /// 不受新增内容/日期排序影响（否则新加的 dentist 会因日期最新而抢占）。
-    var freeSampleLessonId: String? {
-        guard selectedCountry == freeCountryId else { return nil }
-        return lessons.first { $0.isFree && !$0.isDaily }?.id
-            ?? lessons.first { !$0.isDaily }?.id
+    /// 该课堂是否为免费样本（每日课不算，它走当天免费逻辑）
+    func isFreeSample(_ item: SceneLessonIndexItem) -> Bool {
+        item.isFree && !item.isDaily
     }
 
-    /// 该课堂是否为免费样本
-    func isFreeSample(_ id: String) -> Bool {
-        id == freeSampleLessonId
+    // MARK: - 日常词汇派生
+
+    /// 主题大类 chips（id + 中文名）：从 index 内容派生，按固定产品顺序；
+    /// 目录之外的新大类兜底追加，pipeline 加类不用发版。
+    var themeCategories: [(id: String, zh: String)] {
+        var zhById: [String: String] = [:]
+        for lesson in themeLessons where zhById[lesson.category] == nil {
+            zhById[lesson.category] = lesson.categoryZh
+        }
+        var result: [(id: String, zh: String)] = []
+        for id in Self.themeCategoryOrder {
+            if let zh = zhById[id] { result.append((id, zh)) }
+        }
+        let known = Set(Self.themeCategoryOrder)
+        for (id, zh) in zhById.sorted(by: { $0.value < $1.value }) where !known.contains(id) {
+            result.append((id, zh))
+        }
+        return result
+    }
+
+    private func ensureThemeCategorySelection() {
+        if selectedThemeCategory.isEmpty
+            || !themeLessons.contains(where: { $0.category == selectedThemeCategory }) {
+            selectedThemeCategory = themeCategories.first?.id ?? ""
+        }
+    }
+
+    /// 当前主题大类下的课：免费在前，其余按当日稳定随机（与场景分类同思路）
+    var themeLessonsInSelectedCategory: [SceneLessonIndexItem] {
+        let seed = Self.dailyShuffleSeed()
+        return themeLessons.filter { $0.category == selectedThemeCategory }
+            .sorted { a, b in
+                if a.isFree != b.isFree { return a.isFree }
+                return Self.stableHash("\(a.id)|\(seed)") < Self.stableHash("\(b.id)|\(seed)")
+            }
     }
 
     /// 分类固定展示顺序（对应 lesson_catalog.CATEGORIES 的产品顺序），
@@ -135,7 +212,6 @@ class LessonStore {
     /// 分类内排序：今日每日课(NEW) → 免费样本 → 其余按当日随机（当天稳定、每天变）。
     var byCategory: [(category: String, lessons: [SceneLessonIndexItem])] {
         let seed = Self.dailyShuffleSeed()
-        let pinnedId = freeSampleLessonId
         let order = Self.categoryOrder
 
         var groups: [String: [SceneLessonIndexItem]] = [:]   // key = categoryZh
@@ -147,7 +223,7 @@ class LessonStore {
         // 分类内排序优先级：今日每日课 0 → 免费样本 1 → 其它 2
         func rank(_ i: SceneLessonIndexItem) -> Int {
             if i.isDaily && LessonAccessGate.isToday(i.date) { return 0 }
-            if i.id == pinnedId { return 1 }
+            if isFreeSample(i) { return 1 }
             return 2
         }
         return groups.keys.sorted { a, b in

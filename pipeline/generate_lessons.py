@@ -5,9 +5,11 @@
 用法:
   python3 generate_lessons.py --lesson lesson_us_otc_meds   # 单个课堂
   python3 generate_lessons.py --country us                  # 一个国家
+  python3 generate_lessons.py --country daily               # 日常词汇主题课（theme_catalog）
   python3 generate_lessons.py                               # 全量（跳过已存在）
 
 输出: output/lessons/{country}/{lesson_id}/lesson.json（中间态，无坐标无图）
+主题课走 output/lessons/daily/…，culture_tips_zh 定位为「用法小贴士」。
 """
 
 import argparse
@@ -20,6 +22,7 @@ import requests
 
 from config import GPT_API_ENDPOINT, GPT_API_KEY, GPT_MODEL, OUTPUT_DIR
 from lesson_catalog import COUNTRIES, all_lessons
+from theme_catalog import all_theme_lessons
 
 LESSONS_DIR = os.path.join(OUTPUT_DIR, "lessons")
 
@@ -45,6 +48,44 @@ RULES (all mandatory):
 - Brand-specific or local words (venti, paracetamol, EFTPOS) are ENCOURAGED — they are the point of this app. Mark them medium/hard.
 - Order words within each zone from easy to hard.
 - No word may repeat across zones in this lesson.
+- Chinese translations must be natural spoken Chinese, not dictionary-stiff.
+- sentences: each is {{"english": "...", "chinese": "..."}}.
+- Do NOT include any political, religious or sensitive content.
+
+Output STRICT JSON only (no markdown fences, no commentary):
+{{
+  "zones": [
+    {{
+      "id": "<zone id exactly as given>",
+      "hotspots": [ {{"word": "...", "phonetic": "...", "translation_zh": "...", "example": "...", "example_zh": "...", "difficulty": "easy"}} ],
+      "extra_words": [ {{...same fields...}} ]
+    }}
+  ],
+  "sentences": [ {{"english": "...", "chinese": "..."}} ],
+  "culture_tips_zh": ["...", "..."]
+}}"""
+
+
+THEME_PROMPT_TEMPLATE = """You are creating content for a "visual dictionary board" in an English-learning app for Chinese speakers. The lesson teaches CORE everyday vocabulary by theme (like a picture dictionary spread) — not tied to any country or situation.
+
+LESSON: {title_en} ({title_zh})
+
+The lesson has {zone_count} boards. For each board you must produce:
+1. "hotspots": 6-8 CONCRETE items that would be clearly visible in a picture-dictionary illustration of this board (things an artist can draw and a viewer can point at). For body/face boards the items are parts of one drawn figure. NOT actions, NOT abstract concepts.
+2. "extra_words": 3-6 verbs, phrases, or expressions that belong to this theme but CANNOT be drawn (stretch, half past, a pair of).
+
+BOARDS:
+{zones_block}
+
+Also produce for the whole lesson:
+- "sentences": 5 short sentences a learner would actually SAY in daily life using these words. Real spoken register, not textbook style.
+- "culture_tips_zh": 2-3 用法小贴士 in Chinese — practical usage notes for Chinese speakers: word-boundary differences (hand vs arm, 手/手臂), collocations (a pair of jeans), common mistakes Chinese learners make. NEVER encyclopedia facts.
+
+RULES (all mandatory):
+- Spelling/vocabulary: American English. Pick the HIGHEST-FREQUENCY everyday word for each item (pants not trousers).
+- Every word entry: "word" (lowercase unless proper noun), "phonetic" (IPA with slashes like /ˈfɪŋɡɚ/), "translation_zh" (1-2 个中文释义), "example" (one natural sentence a real person would say in daily life, MUST contain the word, MAX 12 words), "example_zh" (自然的中文翻译), "difficulty" ("easy"|"medium"|"hard" by real-world frequency).
+- Order words within each board from easy to hard.
+- No word may repeat across boards in this lesson.
 - Chinese translations must be natural spoken Chinese, not dictionary-stiff.
 - sentences: each is {{"english": "...", "chinese": "..."}}.
 - Do NOT include any political, religious or sensitive content.
@@ -99,11 +140,18 @@ def _call_gpt(messages, temperature=0.7):
 
 
 def build_prompt(lesson):
-    country = COUNTRIES[lesson["country"]]
     zones_block = "\n".join(
         '- id "%s" — %s (%s): %s' % (z["id"], z["en"], z["zh"], z["hint"])
         for z in lesson["zones"]
     )
+    if lesson.get("is_theme"):
+        return THEME_PROMPT_TEMPLATE.format(
+            title_en=lesson["title_en"],
+            title_zh=lesson["title_zh"],
+            zone_count=len(lesson["zones"]),
+            zones_block=zones_block,
+        )
+    country = COUNTRIES[lesson["country"]]
     return PROMPT_TEMPLATE.format(
         country_context=country["context"],
         title_en=lesson["title_en"],
@@ -209,7 +257,7 @@ def main():
     parser.add_argument("--force", action="store_true", help="regenerate even if exists")
     args = parser.parse_args()
 
-    targets = all_lessons()
+    targets = all_lessons() + all_theme_lessons()
     if args.lesson:
         targets = [l for l in targets if l["id"] == args.lesson]
         if not targets:

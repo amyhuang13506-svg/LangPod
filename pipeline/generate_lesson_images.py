@@ -63,7 +63,16 @@ COUNTRY_PALETTES = {
     "ca": "fresh blush-pink and rose color palette, " + _BRIGHT + ", light cream background",
     "nz": "fresh lavender and soft periwinkle color palette, " + _BRIGHT + ", light airy background",
     "sg": "warm golden-amber and coral color palette, " + _BRIGHT + ", light ivory background",
+    # 日常词汇主题板（伪国家 daily）：软青绿，与 6 国色调都不同，区块有辨识度
+    "daily": "fresh soft-teal and aqua color palette, " + _BRIGHT + ", light airy background",
 }
+
+# 伪国家 daily（日常词汇主题板）的展示元数据（review 页用）
+DAILY_META = {"zh": "日常词汇", "flag": "📖"}
+
+
+def country_meta(cc):
+    return COUNTRIES.get(cc, DAILY_META)
 
 HARD_RULES = (
     " ABSOLUTE RULES: Keep text in the image minimal. Any text that does appear MUST be a "
@@ -74,24 +83,47 @@ HARD_RULES = (
     "across the scene."
 )
 
+# 主题图解板：App 会在热点坐标上叠加自己的可点词标签，图内绝不能再画文字
+# （否则双重标签；且图内词可能与 GPT 选词不一致）。
+DAILY_HARD_RULES = (
+    " ABSOLUTE RULES: NO text anywhere in the image — no labels, no captions, no title, "
+    "no letters at all. The app overlays its own interactive labels. NO real brand logos "
+    "or trademarks. Every listed item must be drawn large enough to be clearly "
+    "recognizable, fully visible, and NOT overlapping with other listed items. Spread "
+    "the listed items across the board."
+)
+
 
 def generate_scene_image(zone, lesson, hotspot_words, output_path, variation=0, palette=None):
     """DALL-E 生成一张分区场景插画。variation 用于重试时改变构图措辞。
-    palette 可覆盖国家默认色调（预览/调色用）。"""
-    country = COUNTRIES[lesson["country"]]
+    palette 可覆盖国家默认色调（预览/调色用）。
+    主题课（country=daily）走图解词典板 prompt：词典式铺排而非环境场景。"""
     palette = palette or COUNTRY_PALETTES.get(lesson["country"], DEFAULT_PALETTE)
     objects = ", ".join(w["word"] for w in hotspot_words)
     variation_hint = "" if variation == 0 else (
         " Alternative composition attempt %d: use a wider camera angle and place each object "
         "on its own clear surface or area so every object is unmistakable." % variation
     )
-    prompt = (
-        STYLE_TEMPLATE.format(palette=palette)
-        + "Scene: %s — %s, in %s. " % (zone["name_en"], lesson["title_en"], country["context"].split(".")[0])
-        + "The scene must prominently contain each of these objects, one of each, clearly recognizable: %s." % objects
-        + variation_hint
-        + HARD_RULES
-    )
+    if lesson["country"] == "daily":
+        prompt = (
+            STYLE_TEMPLATE.format(palette=palette)
+            + "Visual dictionary board: %s — %s. " % (zone["name_en"], lesson["title_en"])
+            + "Arrange the items like a picture-dictionary spread on a clean simple background, "
+            + "generously spaced. If the items are parts of a whole (like body parts or a face), "
+            + "draw ONE large clear subject and make each listed part distinctly visible. "
+            + "The board must prominently contain each of these, one of each, clearly recognizable: %s." % objects
+            + variation_hint
+            + DAILY_HARD_RULES
+        )
+    else:
+        country = COUNTRIES[lesson["country"]]
+        prompt = (
+            STYLE_TEMPLATE.format(palette=palette)
+            + "Scene: %s — %s, in %s. " % (zone["name_en"], lesson["title_en"], country["context"].split(".")[0])
+            + "The scene must prominently contain each of these objects, one of each, clearly recognizable: %s." % objects
+            + variation_hint
+            + HARD_RULES
+        )
 
     response = requests.post(
         IMAGE_ENDPOINT,
@@ -329,8 +361,9 @@ def build_review_page(country):
         print("no lessons for %s" % country)
         return
     parts = ["<html><head><meta charset='utf-8'><style>%s</style></head><body>" % REVIEW_CSS]
+    meta = country_meta(country)
     parts.append("<h1>%s %s — 词汇小课堂标注审阅（%d 课）</h1>" % (
-        COUNTRIES[country]["flag"], COUNTRIES[country]["zh"], len(files)))
+        meta["flag"], meta["zh"], len(files)))
     for fp in files:
         with open(fp, "r", encoding="utf-8") as f:
             lesson = json.load(f)

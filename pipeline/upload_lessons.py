@@ -7,6 +7,8 @@ OSS 结构:
   lessons/{country}/index.json
   lessons/{country}/{lesson_id}/lesson.json
   lessons/{country}/{lesson_id}/cover.jpg + {zone_id}.jpg
+  lessons/daily/…                日常词汇主题课（伪国家，结构同上；
+                                 不进 countries.json，老版本 App 不感知）
 
 用法:
   python3 upload_lessons.py --lesson lesson_us_otc_meds
@@ -38,6 +40,14 @@ except ImportError:
     sys.exit(1)
 
 LESSONS_DIR = os.path.join(OUTPUT_DIR, "lessons")
+
+# 伪国家 daily（日常词汇主题课）的 index 元数据。
+# ⚠️ 只用于 lessons/daily/index.json，绝不能加进 countries.json（老版本会当国家渲染）。
+DAILY_META = {"zh": "日常词汇", "flag": "📖"}
+
+
+def country_meta(cc):
+    return COUNTRIES.get(cc, DAILY_META)
 
 
 def get_bucket():
@@ -144,10 +154,11 @@ def rebuild_country_index(bucket, country):
             "zone_count": len(data.get("zones", [])),
         })
     lessons.sort(key=lambda x: (x["is_daily"], x["date"]), reverse=True)
+    meta = country_meta(country)
     index = {
         "country": country,
-        "country_zh": COUNTRIES[country]["zh"],
-        "flag": COUNTRIES[country]["flag"],
+        "country_zh": meta["zh"],
+        "flag": meta["flag"],
         "lessons": lessons,
         "total": len(lessons),
     }

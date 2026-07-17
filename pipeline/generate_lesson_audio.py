@@ -72,7 +72,8 @@ def process_lesson(json_path):
     with open(json_path, "r", encoding="utf-8") as f:
         lesson = json.load(f)
     country = lesson["country"]
-    voice_id = ELEVENLABS_LESSON_VOICES.get(country)
+    # 主题课（伪国家 daily）固定美音，复用 us 的 voice
+    voice_id = ELEVENLABS_LESSON_VOICES.get("us" if country == "daily" else country)
     if not voice_id:
         print("   ❌ no voice for country %s" % country)
         return False
