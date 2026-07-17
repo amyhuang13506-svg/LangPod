@@ -77,6 +77,14 @@ def country_meta(cc):
     return COUNTRIES.get(cc, DAILY_META)
 
 
+def is_vignette_board(board_type):
+    """小图格板：一个词一格小图，而不是一张铺排图上摆物体。
+    action = 动词（chop / fry），state = 形容词或状态（happy / under / heavy）。
+    两者的生图、定位、回验都走同一套「找出演示这个词的那一格」逻辑，只有出词的
+    prompt 不同（在 generate_lessons 里分流）。"""
+    return board_type in ("action", "state")
+
+
 def theme_palette(category):
     """主题图解板底色：一个大类一套色系（同生活场景「一国一色」），
     色系定义在 theme_catalog.THEME_CATEGORIES[category]["palette"]。
@@ -126,17 +134,28 @@ def generate_scene_image(zone, lesson, hotspot_words, output_path, variation=0, 
         " Alternative composition attempt %d: use a wider camera angle and place each object "
         "on its own clear surface or area so every object is unmistakable." % variation
     )
-    if lesson["country"] == "daily" and lesson.get("board_type") == "action":
-        # 动作板：每个动词一格小图（手/人正在做那个动作），格与格之间留白分开，
-        # 这样每个动词都能被视觉模型独立定位成热点。
+    if lesson["country"] == "daily" and is_vignette_board(lesson.get("board_type")):
+        # 小图格板：每个词一格（动作=有人在做，状态=画面体现那个状态），
+        # 格与格之间留白分开，这样每个词都能被视觉模型独立定位成热点。
+        if lesson.get("board_type") == "state":
+            kind, shows = "STATES", (
+                "Each vignette makes that one word unmistakable from the picture alone — a "
+                "feeling from a face and posture, a spatial word from where an object sits "
+                "relative to another, a size or degree word from an obvious visual contrast. "
+            )
+        else:
+            kind, shows = "ACTIONS", (
+                "Each vignette shows hands or a person clearly performing that one action, "
+                "drawn so the action is unmistakable at a glance. "
+            )
         prompt = (
             STYLE_TEMPLATE.format(palette=palette)
-            + "Visual dictionary board of ACTIONS: %s — %s. " % (zone["name_en"], lesson["title_en"])
-            + "Draw each action as its OWN separate vignette, laid out in a clean grid with "
-            + "generous empty space between vignettes — never merge them into one scene. Each "
-            + "vignette shows hands or a person clearly performing that one action, drawn so the "
-            + "action is unmistakable at a glance and obviously different from the others. "
-            + "One vignette per action, in this order: %s." % objects
+            + "Visual dictionary board of %s: %s — %s. " % (kind, zone["name_en"], lesson["title_en"])
+            + "Draw each one as its OWN separate vignette, laid out in a clean grid with "
+            + "generous empty space between vignettes — never merge them into one scene. "
+            + shows
+            + "Every vignette must look obviously different from the others. "
+            + "One vignette each, in this order: %s." % objects
             + variation_hint
             + DAILY_HARD_RULES
         )
@@ -238,15 +257,22 @@ def locate_words(image_path, words, board_type="object"):
     with open(image_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
     word_list = "\n".join("- %s" % w for w in words)
-    if board_type == "action":
+    if is_vignette_board(board_type):
+        match_on = (
+            "Match by the state or relation the picture conveys, not by the objects present — "
+            "'under' is the vignette where one thing sits beneath another, whatever the things "
+            "are; 'tired' is the one whose face and posture show it."
+            if board_type == "state" else
+            "Match by what is being DONE, not by the objects present — 'chop' is the vignette "
+            "where a knife is cutting, wherever it sits."
+        )
         what = (
-            "This illustration is a grid of vignettes, each showing one action being performed. "
-            "For EACH action verb listed below, find the vignette that depicts it and give a "
+            "This illustration is a grid of vignettes, each conveying one word. "
+            "For EACH word listed below, find the vignette that depicts it and give a "
             "TIGHT bounding box around that vignette in normalized coordinates "
             "(x_min, y_min, x_max, y_max; x from 0.0 left to 1.0 right, y from 0.0 top to 1.0 "
-            "bottom). Match by what is being DONE, not by the objects present — 'chop' is the "
-            "vignette where a knife is cutting, wherever it sits. Mark found=false if no "
-            "vignette clearly shows that action.\n\nActions:\n%s\n\n" % word_list
+            "bottom). %s Mark found=false if no vignette clearly conveys that "
+            "word.\n\nWords:\n%s\n\n" % (match_on, word_list)
         )
     else:
         what = (
@@ -316,12 +342,16 @@ def verify_and_fix_locations(image_path, placed, max_rounds=2, board_type="objec
         b64 = base64.b64encode(buf.getvalue()).decode()
 
         legend = "\n".join("%d = %s" % (i, w["word"]) for i, w in enumerate(placed, 1))
-        if board_type == "action":
+        if is_vignette_board(board_type):
             rule = (
-                "This illustration is a grid of vignettes, each showing one action. Every "
-                "numbered red marker must sit on the vignette that depicts the action it labels "
-                "(legend below). Judge by what is being DONE, not by the objects present — a "
-                "'chop' marker on the vignette where something is being peeled is wrong.\n\n"
+                "This illustration is a grid of vignettes, each conveying one word. Every "
+                "numbered red marker must sit on the vignette that depicts the word it labels "
+                "(legend below). Judge by what the picture conveys, not by the objects present "
+                + ("— a 'tired' marker on the vignette showing an excited face is wrong, an "
+                   "'under' marker on the one where the ball sits on top is wrong.\n\n"
+                   if board_type == "state" else
+                   "— a 'chop' marker on the vignette where something is being peeled is "
+                   "wrong.\n\n")
             )
         else:
             rule = (

@@ -144,6 +144,45 @@ Output STRICT JSON only (no markdown fences, no commentary):
 }}"""
 
 
+STATE_PROMPT_TEMPLATE = """You are creating content for a "visual dictionary board" in an English-learning app for Chinese speakers. This page teaches words that describe a STATE, FEELING or RELATION — each word gets its own little drawing that makes it obvious.
+
+LESSON: {title_en} ({title_zh})
+
+The lesson has {zone_count} boards. For each board you must produce:
+1. "hotspots": 5-7 words from this theme, each one drawable as a single small vignette that makes the word unmistakable — a feeling from a face and posture, a spatial relation from where one object sits against another, a size or degree from a visual contrast. Use the bare word ("tired", "under", "heavy").
+   CRITICAL — every word on a board must produce a DIFFERENT picture from every other word on that board. If two words would look nearly the same when drawn, keep the more common one and put the other in extra_words. Ask for each pair: "would a viewer see two different pictures, or the same picture twice?" Same picture → drop one. Fewer words that are each unmistakable beats more words a viewer cannot tell apart.
+2. "extra_words": 4-6 related words or phrases from this theme that would be drawn the same as a hotspot word, or that can NOT be pictured at all.
+
+BOARDS:
+{zones_block}
+
+Also produce for the whole lesson:
+- "sentences": 5 short sentences a learner would actually SAY in daily life using these words. Real spoken register.
+- "culture_tips_zh": 2-3 用法小贴士 in Chinese. EVERY tip must be about a word that actually appears in THIS lesson's word list, and must name it. Useful angles: two words Chinese speakers mix up, where the Chinese equivalent is broader or narrower, the preposition or structure the word takes. NEVER encyclopedia facts. NEVER reuse an example word from these instructions.
+
+RULES (all mandatory):
+- Spelling/vocabulary: American English. Pick the HIGHEST-FREQUENCY everyday word for each idea.
+- Every word entry: "word" (bare, lowercase), "phonetic" (IPA with slashes like /ˈtaɪɚd/), "translation_zh" (1-2 个中文释义), "example" (one natural sentence a real person would say, MUST contain the word, MAX 12 words), "example_zh" (自然的中文翻译), "difficulty" ("easy"|"medium"|"hard" by real-world frequency).
+- Order words within each board from easy to hard.
+- No word may repeat across boards in this lesson.
+- Chinese translations must be natural spoken Chinese, not dictionary-stiff.
+- sentences: each is {{"english": "...", "chinese": "..."}}.
+- Do NOT include any political, religious or sensitive content.
+
+Output STRICT JSON only (no markdown fences, no commentary):
+{{
+  "zones": [
+    {{
+      "id": "<zone id exactly as given>",
+      "hotspots": [ {{"word": "...", "phonetic": "...", "translation_zh": "...", "example": "...", "example_zh": "...", "difficulty": "easy"}} ],
+      "extra_words": [ {{...same fields...}} ]
+    }}
+  ],
+  "sentences": [ {{"english": "...", "chinese": "..."}} ],
+  "culture_tips_zh": ["...", "..."]
+}}"""
+
+
 def _call_gpt(messages, temperature=0.7):
     """GPT call with retry for transient errors, parses JSON (same pattern as generate_script.py)."""
     max_retries = 3
@@ -185,9 +224,12 @@ def build_prompt(lesson):
         for z in lesson["zones"]
     )
     if lesson.get("is_theme"):
-        # 动作板走 verb 模板：热点是动词本身；物体模板会强制「NOT actions」把动词挤走
-        template = (ACTION_PROMPT_TEMPLATE if lesson.get("board_type") == "action"
-                    else THEME_PROMPT_TEMPLATE)
+        # 物体模板强制「热点必须是具体物体，NOT actions / NOT abstract concepts」，
+        # 动词板和状态板套它会跑歪（烹饪动作曾退化成 carrot/pan），各走各的模板。
+        template = {
+            "action": ACTION_PROMPT_TEMPLATE,   # 动词：chop / fry
+            "state": STATE_PROMPT_TEMPLATE,     # 形容词或关系：tired / under / heavy
+        }.get(lesson.get("board_type"), THEME_PROMPT_TEMPLATE)
         return template.format(
             title_en=lesson["title_en"],
             title_zh=lesson["title_zh"],

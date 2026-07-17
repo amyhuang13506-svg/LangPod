@@ -375,6 +375,159 @@ THEME_BOARDS = [
              "hint": "staircase, handrail, elevator door, hallway light, fire extinguisher, trash chute, parking garage"},
         ],
     },
+
+    # ================= B2 批次：身体与健康 +8 =================
+    {
+        "slug": "daily_actions", "category": "body", "icon": "figure.walk",
+        "board_type": "action",
+        "title": _t("日常动作", "Everyday Actions"),
+        "zones": [
+            {"id": "moving", **_t("身体移动", "Moving Around"),
+             "hint": "walk, run, jump, sit, stand, climb (crawl and kneel draw much like sit — extra_words)"},
+            {"id": "routines", **_t("日常起居", "Daily Routines"),
+             "hint": "sleep, eat, drink, wash, brush, read (write draws much like read — extra_words)"},
+        ],
+    },
+    {
+        "slug": "emotions", "category": "body", "icon": "face.smiling.fill",
+        "board_type": "state",
+        "title": _t("情绪与感受", "Feelings"),
+        "zones": [
+            {"id": "core_feelings", **_t("基本情绪", "Core Feelings"),
+             "hint": "each feeling on one face and posture: happy, sad, angry, scared, surprised, tired "
+                     "(upset draws like sad, furious like angry — extra_words)"},
+            {"id": "everyday_moods", **_t("日常状态", "Everyday Moods"),
+             "hint": "bored, excited, nervous, relaxed, confused, embarrassed"},
+        ],
+    },
+    {
+        "slug": "appearance", "category": "body", "icon": "person.fill",
+        "board_type": "state",
+        "title": _t("外貌与体型", "What People Look Like"),
+        "zones": [
+            {"id": "build", **_t("身材", "Build & Height"),
+             "hint": "contrast pairs on drawn people: tall, short, slim, heavy, strong, young, old"},
+            {"id": "looks", **_t("样子", "Looks"),
+             "hint": "curly, straight, bald, blonde, freckled, tanned — each on a distinct drawn person"},
+        ],
+    },
+    {
+        "slug": "family", "category": "body", "icon": "figure.2.and.child.holdinghands",
+        "title": _t("家庭称谓", "Family"),
+        "zones": [
+            {"id": "close_family", **_t("直系", "Close Family"),
+             "hint": "one family group portrait: father, mother, son, daughter, brother, sister, baby"},
+            {"id": "relatives", **_t("亲戚", "Relatives"),
+             "hint": "a wider family gathering: grandfather, grandmother, uncle, aunt, cousin, nephew, niece"},
+        ],
+    },
+    {
+        "slug": "symptoms", "category": "body", "icon": "thermometer.medium",
+        "board_type": "state",
+        "title": _t("症状与不适", "Not Feeling Well"),
+        "zones": [
+            {"id": "common_symptoms", **_t("常见症状", "Common Symptoms"),
+             "hint": "each shown on one person: headache, fever, cough, runny nose, sore throat, stomachache"},
+            {"id": "other_troubles", **_t("其它不适", "Other Troubles"),
+             "hint": "dizzy, itchy, sneeze, toothache, backache, sprained ankle"},
+        ],
+    },
+    {
+        "slug": "doctor_pharmacy", "category": "body", "icon": "cross.case.fill",
+        "title": _t("看医生与买药", "Doctor & Pharmacy"),
+        "zones": [
+            {"id": "at_the_doctor", **_t("诊室", "At the Doctor's"),
+             "hint": "stethoscope, thermometer, blood pressure cuff, examination table, syringe, prescription pad, face mask"},
+            {"id": "at_the_pharmacy", **_t("药房", "At the Pharmacy"),
+             "hint": "pill bottle, tablet, capsule, cough syrup, bandage, ointment tube, pharmacy shelf"},
+        ],
+    },
+    {
+        "slug": "hospital", "category": "body", "icon": "building.2.crop.circle.fill",
+        "title": _t("牙医与医院", "Dentist & Hospital"),
+        "zones": [
+            {"id": "dentist", **_t("牙科", "At the Dentist"),
+             "hint": "dental chair, dental mirror, drill, x-ray image, braces, floss, spit sink"},
+            {"id": "hospital_ward", **_t("医院里", "In the Hospital"),
+             "hint": "hospital bed, IV drip, wheelchair, crutches, cast, monitor screen, nurse call button"},
+        ],
+    },
+    {
+        "slug": "fitness", "category": "body", "icon": "dumbbell.fill",
+        "title": _t("健身与作息", "Fitness & Rest"),
+        "zones": [
+            {"id": "at_the_gym", **_t("健身房", "At the Gym"),
+             "hint": "dumbbell, treadmill, yoga mat, jump rope, exercise bike, water bottle, gym towel"},
+            {"id": "rest", **_t("休息与作息", "Rest & Sleep"),
+             "hint": "pillow, eye mask, earplugs, sleep tracker watch, herbal tea cup, stretching mat, alarm"},
+        ],
+    },
+
+    # ================= B2 批次：基础概念 +6 =================
+    {
+        "slug": "money", "category": "basics", "icon": "banknote.fill",
+        "title": _t("金钱与价格", "Money & Prices"),
+        "zones": [
+            {"id": "cash", **_t("现金", "Cash"),
+             "hint": "coin, bill, wallet, purse, piggy bank, change tray, cash stack"},
+            {"id": "paying", **_t("付款", "Paying"),
+             "hint": "credit card, ATM, bank card reader, checkbook, invoice, discount sign, shopping receipt"},
+        ],
+    },
+    {
+        "slug": "position", "category": "basics", "icon": "arrow.up.left.and.arrow.down.right",
+        "board_type": "state",
+        "title": _t("方位与位置", "Where Things Are"),
+        "zones": [
+            {"id": "basic_position", **_t("基本方位", "Basic Positions"),
+             "hint": "same ball and box in each vignette, only the relation changes: on, under, in, next to, behind, between"},
+            {"id": "directions", **_t("方向", "Directions"),
+             "hint": "left, right, up, down, near, far — each shown with a simple figure and arrow"},
+        ],
+    },
+    {
+        "slug": "quantity", "category": "basics", "icon": "shippingbox.fill",
+        "title": _t("数量与包装", "Packs & Portions"),
+        "zones": [
+            {"id": "containers", **_t("容器", "Containers"),
+             "hint": "bottle, can, jar, box, bag, carton, tube — each holding something ordinary"},
+            {"id": "portions", **_t("份量", "Portions"),
+             "hint": "slice, piece, bunch, pack, roll, bowl, spoonful"},
+        ],
+    },
+    {
+        "slug": "size_degree", "category": "basics", "icon": "arrow.up.and.down.text.horizontal",
+        "board_type": "state",
+        "title": _t("大小与程度", "Big, Small & In Between"),
+        "zones": [
+            {"id": "size", **_t("大小长短", "Size & Length"),
+             "hint": "each word from an obvious contrast between two drawn objects: big, small, long, short, thick, thin"},
+            {"id": "degree", **_t("轻重冷热", "Weight & Temperature"),
+             "hint": "heavy, light, hot, cold, full, empty — each from a clear visual contrast"},
+        ],
+    },
+    {
+        "slug": "signs", "category": "basics", "icon": "exclamationmark.triangle.fill",
+        "title": _t("标志与符号", "Signs & Symbols"),
+        "zones": [
+            {"id": "public_signs", **_t("公共标志", "Public Signs"),
+             "hint": "stop sign, exit sign, restroom sign, no smoking sign, wheelchair sign, warning triangle, arrow sign"},
+            {"id": "everyday_symbols", **_t("日常符号", "Everyday Symbols"),
+             "hint": "wifi symbol, battery icon, power button, recycle symbol, heart icon, magnifying glass icon, plus sign"},
+        ],
+    },
+    {
+        "slug": "dates", "category": "basics", "icon": "calendar",
+        "title": _t("日期与星期", "Dates & Days"),
+        "zones": [
+            {"id": "the_calendar", **_t("看日历", "Reading a Calendar"),
+             "hint": "one large wall calendar with visible day columns and dates: weekend (shaded cells), "
+                     "holiday (a red-marked date), today (a circled date), appointment (a note written in a cell), "
+                     "month, week. Day and month names printed on the calendar are part of the object, not labels"},
+            {"id": "planning", **_t("安排日程", "Planning"),
+             "hint": "planner, sticky note, wall calendar, desk calendar, reminder on a phone, pen marking a date"},
+        ],
+    },
 ]
 
 
