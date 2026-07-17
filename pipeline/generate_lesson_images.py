@@ -95,15 +95,19 @@ HARD_RULES = (
     "across the scene."
 )
 
-# 主题图解板：App 会在热点坐标上叠加自己的可点词标签，图内绝不能再画文字
-# （否则双重标签；且图内词可能与 GPT 选词不一致）。
+# 主题图解板：App 会在热点坐标上叠加自己的可点词标签，图内不能再画「给物体命名的
+# 文字」（否则双重标签，且图内词可能与 GPT 选词不一致）。
+# ⚠️ 但物体自带的文字/数字是内容本身，必须允许：钟面数字、价签上的价格、门牌号、
+# 出租车上的 TAXI —— 「数字与时间」「生活中的数字」这类课没有数字就废了。
 DAILY_HARD_RULES = (
-    " ABSOLUTE RULES: NO text anywhere in the image — no labels, no captions, no title, "
-    "no letters at all. The app overlays its own interactive labels. NO brand logos, "
-    "trademarks, swooshes, stripes or any other mark resembling a real brand — draw every "
-    "item completely plain and unbranded. Every listed item must be drawn large enough to "
-    "be clearly recognizable, fully visible, and NOT overlapping with other listed items. "
-    "Spread the listed items across the board."
+    " ABSOLUTE RULES: Do NOT write labels or captions naming the items — the app overlays "
+    "its own interactive labels, so never print an item's name beside it, and no title. "
+    "Text that is naturally part of an object is expected and welcome: numbers on a clock "
+    "face or calendar, digits on a price tag or house number, a destination word on a sign. "
+    "NO brand logos, trademarks, swooshes, stripes or any other mark resembling a real "
+    "brand — draw every item plain and unbranded. Every listed item must be drawn large "
+    "enough to be clearly recognizable, fully visible, and NOT overlapping with other "
+    "listed items. Spread the listed items across the board."
 )
 
 
@@ -336,24 +340,32 @@ def verify_and_fix_locations(image_path, placed, max_rounds=2):
 
 
 def audit_image_content(image_path):
-    """图内合规审计：主题图解板不许有任何文字（App 自己叠标签），不许有商标/近似商标
-    （曾生成出带 Nike 勾的运动鞋）。返回 (clean: bool, reason: str)。"""
+    """图内合规审计，只拦两类硬伤：
+      1. 给物体命名的标签/标题 —— App 自己叠可点标签，图内再写词会双重标注
+      2. 商标/近似商标 —— 曾生成出带 Nike 勾的运动鞋
+    ⚠️ 物体自带的文字数字（钟面数字、价签、门牌号、TAXI 字样）是内容本身，不算违规
+    —— 一刀切禁文字会把「数字与时间」这类课的核心内容误杀。
+    返回 (clean: bool, reason: str)。"""
     with open(image_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
     prompt = (
         "Audit this illustration for two problems:\n"
-        "1. TEXT: any letters, words, labels, captions or numbers drawn in the image.\n"
-        "2. BRANDING: any real-brand logo, or any mark that resembles one (swoosh, "
-        "three stripes, bitten apple, golden arches, etc).\n"
-        "Report only what is clearly there — a plain unbranded object is fine.\n"
-        'Output STRICT JSON only:\n{"has_text": false, "has_brand": false, "detail": ""}'
+        "1. LABEL TEXT: a word printed next to an object that NAMES it (like 'apple' written "
+        "under an apple), or a title/caption/heading for the whole image.\n"
+        "   IMPORTANT — these are NOT label text, report them as false: numbers on a clock "
+        "face or calendar, digits on a price tag, receipt or house number, a word naturally "
+        "printed on a real object (TAXI on a taxi, EXIT on a door), squiggles that aren't "
+        "readable words.\n"
+        "2. BRANDING: a real-brand logo, or a mark that resembles one (swoosh, three stripes, "
+        "bitten apple, golden arches). A plain unbranded object is fine.\n"
+        'Output STRICT JSON only:\n{"has_label_text": false, "has_brand": false, "detail": ""}'
     )
     parsed = _vision_json(prompt, b64)
     if not parsed:
         return True, ""  # 审计失败不阻断生成
     problems = []
-    if parsed.get("has_text"):
-        problems.append("text")
+    if parsed.get("has_label_text"):
+        problems.append("label")
     if parsed.get("has_brand"):
         problems.append("brand")
     if not problems:
