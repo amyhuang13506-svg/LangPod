@@ -46,13 +46,10 @@ struct ProfileView: View {
                     weekProgress
                     statsRow
 
-                    // Learning settings
+                    // 设置 · 功能 · 法律（合并为一个大框）
                     settingsSection
 
-                    // Other
-                    otherSection
-
-                    // Legal
+                    // 清除数据（+ 开发者选项）
                     legalSection
 
                     #if DEBUG
@@ -108,7 +105,10 @@ struct ProfileView: View {
                         .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(Color.textPrimary)
                     Spacer()
-                    taskProgressRing
+                    // 全部完成后进度环整个隐藏；只在还有未完成任务时显示
+                    if TaskEngine.shared.completedCount < TaskEngine.shared.totalCount {
+                        taskProgressRing
+                    }
                 }
 
                 HStack {
@@ -139,7 +139,7 @@ struct ProfileView: View {
         .buttonStyle(.plain)
     }
 
-    /// 今日任务 2/4 进度环
+    /// 今日任务进度环（仅在还有未完成任务时显示；全部完成后调用处会整个隐藏）
     private var taskProgressRing: some View {
         let done = TaskEngine.shared.completedCount
         let total = max(TaskEngine.shared.totalCount, 1)
@@ -148,12 +148,11 @@ struct ProfileView: View {
                 .stroke(Color.border, lineWidth: 4)
             Circle()
                 .trim(from: 0, to: CGFloat(done) / CGFloat(total))
-                .stroke(done >= total ? Color.success : Color.appPrimary,
-                        style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .stroke(Color.appPrimary, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             Text("\(done)/\(total)")
                 .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(done >= total ? Color.success : Color.appPrimary)
+                .foregroundStyle(Color.appPrimary)
         }
         .frame(width: 40, height: 40)
     }
@@ -179,7 +178,7 @@ struct ProfileView: View {
             let done = TaskEngine.shared.completedCount
             let total = TaskEngine.shared.totalCount
             if total > 0 && done >= total { return "完美一天！\(total) 个任务全部完成" }
-            return "今日已点亮！完成 \(total)/\(total) 任务解锁完美一天"
+            return "今日已点亮！完成 \(done)/\(total) 任务解锁完美一天"
         }
         if hoursUntilReset <= 3 {
             return "即将清零！还有 \(hoursUntilReset)h"
@@ -371,6 +370,15 @@ struct ProfileView: View {
 
     private var settingsSection: some View {
         VStack(spacing: 0) {
+            // 升级 Pro（放最前）
+            if subscriptionManager.isProUser {
+                menuRow(icon: "crown.fill", iconColor: "F59E0B", title: "已订阅 Pro")
+            } else {
+                Button { showPaywall = true } label: {
+                    menuRow(icon: "crown", iconColor: "F59E0B", title: "升级 Pro")
+                }
+            }
+            divider
             NavigationLink {
                 LevelSelectPage(dataStore: dataStore)
             } label: {
@@ -379,79 +387,10 @@ struct ProfileView: View {
             }
             divider
             NavigationLink {
-                LanguageSelectPage()
-            } label: {
-                settingsRow(icon: "globe", iconColor: "3B82F6",
-                            title: "翻译语言", value: "中文")
-            }
-            divider
-            NavigationLink {
-                ReminderTimePage(reminderTime: $reminderTime)
-            } label: {
-                settingsRow(icon: "bell", iconColor: "3B82F6",
-                            title: "每日提醒", value: reminderTimeString)
-            }
-            divider
-            NavigationLink {
                 SleepTimerPage(audioPlayer: audioPlayer)
             } label: {
                 settingsRow(icon: "moon.zzz", iconColor: "8B5CF6",
-                            title: "定时停止", value: sleepTimerDisplayValue)
-            }
-            divider
-            patternPlaybackToggle
-        }
-        .background(.white, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.border, lineWidth: 1)
-        )
-    }
-
-    private var patternPlaybackToggle: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "quote.bubble.fill")
-                .font(.system(size: 14))
-                .foregroundStyle(.white)
-                .frame(width: 28, height: 28)
-                .background(Color(hex: "14B8A6"), in: RoundedRectangle(cornerRadius: 8))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("句型混播")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(Color.textPrimary)
-                Text("播完一集后自动接这集的句型讲解")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.textTertiary)
-            }
-
-            Spacer()
-
-            Toggle("", isOn: Binding(
-                get: { audioPlayer.playPatternsAlongside },
-                set: { newValue in
-                    audioPlayer.playPatternsAlongside = newValue
-                    audioPlayer.rebuildQueueAfterSettingChange()
-                }
-            ))
-            .labelsHidden()
-            .tint(Color.appPrimary)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
-
-
-    // MARK: - Other Section
-
-    private var otherSection: some View {
-        VStack(spacing: 0) {
-            if subscriptionManager.isProUser {
-                menuRow(icon: "crown.fill", iconColor: "F59E0B", title: "已订阅 Pro")
-            } else {
-                Button { showPaywall = true } label: {
-                    menuRow(icon: "crown", iconColor: "F59E0B", title: "升级 Pro")
-                }
+                            title: "定时播放", value: sleepTimerDisplayValue)
             }
             divider
             NavigationLink {
@@ -464,6 +403,18 @@ struct ProfileView: View {
             divider
             Button { showShareCard = true } label: {
                 menuRow(icon: "square.and.arrow.up", iconColor: "94A3B8", title: "分享给朋友")
+            }
+            divider
+            if let privacyURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/privacy.html") {
+                Link(destination: privacyURL) {
+                    menuRow(icon: "shield", iconColor: "94A3B8", title: "隐私政策")
+                }
+            }
+            divider
+            if let termsURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/terms.html") {
+                Link(destination: termsURL) {
+                    menuRow(icon: "doc.text", iconColor: "94A3B8", title: "用户协议")
+                }
             }
         }
         .background(.white, in: RoundedRectangle(cornerRadius: 16))
@@ -478,18 +429,6 @@ struct ProfileView: View {
     private var legalSection: some View {
         VStack(spacing: 20) {
             VStack(spacing: 0) {
-                if let privacyURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/privacy.html") {
-                    Link(destination: privacyURL) {
-                        menuRow(icon: "shield", iconColor: "94A3B8", title: "隐私政策")
-                    }
-                }
-                divider
-                if let termsURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/terms.html") {
-                    Link(destination: termsURL) {
-                        menuRow(icon: "doc.text", iconColor: "94A3B8", title: "用户协议")
-                    }
-                }
-                divider
                 Button { showClearAlert = true } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "trash")
@@ -765,7 +704,7 @@ struct SleepTimerPage: View {
             Spacer()
         }
         .padding(.top, 16)
-        .navigationTitle("定时停止")
+        .navigationTitle("定时播放")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

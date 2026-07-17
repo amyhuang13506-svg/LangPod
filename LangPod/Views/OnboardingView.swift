@@ -8,67 +8,43 @@ struct OnboardingView: View {
     enum OnboardingPage: Int, CaseIterable {
         case welcome = 0
         case goal = 1
-        case methodDemo = 2
-        case levelSelect = 3
-        case userSource = 4
+        case levelSelect = 2
+        case dailyTime = 3
+        case plan = 4
+        case userSource = 5
     }
 
     var body: some View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
 
-            // Skip button (top right, pages 2-3 only)
-            if currentPage == .methodDemo || currentPage == .levelSelect {
-                VStack {
-                    HStack {
-                        Spacer()
-                        Button {
-                            goToNextPage()
-                        } label: {
-                            Text("跳过")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(Color.textTertiary)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                        }
-                    }
-                    Spacer()
+            VStack(spacing: 0) {
+                if let step = questionStep {
+                    questionProgressBar(step: step)
+                        .padding(.top, 16)
+                        .padding(.horizontal, 24)
                 }
-                .padding(.top, 8)
-                .zIndex(10)
-            }
 
-            switch currentPage {
-            case .welcome:
-                welcomePage
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-            case .goal:
-                goalPage
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-            case .methodDemo:
-                methodDemoPage
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-            case .levelSelect:
-                levelSelectPage
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-            case .userSource:
-                userSourcePage
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
+                switch currentPage {
+                case .welcome:
+                    welcomePage
+                        .transition(pageTransition)
+                case .goal:
+                    goalPage
+                        .transition(pageTransition)
+                case .levelSelect:
+                    levelSelectPage
+                        .transition(pageTransition)
+                case .dailyTime:
+                    dailyTimePage
+                        .transition(pageTransition)
+                case .plan:
+                    planPage
+                        .transition(pageTransition)
+                case .userSource:
+                    userSourcePage
+                        .transition(pageTransition)
+                }
             }
         }
         .onDisappear {
@@ -76,15 +52,44 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: - Shared Audio
+    private var pageTransition: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: .trailing).combined(with: .opacity),
+            removal: .move(edge: .leading).combined(with: .opacity)
+        )
+    }
+
+    /// 三个问题页顶部的进度条（1/3 → 3/3），其余页不显示
+    private var questionStep: Int? {
+        switch currentPage {
+        case .goal: return 1
+        case .levelSelect: return 2
+        case .dailyTime: return 3
+        default: return nil
+        }
+    }
+
+    private func questionProgressBar(step: Int) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color(hex: "E2E8F0"))
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.appPrimary)
+                    .frame(width: geo.size.width * CGFloat(step) / 3)
+                    .animation(.easeInOut(duration: 0.35), value: step)
+            }
+        }
+        .frame(height: 4)
+    }
+
+    // MARK: - Shared Audio (level trial listen)
 
     @State private var audioPlayer: AVAudioPlayer?
     @State private var clipTimer: Timer?
     @State private var isAudioPlaying = false
-    @State private var waveformTimer: Timer?
-    @State private var waveformHeights: [CGFloat] = (0..<20).map { _ in CGFloat.random(in: 6...28) }
 
-    private func playBundledAudio(_ name: String, clipDuration: TimeInterval? = nil, onFinish: (() -> Void)? = nil) {
+    private func playBundledAudio(_ name: String, onFinish: (() -> Void)? = nil) {
         stopAllAudio()
 
         guard let url = Bundle.main.url(forResource: name, withExtension: "mp3") else {
@@ -104,29 +109,9 @@ struct OnboardingView: View {
             audioPlayer = player
             isAudioPlaying = true
 
-            // Start waveform animation timer
-            waveformTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { _ in
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    waveformHeights = (0..<20).map { _ in CGFloat.random(in: 6...28) }
-                }
-            }
-
-            // Poll for playback completion
             clipTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { timer in
                 if let p = self.audioPlayer, !p.isPlaying {
                     timer.invalidate()
-                    self.waveformTimer?.invalidate()
-                    self.waveformTimer = nil
-                    self.isAudioPlaying = false
-                    onFinish?()
-                }
-            }
-
-            if let clip = clipDuration {
-                DispatchQueue.main.asyncAfter(deadline: .now() + clip) {
-                    self.audioPlayer?.stop()
-                    self.waveformTimer?.invalidate()
-                    self.waveformTimer = nil
                     self.isAudioPlaying = false
                     onFinish?()
                 }
@@ -142,8 +127,6 @@ struct OnboardingView: View {
     private func stopAllAudio() {
         clipTimer?.invalidate()
         clipTimer = nil
-        waveformTimer?.invalidate()
-        waveformTimer = nil
         audioPlayer?.stop()
         audioPlayer = nil
         isAudioPlaying = false
@@ -156,35 +139,280 @@ struct OnboardingView: View {
         }
     }
 
-    private func goToNextPage() {
-        stopAllAudio()
-        if let next = OnboardingPage(rawValue: currentPage.rawValue + 1) {
-            goToPage(next)
+    /// 选项点击后的统一节奏：震动 → 短暂停留展示选中态 → 自动前进
+    private func selectAndAdvance(to page: OnboardingPage) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            goToPage(page)
         }
     }
 
     // MARK: - Page 1: Welcome
 
-    private var welcomePage: some View {
-        VStack(spacing: 0) {
-            Spacer().frame(height: 180)
+    /// 欢迎页浮动的场景短句：长短混搭（十几条轮换，控制在单行宽度内）
+    private static let heroPhrases: [(scene: String, en: String)] = [
+        ("☕️ 点单", "To go, please!"),
+        ("✈️ 机场", "Where's gate B12?"),
+        ("🏠 租房", "Is the deposit refundable?"),
+        ("🩺 看病", "Can I book an appointment?"),
+        ("🛒 超市", "Where's the dairy aisle?"),
+        ("🚕 打车", "Right here is fine!"),
+        ("🍽️ 餐厅", "Can we get the check?"),
+        ("🏦 银行", "I'd like to open an account."),
+        ("🏨 酒店", "A late check-out, please?"),
+        ("🚇 地铁", "Does this go downtown?"),
+        ("📱 办卡", "A SIM card, please."),
+        ("🛃 过关", "Just here for vacation."),
+        ("💇 理发", "Just a trim."),
+        ("📦 快递", "Where's my package?"),
+        ("🧾 退货", "Can I get a refund?"),
+        ("👋 社交", "Wanna grab a coffee?"),
+    ]
+
+    private static let heroSlotCount = 7
+
+    @State private var heroTimer: Timer?
+    @State private var heroBobbing = false
+    @State private var heroSize: CGSize = .zero
+    /// 每个槽位当前显示第几条短句
+    @State private var slotPhrases: [Int] = Array(0..<heroSlotCount)
+    /// 每个槽位当前是否可见（整批一条条弹出 → 停留 → 一条条消失 → 循环）
+    @State private var slotVisible: [Bool] = Array(repeating: false, count: heroSlotCount)
+    /// 每个槽位解算后的绝对坐标（松弛去重叠后的结果）
+    @State private var slotPos: [CGPoint] = Array(repeating: .zero, count: heroSlotCount)
+    @State private var nextPhrase = 0
+
+    /// 气泡的有机种子位置（hero 相对坐标 0-1）：中间密、上下疏，像被地球引力聚拢的一团。
+    /// 解算时以此为起点，只把真正重叠的对儿轻推开——保留聚拢感，又不重叠。
+    private static let heroSeeds: [CGPoint] = [
+        CGPoint(x: 0.31, y: 0.17),
+        CGPoint(x: 0.66, y: 0.15),
+        CGPoint(x: 0.40, y: 0.29),
+        CGPoint(x: 0.61, y: 0.33),
+        CGPoint(x: 0.30, y: 0.45),
+        CGPoint(x: 0.58, y: 0.48),
+        CGPoint(x: 0.46, y: 0.60),
+    ]
+
+    /// 估算某条短句气泡的宽度（用于分配位置 + 无重叠松弛）
+    private static func heroWidthEstimate(_ phraseIndex: Int) -> CGFloat {
+        let p = heroPhrases[phraseIndex % heroPhrases.count]
+        return 66 + CGFloat(p.en.count) * 6.4   // 场景标签+内边距≈66，英文≈每字符6.4
+    }
+
+    private func heroChip(phraseIndex: Int) -> some View {
+        let phrase = Self.heroPhrases[phraseIndex % Self.heroPhrases.count]
+        return HStack(alignment: .firstTextBaseline, spacing: 5) {
+            Text(phrase.scene)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color.appPrimary)
+            Text(phrase.en)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Color.textPrimary)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(.white, in: Capsule())
+        .overlay(Capsule().stroke(Color.border, lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 5)
+    }
+
+    /// 单个气泡：使用松弛解算后的绝对坐标，靠下的略大
+    private func heroBubble(slot: Int) -> some View {
+        let visible = slotVisible[slot]
+        let depth = 0.9 + 0.16 * (slotPos[slot].y / max(1, heroSize.height))
+
+        return heroChip(phraseIndex: slotPhrases[slot])
+            .offset(y: heroBobbing ? -4 : 4)
+            .animation(
+                .easeInOut(duration: 1.9 + Double(slot) * 0.25).repeatForever(autoreverses: true),
+                value: heroBobbing
+            )
+            .scaleEffect(visible ? depth : 0.01, anchor: .bottom)
+            .opacity(visible ? 1 : 0)
+            .animation(
+                visible
+                    ? .spring(response: 0.45, dampingFraction: 0.62)
+                    : .easeIn(duration: 0.28),
+                value: visible
+            )
+            .position(slotPos[slot])
+    }
+
+    private var welcomeHero: some View {
+        GeometryReader { geo in
+            let diameter = min(geo.size.width * 0.62, geo.size.height * 0.56)
+            let center = CGPoint(x: geo.size.width * 0.5, y: geo.size.height * 0.44)
 
             ZStack {
+                // 地球身后的柔光，和页面渐变背景连成一体
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [Color(hex: "E0F2FE"), Color.primaryLighter],
+                            colors: [Color.appPrimary.opacity(0.13), .clear],
                             center: .center,
-                            startRadius: 0,
-                            endRadius: 100
+                            startRadius: diameter * 0.2,
+                            endRadius: diameter * 0.9
                         )
                     )
-                    .frame(width: 200, height: 200)
+                    .frame(width: diameter * 1.8, height: diameter * 1.8)
+                    .position(center)
 
-                Image(systemName: "headphones")
-                    .font(.system(size: 80))
-                    .foregroundStyle(Color.appPrimary)
+                // 地面投影（淡蓝椭圆，跟手绘贴纸风一致）
+                Ellipse()
+                    .fill(Color(hex: "BBDDF5").opacity(0.55))
+                    .frame(width: diameter * 0.85, height: diameter * 0.18)
+                    .blur(radius: 6)
+                    .position(x: center.x + diameter * 0.06, y: center.y + diameter * 0.56)
+
+                // 手绘卡通地球，轻轻上下漂浮
+                Image("cartoonGlobe")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: diameter, height: diameter)
+                    .offset(y: heroBobbing ? -6 : 6)
+                    .animation(
+                        .easeInOut(duration: 3.0).repeatForever(autoreverses: true),
+                        value: heroBobbing
+                    )
+                    .position(center)
+
+                // 围绕地球的场景短句：一条条弹出、一条条消失，滚动换新
+                ForEach(0..<Self.heroSlotCount, id: \.self) { slot in
+                    heroBubble(slot: slot)
+                }
             }
+            .offset(y: geo.size.height * 0.06)   // 地球+泡泡整体下移一点
+            .onAppear {
+                heroSize = geo.size
+                startHeroLoop()
+            }
+        }
+        .frame(height: UIScreen.main.bounds.height * 0.52)
+        .onDisappear {
+            heroTimer?.invalidate()
+            heroTimer = nil
+        }
+    }
+
+    // 一波循环：staggerIn 依次弹出 → hold 停留 → staggerOut 依次消失 → 换一批句子再来
+    private static let heroStagger = 0.16      // 相邻气泡出/入的时间差
+    private static let heroHold = 2.6          // 全部弹出后停留时长
+
+    private var heroCycleDuration: TimeInterval {
+        let span = Double(slotVisible.count) * Self.heroStagger
+        return span + Self.heroHold + span + 0.4   // 入 + 停 + 出 + 间隙
+    }
+
+    private func startHeroLoop() {
+        heroBobbing = true
+        runHeroWave()
+        heroTimer?.invalidate()
+        heroTimer = Timer.scheduledTimer(withTimeInterval: heroCycleDuration, repeats: true) { _ in
+            runHeroWave()
+        }
+    }
+
+    /// 一整波「第一次出场」效果：解算无重叠位置 → 依次弹出、停留、依次消失
+    private func runHeroWave() {
+        let n = Self.heroSlotCount
+        let count = Self.heroPhrases.count
+
+        // 本波要显示的一批句子
+        let chosen = (0..<n).map { (nextPhrase + $0) % count }
+        nextPhrase = (nextPhrase + 5) % count   // 下波错开，减少重复感
+
+        // 宽度感知分配：最宽的句子给最靠中线的种子位，narrow 的放两侧，避免侧边裁切
+        let seedOrder = (0..<n).sorted { abs(Self.heroSeeds[$0].x - 0.5) < abs(Self.heroSeeds[$1].x - 0.5) }
+        let phraseOrder = chosen.sorted { Self.heroWidthEstimate($0) > Self.heroWidthEstimate($1) }
+        var assign = [Int](repeating: 0, count: n)
+        for k in 0..<n { assign[seedOrder[k]] = phraseOrder[k] }
+
+        // 从有机种子出发做无重叠松弛
+        let pos = solveHeroPositions(assign: assign, size: heroSize)
+
+        let stagger = Self.heroStagger
+        let inSpan = Double(n) * stagger
+
+        // 依次弹出（弹出前把该波的句子和解算坐标填进槽位）
+        for slot in 0..<n {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(slot) * stagger) {
+                slotPhrases[slot] = assign[slot]
+                slotPos[slot] = pos[slot]
+                slotVisible[slot] = true
+            }
+        }
+
+        // 停留后依次消失
+        let outStart = inSpan + Self.heroHold
+        for slot in 0..<n {
+            DispatchQueue.main.asyncAfter(deadline: .now() + outStart + Double(slot) * stagger) {
+                slotVisible[slot] = false
+            }
+        }
+    }
+
+    /// 无重叠松弛：以有机种子为起点，只把重叠的气泡沿最小穿透方向轻推开，
+    /// 保留「向地球聚拢」的团簇感，同时保证任意两条都不叠。
+    private func solveHeroPositions(assign: [Int], size: CGSize) -> [CGPoint] {
+        let n = assign.count
+        guard size.width > 1, size.height > 1 else {
+            return Self.heroSeeds.map { CGPoint(x: $0.x * size.width, y: $0.y * size.height) }
+        }
+        var pos = Self.heroSeeds.map { CGPoint(x: $0.x * size.width, y: $0.y * size.height) }
+        var halfW = [CGFloat](repeating: 0, count: n)
+        let halfH: CGFloat = 15
+        let pad: CGFloat = 8
+        for i in 0..<n { halfW[i] = Self.heroWidthEstimate(assign[i]) / 2 }
+
+        for _ in 0..<60 {
+            for i in 0..<n {
+                for j in (i + 1)..<n {
+                    let dx = pos[j].x - pos[i].x
+                    let dy = pos[j].y - pos[i].y
+                    let overlapX = (halfW[i] + halfW[j] + pad) - abs(dx)
+                    let overlapY = (halfH + halfH + pad) - abs(dy)
+                    guard overlapX > 0, overlapY > 0 else { continue }
+                    if overlapY <= overlapX {
+                        let push = overlapY / 2 * (dy < 0 ? -1 : 1)
+                        pos[i].y -= push; pos[j].y += push
+                    } else {
+                        let push = overlapX / 2 * (dx < 0 ? -1 : 1)
+                        pos[i].x -= push; pos[j].x += push
+                    }
+                }
+            }
+            // 夹在 hero 边界内
+            for i in 0..<n {
+                pos[i].x = min(max(halfW[i] + 4, pos[i].x), size.width - halfW[i] - 4)
+                pos[i].y = min(max(halfH + 6, pos[i].y), size.height - halfH - 6)
+            }
+        }
+        return pos
+    }
+
+    private var welcomePage: some View {
+        ZStack {
+            // 整页统一背景：顶部天空蓝渐变到页面底色，与地球光晕衔接
+            LinearGradient(
+                stops: [
+                    .init(color: Color(hex: "E7F2FF"), location: 0),
+                    .init(color: Color(hex: "F4F9FF"), location: 0.45),
+                    .init(color: Color.appBackground, location: 0.75),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            welcomePageContent
+        }
+    }
+
+    private var welcomePageContent: some View {
+        VStack(spacing: 0) {
+            welcomeHero
 
             VStack(spacing: 12) {
                 Text("Castlingo")
@@ -192,524 +420,194 @@ struct OnboardingView: View {
                     .foregroundStyle(Color.textPrimary)
                     .tracking(-0.5)
 
-                Text("600小时，听会一门语言")
-                    .font(.system(size: 20, weight: .semibold))
+                Text("从真实场景，学实用英语")
+                    .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(Color.bodyText)
 
-                Text("源于FSI外交官训练，重复即本能")
+                Text("点单、租房、看病、机场，学了就能用\n每天几分钟，听得懂，开得了口")
                     .font(.system(size: 14))
                     .foregroundStyle(Color.textTertiary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
             }
-            .padding(.top, 32)
+            .padding(.top, 8)
             .padding(.horizontal, 32)
 
             Spacer()
 
-            Button {
-                goToPage(.goal)
-            } label: {
-                Text("开始使用")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 16))
+            VStack(spacing: 14) {
+                Button {
+                    goToPage(.goal)
+                } label: {
+                    Text("开始定制")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 16))
+                }
             }
             .padding(.horizontal, 32)
             .padding(.bottom, 40)
         }
     }
 
-    // MARK: - Page 2: Goal — YouTube 原声功能介绍
+    // MARK: - Page 2: Goal question
 
-    @State private var goalSubtitlePhase: Int = 0
-    @State private var goalSubtitleTimer: Timer?
+    enum LearningGoal: String, CaseIterable {
+        case travel = "travel"
+        case study = "study"
+        case living = "overseas_living"
+        case work = "work"
+        case video = "video"
+        case selfGrowth = "self_growth"
 
-    private let goalSubtitles: [(en: String, zh: String)] = [
-        (en: "Sleep is the most powerful performance enhancer.",
-         zh: "睡眠是最强大的表现增强剂。"),
-        (en: "We always see the tip of the spear writing their own tools.",
-         zh: "我们总能看到尖端团队在开发自己的工具。"),
-        (en: "I see that every day in the SaaS product index.",
-         zh: "我每天都能在 SaaS 产品指数里看到。"),
-        (en: "It's about understanding what they actually do.",
-         zh: "关键是理解他们究竟在做什么。"),
-        (en: "The compounding effect over time is enormous.",
-         zh: "长期复利效应是巨大的。")
-    ]
+        var icon: String {
+            switch self {
+            case .travel: return "airplane"
+            case .study: return "graduationcap.fill"
+            case .living: return "house.fill"
+            case .work: return "briefcase.fill"
+            case .video: return "play.rectangle.fill"
+            case .selfGrowth: return "sparkles"
+            }
+        }
 
-    private func subtitle(at offset: Int) -> (en: String, zh: String) {
-        let count = goalSubtitles.count
-        let idx = ((goalSubtitlePhase + offset) % count + count) % count
-        return goalSubtitles[idx]
+        var label: String {
+            switch self {
+            case .travel: return "出国旅行"
+            case .study: return "留学生活"
+            case .living: return "在国外生活"
+            case .work: return "工作需要"
+            case .video: return "刷懂英文原声视频"
+            case .selfGrowth: return "提升自己"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .travel: return Color(hex: "F59E0B")
+            case .study: return Color(hex: "8B5CF6")
+            case .living: return Color(hex: "10B981")
+            case .work: return Color(hex: "3B82F6")
+            case .video: return Color(hex: "FF0000")
+            case .selfGrowth: return Color(hex: "EC4899")
+            }
+        }
+
+        var bgColor: Color {
+            switch self {
+            case .travel: return Color(hex: "FFFBEB")
+            case .study: return Color(hex: "F5F3FF")
+            case .living: return Color(hex: "ECFDF5")
+            case .work: return Color(hex: "EFF6FF")
+            case .video: return Color(hex: "FEF2F2")
+            case .selfGrowth: return Color(hex: "FDF2F8")
+            }
+        }
+
+        /// 计划页里 90 天效果预期的文案
+        var outcome90d: String {
+            switch self {
+            case .travel: return "旅行常用场景对话不慌不忙，点单问路都能自己来"
+            case .study: return "课堂内外的日常交流跟得上，社交场合敢开口"
+            case .living: return "办事、就医、社交都能自己搞定，不用再靠翻译软件"
+            case .work: return "职场高频表达张口就来，开会邮件不再卡壳"
+            case .video: return "不开字幕也能跟上英文原声播客和视频"
+            case .selfGrowth: return "英语听力形成条件反射，把'学过'变成'用得上'"
+            }
+        }
     }
+
+    @State private var selectedGoal: LearningGoal? = nil
 
     private var goalPage: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: 62)
+            Spacer().frame(height: 40)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("看英语原声 YouTube")
-                    .font(.system(size: 24, weight: .bold))
+            VStack(alignment: .leading, spacing: 8) {
+                Text("你为什么学英语？")
+                    .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(Color.textPrimary)
-                Text("中英双语字幕陪你学")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(Color.appPrimary)
 
-                Text("Joe Rogan、Lex Fridman、Sam Altman…\n每天更新全球热门播客")
-                    .font(.system(size: 13))
+                Text("我们会按你的目标安排学习内容")
+                    .font(.system(size: 14))
                     .foregroundStyle(Color.textTertiary)
-                    .lineSpacing(3)
-                    .padding(.top, 8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
 
-            Spacer().frame(height: 18)
+            Spacer().frame(height: 28)
 
-            // Composite card: source bar + video + subtitle
-            VStack(spacing: 0) {
-                // Source row
-                HStack {
-                    HStack(spacing: 8) {
-                        youtubeBadge
-                        Text("All-In Podcast")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(.white)
+            VStack(spacing: 10) {
+                ForEach(LearningGoal.allCases, id: \.rawValue) { goal in
+                    optionRow(
+                        icon: goal.icon,
+                        iconColor: goal.color,
+                        iconBg: goal.bgColor,
+                        label: goal.label,
+                        isSelected: selectedGoal == goal
+                    ) {
+                        selectedGoal = goal
+                        selectAndAdvance(to: .levelSelect)
                     }
-                    Spacer()
-                    Text("硅谷 · 科技")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.55))
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Color.black)
-
-                LoopingVideoPlayer(resourceName: "onboarding_demo", resourceExt: "mp4")
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 160)
-                    .clipped()
-
-                VStack(alignment: .leading, spacing: 12) {
-                    subtitleRow(
-                        en: subtitle(at: -1).en,
-                        zh: subtitle(at: -1).zh,
-                        enFont: 13, enWeight: .medium, enOpacity: 0.30,
-                        zhFont: 11, zhOpacity: 0.24,
-                        currentLines: 1
-                    )
-
-                    subtitleRow(
-                        en: subtitle(at: 0).en,
-                        zh: subtitle(at: 0).zh,
-                        enFont: 16, enWeight: .bold, enOpacity: 1.0,
-                        zhFont: 13, zhOpacity: 0.78,
-                        currentLines: 2
-                    )
-
-                    subtitleRow(
-                        en: subtitle(at: 1).en,
-                        zh: subtitle(at: 1).zh,
-                        enFont: 13, enWeight: .medium, enOpacity: 0.30,
-                        zhFont: 11, zhOpacity: 0.24,
-                        currentLines: 1
-                    )
-                }
-                .frame(maxWidth: .infinity, minHeight: 178, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 18)
-                .background(Color(hex: "0a0a0a"))
             }
-            .background(Color(hex: "0a0a0a"))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .shadow(color: Color.black.opacity(0.25), radius: 14, x: 0, y: 10)
             .padding(.horizontal, 24)
 
-            Text("视频 · 字幕 · 翻译，一边看一边学")
-                .font(.system(size: 13))
-                .foregroundStyle(Color.textTertiary)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, 14)
-                .padding(.horizontal, 24)
-
             Spacer()
+        }
+    }
 
+    private func optionRow(icon: String, iconColor: Color, iconBg: Color, label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             HStack(spacing: 14) {
-                Text("600h")
-                    .font(.system(size: 14, weight: .heavy))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 10))
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(iconBg)
+                        .frame(width: 44, height: 44)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("600 小时 → 听力本能")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(Color.textPrimary)
-                    Text("源自 FSI 外交官训练法 · 每天 20 分钟 ≈ 5 个月")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color.textTertiary)
+                    Image(systemName: icon)
+                        .font(.system(size: 17))
+                        .foregroundStyle(iconColor)
                 }
+
+                Text(label)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(Color.textPrimary)
 
                 Spacer()
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(isSelected ? Color.appPrimary : Color.textQuaternary)
             }
-            .padding(14)
-            .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 14))
-            .padding(.horizontal, 24)
-            .padding(.bottom, 16)
-
-            Button {
-                stopGoalSubtitleLoop()
-                goToPage(.methodDemo)
-            } label: {
-                Text("继续")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 16))
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 40)
+            .padding(16)
+            .background(.white, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? Color.appPrimary : Color.border, lineWidth: isSelected ? 2 : 1)
+            )
         }
-        .onAppear { startGoalSubtitleLoop() }
-        .onDisappear { stopGoalSubtitleLoop() }
+        .buttonStyle(.plain)
     }
 
-    private func subtitleRow(
-        en: String, zh: String,
-        enFont: CGFloat, enWeight: Font.Weight, enOpacity: Double,
-        zhFont: CGFloat, zhOpacity: Double,
-        currentLines: Int
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(en)
-                .font(.system(size: enFont, weight: enWeight))
-                .foregroundStyle(.white.opacity(enOpacity))
-                .lineLimit(currentLines)
-                .truncationMode(.tail)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .contentTransition(.opacity)
-            Text(zh)
-                .font(.system(size: zhFont))
-                .foregroundStyle(.white.opacity(zhOpacity))
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .contentTransition(.opacity)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func startGoalSubtitleLoop() {
-        goalSubtitleTimer?.invalidate()
-        goalSubtitlePhase = 0
-        goalSubtitleTimer = Timer.scheduledTimer(withTimeInterval: 2.4, repeats: true) { _ in
-            withAnimation(.easeInOut(duration: 0.45)) {
-                goalSubtitlePhase = (goalSubtitlePhase + 1) % goalSubtitles.count
-            }
-        }
-    }
-
-    private func stopGoalSubtitleLoop() {
-        goalSubtitleTimer?.invalidate()
-        goalSubtitleTimer = nil
-    }
-
-    private var youtubeBadge: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 4)
-                .fill(Color(hex: "FF0000"))
-                .frame(width: 22, height: 15)
-            Image(systemName: "play.fill")
-                .font(.system(size: 7, weight: .black))
-                .foregroundStyle(.white)
-        }
-    }
-
-    // MARK: - Page 3: Method Demo
-
-    @State private var demoStep: DemoStep = .idle
-    @State private var showWaveform = false
-
-    enum DemoStep: Int {
-        case idle = 0
-        case playEn1 = 1
-        case playEn2 = 2
-        case playZh = 3
-        case playEn3 = 4
-        case complete = 5
-    }
-
-    // Demo script for display after completion
-    private let demoScript: [(en: String, zh: String)] = [
-        ("Hi Lisa, coffee or tea today?", "嗨丽莎，今天喝咖啡还是茶？"),
-        ("Coffee, always! What about you?", "咖啡，永远都是咖啡！你呢？"),
-        ("Tea for me. Let's grab some now!", "我选茶。走，现在就去买一杯！"),
-    ]
-
-    private var methodDemoPage: some View {
-        VStack(spacing: 0) {
-            // Scrollable content area
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    Spacer().frame(height: 44)
-
-                    // Title
-                    VStack(spacing: 8) {
-                        Text("Castlingo 听力法")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(Color.textPrimary)
-
-                        Text("60 秒体验：YouTube 原声 → 5 遍训练")
-                            .font(.system(size: 17))
-                            .foregroundStyle(Color.textTertiary)
-
-                        HStack(spacing: 6) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 3)
-                                    .fill(Color(hex: "FF0000"))
-                                    .frame(width: 16, height: 11)
-                                Image(systemName: "play.fill")
-                                    .font(.system(size: 5, weight: .black))
-                                    .foregroundStyle(.white)
-                            }
-                            Text("由 YouTube 原声拆解生成")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(Color.textSecondary)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color.primaryLight, in: Capsule())
-                        .padding(.top, 4)
-                    }
-
-                    Spacer().frame(height: 60)
-
-                    // Demo steps
-                    VStack(spacing: 0) {
-                        demoStepRow(step: .playEn1, icon: "ear", label: "先听一段英语对话", sublabel: "第 1 遍英语")
-                        demoConnector(active: demoStep.rawValue >= DemoStep.playEn2.rawValue)
-                        demoStepRow(step: .playEn2, icon: "arrow.counterclockwise", label: "你听懂了多少？再来一遍", sublabel: "第 2 遍英语")
-                        demoConnector(active: demoStep.rawValue >= DemoStep.playZh.rawValue)
-                        demoStepRow(step: .playZh, icon: "globe.asia.australia.fill", label: "现在听中文对照", sublabel: "中文翻译")
-                        demoConnector(active: demoStep.rawValue >= DemoStep.playEn3.rawValue)
-                        demoStepRow(step: .playEn3, icon: "sparkles", label: "最后一遍英语，感受变化", sublabel: "第 3 遍英语")
-                    }
-                    .padding(.horizontal, 32)
-
-                    Spacer().frame(height: 16)
-
-                    // Waveform
-                    if showWaveform {
-                        waveformView
-                            .transition(.opacity.combined(with: .scale(scale: 0.8)))
-                    }
-
-                    // After complete: result text + dialogue card
-                    if demoStep == .complete {
-                        VStack(spacing: 12) {
-                            Text("是不是全都听懂了？")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(Color.appPrimary)
-
-                            Text("这就是 Castlingo 听力法")
-                                .font(.system(size: 14))
-                                .foregroundStyle(Color.textTertiary)
-
-                            VStack(spacing: 10) {
-                                ForEach(0..<demoScript.count, id: \.self) { i in
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(demoScript[i].en)
-                                            .font(.system(size: 14, weight: .medium))
-                                            .foregroundStyle(Color.textPrimary)
-                                        Text(demoScript[i].zh)
-                                            .font(.system(size: 13))
-                                            .foregroundStyle(Color.textTertiary)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                            }
-                            .padding(16)
-                            .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 12))
-                            .padding(.horizontal, 32)
-                            .padding(.top, 4)
-                        }
-                        .padding(.top, 12)
-                        .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    }
-                }
-            }
-
-            // Fixed bottom button
-            Button {
-                if demoStep == .idle {
-                    startDemo()
-                } else if demoStep == .complete {
-                    goToPage(.levelSelect)
-                } else {
-                    advanceDemo()
-                }
-            } label: {
-                Text(demoButtonText)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 16))
-            }
-            .padding(.horizontal, 32)
-            .padding(.bottom, 40)
-            .padding(.top, 16)
-        }
-    }
-
-    private var demoButtonText: String {
-        switch demoStep {
-        case .idle: return "开始体验"
-        case .complete: return "选择级别"
-        default: return "继续"
-        }
-    }
-
-    private func demoStepRow(step: DemoStep, icon: String, label: String, sublabel: String) -> some View {
-        let isActive = demoStep.rawValue >= step.rawValue
-        let isCurrent = demoStep == step
-
-        let circleSize: CGFloat = isCurrent ? 44 : 40
-
-        return HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(isActive ? Color.appPrimary : Color(hex: "E2E8F0"))
-                    .frame(width: circleSize, height: circleSize)
-                    .animation(.easeInOut(duration: 0.3), value: isCurrent)
-
-                if isActive && !isCurrent {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.white)
-                } else {
-                    Image(systemName: icon)
-                        .font(.system(size: isCurrent ? 18 : 16))
-                        .foregroundStyle(isActive ? .white : Color.textTertiary)
-                }
-            }
-            .frame(width: 44, height: 44)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.system(size: 15, weight: isCurrent ? .semibold : .regular))
-                    .foregroundStyle(isActive ? Color.textPrimary : Color.textTertiary)
-
-                Text(sublabel)
-                    .font(.system(size: 12))
-                    .foregroundStyle(isActive ? Color.appPrimary : Color.textQuaternary)
-            }
-
-            Spacer()
-
-            // Right indicator — fixed 20x20 frame for alignment
-            ZStack {
-                if isActive && !isCurrent {
-                    // Completed — green checkmark
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundStyle(Color.success)
-                } else if isCurrent && isAudioPlaying {
-                    // Playing — pulsing green dot
-                    Circle()
-                        .fill(Color.success)
-                        .frame(width: 10, height: 10)
-                        .scaleEffect(isAudioPlaying ? 1.4 : 1.0)
-                        .opacity(isAudioPlaying ? 0.6 : 1.0)
-                        .animation(
-                            .easeInOut(duration: 0.6).repeatForever(autoreverses: true),
-                            value: isAudioPlaying
-                        )
-                } else if isCurrent && !isAudioPlaying && demoStep != .idle {
-                    // Waiting — static green dot
-                    Circle()
-                        .fill(Color.success)
-                        .frame(width: 10, height: 10)
-                }
-            }
-            .frame(width: 20, height: 20)
-        }
-    }
-
-    private func demoConnector(active: Bool) -> some View {
-        HStack {
-            Rectangle()
-                .fill(active ? Color.appPrimary.opacity(0.3) : Color(hex: "E2E8F0"))
-                .frame(width: 2, height: 28)
-                .padding(.leading, 21)
-            Spacer()
-        }
-    }
-
-    private var waveformView: some View {
-        HStack(spacing: 3) {
-            ForEach(0..<20, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.appPrimary.opacity(0.6))
-                    .frame(width: 4, height: isAudioPlaying ? waveformHeights[i] : 4)
-            }
-        }
-        .frame(height: 32)
-        .padding(.horizontal, 60)
-    }
-
-    private func startDemo() {
-        withAnimation(.easeInOut(duration: 0.3)) {
-            demoStep = .playEn1
-            showWaveform = true
-        }
-        playBundledAudio("onboarding_demo_en")
-    }
-
-    private func advanceDemo() {
-        guard let next = DemoStep(rawValue: demoStep.rawValue + 1) else { return }
-
-        withAnimation(.easeInOut(duration: 0.3)) {
-            demoStep = next
-        }
-
-        switch next {
-        case .playEn2:
-            playBundledAudio("onboarding_demo_en")
-        case .playZh:
-            playBundledAudio("onboarding_demo_zh")
-        case .playEn3:
-            playBundledAudio("onboarding_demo_en")
-        case .complete:
-            withAnimation(.easeInOut(duration: 0.3)) {
-                showWaveform = false
-            }
-            stopAllAudio()
-        default:
-            break
-        }
-    }
-
-    // MARK: - Page 4: Trial Listen + Level Select
+    // MARK: - Page 3: Level self-assess + trial listen
 
     @State private var selectedLevel: PodcastLevel = .easy
+    @State private var hasPickedLevel = false
     @State private var trialPlayingLevel: PodcastLevel? = nil
 
     private var levelSelectPage: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: 62)
+            Spacer().frame(height: 40)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("试听并选择你的级别")
-                    .font(.system(size: 24, weight: .bold))
+                Text("你现在的听力水平？")
+                    .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(Color.textPrimary)
 
-                Text("点击播放按钮试听不同级别，选择最适合你的")
+                Text("不确定就点喇叭试听，选能听懂一半的那档")
                     .font(.system(size: 14))
                     .foregroundStyle(Color.textTertiary)
             }
@@ -725,7 +623,7 @@ struct OnboardingView: View {
                     dotBg: Color.successLight,
                     name: "初级",
                     desc: "简单日常对话，慢速播放",
-                    detail: "1000词以内 · 3-5分钟"
+                    detail: "适合基础薄弱、久没碰英语"
                 )
                 trialLevelCard(
                     level: .medium,
@@ -733,44 +631,31 @@ struct OnboardingView: View {
                     dotBg: Color.primaryLighter,
                     name: "中级",
                     desc: "生活、文化、旅行话题",
-                    detail: "3000词以内 · 5-8分钟"
+                    detail: "适合能听懂慢速、想再上一层"
                 )
                 trialLevelCard(
                     level: .hard,
                     dotFill: Color.hardOrange,
                     dotBg: Color.warningLight,
                     name: "高级",
-                    desc: "新闻、商务、深度话题",
-                    detail: "自然语速 · 8-12分钟"
+                    desc: "新闻、商务，自然语速",
+                    detail: "适合想挑战原声语速"
                 )
             }
             .padding(.horizontal, 24)
 
             Spacer()
-
-            Button {
-                goToPage(.userSource)
-            } label: {
-                Text("继续")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 16))
-            }
-            .padding(.horizontal, 32)
-            .padding(.bottom, 40)
         }
     }
 
     private func trialLevelCard(level: PodcastLevel, dotFill: Color, dotBg: Color, name: String, desc: String, detail: String) -> some View {
-        let isSelected = selectedLevel == level
+        let isSelected = hasPickedLevel && selectedLevel == level
         let isPlaying = trialPlayingLevel == level
 
         return Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                selectedLevel = level
-            }
+            selectedLevel = level
+            hasPickedLevel = true
+            selectAndAdvance(to: .dailyTime)
         } label: {
             HStack(spacing: 14) {
                 ZStack {
@@ -842,7 +727,6 @@ struct OnboardingView: View {
             trialPlayingLevel = nil
         } else {
             trialPlayingLevel = level
-            selectedLevel = level
             playBundledAudio(trialAudioName(for: level)) {
                 DispatchQueue.main.async {
                     trialPlayingLevel = nil
@@ -851,7 +735,397 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: - Page 5: User Source
+    // MARK: - Page 4: Daily time commitment
+
+    private struct TimeOption: Identifiable {
+        let minutes: Int
+        let label: String
+        let detail: String
+        let isRecommended: Bool
+        var id: Int { minutes }
+    }
+
+    private let timeOptions: [TimeOption] = [
+        TimeOption(minutes: 5, label: "每天 5 分钟", detail: "极简 · 先把每天听英语的习惯养起来", isRecommended: false),
+        TimeOption(minutes: 10, label: "每天 10 分钟", detail: "轻松 · 一集播客，加一个句型讲解", isRecommended: false),
+        TimeOption(minutes: 15, label: "每天 15 分钟", detail: "推荐 · 播客、句型，加每日任务打卡", isRecommended: true),
+        TimeOption(minutes: 20, label: "每天 20 分钟", detail: "认真 · 再加一篇出国场景课堂", isRecommended: false),
+        TimeOption(minutes: 30, label: "每天 30 分钟", detail: "沉浸 · 全部内容，加原声播客磨耳朵", isRecommended: false),
+    ]
+
+    @State private var selectedMinutes: Int? = nil
+
+    private var dailyTimePage: some View {
+        VStack(spacing: 0) {
+            Spacer().frame(height: 40)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("每天想投入多久？")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+
+                Text("少而稳定比多而三天打鱼更有效")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.textTertiary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 24)
+
+            Spacer().frame(height: 28)
+
+            VStack(spacing: 10) {
+                ForEach(Array(timeOptions.enumerated()), id: \.element.id) { index, option in
+                    timeOptionRow(option: option, index: index)
+                }
+            }
+            .padding(.horizontal, 24)
+
+            Spacer()
+        }
+    }
+
+    private func timeOptionRow(option: TimeOption, index: Int) -> some View {
+        let isSelected = selectedMinutes == option.minutes
+        let letter = String(UnicodeScalar(UInt8(65 + index)))   // A / B / C / D / E
+
+        return Button {
+            selectedMinutes = option.minutes
+            selectAndAdvance(to: .plan)
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isSelected ? Color.appPrimary : Color.primaryLighter)
+                        .frame(width: 44, height: 44)
+                    Text(letter)
+                        .font(.system(size: 18, weight: .heavy))
+                        .foregroundStyle(isSelected ? .white : Color.appPrimary)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(option.label)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.textPrimary)
+
+                        if option.isRecommended {
+                            Text("推荐")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(Color.appPrimary, in: Capsule())
+                        }
+                    }
+                    Text(option.detail)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.textTertiary)
+                }
+
+                Spacer()
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(isSelected ? Color.appPrimary : Color.textQuaternary)
+            }
+            .padding(18)
+            .background(.white, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? Color.appPrimary : Color.border, lineWidth: isSelected ? 2 : 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Page 5: Plan build + reveal
+
+    /// 0 = 生成中，1-3 = 第 N 条已完成，4 = 计划揭示
+    @State private var planStage = 0
+
+    private var levelDisplayName: String {
+        switch selectedLevel {
+        case .easy: return "初级"
+        case .medium: return "中级"
+        case .hard: return "高级"
+        }
+    }
+
+    private var planBuildSteps: [String] {
+        [
+            "分析听力水平 · \(levelDisplayName)",
+            "按目标匹配学习内容 · \(selectedGoal?.label ?? "实用口语")",
+            "生成每日 \(selectedMinutes ?? 15) 分钟计划",
+        ]
+    }
+
+    // MARK: 计划条目 —— 按目标和时长拼装，不是人人相同
+
+    private struct PlanItem: Identifiable {
+        let icon: String
+        let color: Color
+        let title: String
+        let detail: String
+        var id: String { title }
+    }
+
+    /// 场景课堂一行的说明，跟随用户目标侧重
+    private var lessonDetailText: String {
+        switch selectedGoal {
+        case .travel: return "机场、酒店、餐厅，旅行场景课优先安排"
+        case .study: return "校园、社交、日常琐事，留学场景课优先安排"
+        case .living: return "租房、看病、办事，海外生活场景课优先安排"
+        case .work: return "职场沟通高频场景课优先安排"
+        default: return "点单、租房、看病，按真实场景分类的实用课"
+        }
+    }
+
+    private var planItems: [PlanItem] {
+        var items: [PlanItem] = [
+            PlanItem(icon: "headphones", color: Color.appPrimary,
+                     title: "每天 1 集\(levelDisplayName)播客",
+                     detail: "英语 ×3 → 中文 ×1 → 英语 ×1，重复成本能"),
+            PlanItem(icon: "text.bubble.fill", color: Color(hex: "F59E0B"),
+                     title: "高频句型讲解",
+                     detail: "从当天播客拆出来，讲透场景和语感"),
+        ]
+
+        let youtubeItem = PlanItem(icon: "play.rectangle.fill", color: Color(hex: "FF0000"),
+                                   title: "YouTube 原声播客",
+                                   detail: "中英双语字幕，检验真实语速听力")
+        let lessonItem = PlanItem(icon: "graduationcap.fill", color: Color(hex: "10B981"),
+                                  title: "出国场景课堂",
+                                  detail: lessonDetailText)
+
+        // 目标决定第三块的侧重；时间充裕（≥20 分钟）则两块都排进来
+        if selectedGoal == .video {
+            items.append(youtubeItem)
+            if (selectedMinutes ?? 15) >= 20 { items.append(lessonItem) }
+        } else {
+            items.append(lessonItem)
+            if (selectedMinutes ?? 15) >= 20 { items.append(youtubeItem) }
+        }
+
+        items.append(PlanItem(icon: "flame.fill", color: Color(hex: "F97316"),
+                              title: "每日任务打卡",
+                              detail: "词汇 + 句型练习，连续打卡不断档"))
+        return items
+    }
+
+    private var planPage: some View {
+        VStack(spacing: 0) {
+            if planStage < 4 {
+                Spacer()
+
+                VStack(spacing: 24) {
+                    Text("正在生成你的专属计划…")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+
+                    VStack(alignment: .leading, spacing: 18) {
+                        ForEach(0..<planBuildSteps.count, id: \.self) { i in
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    if planStage > i {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.system(size: 20))
+                                            .foregroundStyle(Color.success)
+                                            .transition(.scale.combined(with: .opacity))
+                                    } else if planStage == i {
+                                        ProgressView()
+                                            .tint(Color.appPrimary)
+                                    } else {
+                                        Circle()
+                                            .stroke(Color(hex: "E2E8F0"), lineWidth: 2)
+                                            .frame(width: 18, height: 18)
+                                    }
+                                }
+                                .frame(width: 22, height: 22)
+
+                                Text(planBuildSteps[i])
+                                    .font(.system(size: 15, weight: planStage >= i ? .medium : .regular))
+                                    .foregroundStyle(planStage >= i ? Color.textPrimary : Color.textQuaternary)
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 40)
+
+                Spacer()
+            } else {
+                planRevealContent
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+        }
+        .onAppear { runPlanBuildAnimation() }
+    }
+
+    private func runPlanBuildAnimation() {
+        planStage = 0
+        for i in 1...4 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55 * Double(i)) {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    planStage = i
+                }
+                if i == 4 {
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                }
+            }
+        }
+    }
+
+    private var planRevealContent: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    Spacer().frame(height: 32)
+
+                    VStack(spacing: 10) {
+                        Text("你的专属听力计划")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundStyle(Color.textPrimary)
+
+                        HStack(spacing: 8) {
+                            planChip(levelDisplayName)
+                            planChip("每天 \(selectedMinutes ?? 15) 分钟")
+                            if let goal = selectedGoal {
+                                planChip(goal.label)
+                            }
+                        }
+                    }
+
+                    Spacer().frame(height: 24)
+
+                    // 每天做什么 —— 条目由级别、目标、时长拼装
+                    VStack(spacing: 0) {
+                        ForEach(Array(planItems.enumerated()), id: \.element.id) { index, item in
+                            if index > 0 { planDivider }
+                            planRow(icon: item.icon, color: item.color,
+                                    title: item.title, detail: item.detail)
+                        }
+                    }
+                    .background(.white, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.border, lineWidth: 1)
+                    )
+                    .padding(.horizontal, 24)
+
+                    Spacer().frame(height: 20)
+
+                    // 效果预期时间线
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("坚持下去，你会听到变化")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Color.textPrimary)
+
+                        milestoneRow(
+                            day: "第 7 天",
+                            title: "耳朵热起来",
+                            desc: "适应 5 遍精听的节奏，能从整句里抓到关键词，英语不再是一片模糊的背景音"
+                        )
+                        milestoneRow(
+                            day: "第 21 天",
+                            title: "句型上口",
+                            desc: "高频句型开始形成条件反射，听到熟悉的场景，能直接反应出该说的那句话"
+                        )
+                        milestoneRow(
+                            day: "第 30 天",
+                            title: "跟上对话",
+                            desc: "日常对话不用暂停回放也能跟上大意，敢在真实场景里开口回应"
+                        )
+                        milestoneRow(
+                            day: "第 90 天",
+                            title: "真的用得上",
+                            desc: selectedGoal?.outcome90d ?? "英语听力形成条件反射，把'学过'变成'用得上'"
+                        )
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(18)
+                    .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 16))
+                    .padding(.horizontal, 24)
+
+                    Spacer().frame(height: 20)
+                }
+            }
+
+            Button {
+                goToPage(.userSource)
+            } label: {
+                Text("开启我的计划")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 16))
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 40)
+            .padding(.top, 8)
+        }
+    }
+
+    private var planDivider: some View {
+        Divider().padding(.leading, 70)
+    }
+
+    private func planRow(icon: String, color: Color, title: String, detail: String) -> some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(color.opacity(0.12))
+                    .frame(width: 40, height: 40)
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundStyle(color)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.textPrimary)
+                Text(detail)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.textTertiary)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private func planChip(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(Color.appPrimary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color.primaryLight, in: Capsule())
+    }
+
+    private func milestoneRow(day: String, title: String, desc: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(day)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(Color.appPrimary)
+                .frame(width: 52, alignment: .leading)
+                .padding(.top, 1)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.textPrimary)
+                Text(desc)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.textTertiary)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    // MARK: - Page 6: User Source
 
     @State private var selectedSource: String? = nil
 
@@ -875,21 +1149,21 @@ struct OnboardingView: View {
 
     private var userSourcePage: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: 62)
+            Spacer().frame(height: 40)
 
             VStack(alignment: .leading, spacing: 8) {
+                Text("最后一个问题")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.appPrimary)
+
                 Text("你是怎么发现 Castlingo 的？")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(Color.textPrimary)
-
-                Text("帮助我们把 Castlingo 推荐给更多人")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color.textTertiary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
 
-            Spacer().frame(height: 28)
+            Spacer().frame(height: 24)
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 8) {
@@ -898,32 +1172,8 @@ struct OnboardingView: View {
                     }
                 }
                 .padding(.horizontal, 24)
+                .padding(.bottom, 24)
             }
-
-            Button {
-                if let source = selectedSource {
-                    UserDefaults.standard.set(source, forKey: "userAcquisitionSource")
-                }
-                dataStore.selectedLevel = selectedLevel
-                dataStore.hasCompletedOnboarding = true
-                Analytics.track(.onboardingComplete, params: [
-                    "level": selectedLevel.rawValue,
-                    "source": selectedSource ?? "unknown"
-                ])
-            } label: {
-                Text("进入 Castlingo")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(
-                        Color.appPrimary.opacity(selectedSource != nil ? 1 : 0.5),
-                        in: RoundedRectangle(cornerRadius: 16)
-                    )
-            }
-            .disabled(selectedSource == nil)
-            .padding(.horizontal, 32)
-            .padding(.bottom, 40)
         }
     }
 
@@ -931,8 +1181,11 @@ struct OnboardingView: View {
         let isSelected = selectedSource == option.label
 
         return Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                selectedSource = option.label
+            guard selectedSource == nil else { return }
+            selectedSource = option.label
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                completeOnboarding()
             }
         } label: {
             HStack(spacing: 14) {
@@ -974,47 +1227,29 @@ struct OnboardingView: View {
         }
         .buttonStyle(.plain)
     }
+
+    private func completeOnboarding() {
+        if let source = selectedSource {
+            UserDefaults.standard.set(source, forKey: "userAcquisitionSource")
+        }
+        if let goal = selectedGoal {
+            UserDefaults.standard.set(goal.rawValue, forKey: "userLearningGoal")
+        }
+        if let minutes = selectedMinutes {
+            UserDefaults.standard.set(minutes, forKey: "dailyGoalMinutes")
+        }
+        dataStore.selectedLevel = selectedLevel
+        dataStore.hasCompletedOnboarding = true
+        Analytics.track(.onboardingComplete, params: [
+            "level": selectedLevel.rawValue,
+            "source": selectedSource ?? "unknown",
+            "goal": selectedGoal?.rawValue ?? "unknown",
+            "daily_minutes": "\(selectedMinutes ?? 0)"
+        ])
+    }
 }
 
 #Preview {
     OnboardingView()
         .environment(DataStore())
-}
-
-// MARK: - Looping muted video for onboarding goal page
-
-struct LoopingVideoPlayer: UIViewRepresentable {
-    let resourceName: String
-    let resourceExt: String
-
-    final class PlayerView: UIView {
-        let playerLayer = AVPlayerLayer()
-        var player: AVQueuePlayer?
-        var looper: AVPlayerLooper?
-
-        override func layoutSubviews() {
-            super.layoutSubviews()
-            playerLayer.frame = bounds
-        }
-    }
-
-    func makeUIView(context: Context) -> PlayerView {
-        let view = PlayerView()
-        view.backgroundColor = .black
-        view.layer.addSublayer(view.playerLayer)
-        view.playerLayer.videoGravity = .resizeAspectFill
-
-        if let url = Bundle.main.url(forResource: resourceName, withExtension: resourceExt) {
-            let item = AVPlayerItem(url: url)
-            let player = AVQueuePlayer()
-            view.looper = AVPlayerLooper(player: player, templateItem: item)
-            view.player = player
-            view.playerLayer.player = player
-            player.isMuted = true
-            player.play()
-        }
-        return view
-    }
-
-    func updateUIView(_ uiView: PlayerView, context: Context) {}
 }
