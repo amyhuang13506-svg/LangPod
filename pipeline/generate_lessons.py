@@ -105,6 +105,45 @@ Output STRICT JSON only (no markdown fences, no commentary):
 }}"""
 
 
+ACTION_PROMPT_TEMPLATE = """You are creating content for a "visual dictionary board" in an English-learning app for Chinese speakers. This page teaches ACTION VERBS — each verb gets its own little drawing of someone doing it.
+
+LESSON: {title_en} ({title_zh})
+
+The lesson has {zone_count} boards. For each board you must produce:
+1. "hotspots": 5-7 ACTION VERBS from this theme, each one drawable as a small vignette of a person or hands performing it. Use the bare verb as the word ("chop", not "chop a carrot", not "chopping").
+   CRITICAL — every verb on a board must be drawn DIFFERENTLY from every other verb on that board. If two verbs would produce near-identical pictures, keep only the more common one and put the other in extra_words. Ask yourself for each pair: "would a viewer see two different pictures, or the same picture twice?" Same picture → drop one. Fewer verbs that are each unmistakable beats more verbs a viewer cannot tell apart.
+2. "extra_words": 4-6 related verbs or phrases from this theme that would be drawn the same as a hotspot verb, or that can NOT be shown as a single action at all.
+
+BOARDS:
+{zones_block}
+
+Also produce for the whole lesson:
+- "sentences": 5 short sentences a learner would actually SAY in daily life using these verbs. Real spoken register.
+- "culture_tips_zh": 2-3 用法小贴士 in Chinese. EVERY tip must be about a verb that actually appears in THIS lesson's word list, and must name it. Useful angles: two verbs Chinese speakers mix up, the object a verb usually takes, a verb whose Chinese equivalent is broader or narrower. NEVER encyclopedia facts. NEVER reuse an example word from these instructions.
+
+RULES (all mandatory):
+- Spelling/vocabulary: American English. Pick the HIGHEST-FREQUENCY everyday verb for each action.
+- Every word entry: "word" (the bare verb, lowercase), "phonetic" (IPA with slashes like /tʃɑːp/), "translation_zh" (1-2 个中文释义), "example" (one natural sentence a real person would say, MUST contain the verb, MAX 12 words), "example_zh" (自然的中文翻译), "difficulty" ("easy"|"medium"|"hard" by real-world frequency).
+- Order verbs within each board from easy to hard.
+- No verb may repeat across boards in this lesson.
+- Chinese translations must be natural spoken Chinese, not dictionary-stiff.
+- sentences: each is {{"english": "...", "chinese": "..."}}.
+- Do NOT include any political, religious or sensitive content.
+
+Output STRICT JSON only (no markdown fences, no commentary):
+{{
+  "zones": [
+    {{
+      "id": "<zone id exactly as given>",
+      "hotspots": [ {{"word": "...", "phonetic": "...", "translation_zh": "...", "example": "...", "example_zh": "...", "difficulty": "easy"}} ],
+      "extra_words": [ {{...same fields...}} ]
+    }}
+  ],
+  "sentences": [ {{"english": "...", "chinese": "..."}} ],
+  "culture_tips_zh": ["...", "..."]
+}}"""
+
+
 def _call_gpt(messages, temperature=0.7):
     """GPT call with retry for transient errors, parses JSON (same pattern as generate_script.py)."""
     max_retries = 3
@@ -146,7 +185,10 @@ def build_prompt(lesson):
         for z in lesson["zones"]
     )
     if lesson.get("is_theme"):
-        return THEME_PROMPT_TEMPLATE.format(
+        # 动作板走 verb 模板：热点是动词本身；物体模板会强制「NOT actions」把动词挤走
+        template = (ACTION_PROMPT_TEMPLATE if lesson.get("board_type") == "action"
+                    else THEME_PROMPT_TEMPLATE)
+        return template.format(
             title_en=lesson["title_en"],
             title_zh=lesson["title_zh"],
             zone_count=len(lesson["zones"]),
@@ -256,6 +298,8 @@ def generate_lesson_content(lesson, max_attempts=2):
                 "is_free": lesson["is_free"],
                 "is_daily": False,
                 "date": "",
+                # 生图阶段要据此选 prompt（动作板画小图格，物体板画词典铺排）
+                "board_type": lesson.get("board_type", "object"),
                 "word_count": word_count,
                 "zones": zones_out,
                 "sentences": content["sentences"][:5],

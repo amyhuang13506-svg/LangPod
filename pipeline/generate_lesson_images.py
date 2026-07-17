@@ -126,7 +126,21 @@ def generate_scene_image(zone, lesson, hotspot_words, output_path, variation=0, 
         " Alternative composition attempt %d: use a wider camera angle and place each object "
         "on its own clear surface or area so every object is unmistakable." % variation
     )
-    if lesson["country"] == "daily":
+    if lesson["country"] == "daily" and lesson.get("board_type") == "action":
+        # 动作板：每个动词一格小图（手/人正在做那个动作），格与格之间留白分开，
+        # 这样每个动词都能被视觉模型独立定位成热点。
+        prompt = (
+            STYLE_TEMPLATE.format(palette=palette)
+            + "Visual dictionary board of ACTIONS: %s — %s. " % (zone["name_en"], lesson["title_en"])
+            + "Draw each action as its OWN separate vignette, laid out in a clean grid with "
+            + "generous empty space between vignettes — never merge them into one scene. Each "
+            + "vignette shows hands or a person clearly performing that one action, drawn so the "
+            + "action is unmistakable at a glance and obviously different from the others. "
+            + "One vignette per action, in this order: %s." % objects
+            + variation_hint
+            + DAILY_HARD_RULES
+        )
+    elif lesson["country"] == "daily":
         prompt = (
             STYLE_TEMPLATE.format(palette=palette)
             + "Visual dictionary board: %s — %s. " % (zone["name_en"], lesson["title_en"])
@@ -217,24 +231,39 @@ def _vision_json(prompt, b64_image):
     return None
 
 
-def locate_words(image_path, words):
-    """GPT-4o vision 定位每个词的物体，返回 {word: {found, x, y}}。坐标归一化 0-1。
-    用紧致边界框取中心（比直接猜点准），对身体/五官这类"整体的局部"强调贴准部位。"""
+def locate_words(image_path, words, board_type="object"):
+    """GPT-4o vision 定位每个词，返回 {word: {found, x, y}}。坐标归一化 0-1。
+    用紧致边界框取中心（比直接猜点准），对身体/五官这类"整体的局部"强调贴准部位。
+    动作板（board_type="action"）定位的是"演示该动词的那格小图"而非物体。"""
     with open(image_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
     word_list = "\n".join("- %s" % w for w in words)
+    if board_type == "action":
+        what = (
+            "This illustration is a grid of vignettes, each showing one action being performed. "
+            "For EACH action verb listed below, find the vignette that depicts it and give a "
+            "TIGHT bounding box around that vignette in normalized coordinates "
+            "(x_min, y_min, x_max, y_max; x from 0.0 left to 1.0 right, y from 0.0 top to 1.0 "
+            "bottom). Match by what is being DONE, not by the objects present — 'chop' is the "
+            "vignette where a knife is cutting, wherever it sits. Mark found=false if no "
+            "vignette clearly shows that action.\n\nActions:\n%s\n\n" % word_list
+        )
+    else:
+        what = (
+            "This is a flat illustration. For EACH item listed below, decide if it is clearly "
+            "visible in the image. If visible, give a TIGHT bounding box in normalized coordinates "
+            "(x_min, y_min, x_max, y_max; x from 0.0 left to 1.0 right, y from 0.0 top to 1.0 bottom). "
+            "The box must cover exactly that item and nothing else. "
+            "If the items are parts of one whole (body parts, face features), anchor each box "
+            "precisely ON that specific part: 'shoulder' is only the small joint area between neck "
+            "and upper arm (NOT the torso), 'hand' is only the hand, 'chest' is the upper torso "
+            "(NOT the belly).\n\nItems:\n%s\n\n" % word_list
+        )
     prompt = (
-        "This is a flat illustration. For EACH item listed below, decide if it is clearly "
-        "visible in the image. If visible, give a TIGHT bounding box in normalized coordinates "
-        "(x_min, y_min, x_max, y_max; x from 0.0 left to 1.0 right, y from 0.0 top to 1.0 bottom). "
-        "The box must cover exactly that item and nothing else. "
-        "If the items are parts of one whole (body parts, face features), anchor each box "
-        "precisely ON that specific part: 'shoulder' is only the small joint area between neck "
-        "and upper arm (NOT the torso), 'hand' is only the hand, 'chest' is the upper torso "
-        "(NOT the belly).\n\nItems:\n%s\n\n"
-        "Output STRICT JSON only:\n"
+        what
+        + "Output STRICT JSON only:\n"
         '{"objects": [{"word": "...", "found": true, "x_min": 0.31, "y_min": 0.42, "x_max": 0.45, "y_max": 0.58}, '
-        '{"word": "...", "found": false, "x_min": 0, "y_min": 0, "x_max": 0, "y_max": 0}]}' % word_list
+        '{"word": "...", "found": false, "x_min": 0, "y_min": 0, "x_max": 0, "y_max": 0}]}'
     )
     parsed = _vision_json(prompt, b64)
     if not parsed:
@@ -255,7 +284,7 @@ def locate_words(image_path, words):
     return result
 
 
-def verify_and_fix_locations(image_path, placed, max_rounds=2):
+def verify_and_fix_locations(image_path, placed, max_rounds=2, board_type="object"):
     """标注回验：把已定位的点画到图上编号，让视觉模型逐个检查是否落在正确物体上，
     错的按返回坐标修正。直接消灭"肩膀的点标到肚子上"这类偏移。placed 原地修改。
 
@@ -287,12 +316,23 @@ def verify_and_fix_locations(image_path, placed, max_rounds=2):
         b64 = base64.b64encode(buf.getvalue()).decode()
 
         legend = "\n".join("%d = %s" % (i, w["word"]) for i, w in enumerate(placed, 1))
+        if board_type == "action":
+            rule = (
+                "This illustration is a grid of vignettes, each showing one action. Every "
+                "numbered red marker must sit on the vignette that depicts the action it labels "
+                "(legend below). Judge by what is being DONE, not by the objects present — a "
+                "'chop' marker on the vignette where something is being peeled is wrong.\n\n"
+            )
+        else:
+            rule = (
+                "This illustration has numbered red dot markers. Each marker must sit exactly ON "
+                "the item it labels (legend below). Judge STRICTLY — for body/face parts the dot "
+                "must be on that specific anatomical part (a 'shoulder' dot on the belly is wrong; "
+                "a 'nail' dot floating next to the fingertip is wrong).\n\n"
+            )
         prompt = (
-            "This illustration has numbered red dot markers. Each marker must sit exactly ON the "
-            "item it labels (legend below). Judge STRICTLY — for body/face parts the dot must be "
-            "on that specific anatomical part (a 'shoulder' dot on the belly is wrong; a 'nail' "
-            "dot floating next to the fingertip is wrong).\n\n"
-            "Legend:\n%s\n\n"
+            rule
+            + "Legend:\n%s\n\n"
             "For EACH marker: ok=true if it clearly sits on the correct item; otherwise ok=false "
             "with the corrected normalized center (x, y) of the correct item. If the image shows "
             "several instances of the item (e.g. multiple hands), you may point to whichever "
@@ -435,38 +475,44 @@ def process_zone(lesson, zone, zone_dir_rel, lesson_dir_abs):
     image_path = os.path.join(lesson_dir_abs, image_name)
     hotspots = zone["hotspots"]
 
-    best = None  # (located_count, located_map)
+    # 选图排序：先看合规（审计过没过），再看定位命中数。
+    # 早先版本是「最后一次尝试的图直接用」—— 带 BOIL/FRY 标签的板就这么漏上线了。
+    # 但审计本身会误报（干净的动作板被说成有标签），所以不硬失败：
+    # 有干净的版本就绝不用被拒的版本，全被拒才退而求其次并标记待人工核验。
+    best = None  # ((clean, located_count), located_map)
     for attempt in range(MAX_IMAGE_ATTEMPTS):
         if attempt > 0 or not os.path.exists(image_path):
             print("      🖼  generating image (attempt %d)..." % (attempt + 1))
             if not generate_scene_image(zone, lesson, hotspots, image_path, variation=attempt):
                 continue
-        # 合规审计（图内文字 / 商标）：不合规直接换一版，别浪费后面的定位调用
+        clean = True
         if lesson["country"] == "daily":
             clean, reason = audit_image_content(image_path)
             if not clean:
                 print("      🚫 rejected (%s)" % reason)
-                if attempt < MAX_IMAGE_ATTEMPTS - 1:
-                    os.remove(image_path)
-                    continue
-        located = locate_words(image_path, [w["word"] for w in hotspots])
+        located = locate_words(image_path, [w["word"] for w in hotspots],
+                               board_type=lesson.get("board_type", "object"))
         found = [w for w in hotspots if located.get(w["word"].lower(), {}).get("found")]
-        print("      📍 located %d/%d hotspots" % (len(found), len(hotspots)))
-        if best is None or len(found) > best[0]:
-            best = (len(found), located)
+        print("      📍 located %d/%d hotspots%s" % (
+            len(found), len(hotspots), "" if clean else " (审计未过)"))
+        score = (1 if clean else 0, len(found))
+        if best is None or score > best[0]:
+            best = (score, located)
             shutil.copyfile(image_path, image_path + ".best")
-        if len(found) == len(hotspots):
+        if clean and len(found) == len(hotspots):
             break
-        # 未全中 → 下一轮重新生成（换构图措辞）
+        # 不合规或未全中 → 下一轮重新生成（换构图措辞）
         if attempt < MAX_IMAGE_ATTEMPTS - 1:
             os.remove(image_path)
 
     if best is None:
         print("      ❌ zone failed entirely")
         return False
-    # 用效果最好的一版图
+    # 用最优的一版图
     if os.path.exists(image_path + ".best"):
         shutil.move(image_path + ".best", image_path)
+    if not best[0][0]:
+        print("      ⚠️  所有版本都没过审计，已用命中最多的一版 —— 需人工核验")
     located = best[1]
 
     kept, demoted = [], []
@@ -488,7 +534,8 @@ def process_zone(lesson, zone, zone_dir_rel, lesson_dir_abs):
     spread_close_labels(kept, min_sep=min_sep, max_shift=max_shift)
     # 标注回验：让视觉模型检查每个点是否落在正确物体/部位上，错的修正 + 打置信度
     try:
-        _, low_words = verify_and_fix_locations(image_path, kept)
+        _, low_words = verify_and_fix_locations(
+            image_path, kept, board_type=lesson.get("board_type", "object"))
     except Exception as e:
         print("      ⚠️  verify pass failed: %s" % e)
         low_words = []

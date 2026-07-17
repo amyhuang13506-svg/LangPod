@@ -268,15 +268,19 @@ THEME_BOARDS = [
         ],
     },
     {
+        # 动作板：热点是动词本身（每个动词画成一格小图），不是动作里的物体。
+        # 没有 board_type 的话模板会强制「热点必须是具体物体」，动词全被挤进
+        # extra_words，热点退化成 carrot/potato/pan/pot —— 还和蔬菜课、餐具课撞词。
         "slug": "cooking_verbs", "category": "grocery", "icon": "flame.fill",
+        "board_type": "action",
         "title": _t("烹饪动作", "Cooking Actions"),
         "zones": [
             {"id": "prep_actions", **_t("备菜", "Prepping"),
-             "hint": "each action as its own small vignette of hands: chopping a carrot, peeling a potato, "
-                     "washing lettuce, cracking an egg, slicing bread, grating cheese"},
+             "hint": "hands performing each prep action: chop, peel, wash, grate, crack, pour "
+                     "(slice looks the same as chop — extra_words)"},
             {"id": "heat_actions", **_t("下锅", "Cooking with Heat"),
-             "hint": "each action as its own small vignette: frying in a pan, boiling a pot, steaming a basket, "
-                     "baking in an oven, grilling on a rack, stirring with a spoon"},
+             "hint": "each cooking-with-heat action in progress: boil, fry, steam, bake, grill, reheat. "
+                     "roast draws the same as bake and simmer the same as boil — extra_words"},
         ],
     },
     {
@@ -392,6 +396,8 @@ def all_theme_lessons():
             "zones": board["zones"],
             "is_free": board["slug"] in FREE_THEME_SLUGS,
             "is_theme": True,
+            # object（默认）= 物体图解板；action = 动词板，热点是动作本身
+            "board_type": board.get("board_type", "object"),
         })
     return lessons
 
