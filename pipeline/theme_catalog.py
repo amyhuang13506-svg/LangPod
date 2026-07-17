@@ -555,23 +555,16 @@ THEME_BOARDS = [
         ],
     },
     {
+        # 「看日历」板退役：today/weekend/holiday/appointment 是日历上的标记，不是独立物体，
+        # 定位器认物体在行、认标记不在（同方位/左右的失败）。整块板 5 词全定位不到 → 只留
+        # planning 一块实物板（planner/便签/挂历…，6/6 定位）。抽象时间词并入 extra_words 保留。
         "slug": "dates", "category": "basics", "icon": "calendar",
-        "title": _t("日期与星期", "Dates & Days"),
+        "title": _t("日程用品", "Planning Tools"),
         "zones": [
-            {"id": "the_calendar", **_t("看日历", "Reading a Calendar"),
-             # month / week 曾是热点，但它们在日历上只能靠推断去指（表头？某一行？），
-             # 定位器一个都抓不住，整块板最后只剩 2 个词。改成指得到的部件当热点，
-             # 抽象的时间单位退到补充词。
-             "hint": "every hotspot must be a part of ONE wall calendar that can be pointed at: "
-                     "today (a circled date), weekend (the shaded end columns), holiday (a date marked in red), "
-                     "appointment (a handwritten note inside a cell), date (a plain numbered cell). "
-                     "Put month, week, year and similar time units in extra_words — they are not pointable",
-             "image_hint": "Draw ONE single large wall calendar filling the board — never several calendars. "
-                           "A month grid with weekday columns, the two end columns shaded, one date circled "
-                           "in red, another date marked in red, and a small handwritten note inside one cell. "
-                           "Every listed item is a part of that one calendar"},
             {"id": "planning", **_t("安排日程", "Planning"),
-             "hint": "planner, sticky note, wall calendar, desk calendar, reminder on a phone, pen marking a date"},
+             "hint": "planner, sticky note, wall calendar, desk calendar, reminder on a phone, pen marking a date. "
+                     "Put today, weekend, holiday, appointment, date, month, week, year in extra_words — "
+                     "they are calendar markings, not pointable objects"},
         ],
     },
 ]
