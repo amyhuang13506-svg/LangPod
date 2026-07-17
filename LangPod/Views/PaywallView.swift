@@ -254,7 +254,7 @@ struct PaywallView: View {
                 .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(Color.bodyText)
 
-            Text("听力 · 词汇 · 口语，一站搞定")
+            Text("内容免费看，解锁发音 · 收藏 · 练习")
                 .font(.system(size: 14))
                 .foregroundStyle(Color.textTertiary)
         }
@@ -270,8 +270,8 @@ struct PaywallView: View {
     }
 
     private let comparisons: [ComparisonRow] = [
-        ComparisonRow(freeText: "仅开户第1课",  proText: "6国场景60+课，天天上新"),
-        ComparisonRow(freeText: "仅寒暄第1句",  proText: "227条地道表达，张口就来"),
+        ComparisonRow(freeText: "每类前2课",  proText: "6国60+课，发音收藏全解锁"),
+        ComparisonRow(freeText: "每类前2条",  proText: "227条地道表达，全部能听能存"),
         ComparisonRow(freeText: "每日2集4遍",  proText: "集数不限，完整5遍磨耳朵"),
         ComparisonRow(freeText: "仅英文字幕",  proText: "双语字幕，点哪个词查哪个"),
         ComparisonRow(freeText: "每集限3词",   proText: "整集生词一个不落"),
