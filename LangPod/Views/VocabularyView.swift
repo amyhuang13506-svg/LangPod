@@ -30,6 +30,17 @@ struct VocabularyView: View {
                 header
                     .padding(.bottom, 10)
 
+                // 全局今日课置顶卡（跨国家）：今日课国家每天轮换，只靠分类网格
+                // 展示的话，选中国家对不上就完全看不到 —— 免费用户唯一的当日免费
+                // 内容必须一进来就可见。
+                if let today = lessonStore.todayCard {
+                    TodayLessonCard(item: today.item, country: today.country) {
+                        open(today.item, country: today.country)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 10)
+                }
+
                 CountryChipsRow()
                     .environment(lessonStore)
                     .padding(.horizontal, 20)

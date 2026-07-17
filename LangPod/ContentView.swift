@@ -16,7 +16,7 @@ struct ContentView: View {
         var id: String { rawValue }
     }
     @State private var taskPractice: TaskPracticeTarget?
-    @State private var taskLesson: SceneLessonIndexItem?
+    @State private var taskLesson: LessonOpenTarget?
 
     var body: some View {
         if dataStore.hasCompletedOnboarding {
@@ -85,8 +85,8 @@ struct ContentView: View {
                         .environment(sentenceStore)
                 }
             }
-            .fullScreenCover(item: $taskLesson) { item in
-                LessonDetailView(item: item, country: lessonStore.currentCountry)
+            .fullScreenCover(item: $taskLesson) { target in
+                LessonDetailView(item: target.item, country: target.country)
                     .environment(vocabularyStore)
                     .environment(lessonStore)
                     .environment(sentenceStore)
@@ -143,9 +143,16 @@ struct ContentView: View {
 
         case .learnLesson, .roleplayLesson:
             selectedTab = 1
-            // 开今日课（无今日课时退回第一篇课堂）；模拟对话在课堂详情页内
+            // 优先全局今日课（跨国家、当天免费）：今日课国家每天轮换，
+            // 只查选中国家的索引 6 天里 5 天找不到。模拟对话在课堂详情页内。
             lessonStore.loadIfNeeded()
-            taskLesson = lessonStore.todayLesson ?? lessonStore.lessons.first
+            if let today = lessonStore.todayCard {
+                taskLesson = LessonOpenTarget(item: today.item, country: today.country)
+            } else if let t = lessonStore.todayLesson {
+                taskLesson = LessonOpenTarget(item: t, country: lessonStore.currentCountry)
+            } else if let first = lessonStore.lessons.first {
+                taskLesson = LessonOpenTarget(item: first, country: lessonStore.currentCountry)
+            }
 
         case .rawPodcast10Min:
             selectedTab = 0

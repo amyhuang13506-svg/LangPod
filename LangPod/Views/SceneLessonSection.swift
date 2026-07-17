@@ -92,7 +92,7 @@ struct TodayLessonCard: View {
 struct LessonCoverCard: View {
     let item: SceneLessonIndexItem
     let locked: Bool
-    /// 是否免费样本（闸门收紧后不再读 item.isFree，由调用方按「第一国第一课」判定）
+    /// 是否显示「· 免费」绿标：调用方按「非订阅用户 且 第一国第一课」判定，订阅用户永远不显示
     var free: Bool = false
     let completed: Bool
     let onTap: () -> Void
@@ -134,9 +134,9 @@ struct LessonCoverCard: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Color.textPrimary)
                         .lineLimit(1)
-                    Text("\(item.wordCount) 词")
+                    Text("\(item.wordCount) 词\(free ? " · 免费" : "")")
                         .font(.system(size: 11))
-                        .foregroundColor(Color.textTertiary)
+                        .foregroundColor(free ? Color.success : Color.textTertiary)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
