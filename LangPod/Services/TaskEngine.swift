@@ -81,6 +81,21 @@ enum DailyTaskType: String, Codable, CaseIterable {
         }
     }
 
+    /// 打卡清单展示顺序：轻 → 重。先给几十秒能完成的单词练习（快速拿到完成感），
+    /// 再句型讲解（约 2 分钟），播客类压轴 —— 避免新用户一打开就面对最重的任务。
+    var displayOrder: Int {
+        switch self {
+        case .practiceWordMatch: return 0
+        case .practiceSentence: return 1
+        case .practiceSceneQuiz: return 2
+        case .listenPattern: return 3
+        case .learnLesson: return 4
+        case .roleplayLesson: return 5
+        case .listenEpisode: return 6
+        case .rawPodcast10Min: return 7
+        }
+    }
+
     var isPractice: Bool {
         self == .practiceWordMatch || self == .practiceSentence || self == .practiceSceneQuiz
     }
@@ -94,8 +109,10 @@ struct DailyTaskRecord: Codable {
     var taskIds: [String]          // 抽中的任务类型 id，3-4 个
     var doneFlags: [Bool]
     var popupShownToday: Bool      // 当日清单弹窗是否已自动展示
-    var rewardGranted: Bool        // 4/4 庆祝是否已发（幂等闸门）
+    var rewardGranted: Bool        // 4/4 火苗/analytics 是否已发（幂等，只一次）
     var rawListenSeconds: Double   // 10 分钟播客的累计收听秒数
+    var celebrationShown: Bool? = nil  // 庆祝是否已「真正展示给用户」（与发奖解耦）。
+                                       // optional 兼容旧记录；被完成页/练习全屏页挡下时不算展示，回前台补弹。
 }
 
 // MARK: - TaskEngine
@@ -344,27 +361,49 @@ final class TaskEngine {
         }
     }
 
-    /// 4/4 大庆祝的幂等闸门：先置位再执行副作用，防事件重放重复弹。
+    /// 4/4 达成：火苗/analytics 只发一次（rewardGranted 幂等），随后尝试展示庆祝。
+    /// 关键：庆祝「展示」与「发奖」解耦——被完成页/练习全屏页挡下时不算已展示，回前台再补弹。
     private func grantIfNeeded() {
         guard var r = record,
               !r.doneFlags.isEmpty,
+              r.doneFlags.allSatisfy({ $0 }) else { return }
+        if !r.rewardGranted {
+            r.rewardGranted = true
+            record = r
+            persist()
+            Analytics.track(.dailyTaskAllComplete)
+        }
+        presentCelebrationIfNeeded()
+    }
+
+    /// 全部完成且庆祝尚未真正展示 → 触发展示（onAllCompleted 内部判断是否被 cover 挡、需排队）。
+    /// 冷启动 / 回前台也会调用，恢复被吞掉的庆祝（如锁屏听完最后一格、或第 4 格在练习全屏页里完成）。
+    func presentCelebrationIfNeeded() {
+        guard let r = record, r.dateKey == Self.todayKey(),
+              !r.doneFlags.isEmpty,
               r.doneFlags.allSatisfy({ $0 }),
-              !r.rewardGranted else { return }
-        r.rewardGranted = true
+              r.celebrationShown != true else { return }
+        onAllCompleted?()
+    }
+
+    /// 庆祝页真正展示后（用户点继续/炫耀）调用，持久化「已展示」，避免回前台重复弹。
+    func markCelebrationShown() {
+        guard var r = record else { return }
+        r.celebrationShown = true
         record = r
         persist()
-        Analytics.track(.dailyTaskAllComplete)
-        onAllCompleted?()
     }
 
     // MARK: - UI Queries
 
     var todayTasks: [(type: DailyTaskType, done: Bool)] {
         guard let r = record, r.dateKey == Self.todayKey() else { return [] }
-        return r.taskIds.indices.compactMap { i in
+        return r.taskIds.indices.compactMap { i -> (type: DailyTaskType, done: Bool)? in
             guard let t = DailyTaskType(rawValue: r.taskIds[i]) else { return nil }
             return (t, r.doneFlags[i])
         }
+        // 展示顺序轻 → 重（完成标记按类型匹配，与持久化顺序无关，重排安全）
+        .sorted { $0.type.displayOrder < $1.type.displayOrder }
     }
 
     var completedCount: Int {
@@ -431,9 +470,18 @@ extension TaskEngine {
 
     /// 完成全部剩余任务格 → 触发 4/4 大庆祝。
     func debugCompleteAll() {
+        // 测试时清掉「已发奖 / 已展示」闸门，保证每次都重新弹庆祝
+        if var r = record {
+            r.rewardGranted = false
+            r.celebrationShown = false
+            record = r
+            persist()
+        }
         while let next = nextIncompleteTask() {
             complete(next)
         }
+        // 若本来就已全完成（nextIncompleteTask 直接为 nil），也主动补弹一次
+        presentCelebrationIfNeeded()
     }
 }
 #endif
