@@ -124,11 +124,6 @@
 		RP0091 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = RP0092 /* ExploreView.swift */; };
 		RP0101 /* BilingualSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = RP0102 /* BilingualSearch.swift */; };
 		SM0001 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SM0002 /* SubscriptionManager.swift */; };
-		UM0001 /* UMCommon.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = UM0011 /* UMCommon.xcframework */; };
-		UM0002 /* UMDevice.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = UM0012 /* UMDevice.xcframework */; };
-		UM0003 /* UYuMao.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = UM0013 /* UYuMao.xcframework */; };
-		UM0004 /* UTDID.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = UM0014 /* UTDID.framework */; };
-		UM0005 /* UMCommonLog.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = UM0015 /* UMCommonLog.framework */; };
 		UM0006 /* UMCommonLog.bundle in Resources */ = {isa = PBXBuildFile; fileRef = UM0016 /* UMCommonLog.bundle */; };
 /* End PBXBuildFile section */
 
@@ -265,11 +260,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				UM0001 /* UMCommon.xcframework in Frameworks */,
-				UM0002 /* UMDevice.xcframework in Frameworks */,
-				UM0003 /* UYuMao.xcframework in Frameworks */,
-				UM0004 /* UTDID.framework in Frameworks */,
-				UM0005 /* UMCommonLog.framework in Frameworks */,
 				BF27984632099ED9EF48F8DA /* RevenueCat in Frameworks */,
 				AA53B5824034DAC2B4BB0CAA /* AdjustSdk in Frameworks */,
 			);
@@ -794,11 +784,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = LangPod/LangPod.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = 4SYQ773ULJ;
-				FRAMEWORK_SEARCH_PATHS = (
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/iOS/common/common_ios_7.5.10",
+					"$(PROJECT_DIR)/iOS/common/common_ios_7.5.10/UMCommon.xcframework/ios-arm64",
+					"$(PROJECT_DIR)/iOS/common/common_ios_7.5.10/UMDevice.xcframework/ios-arm64",
+					"$(PROJECT_DIR)/iOS/common/common_ios_7.5.10/UYuMao.xcframework/ios-arm64",
 					"$(PROJECT_DIR)/iOS/thirdparties/thirdparties_ios_1.0.5",
 					"$(PROJECT_DIR)/iOS/umcommonlog/umcommonlog_ios_2.0.0",
 				);
@@ -815,11 +807,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4.2;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					"-ObjC",
-				);
+				MARKETING_VERSION = 1.4.3;
+				OTHER_LDFLAGS = "$(inherited)";
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = "$(inherited) -ObjC -framework UMCommon -framework UMDevice -framework UYuMao -framework UTDID -framework UMCommonLog";
 				PRODUCT_BUNDLE_IDENTIFIER = com.amyhuang.castlingo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -836,11 +826,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = LangPod/LangPod.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = 4SYQ773ULJ;
-				FRAMEWORK_SEARCH_PATHS = (
+				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = (
 					"$(inherited)",
-					"$(PROJECT_DIR)/iOS/common/common_ios_7.5.10",
+					"$(PROJECT_DIR)/iOS/common/common_ios_7.5.10/UMCommon.xcframework/ios-arm64",
+					"$(PROJECT_DIR)/iOS/common/common_ios_7.5.10/UMDevice.xcframework/ios-arm64",
+					"$(PROJECT_DIR)/iOS/common/common_ios_7.5.10/UYuMao.xcframework/ios-arm64",
 					"$(PROJECT_DIR)/iOS/thirdparties/thirdparties_ios_1.0.5",
 					"$(PROJECT_DIR)/iOS/umcommonlog/umcommonlog_ios_2.0.0",
 				);
@@ -857,11 +849,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4.2;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					"-ObjC",
-				);
+				MARKETING_VERSION = 1.4.3;
+				OTHER_LDFLAGS = "$(inherited)";
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = "$(inherited) -ObjC -framework UMCommon -framework UMDevice -framework UYuMao -framework UTDID -framework UMCommonLog";
 				PRODUCT_BUNDLE_IDENTIFIER = com.amyhuang.castlingo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

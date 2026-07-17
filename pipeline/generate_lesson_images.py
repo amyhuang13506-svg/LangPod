@@ -63,8 +63,11 @@ COUNTRY_PALETTES = {
     "ca": "fresh blush-pink and rose color palette, " + _BRIGHT + ", light cream background",
     "nz": "fresh lavender and soft periwinkle color palette, " + _BRIGHT + ", light airy background",
     "sg": "warm golden-amber and coral color palette, " + _BRIGHT + ", light ivory background",
-    # 日常词汇主题板（伪国家 daily）：软青绿，与 6 国色调都不同，区块有辨识度
-    "daily": "fresh soft-teal and aqua color palette, " + _BRIGHT + ", light airy background",
+    # 日常词汇主题板（伪国家 daily）：浅青背景做区块辨识度，但物体必须保持
+    # 真实自然色（图解词典靠颜色认物：香蕉是黄的、草莓是红的，禁止整图单色调）
+    "daily": ("light airy pale-aqua background; every object keeps its NATURAL "
+              "real-world color (a banana is yellow, a strawberry is red, jeans are blue) "
+              "— only the background is tinted, " + _BRIGHT),
 }
 
 # 伪国家 daily（日常词汇主题板）的展示元数据（review 页用）

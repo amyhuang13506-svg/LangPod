@@ -103,6 +103,8 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     // MARK: - Permission
 
     func requestPermission() {
+        // 截图/调试用：simctl launch 传 -debug_screenshot_mode YES 跳过授权弹框
+        if UserDefaults.standard.bool(forKey: "debug_screenshot_mode") { return }
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
             DispatchQueue.main.async {
                 self?.isAuthorized = granted

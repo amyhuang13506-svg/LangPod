@@ -62,6 +62,9 @@ enum AdjustTracker {
     /// 主界面出现后调用。已决策过（同意/拒绝）则直接放行首包，不再弹框。
     /// 必须在 App .active 状态下请求，否则 iOS 会静默回 .denied。
     static func requestATTIfNeeded() {
+        // 截图/调试用：simctl launch 传 -debug_screenshot_mode YES 跳过弹框
+        //（argument domain 只在该次启动生效，真机正常启动不受影响）
+        if UserDefaults.standard.bool(forKey: "debug_screenshot_mode") { return }
         guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else {
             resolveTrackingGate()
             return

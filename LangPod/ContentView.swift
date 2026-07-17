@@ -16,7 +16,7 @@ struct ContentView: View {
         var id: String { rawValue }
     }
     @State private var taskPractice: TaskPracticeTarget?
-    @State private var taskLesson: LessonOpenTarget?
+    @State private var taskLesson: SceneLessonIndexItem?
 
     var body: some View {
         if dataStore.hasCompletedOnboarding {
@@ -43,6 +43,12 @@ struct ContentView: View {
                     .tag(3)
             }
             .tint(.accent)
+            .onAppear {
+                // 截图/调试用：simctl launch 传 -debug_start_tab N 直接落到指定 tab
+                // （argument domain 只在该次启动生效，真机正常启动不受影响）
+                let debugTab = UserDefaults.standard.integer(forKey: "debug_start_tab")
+                if (1...3).contains(debugTab) { selectedTab = debugTab }
+            }
             .onChange(of: subscriptionManager.isProUser, initial: true) {
                 audioPlayer.isProUser = subscriptionManager.isProUser
             }
@@ -85,8 +91,8 @@ struct ContentView: View {
                         .environment(sentenceStore)
                 }
             }
-            .fullScreenCover(item: $taskLesson) { target in
-                LessonDetailView(item: target.item, country: target.country)
+            .fullScreenCover(item: $taskLesson) { item in
+                LessonDetailView(item: item, country: lessonStore.currentCountry)
                     .environment(vocabularyStore)
                     .environment(lessonStore)
                     .environment(sentenceStore)
@@ -143,16 +149,9 @@ struct ContentView: View {
 
         case .learnLesson, .roleplayLesson:
             selectedTab = 1
-            // 优先全局今日课（跨国家、当天免费）：今日课国家每天轮换，
-            // 只查选中国家的索引 6 天里 5 天找不到。模拟对话在课堂详情页内。
+            // 开今日课（无今日课时退回第一篇课堂）；模拟对话在课堂详情页内
             lessonStore.loadIfNeeded()
-            if let today = lessonStore.todayCard {
-                taskLesson = LessonOpenTarget(item: today.item, country: today.country)
-            } else if let t = lessonStore.todayLesson {
-                taskLesson = LessonOpenTarget(item: t, country: lessonStore.currentCountry)
-            } else if let first = lessonStore.lessons.first {
-                taskLesson = LessonOpenTarget(item: first, country: lessonStore.currentCountry)
-            }
+            taskLesson = lessonStore.todayLesson ?? lessonStore.lessons.first
 
         case .rawPodcast10Min:
             selectedTab = 0
