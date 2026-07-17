@@ -29,8 +29,18 @@ class LessonStore {
     /// 日常词汇选中的主题大类（不持久化，默认第一个有内容的大类）
     var selectedThemeCategory: String = ""
 
-    /// 主题大类固定产品顺序（对应 pipeline theme_catalog.THEME_CATEGORIES）
-    static let themeCategoryOrder = ["body", "basics", "home", "grocery", "clothing", "outdoor"]
+    /// 主题大类固定产品顺序（对应 pipeline theme_catalog.THEME_CATEGORIES 的 8 大类）。
+    /// 目录外的新大类由 themeCategories 兜底追加，服务端加类不用发版。
+    static let themeCategoryOrder = [
+        "grocery",    // 食物
+        "home",       // 家居
+        "body",       // 身体与健康
+        "clothing",   // 穿着
+        "transport",  // 出行与城市
+        "nature",     // 自然与动物
+        "work",       // 工作与休闲
+        "basics",     // 基础概念
+    ]
 
     /// 伪国家 daily 的元数据：详情页发音口音固定美音。
     /// ⚠️ 不进 countries.json（老版本会把它当国家渲染），App 端直接引用这个常量。

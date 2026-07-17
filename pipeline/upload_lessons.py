@@ -17,6 +17,7 @@ OSS 结构:
 """
 
 import argparse
+import copy
 import glob
 import hashlib
 import json
@@ -132,9 +133,16 @@ def upload_lesson(bucket, json_path):
     if not lesson.get("date"):
         lesson["date"] = datetime.now().strftime("%Y-%m-%d")
 
+    # _conf 是生图流程的内部质检数据（标注置信度）：本地保留给审阅页用，不上线。
+    # 只在 OSS 副本里剥掉，本地 lesson.json 保持完整。
+    oss_payload = copy.deepcopy(lesson)
+    for zone in oss_payload["zones"]:
+        for word in zone["hotspots"] + zone["extra_words"]:
+            word.pop("_conf", None)
+
     bucket.put_object(
         "%s/lesson.json" % prefix,
-        json.dumps(lesson, ensure_ascii=False, indent=2).encode("utf-8"),
+        json.dumps(oss_payload, ensure_ascii=False, indent=2).encode("utf-8"),
     )
     # 本地也写回 OSS URL 版本，保持幂等
     with open(json_path, "w", encoding="utf-8") as f:
