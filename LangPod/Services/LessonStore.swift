@@ -28,12 +28,16 @@ class LessonStore {
     private(set) var freeSceneIds: Set<String> = []
     private(set) var freeThemeIds: Set<String> = []
 
-    /// 分类内稳定顺序取前 N 个。用 id 哈希而非当日 seed —— 免费范围固定不漂移，
-    /// 昨天能看的今天还能看；每日课不占名额（走当天免费逻辑）。
+    /// 分类内取「最早的 N 课」免费。按 date 升序（date = 内容创建日，pipeline 落盘时必填）：
+    /// 新课 date 更晚 → 永远排在后面 → 不会把已免费的课挤成锁。内容在持续生成，
+    /// 闸门必须对「新增」稳定，否则用户昨天能看的课今天变锁（像 bug）。
+    /// 免费占比随分类变大自然稀释。每日课不占名额（走当天免费逻辑）。
     private static func computeFreeIds(_ items: [SceneLessonIndexItem]) -> Set<String> {
         var result: Set<String> = []
         for (_, list) in Dictionary(grouping: items.filter { !$0.isDaily }, by: \.category) {
-            let ranked = list.sorted { stableHash($0.id) < stableHash($1.id) }
+            let ranked = list.sorted { a, b in
+                a.date == b.date ? a.id < b.id : a.date < b.date
+            }
             result.formUnion(ranked.prefix(freePerCategory).map(\.id))
         }
         return result
