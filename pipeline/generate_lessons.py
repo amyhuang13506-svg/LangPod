@@ -15,6 +15,7 @@
 import argparse
 import json
 import os
+import re
 import sys
 import time
 
@@ -79,7 +80,7 @@ BOARDS:
 
 Also produce for the whole lesson:
 - "sentences": 5 short sentences a learner would actually SAY in daily life using these words. Real spoken register, not textbook style.
-- "culture_tips_zh": 2-3 用法小贴士 in Chinese — practical usage notes for Chinese speakers: word-boundary differences (hand vs arm, 手/手臂), collocations (a pair of jeans), common mistakes Chinese learners make. NEVER encyclopedia facts.
+- "culture_tips_zh": 2-3 用法小贴士 in Chinese. EVERY tip must be about a word that actually appears in THIS lesson's word list, and must name that word. Useful angles: where English splits a word that Chinese doesn't (or the reverse), the collocation or measure word a Chinese learner gets wrong, a false friend, a word pair that looks interchangeable but isn't. NEVER encyclopedia facts. NEVER reuse an example word from these instructions — write tips about this lesson's own words only.
 
 RULES (all mandatory):
 - Spelling/vocabulary: American English. Pick the HIGHEST-FREQUENCY everyday word for each item (pants not trousers).
@@ -196,8 +197,26 @@ def validate_content(lesson, content):
 
     if len(content.get("sentences", [])) < 4:
         problems.append("only %d sentences (want 5)" % len(content.get("sentences", [])))
-    if len(content.get("culture_tips_zh", [])) < 2:
-        problems.append("only %d culture tips (want 2-3)" % len(content.get("culture_tips_zh", [])))
+    tips = content.get("culture_tips_zh", [])
+    if len(tips) < 2:
+        problems.append("only %d culture tips (want 2-3)" % len(tips))
+    # 贴士必须讲本课的词。GPT 会把 prompt 里的举例照抄进无关课（厨房课讲 hand vs arm、
+    # 到处都是 a pair of jeans）—— 同「香蕉画进身体部位板」一类的举例泄漏。
+    # 判据：贴士里的英文词至少有一个出现在本课词表（逐词比 + 去复数尾，
+    # 'a cup of tea' 能匹配 'tea bag'、'apples' 能匹配 'apple'）。
+    def _norm(w):
+        for suf in ("ies", "es", "s"):
+            if w.endswith(suf) and len(w) - len(suf) >= 3:
+                return w[:-len(suf)] + ("y" if suf == "ies" else "")
+        return w
+
+    vocab = set()
+    for w in seen_words:
+        vocab.update(_norm(t) for t in re.findall(r"[a-zA-Z]{3,}", w.lower()))
+    for tip in tips:
+        tokens = {_norm(t) for t in re.findall(r"[a-zA-Z]{3,}", tip.lower())}
+        if tokens and not (tokens & vocab):
+            problems.append("tip cites no word from this lesson (prompt example leak?): %s" % tip[:40])
     return problems
 
 
