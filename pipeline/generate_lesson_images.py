@@ -79,10 +79,11 @@ def country_meta(cc):
 
 def is_vignette_board(board_type):
     """小图格板：一个词一格小图，而不是一张铺排图上摆物体。
-    action = 动词（chop / fry），state = 形容词或状态（happy / under / heavy）。
-    两者的生图、定位、回验都走同一套「找出演示这个词的那一格」逻辑，只有出词的
-    prompt 不同（在 generate_lessons 里分流）。"""
-    return board_type in ("action", "state")
+    action   = 动词（chop / fry）
+    state    = 自足状态（happy / dizzy）—— 一个主体自己就能体现，画在脸上/身上即可
+    contrast = 比较或关系（big / under）—— 离开参照物没有意义，必须靠同框对比表达
+    三者的定位、回验共用同一套「找出演示这个词的那一格」逻辑，只有生图 prompt 不同。"""
+    return board_type in ("action", "state", "contrast")
 
 
 def theme_palette(category):
@@ -118,6 +119,17 @@ DAILY_HARD_RULES = (
     "listed items. Spread the listed items across the board."
 )
 
+# 对比板专用硬规则。物体板那套里有一句「物体自带的文字是欢迎的」（钟面数字、价签），
+# 对比板收到这句等于收到「可以写字」的许可，把禁字幕那条冲淡了 —— 八张图张张带字幕。
+# 这里不给任何写字的余地：画面里本来就没有该出现文字的东西。
+CONTRAST_HARD_RULES = (
+    " ABSOLUTE RULES: The illustration must contain NO text of any kind — not a single "
+    "letter, word, caption, title, label or number, anywhere. This is a wordless picture: "
+    "the comparison is carried entirely by what is drawn. Any writing at all ruins it. "
+    "NO brand logos, trademarks, swooshes, stripes or any other mark resembling a real "
+    "brand — draw everything plain and unbranded. No arrows, no annotation marks."
+)
+
 
 def generate_scene_image(zone, lesson, hotspot_words, output_path, variation=0, palette=None):
     """DALL-E 生成一张分区场景插画。variation 用于重试时改变构图措辞。
@@ -137,35 +149,72 @@ def generate_scene_image(zone, lesson, hotspot_words, output_path, variation=0, 
     if lesson["country"] == "daily" and is_vignette_board(lesson.get("board_type")):
         # 小图格板：每个词一格（动作=有人在做，状态=画面体现那个状态），
         # 格与格之间留白分开，这样每个词都能被视觉模型独立定位成热点。
-        if lesson.get("board_type") == "state":
-            kind, shows = "STATES", (
-                "Each vignette makes that one word unmistakable from the picture alone — a "
-                "feeling from a face and posture, a spatial word from where an object sits "
-                "relative to another, a size or degree word from an obvious visual contrast. "
+        board_type = lesson.get("board_type")
+        if board_type == "contrast" and zone.get("image_hint"):
+            # 递给模型一串抽象词 + "visual dictionary board"，它画的就是教科书闪卡 ——
+            # 训练数据里这种图全带字幕，先验压倒一切，八次尝试八次印字。给词它就印词。
+            # 所以对比板改成只给画面：作者写清楚画什么，词一个都不进 prompt，
+            # 图里就没有词可印。定位器照样能从画好的图里把词认出来。
+            prompt = (
+                STYLE_TEMPLATE.format(palette=palette)
+                + zone["image_hint"].rstrip(". ") + ". "
+                + variation_hint
+                + CONTRAST_HARD_RULES
+            )
+        elif board_type == "contrast":
+            # 比较词和关系词离开参照物就没有意义。给一串词让模型「每词一格」，它会给每格
+            # 画不同的物体 —— 六个格子六组物体，关系无从读起，模型只好把词印在格子下面
+            # 当字幕（用户直接读到答案，图解词典就废了）。破法是锁死参照物：全板重复同一
+            # 对物体，只让词描述的那一项变化，对比就自己浮出来，不需要任何文字。
+            prompt = (
+                STYLE_TEMPLATE.format(palette=palette)
+                + "Visual dictionary board of COMPARISONS: %s — %s. " % (
+                    zone["name_en"], lesson["title_en"])
+                + "These words mean nothing on their own — each one is only readable against "
+                + "something else in the same frame. So: pick ONE simple everyday object (plus, "
+                + "if the words describe where things sit, ONE container or surface for it) and "
+                + "reuse that SAME object throughout the entire board. Never give a word its own "
+                + "different subject — the moment the objects change, the comparison disappears "
+                + "and the word becomes unreadable. "
+                + "Where two of the listed words are opposites, draw BOTH in the same vignette, "
+                + "side by side, as the same object at its two extremes. Otherwise give the word "
+                + "its own vignette in which only the described property differs from the others. "
+                + "Lay the vignettes out in a clean grid with generous empty space between them. "
+                + "Cover all of: %s." % objects
+                + variation_hint
+                + DAILY_HARD_RULES
             )
         else:
-            kind, shows = "ACTIONS", (
-                "Each vignette shows hands or a person clearly performing that one action, "
-                "drawn so the action is unmistakable at a glance. "
+            if board_type == "state":
+                kind, shows = "STATES", (
+                    "Each vignette makes that one word unmistakable from the picture alone — a "
+                    "feeling or a symptom read off one person's face, posture and gesture. "
+                )
+            else:
+                kind, shows = "ACTIONS", (
+                    "Each vignette shows hands or a person clearly performing that one action, "
+                    "drawn so the action is unmistakable at a glance. "
+                )
+            prompt = (
+                STYLE_TEMPLATE.format(palette=palette)
+                + "Visual dictionary board of %s: %s — %s. " % (
+                    kind, zone["name_en"], lesson["title_en"])
+                + "Draw each one as its OWN separate vignette, laid out in a clean grid with "
+                + "generous empty space between vignettes — never merge them into one scene. "
+                + shows
+                + "Every vignette must look obviously different from the others. "
+                + "One vignette each, in this order: %s." % objects
+                + variation_hint
+                + DAILY_HARD_RULES
             )
-        prompt = (
-            STYLE_TEMPLATE.format(palette=palette)
-            + "Visual dictionary board of %s: %s — %s. " % (kind, zone["name_en"], lesson["title_en"])
-            + "Draw each one as its OWN separate vignette, laid out in a clean grid with "
-            + "generous empty space between vignettes — never merge them into one scene. "
-            + shows
-            + "Every vignette must look obviously different from the others. "
-            + "One vignette each, in this order: %s." % objects
-            + variation_hint
-            + DAILY_HARD_RULES
-        )
     elif lesson["country"] == "daily":
         prompt = (
             STYLE_TEMPLATE.format(palette=palette)
             + "Visual dictionary board: %s — %s. " % (zone["name_en"], lesson["title_en"])
-            + "Arrange the items like a picture-dictionary spread on a clean simple background, "
-            + "generously spaced. If the items are parts of a whole (like body parts or a face), "
-            + "draw ONE large clear subject and make each listed part distinctly visible. "
+            + ((zone["image_hint"].rstrip(". ") + ". ") if zone.get("image_hint") else
+               "Arrange the items like a picture-dictionary spread on a clean simple background, "
+               "generously spaced. If the items are parts of a whole (like body parts or a face), "
+               "draw ONE large clear subject and make each listed part distinctly visible. ")
             + "The board must prominently contain each of these, one of each, clearly recognizable: %s." % objects
             + variation_hint
             + DAILY_HARD_RULES
@@ -257,11 +306,25 @@ def locate_words(image_path, words, board_type="object"):
     with open(image_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
     word_list = "\n".join("- %s" % w for w in words)
-    if is_vignette_board(board_type):
+    if board_type == "contrast":
+        # 对比板全板共用同一对物体，两个反义词常常同处一格。框整格会让两个词落在同一点上，
+        # 所以这里要的是「格子里具备该属性的那一个物体」，不是格子本身。
+        what = (
+            "This illustration is a grid of vignettes that compare things. The SAME objects "
+            "recur throughout — only the property being compared changes.\n"
+            "For EACH word below, give a TIGHT bounding box around the ONE object that has "
+            "that property — not around the whole vignette. When two opposite words share a "
+            "vignette, they must get different boxes: each points at its own object.\n"
+            "Coordinates are normalized (x_min, y_min, x_max, y_max; x from 0.0 left to 1.0 "
+            "right, y from 0.0 top to 1.0 bottom). Judge only by what is drawn: a word is "
+            "found=false unless the picture itself shows the comparison. If the word is merely "
+            "printed on the image as a caption, that is NOT the word being depicted — mark it "
+            "found=false.\n\nWords:\n%s\n\n" % word_list
+        )
+    elif is_vignette_board(board_type):
         match_on = (
-            "Match by the state or relation the picture conveys, not by the objects present — "
-            "'under' is the vignette where one thing sits beneath another, whatever the things "
-            "are; 'tired' is the one whose face and posture show it."
+            "Match by the state the picture conveys, not by the objects present — 'tired' is "
+            "the vignette whose face and posture show it."
             if board_type == "state" else
             "Match by what is being DONE, not by the objects present — 'chop' is the vignette "
             "where a knife is cutting, wherever it sits."
@@ -272,7 +335,9 @@ def locate_words(image_path, words, board_type="object"):
             "TIGHT bounding box around that vignette in normalized coordinates "
             "(x_min, y_min, x_max, y_max; x from 0.0 left to 1.0 right, y from 0.0 top to 1.0 "
             "bottom). %s Mark found=false if no vignette clearly conveys that "
-            "word.\n\nWords:\n%s\n\n" % (match_on, word_list)
+            "word. Judge only by what is drawn: if the word is merely printed on the image as "
+            "a caption, that is NOT the word being depicted — mark it found=false."
+            "\n\nWords:\n%s\n\n" % (match_on, word_list)
         )
     else:
         what = (
@@ -409,26 +474,39 @@ def verify_and_fix_locations(image_path, placed, max_rounds=2, board_type="objec
     return min_conf, low_words
 
 
-def audit_image_content(image_path):
+def audit_image_content(image_path, words=None):
     """图内合规审计，只拦两类硬伤：
       1. 给物体命名的标签/标题 —— App 自己叠可点标签，图内再写词会双重标注
       2. 商标/近似商标 —— 曾生成出带 Nike 勾的运动鞋
     ⚠️ 物体自带的文字数字（钟面数字、价签、门牌号、TAXI 字样）是内容本身，不算违规
     —— 一刀切禁文字会把「数字与时间」这类课的核心内容误杀。
+    但自带文字一旦拼出本板要教的词，就等于把答案印在图上（挂历顶端印着 MONTH，而
+    month 正是热点词），这时要拦。传 words 才判得了这一条 —— 不传就退回旧的两条。
     返回 (clean: bool, reason: str)。"""
     with open(image_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
+    giveaway = ""
+    if words:
+        giveaway = (
+            "3. GIVEAWAY TEXT: this board teaches these words: %s.\n"
+            "   The learner is meant to read them off the PICTURE, so report has_giveaway=true "
+            "if any of them appears as readable text anywhere in the image — including text "
+            "printed naturally on an object. Readable text that is not one of these words is "
+            "fine and must not be reported here.\n" % ", ".join(words)
+        )
     prompt = (
-        "Audit this illustration for two problems:\n"
+        "Audit this illustration for these problems:\n"
         "1. LABEL TEXT: a word printed next to an object that NAMES it (like 'apple' written "
         "under an apple), or a title/caption/heading for the whole image.\n"
         "   IMPORTANT — these are NOT label text, report them as false: numbers on a clock "
         "face or calendar, digits on a price tag, receipt or house number, a word naturally "
         "printed on a real object (TAXI on a taxi, EXIT on a door), squiggles that aren't "
         "readable words.\n"
+        + giveaway +
         "2. BRANDING: a real-brand logo, or a mark that resembles one (swoosh, three stripes, "
         "bitten apple, golden arches). A plain unbranded object is fine.\n"
-        'Output STRICT JSON only:\n{"has_label_text": false, "has_brand": false, "detail": ""}'
+        'Output STRICT JSON only:\n'
+        '{"has_label_text": false, "has_brand": false, "has_giveaway": false, "detail": ""}'
     )
     parsed = _vision_json(prompt, b64)
     if not parsed:
@@ -438,6 +516,8 @@ def audit_image_content(image_path):
         problems.append("label")
     if parsed.get("has_brand"):
         problems.append("brand")
+    if words and parsed.get("has_giveaway"):
+        problems.append("giveaway")
     if not problems:
         return True, ""
     return False, "%s: %s" % ("+".join(problems), (parsed.get("detail") or "")[:80])
@@ -517,7 +597,8 @@ def process_zone(lesson, zone, zone_dir_rel, lesson_dir_abs):
                 continue
         clean = True
         if lesson["country"] == "daily":
-            clean, reason = audit_image_content(image_path)
+            clean, reason = audit_image_content(
+                image_path, words=[w["word"] for w in hotspots])
             if not clean:
                 print("      🚫 rejected (%s)" % reason)
         located = locate_words(image_path, [w["word"] for w in hotspots],

@@ -476,13 +476,34 @@ THEME_BOARDS = [
     },
     {
         "slug": "position", "category": "basics", "icon": "arrow.up.left.and.arrow.down.right",
-        "board_type": "state",
+        "board_type": "contrast",
         "title": _t("方位与位置", "Where Things Are"),
         "zones": [
+            # image_hint 里一个抽象词都不能出现 —— 递给图模型的是画面，不是词表。
+            # 参照物（球+木箱 / 男孩+球）全板锁死不变，关系才读得出来。
             {"id": "basic_position", **_t("基本方位", "Basic Positions"),
-             "hint": "same ball and box in each vignette, only the relation changes: on, under, in, next to, behind, between"},
+             "hint": "same ball and box in each vignette, only the relation changes: on, under, in, out, behind, ahead",
+             "image_hint": "A 3x2 grid of six small scenes with generous empty space between them. "
+                           "Every scene contains the SAME red rubber ball and the SAME open wooden crate, "
+                           "drawn identically each time — only where the ball sits changes: "
+                           "(1) the ball resting on top of the closed crate lid; "
+                           "(2) the crate raised on short legs, the ball on the ground beneath it; "
+                           "(3) the ball sitting down inside the open crate; "
+                           "(4) the ball held in the air just above the open crate, the crate now empty; "
+                           "(5) the ball mostly hidden behind the crate, only its top edge showing; "
+                           "(6) the ball on the ground clearly in front of the crate, closer to the viewer"},
             {"id": "directions", **_t("方向", "Directions"),
-             "hint": "left, right, up, down, near, far — each shown with a simple figure and arrow"},
+             "hint": "left, right, up, down, near, far — each read off where the ball sits relative to the same boy",
+             "image_hint": "A 3x2 grid of six small scenes with generous empty space between them. "
+                           "Every scene contains the SAME boy in an orange shirt standing facing the viewer and "
+                           "the SAME red ball, drawn identically each time — only the ball changes place. "
+                           "The red ball MUST appear in all six scenes; a scene without the ball is wrong: "
+                           "(1) the ball on the ground at the far left of the scene, the boy turning his head to look at it; "
+                           "(2) the ball on the ground at the far right, the boy turning his head to look at it; "
+                           "(3) the ball high in the air above the boy's head, the boy looking up at it; "
+                           "(4) the ball on the ground at the boy's feet, the boy looking down at it; "
+                           "(5) the ball right beside the boy's shoe, almost touching it; "
+                           "(6) the ball tiny in the far distance behind the boy, small with distance"},
         ],
     },
     {
@@ -497,13 +518,30 @@ THEME_BOARDS = [
     },
     {
         "slug": "size_degree", "category": "basics", "icon": "arrow.up.and.down.text.horizontal",
-        "board_type": "state",
+        "board_type": "contrast",
         "title": _t("大小与程度", "Big, Small & In Between"),
         "zones": [
+            # 反义词成对同框：一格里画同一样东西的两个极端，两个词各占一个热点。
+            # 拆开画就没得比 —— 单看一个球说不出它"大"。
             {"id": "size", **_t("大小长短", "Size & Length"),
-             "hint": "each word from an obvious contrast between two drawn objects: big, small, long, short, thick, thin"},
+             "hint": "opposites paired in one vignette, same object at both extremes: big, small, long, short, thick, thin",
+             "image_hint": "Three scenes in a row with generous empty space between them, each comparing the "
+                           "SAME kind of object at two extremes, side by side: "
+                           "(1) two red rubber balls, one enormous and one tiny; "
+                           "(2) two yellow pencils lying parallel, one very long and one worn down to a stub; "
+                           "(3) two blue books standing upright side by side, one very thick and one very thin"},
             {"id": "degree", **_t("轻重冷热", "Weight & Temperature"),
-             "hint": "heavy, light, hot, cold, full, empty — each from a clear visual contrast"},
+             "hint": "opposites paired in one vignette, same object at both extremes: heavy, light, hot, cold, full, empty",
+             "image_hint": "Three scenes in a row, fully inside the frame, with generous empty space between them. "
+                           "Each scene compares the SAME kind of object at two extremes, side by side — "
+                           "BOTH objects must be drawn in every scene: "
+                           "(1) two identical cardboard boxes, each held by its own man: the left man hunched and "
+                           "straining under his box, knees bent, face red; the right man holding his box up "
+                           "balanced on one fingertip, relaxed and smiling; "
+                           "(2) two identical white mugs — one with curling steam rising from it, "
+                           "the other with ice cubes in it and frost on its side; "
+                           "(3) two identical drinking glasses — one filled to the brim with orange juice, "
+                           "the other completely empty"},
         ],
     },
     {
@@ -521,9 +559,17 @@ THEME_BOARDS = [
         "title": _t("日期与星期", "Dates & Days"),
         "zones": [
             {"id": "the_calendar", **_t("看日历", "Reading a Calendar"),
-             "hint": "one large wall calendar with visible day columns and dates: weekend (shaded cells), "
-                     "holiday (a red-marked date), today (a circled date), appointment (a note written in a cell), "
-                     "month, week. Day and month names printed on the calendar are part of the object, not labels"},
+             # month / week 曾是热点，但它们在日历上只能靠推断去指（表头？某一行？），
+             # 定位器一个都抓不住，整块板最后只剩 2 个词。改成指得到的部件当热点，
+             # 抽象的时间单位退到补充词。
+             "hint": "every hotspot must be a part of ONE wall calendar that can be pointed at: "
+                     "today (a circled date), weekend (the shaded end columns), holiday (a date marked in red), "
+                     "appointment (a handwritten note inside a cell), date (a plain numbered cell). "
+                     "Put month, week, year and similar time units in extra_words — they are not pointable",
+             "image_hint": "Draw ONE single large wall calendar filling the board — never several calendars. "
+                           "A month grid with weekday columns, the two end columns shaded, one date circled "
+                           "in red, another date marked in red, and a small handwritten note inside one cell. "
+                           "Every listed item is a part of that one calendar"},
             {"id": "planning", **_t("安排日程", "Planning"),
              "hint": "planner, sticky note, wall calendar, desk calendar, reminder on a phone, pen marking a date"},
         ],

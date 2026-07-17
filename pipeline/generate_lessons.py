@@ -183,6 +183,45 @@ Output STRICT JSON only (no markdown fences, no commentary):
 }}"""
 
 
+CONTRAST_PROMPT_TEMPLATE = """You are creating content for a "visual dictionary board" in an English-learning app for Chinese speakers. This page teaches words that only mean something IN COMPARISON — a size, an amount, a temperature, or where one thing sits relative to another. The board draws the SAME objects throughout and changes only the thing the word describes, so the comparison is visible without any text.
+
+LESSON: {title_en} ({title_zh})
+
+The lesson has {zone_count} boards. For each board you must produce:
+1. "hotspots": 5-7 words from this theme, each drawable only against a reference in the same frame. Use the bare word ("big", "under").
+   CRITICAL — OPPOSITES BELONG TOGETHER. These words come in pairs, and a pair is what makes each of them readable: drawn side by side, the same object at both extremes shows both words at once. So if you put a word on a board, its opposite goes on the SAME board as a hotspot too — never in extra_words, never on the other board. A word whose opposite is missing has nothing to be read against and cannot be drawn. Prefer complete pairs over more words.
+2. "extra_words": 4-6 related words from this theme that are near-synonyms of a hotspot (a stronger or weaker degree of the same idea), or that cannot be pictured at all. Never put the opposite of a hotspot here.
+
+BOARDS:
+{zones_block}
+
+Also produce for the whole lesson:
+- "sentences": 5 short sentences a learner would actually SAY in daily life using these words. Real spoken register.
+- "culture_tips_zh": 2-3 用法小贴士 in Chinese. EVERY tip must name a word from THIS lesson's word list and teach how that ENGLISH word actually behaves — the preposition or structure it takes, the noun it pairs with, its connotation or register, or how to choose between two words in this lesson. Chinese is for explaining the point, NOT for contrasting the two languages. FORBIDDEN: claiming the Chinese equivalent is broader/narrower than the English word (that angle invites invented contrasts); explaining Chinese usage to Chinese speakers; encyclopedia facts; tips that state the obvious. Every claim must be TRUE of real English — if a word has no real pitfall, write about a different word. NEVER reuse an example word from these instructions.
+
+RULES (all mandatory):
+- Spelling/vocabulary: American English. Pick the HIGHEST-FREQUENCY everyday word for each idea.
+- Every word entry: "word" (bare, lowercase), "phonetic" (IPA with slashes like /bɪɡ/), "translation_zh" (1-2 个中文释义), "example" (one natural sentence a real person would say, MUST contain the word, MAX 12 words), "example_zh" (自然的中文翻译), "difficulty" ("easy"|"medium"|"hard" by real-world frequency).
+- Keep each pair adjacent in the list, easier pair first.
+- No word may repeat across boards in this lesson.
+- Chinese translations must be natural spoken Chinese, not dictionary-stiff.
+- sentences: each is {{"english": "...", "chinese": "..."}}.
+- Do NOT include any political, religious or sensitive content.
+
+Output STRICT JSON only (no markdown fences, no commentary):
+{{
+  "zones": [
+    {{
+      "id": "<zone id exactly as given>",
+      "hotspots": [ {{"word": "...", "phonetic": "...", "translation_zh": "...", "example": "...", "example_zh": "...", "difficulty": "easy"}} ],
+      "extra_words": [ {{...same fields...}} ]
+    }}
+  ],
+  "sentences": [ {{"english": "...", "chinese": "..."}} ],
+  "culture_tips_zh": ["...", "..."]
+}}"""
+
+
 def _call_gpt(messages, temperature=0.7):
     """GPT call with retry for transient errors, parses JSON (same pattern as generate_script.py)."""
     max_retries = 3
@@ -227,8 +266,9 @@ def build_prompt(lesson):
         # 物体模板强制「热点必须是具体物体，NOT actions / NOT abstract concepts」，
         # 动词板和状态板套它会跑歪（烹饪动作曾退化成 carrot/pan），各走各的模板。
         template = {
-            "action": ACTION_PROMPT_TEMPLATE,   # 动词：chop / fry
-            "state": STATE_PROMPT_TEMPLATE,     # 形容词或关系：tired / under / heavy
+            "action": ACTION_PROMPT_TEMPLATE,      # 动词：chop / fry
+            "state": STATE_PROMPT_TEMPLATE,        # 自足状态：tired / dizzy
+            "contrast": CONTRAST_PROMPT_TEMPLATE,  # 比较或关系：big / under —— 反义词必须成对留在热点
         }.get(lesson.get("board_type"), THEME_PROMPT_TEMPLATE)
         return template.format(
             title_en=lesson["title_en"],
@@ -331,14 +371,20 @@ def generate_lesson_content(lesson, max_attempts=2):
             zone_meta = {z["id"]: z for z in lesson["zones"]}
             for z in content["zones"]:
                 meta = zone_meta[z["id"]]
-                zones_out.append({
+                zone_out = {
                     "id": z["id"],
                     "name_zh": meta["zh"],
                     "name_en": meta["en"],
                     "image": "",  # 生图步骤填充
                     "hotspots": z["hotspots"],
                     "extra_words": z["extra_words"],
-                })
+                }
+                # 目录里的 hint 只喂给选词，喂不到画图 —— 作者写的构图要求（「一张大挂历，
+                # 各部分标出来」）到不了图片模型，于是它画了 7 个散落的日历，热点全落空。
+                # image_hint 是给图片模型的那一句，按需在目录里写。
+                if meta.get("image_hint"):
+                    zone_out["image_hint"] = meta["image_hint"]
+                zones_out.append(zone_out)
             word_count = sum(len(z["hotspots"]) + len(z["extra_words"]) for z in zones_out)
             return {
                 "id": lesson["id"],
