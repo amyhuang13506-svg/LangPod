@@ -22,7 +22,13 @@ palette 只染背景，物体一律保持真实自然色（图解词典靠颜色
 """
 
 # palette = 该大类图解板的底色色系（generate_lesson_images.theme_palette 组装完整 prompt）
-# 色系复用来源：sg 金橙 / us 奶油 / 主题板初版浅青 / ca 粉玫 / uk 天蓝 / au 草绿 / nz 薰衣草 / 新增黄油黄
+# 色系复用来源：sg 金橙 / us 奶油 / 主题板初版浅青 / ca 粉玫 / uk 天蓝 / au 草绿 / nz 薰衣草
+# + 新增兰紫（basics）。
+#
+# ⚠️ 8 个粉彩底色排在一起，必须拉开色相距离，否则用户看不出差别。实测教训：
+# basics 初版用 butter-yellow (#fdf6c2) 和 home 的 warm cream (#fef1ce) 只差 RGB 13，
+# 肉眼就是同一个色 —— 改成兰紫（色相 ~310°，离 work 的薰衣草 260° 和 clothing 的
+# 粉玫 15° 各差 50°+）。改色前先用四角像素采样比一比（见 git log）。
 THEME_CATEGORIES = {
     "grocery":   {"zh": "食物",      "icon_emoji": "🥕", "palette": "warm golden-amber and coral"},
     "home":      {"zh": "家居",      "icon_emoji": "🏠", "palette": "warm cream and soft honey"},
@@ -31,7 +37,7 @@ THEME_CATEGORIES = {
     "transport": {"zh": "出行与城市", "icon_emoji": "🚌", "palette": "fresh sky-blue and cornflower"},
     "nature":    {"zh": "自然与动物", "icon_emoji": "🌳", "palette": "fresh sage-green and mint"},
     "work":      {"zh": "工作与休闲", "icon_emoji": "💼", "palette": "fresh lavender and soft periwinkle"},
-    "basics":    {"zh": "基础概念",   "icon_emoji": "🔢", "palette": "soft butter-yellow and warm sand"},
+    "basics":    {"zh": "基础概念",   "icon_emoji": "🔢", "palette": "soft orchid and light mauve"},
 }
 
 # 免费课：每大类一门。nature / work 的免费课随该类内容批次补上（届时补进本集合）。
