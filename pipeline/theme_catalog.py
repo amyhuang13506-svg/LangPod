@@ -32,12 +32,12 @@ palette 只染背景，物体一律保持真实自然色（图解词典靠颜色
 THEME_CATEGORIES = {
     "grocery":   {"zh": "食物",      "icon_emoji": "🥕", "palette": "warm golden-amber and coral"},
     "home":      {"zh": "家居",      "icon_emoji": "🏠", "palette": "warm cream and soft honey"},
-    "body":      {"zh": "身体与健康", "icon_emoji": "🧍", "palette": "pale-aqua and soft teal"},
+    "body":      {"zh": "身体", "icon_emoji": "🧍", "palette": "pale-aqua and soft teal"},
     "clothing":  {"zh": "穿着",      "icon_emoji": "👕", "palette": "fresh blush-pink and rose"},
-    "transport": {"zh": "出行与城市", "icon_emoji": "🚌", "palette": "fresh sky-blue and cornflower"},
-    "nature":    {"zh": "自然与动物", "icon_emoji": "🌳", "palette": "fresh sage-green and mint"},
-    "work":      {"zh": "工作与休闲", "icon_emoji": "💼", "palette": "fresh lavender and soft periwinkle"},
-    "basics":    {"zh": "基础概念",   "icon_emoji": "🔢", "palette": "soft orchid and light mauve"},
+    "transport": {"zh": "出行", "icon_emoji": "🚌", "palette": "fresh sky-blue and cornflower"},
+    "nature":    {"zh": "自然", "icon_emoji": "🌳", "palette": "fresh sage-green and mint"},
+    "work":      {"zh": "工作", "icon_emoji": "💼", "palette": "fresh lavender and soft periwinkle"},
+    "basics":    {"zh": "基础",   "icon_emoji": "🔢", "palette": "soft orchid and light mauve"},
 }
 
 # 免费课：每大类一门。nature / work 的免费课随该类内容批次补上（届时补进本集合）。
@@ -565,6 +565,182 @@ THEME_BOARDS = [
              "hint": "planner, sticky note, wall calendar, desk calendar, reminder on a phone, pen marking a date. "
                      "Put today, weekend, holiday, appointment, date, month, week, year in extra_words — "
                      "they are calendar markings, not pointable objects"},
+        ],
+    },
+
+    # ================= B3 批次：穿着 +6 =================
+    {
+        "slug": "underwear", "category": "clothing", "icon": "figure.stand",
+        "title": _t("内衣与袜子", "Underwear & Socks"),
+        "zones": [
+            {"id": "innerwear", **_t("贴身衣物", "Innerwear"),
+             "hint": "bra, briefs, boxers, undershirt, camisole, thermal underwear — folded on a shelf, plain and modest"},
+            {"id": "legwear", **_t("袜子与腿部", "Socks & Legwear"),
+             "hint": "ankle socks, knee socks, tights, leggings, slipper socks, wool socks. Put stockings in extra_words (looks like tights)"},
+        ],
+    },
+    {
+        "slug": "bags", "category": "clothing", "icon": "bag.fill",
+        "title": _t("包与钱包", "Bags & Wallets"),
+        "zones": [
+            {"id": "bags", **_t("各种包", "Kinds of Bags"),
+             "hint": "handbag, tote bag, shoulder bag, briefcase, suitcase, drawstring bag. Put backpack in extra_words (owned by the accessories lesson)"},
+            {"id": "small_carry", **_t("钱包与小件", "Wallets & Small Carry"),
+             "hint": "wallet, coin purse, card holder, keychain, cosmetic pouch, luggage tag — small personal carriers laid out"},
+        ],
+    },
+    {
+        "slug": "jewelry", "category": "clothing", "icon": "crown.fill",
+        "title": _t("首饰与手表", "Jewelry & Watches"),
+        "zones": [
+            {"id": "jewelry", **_t("首饰", "Jewelry"),
+             "hint": "ring, necklace, bracelet, pendant, brooch, anklet. Put earrings in extra_words (owned by the accessories lesson)"},
+            {"id": "watch_hair", **_t("手表与发饰", "Watches & Hair Accessories"),
+             "hint": "watch, smartwatch, hairpin, hair clip, headband, scrunchie — a watch face plus hair pieces"},
+        ],
+    },
+    {
+        "slug": "materials", "category": "clothing", "icon": "square.grid.3x3.fill",
+        "title": _t("材质与图案", "Fabrics & Patterns"),
+        "zones": [
+            {"id": "fabrics", **_t("材质", "Fabrics"),
+             "hint": "each word is one fabric swatch with an unmistakable texture: cotton, wool, leather, denim, silk, fur",
+             "image_hint": "A row of six square fabric swatches with empty space between them, each a clearly different "
+                           "material texture and NO text: plain white woven cotton, thick cream cable-knit wool, "
+                           "smooth brown leather, blue jeans denim with a seam, glossy rippling red silk, soft grey fur"},
+            {"id": "patterns", **_t("图案", "Patterns"),
+             "hint": "each word is one patterned swatch, the pattern is the word: striped, plaid, floral, polka-dot, checkered, solid",
+             "image_hint": "A row of six square fabric swatches with empty space between them, each showing ONE pattern and "
+                           "NO text: bold horizontal stripes, tartan plaid, scattered flowers, evenly spaced polka dots, "
+                           "a checkerboard grid, one flat solid color"},
+        ],
+    },
+    {
+        "slug": "laundry", "category": "clothing", "icon": "washer.fill",
+        "title": _t("洗衣与护理", "Laundry & Care"),
+        "zones": [
+            {"id": "washing", **_t("洗衣", "Washing"),
+             "hint": "washing machine, dryer, detergent bottle, laundry basket, clothes hanger, clothespin"},
+            {"id": "ironing", **_t("熨烫与整理", "Ironing & Tidying"),
+             "hint": "iron, ironing board, lint roller, fabric softener, drying rack, laundry bag. Put wrinkle and stain in extra_words (they are marks, not objects)"},
+        ],
+    },
+    {
+        "slug": "makeup", "category": "clothing", "icon": "paintbrush.pointed.fill",
+        "title": _t("化妆与护肤", "Makeup & Skincare"),
+        "zones": [
+            {"id": "makeup", **_t("化妆品", "Makeup"),
+             "hint": "lipstick, mascara, eyeliner, blush, foundation bottle, eyeshadow palette"},
+            {"id": "skincare", **_t("护肤品", "Skincare"),
+             "hint": "cleanser, toner bottle, moisturizer jar, sunscreen, sheet mask, cotton pad"},
+        ],
+    },
+
+    # ================= B3 批次：出行与城市 +9 =================
+    {
+        "slug": "driving", "category": "transport", "icon": "car.fill",
+        "title": _t("开车与路况", "Driving"),
+        "zones": [
+            {"id": "inside_car", **_t("车里", "Inside the Car"),
+             "hint": "steering wheel, seatbelt, dashboard, gas pedal, gear shift, rearview mirror"},
+            {"id": "road_stops", **_t("路上", "Out on the Road"),
+             "hint": "gas station, parking lot, tunnel, toll booth, speed bump, road cone. Put traffic jam in extra_words (a situation, not one object)"},
+        ],
+    },
+    {
+        # on_the_bus 退役：公交内部件（window/bus window/aisle）太 generic，画出来分不清，图模型
+        # 每次都退回闪卡模式给每件印字幕（试过明令「无文字」也压不住 —— 物体本身不够独特）。
+        # subway_station 的物体（扶梯/闸机/线路图/售票机）个个独特、不需文字就能认，单区块成课。
+        # 公交内部件并入 extra_words 保留。
+        "slug": "bus_subway", "category": "transport", "icon": "tram.fill",
+        "title": _t("地铁站", "The Subway Station"),
+        "zones": [
+            {"id": "subway_station", **_t("地铁站", "The Subway Station"),
+             "hint": "turnstile, platform, escalator, subway map, ticket machine, subway train. "
+                     "Put handrail, stop button, fare card, priority seat, aisle in extra_words "
+                     "(generic bus-interior parts that don't read without a caption)"},
+        ],
+    },
+    {
+        "slug": "airport", "category": "transport", "icon": "airplane",
+        "title": _t("机场与飞机", "Airport & Plane"),
+        "zones": [
+            # boarding pass / departure board 离开文字就认不出（票根 / 黑屏），而它俩正是要教的词
+            # → 图模型只能把 BOARDING PASS、DEPARTURE 印上去（还拼错成 DEPARTURE BORD）。换成可画
+            # 的实物（登机口、行李转盘、塔台），抽象旅行词进 extra_words 保留。passport 靠护照形状 +
+            # 烫金地球认得出，内在烫金可留。
+            {"id": "at_the_airport", **_t("在机场", "At the Airport"),
+             "hint": "check-in counter, luggage cart, security gate, boarding gate, baggage carousel, control tower. "
+                     "Put boarding pass, departure board, passport in extra_words if they can only be told apart by "
+                     "printed words"},
+            {"id": "on_the_plane", **_t("飞机上", "On the Plane"),
+             "hint": "tray table, window shade, overhead bin, life vest, flight attendant, airplane seat"},
+        ],
+    },
+    {
+        "slug": "directions", "category": "transport", "icon": "map.fill",
+        "title": _t("问路与导航", "Asking Directions"),
+        "zones": [
+            {"id": "nav_tools", **_t("导航工具", "Finding the Way"),
+             "hint": "paper map, GPS on a phone, compass, signpost, landmark tower, street sign. "
+                     "Put turn, left, right, straight, block in extra_words — directions are not pointable objects"},
+            {"id": "junctions", **_t("路口", "Junctions"),
+             "hint": "intersection, crosswalk, corner, roundabout, overpass, pedestrian bridge"},
+        ],
+    },
+    {
+        # 店铺天生靠招牌辨识。试过明令「无招牌、只靠货品」，图模型照样把店名印上去（这个先验压
+        # 不住）—— 而且反而画得更少更含糊。所以接受店招：真实店铺本就有招牌，橱窗货品也能辨识，
+        # App 还叠自己的可点标签，英文店名只是轻微冗余，不像抽象词那样「离开文字就认不出」。
+        "slug": "shops", "category": "transport", "icon": "storefront.fill",
+        "title": _t("商店类型", "Types of Shops"),
+        "zones": [
+            {"id": "daily_shops", **_t("日常店铺", "Everyday Shops"),
+             "hint": "supermarket, convenience store, bakery, bookstore, flower shop, toy store — six storefronts in a row, "
+                     "each with its goods visible in the window (a cart, bread, books, flowers, toys)"},
+            {"id": "service_shops", **_t("服务店铺", "Service Shops"),
+             "hint": "barber shop, hair salon, laundromat, hardware store, pet shop, repair shop — six storefronts, "
+                     "each shown with the iconic objects of its trade (barber pole, styling chair, washing machines, tools, a puppy)"},
+        ],
+    },
+    {
+        "slug": "restaurant", "category": "transport", "icon": "fork.knife.circle.fill",
+        "title": _t("餐厅与咖啡馆", "Restaurant & Café"),
+        "zones": [
+            {"id": "dining_out", **_t("在餐厅", "Dining Out"),
+             "hint": "menu, waiter, booth, high chair, napkin holder, order pad. Put bill and tip in extra_words (paper marks / abstract)"},
+            {"id": "at_the_cafe", **_t("在咖啡馆", "At the Café"),
+             "hint": "coffee cup, straw, barista, pastry case, to-go cup, cafe counter"},
+        ],
+    },
+    {
+        "slug": "post", "category": "transport", "icon": "envelope.fill",
+        "title": _t("邮局与快递", "Post & Delivery"),
+        "zones": [
+            {"id": "post_office", **_t("邮局", "The Post Office"),
+             "hint": "envelope, stamp, postcard, mailbox, postal scale, mail slot"},
+            {"id": "delivery", **_t("快递", "Delivery"),
+             "hint": "parcel, delivery van, courier, shipping label, packing tape, cardboard box"},
+        ],
+    },
+    {
+        "slug": "hotel", "category": "transport", "icon": "bed.double.fill",
+        "title": _t("酒店与住宿", "Hotel & Lodging"),
+        "zones": [
+            {"id": "front_desk", **_t("前台与大堂", "Front Desk & Lobby"),
+             "hint": "reception desk, room card, bellhop, luggage trolley, lobby sofa, elevator button"},
+            {"id": "guest_room", **_t("客房", "The Guest Room"),
+             "hint": "minibar, room safe, hair dryer, bath towel, do-not-disturb sign, slippers"},
+        ],
+    },
+    {
+        "slug": "park", "category": "transport", "icon": "tree.fill",
+        "title": _t("公园与景点", "Park & Sights"),
+        "zones": [
+            {"id": "playground", **_t("游乐区", "The Playground"),
+             "hint": "swing, slide, seesaw, sandbox, pond, picnic table"},
+            {"id": "sights", **_t("景点", "The Sights"),
+             "hint": "statue, monument, ticket booth, map board, souvenir stand, viewpoint railing"},
         ],
     },
 ]
