@@ -380,22 +380,6 @@ actor APIService {
         }
     }
 
-    /// 拉今日句型指针（expressions/today.json）。每天 pipeline 轮换分类新生成一条后重写。失败返回 nil。
-    func fetchTodayExpression() async -> ExpressionToday? {
-        guard let url = URL(string: "\(baseURL)/expressions/today.json") else { return nil }
-        do {
-            var request = URLRequest(url: url)
-            request.cachePolicy = .reloadIgnoringLocalCacheData
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
-            let rewritten = rewriteURLs(data)
-            return try JSONDecoder().decode(ExpressionToday.self, from: rewritten)
-        } catch {
-            debugLog("⚠️ today expression fetch error: \(error.localizedDescription)")
-            return nil
-        }
-    }
-
     nonisolated func loadCachedExpressionIndexSync() -> [ExpressionGroup]? {
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("CastlingoEpisodes", isDirectory: true)

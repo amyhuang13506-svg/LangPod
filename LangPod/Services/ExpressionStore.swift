@@ -14,16 +14,6 @@ class ExpressionStore {
     private var loaded = false
     private var loadingGroups: Set<String> = []
 
-    /// 今日句型（跨大组，来自 expressions/today.json）。仅当日期是今天才展示。
-    var globalToday: ExpressionToday?
-    private var loadedToday = false
-
-    /// 当天有效的今日句型（过期自动隐藏）
-    var todayExpression: ExpressionToday? {
-        guard let t = globalToday, ExpressionAccessGate.isToday(t.date) else { return nil }
-        return t
-    }
-
     init() {
         self.selectedGroupId = UserDefaults.standard.string(forKey: "expressionGroup") ?? "reactions"
     }
@@ -38,26 +28,12 @@ class ExpressionStore {
             groups = cached
         }
         isLoading = true
-        loadTodayIfNeeded()
         Task {
             let remote = await APIService.shared.fetchExpressionIndex()
             if !remote.isEmpty { self.groups = remote }
             self.isLoading = false
             self.loaded = true
             self.loadGroupDetails(self.selectedGroupId)
-        }
-    }
-
-    /// 拉今日句型（每次会话一次）。顶部置顶卡用。
-    func loadTodayIfNeeded() {
-        guard !loadedToday else { return }
-        loadedToday = true
-        Task {
-            if let t = await APIService.shared.fetchTodayExpression() {
-                self.globalToday = t
-                // 顺带把它所属分类详情拉回，方便分类内定位 + NEW 角标
-                self.loadGroupDetails(t.groupId)
-            }
         }
     }
 
