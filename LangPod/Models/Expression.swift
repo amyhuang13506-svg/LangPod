@@ -6,15 +6,12 @@ import Foundation
 // MARK: - 免费闸门
 
 enum ExpressionFreeGate {
-    /// 每个分类免费开放的卡数 —— 所有小分类通用（含商务英语），不再有「免费分类」特判。
+    /// 每个大组 chip 免费开放的表达数 —— 免费单位是「大组」，不是分类。
+    /// 具体免费的是：该组第一个有内容分类的前 freeCount 条（判定在 ExpressionStore）。
     /// 免费范围固定不漂移：昨天能看的今天还能看（移动的付费墙会被当成 bug）。
-    /// 每天换新由每日任务的轮换负责，不靠移动闸门。
-    static let freePerCategory = 2
+    static let freeCount = 2
 
-    /// 分类内前 freePerCategory 条免费
-    static func isFree(index: Int) -> Bool { index < freePerCategory }
-
-    /// 每日任务「学一个句型」的轮换位：把「全部分类 × 免费位」摊平成一条序列，
+    /// 每日任务「学一个句型」的轮换位：把「免费入口 × 免费位」摊平成一条序列，
     /// 按本地日期取一个 —— 每天换一张，轮完一圈从头再来。
     static func dailySlot(total: Int) -> Int {
         guard total > 0 else { return 0 }

@@ -230,20 +230,20 @@ struct PatternsTabView: View {
         }
     }
 
-    /// 每日任务「学一个句型」深链：按日在「全部分类 × 免费位」里轮换一张免费卡。
+    /// 每日任务「学一个句型」深链：按日在「各组免费入口 × 免费位」里轮换一张免费卡。
     /// 分类还没加载到时保留 flag，等 groups onChange 再消费。
     private func consumeExpressionTaskDeepLinkIfNeeded() {
         guard TaskEngine.shared.pendingExpressionDeepLink else { return }
-        // 顺序与 groups 一致即可（内容变动时轮换位会漂，但每天仍是免费卡，可接受）
-        let cats = expressionStore.groups.flatMap(\.categories).filter { $0.count > 0 }
+        // 免费入口 = 每个大组的第一个有内容分类；免费表达就落在它的前 freeCount 条
+        let cats = expressionStore.freeEntryCategories
         guard !cats.isEmpty else { return }
         TaskEngine.shared.pendingExpressionDeepLink = false
 
-        let slot = ExpressionFreeGate.dailySlot(total: cats.count * ExpressionFreeGate.freePerCategory)
-        let category = cats[slot / ExpressionFreeGate.freePerCategory]
+        let slot = ExpressionFreeGate.dailySlot(total: cats.count * ExpressionFreeGate.freeCount)
+        let category = cats[slot / ExpressionFreeGate.freeCount]
         // 分类内容不足免费位数时收敛到最后一条
         let count = expressionStore.details[category.id]?.expressions.count ?? category.count
-        let index = min(slot % ExpressionFreeGate.freePerCategory, max(count - 1, 0))
+        let index = min(slot % ExpressionFreeGate.freeCount, max(count - 1, 0))
         pagerTarget = ExpressionPagerTarget(category: category, index: index)
     }
 
@@ -435,9 +435,10 @@ struct ExpressionPagerView: View {
     @State private var appeared = false
     @State private var showPaywall = false
 
-    /// 每个分类前 freePerCategory 条免费；其余页内容照常可见，只在动作按钮处拦
+    /// 免费单位 = 大组：只有组的免费入口分类前 freeCount 条免费；其余页内容照常可见，
+    /// 只在动作按钮处拦
     private func locked(_ index: Int) -> Bool {
-        isPro ? false : !ExpressionFreeGate.isFree(index: index)
+        store.isExpressionLocked(categoryId: item.id, index: index, isPro: isPro)
     }
 
     var body: some View {

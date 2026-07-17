@@ -88,4 +88,25 @@ class ExpressionStore {
         if let detail { details[id] = detail }
         return detail
     }
+
+    // MARK: - 免费闸门（免费单位 = 大组 chip）
+
+    /// 某分类是不是它所在大组的「免费分类」= 该组第一个有内容的分类。
+    /// 免费的表达只落在这个分类的前 ExpressionFreeGate.freeCount 条。
+    func isFreeCategory(_ categoryId: String) -> Bool {
+        guard let group = groups.first(where: { g in g.categories.contains { $0.id == categoryId } })
+        else { return true }   // 组结构未加载 → 保守放行（不误锁），加载后自然收敛
+        return group.categories.first { $0.count > 0 }?.id == categoryId
+    }
+
+    /// 单条表达是否锁定：非 Pro 时，只有「组的免费分类」的前 freeCount 条免费，其余全锁。
+    func isExpressionLocked(categoryId: String, index: Int, isPro: Bool) -> Bool {
+        if isPro { return false }
+        return !(index < ExpressionFreeGate.freeCount && isFreeCategory(categoryId))
+    }
+
+    /// 每个大组的免费入口分类（第一个有内容分类）——供每日任务深链定位免费表达。
+    var freeEntryCategories: [ExpressionCategoryIndexItem] {
+        groups.compactMap { group in group.categories.first { $0.count > 0 } }
+    }
 }

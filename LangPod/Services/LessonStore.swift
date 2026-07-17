@@ -13,32 +13,40 @@ enum LessonSection: String {
 class LessonStore {
     var countries: [LessonCountry] = LessonCountry.defaults
     var lessons: [SceneLessonIndexItem] = [] {
-        didSet { freeSceneIds = Self.computeFreeIds(lessons) }
+        // 生活场景：免费单位 = 国家（lessons 已是当前国家的 index），每国共 freeCount 课
+        didSet { freeSceneIds = Self.earliestFreeIds(lessons) }
     }
     var isLoadingIndex = false
 
-    // MARK: - 免费闸门（每个分类前 N 课免费）
+    // MARK: - 免费闸门
 
-    /// 每个小分类免费开放的课数 —— 日常词汇 / 生活场景 通用。
-    /// 与句型的 ExpressionFreeGate.freePerCategory 对齐。
-    static let freePerCategory = 2
+    /// 免费开放课数。生活场景按「每国」、日常词汇按「每主题分类」，句型按「每大组」，
+    /// 都取这个数；与句型 ExpressionFreeGate.freeCount 对齐。
+    static let freeCount = 2
 
-    /// 免费课 id（分类内按 id 稳定排序取前 freePerCategory 个）。
-    /// 随 lessons / themeLessons 重算：切国家 → 重算当前国家的免费集。
+    /// 免费课 id。随 lessons / themeLessons 重算：切国家 → 重算当前国家的免费集。
     private(set) var freeSceneIds: Set<String> = []
     private(set) var freeThemeIds: Set<String> = []
 
-    /// 分类内取「最早的 N 课」免费。按 date 升序（date = 内容创建日，pipeline 落盘时必填）：
-    /// 新课 date 更晚 → 永远排在后面 → 不会把已免费的课挤成锁。内容在持续生成，
-    /// 闸门必须对「新增」稳定，否则用户昨天能看的课今天变锁（像 bug）。
-    /// 免费占比随分类变大自然稀释。每日课不占名额（走当天免费逻辑）。
-    private static func computeFreeIds(_ items: [SceneLessonIndexItem]) -> Set<String> {
+    /// 稳定排序取最早的 freeCount 课。按 date 升序（date = 内容创建日，pipeline 落盘时必填）：
+    /// 新课 date 更晚 → 永远排在后面 → 不会把已免费的课挤成锁（内容在持续生成，
+    /// 闸门必须对「新增」稳定，否则用户昨天能看的课今天变锁，像 bug）。
+    private static func sortedByDate(_ items: [SceneLessonIndexItem]) -> [SceneLessonIndexItem] {
+        items.filter { !$0.isDaily }.sorted { a, b in
+            a.date == b.date ? a.id < b.id : a.date < b.date
+        }
+    }
+
+    /// 生活场景：整个国家（跨全部分类）取最早的 freeCount 课免费。
+    private static func earliestFreeIds(_ items: [SceneLessonIndexItem]) -> Set<String> {
+        Set(sortedByDate(items).prefix(freeCount).map(\.id))
+    }
+
+    /// 日常词汇：每个主题分类各取最早的 freeCount 课免费（结构无国家维度，分类即单位）。
+    private static func perCategoryFreeIds(_ items: [SceneLessonIndexItem]) -> Set<String> {
         var result: Set<String> = []
         for (_, list) in Dictionary(grouping: items.filter { !$0.isDaily }, by: \.category) {
-            let ranked = list.sorted { a, b in
-                a.date == b.date ? a.id < b.id : a.date < b.date
-            }
-            result.formUnion(ranked.prefix(freePerCategory).map(\.id))
+            result.formUnion(sortedByDate(list).prefix(freeCount).map(\.id))
         }
         return result
     }
@@ -51,7 +59,8 @@ class LessonStore {
     }
 
     var themeLessons: [SceneLessonIndexItem] = [] {
-        didSet { freeThemeIds = Self.computeFreeIds(themeLessons) }
+        // 日常词汇：免费单位 = 主题分类（不变），每分类共 freeCount 课
+        didSet { freeThemeIds = Self.perCategoryFreeIds(themeLessons) }
     }
     var isLoadingThemeIndex = false
     private var loadedTheme = false
@@ -197,8 +206,8 @@ class LessonStore {
     }
 
     /// 该课堂是否免费（每日课不算，它走当天免费逻辑）。
-    /// 客户端按「每个分类前 freePerCategory 课」派生，不再读内容里的 is_free 标记
-    /// —— 免费范围跟着内容自动扩展，pipeline 加课不用改标记也不用发版。
+    /// 客户端派生：生活场景=每国前 freeCount 课，日常词汇=每主题分类前 freeCount 课。
+    /// 不读内容里的 is_free 标记 —— 免费范围跟着内容自动扩展，pipeline 加课不用改标记也不用发版。
     func isFreeSample(_ item: SceneLessonIndexItem) -> Bool {
         if item.isDaily { return false }
         return freeSceneIds.contains(item.id) || freeThemeIds.contains(item.id)
