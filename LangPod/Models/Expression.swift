@@ -38,13 +38,6 @@ enum ExpressionSection: String, CaseIterable {
         case .business: "商务英语"
         }
     }
-
-    var icon: String {
-        switch self {
-        case .social: "bubble.left.and.bubble.right.fill"
-        case .business: "briefcase.fill"
-        }
-    }
 }
 
 struct ExpressionGroup: Codable, Identifiable, Hashable {

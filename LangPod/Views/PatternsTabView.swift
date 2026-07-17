@@ -133,23 +133,19 @@ struct PatternsTabView: View {
             expressionStore.section = section
             Analytics.track(.patternSectionSwitch, params: ["section": section.rawValue])
         } label: {
-            HStack(spacing: 6) {
-                Image(systemName: section.icon)
-                    .font(.system(size: 13, weight: .semibold))
-                Text(section.zh)
-                    .font(.system(size: 14, weight: selected ? .bold : .medium))
-            }
-            .foregroundColor(selected ? .white : Color.textSecondary)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 11)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(selected ? Color.appPrimary : Color.white)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(selected ? Color.clear : Color.border, lineWidth: 1)
-            )
+            Text(section.zh)
+                .font(.system(size: 15, weight: selected ? .bold : .semibold))
+                .foregroundColor(selected ? .white : Color.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(selected ? Color.appPrimary : Color.white)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(selected ? Color.clear : Color.border, lineWidth: 1)
+                )
         }
         .buttonStyle(.plain)
     }
