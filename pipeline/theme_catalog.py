@@ -179,6 +179,192 @@ THEME_BOARDS = [
              "hint": "mailbox, fire hydrant, fountain, billboard, vending machine, parking meter, fence"},
         ],
     },
+
+    # ================= B1 批次：食物 +10 =================
+    {
+        "slug": "meat_eggs", "category": "grocery", "icon": "fork.knife",
+        "title": _t("肉与蛋", "Meat & Eggs"),
+        "zones": [
+            {"id": "meat_counter", **_t("肉柜", "At the Meat Counter"),
+             "hint": "beef, pork, chicken, lamb, steak, ribs, ham, bacon — raw cuts laid out on a counter"},
+            {"id": "eggs_and_cuts", **_t("蛋与部位", "Eggs & Cuts"),
+             "hint": "egg, egg yolk, eggshell, drumstick, chicken wing, ground meat, sausage; raw/cooked/tender expressions go to extra_words"},
+        ],
+    },
+    {
+        "slug": "seafood", "category": "grocery", "icon": "fish.fill",
+        "title": _t("海鲜", "Seafood"),
+        "zones": [
+            {"id": "fish_stall", **_t("鱼摊", "The Fish Stall"),
+             "hint": "fish, salmon, tuna, fish fillet, fish head, fish tail, ice tray, tongs"},
+            {"id": "shellfish", **_t("贝类与虾蟹", "Shellfish"),
+             "hint": "shrimp, crab, lobster, clam, oyster, scallop, squid, mussel"},
+        ],
+    },
+    {
+        "slug": "dairy", "category": "grocery", "icon": "takeoutbag.and.cup.and.straw.fill",
+        "title": _t("乳制品", "Dairy"),
+        "zones": [
+            {"id": "milk_shelf", **_t("冷藏柜", "The Dairy Case"),
+             "hint": "milk carton, yogurt cup, butter, cheese, cream, sour cream — items on a fridge shelf"},
+            {"id": "cheese_board", **_t("奶酪与更多", "Cheese & More"),
+             "hint": "cheese slice, cheese wheel, shredded cheese, ice cream, whipped cream, condensed milk"},
+        ],
+    },
+    {
+        "slug": "staples", "category": "grocery", "icon": "birthday.cake.fill",
+        "title": _t("主食与面点", "Bread & Staples"),
+        "zones": [
+            {"id": "bakery", **_t("面包房", "At the Bakery"),
+             "hint": "bread loaf, baguette, bun, croissant, bagel, toast, muffin, donut"},
+            {"id": "grains", **_t("米面谷物", "Rice & Grains"),
+             "hint": "rice, noodles, pasta, flour, oatmeal, cereal, corn tortilla, dumpling"},
+        ],
+    },
+    {
+        "slug": "drinks", "category": "grocery", "icon": "cup.and.saucer.fill",
+        "title": _t("饮料", "Drinks"),
+        "zones": [
+            {"id": "cold_drinks", **_t("冷饮", "Cold Drinks"),
+             "hint": "water bottle, soda can, juice box, iced tea, smoothie, milkshake, sports drink"},
+            {"id": "hot_drinks", **_t("热饮", "Hot Drinks"),
+             "hint": "coffee mug, teapot, tea bag, hot chocolate, espresso cup, thermos, kettle steam"},
+        ],
+    },
+    {
+        "slug": "seasoning", "category": "grocery", "icon": "drop.fill",
+        "title": _t("调味料", "Seasonings"),
+        "zones": [
+            {"id": "spice_rack", **_t("调料架", "The Spice Rack"),
+             "hint": "salt shaker, pepper mill, sugar jar, chili powder, cinnamon stick, garlic clove, herb leaves"},
+            {"id": "sauces", **_t("酱料与油", "Sauces & Oils"),
+             "hint": "soy sauce bottle, vinegar, cooking oil, ketchup, mustard, mayonnaise, honey jar, hot sauce"},
+        ],
+    },
+    {
+        "slug": "snacks", "category": "grocery", "icon": "popcorn.fill",
+        "title": _t("零食与甜点", "Snacks & Sweets"),
+        "zones": [
+            {"id": "snack_aisle", **_t("零食货架", "The Snack Aisle"),
+             "hint": "potato chips bag, popcorn, cookies, crackers, nuts, candy, chocolate bar, gum"},
+            {"id": "desserts", **_t("甜点", "Desserts"),
+             "hint": "cake slice, cupcake, pie, pudding, jelly, lollipop, marshmallow, waffle"},
+        ],
+    },
+    {
+        "slug": "tableware", "category": "grocery", "icon": "fork.knife.circle.fill",
+        "title": _t("餐具与厨具", "Tableware & Utensils"),
+        "zones": [
+            {"id": "table_setting", **_t("餐桌摆盘", "The Table Setting"),
+             "hint": "plate, fork, table knife, spoon, chopsticks, napkin, drinking glass, placemat"},
+            {"id": "kitchen_utensils", **_t("厨房小工具", "Kitchen Utensils"),
+             "hint": "ladle, spatula, whisk, peeler, grater, measuring cup, rolling pin, colander"},
+        ],
+    },
+    {
+        "slug": "cooking_verbs", "category": "grocery", "icon": "flame.fill",
+        "title": _t("烹饪动作", "Cooking Actions"),
+        "zones": [
+            {"id": "prep_actions", **_t("备菜", "Prepping"),
+             "hint": "each action as its own small vignette of hands: chopping a carrot, peeling a potato, "
+                     "washing lettuce, cracking an egg, slicing bread, grating cheese"},
+            {"id": "heat_actions", **_t("下锅", "Cooking with Heat"),
+             "hint": "each action as its own small vignette: frying in a pan, boiling a pot, steaming a basket, "
+                     "baking in an oven, grilling on a rack, stirring with a spoon"},
+        ],
+    },
+    {
+        "slug": "supermarket", "category": "grocery", "icon": "cart.fill",
+        "title": _t("逛超市", "At the Supermarket"),
+        "zones": [
+            {"id": "shopping", **_t("挑货", "Down the Aisles"),
+             "hint": "shopping cart, shopping basket, aisle shelf, price tag, freezer, produce scale, trolley"},
+            {"id": "checkout", **_t("结账", "At the Checkout"),
+             "hint": "cash register, conveyor belt, barcode scanner, receipt, grocery bag, card reader, coupon"},
+        ],
+    },
+
+    # ================= B1 批次：家居 +8 =================
+    {
+        "slug": "living_room", "category": "home", "icon": "sofa.fill",
+        "title": _t("客厅", "The Living Room"),
+        "zones": [
+            {"id": "seating", **_t("沙发区", "The Seating Area"),
+             "hint": "sofa, armchair, coffee table, cushion, throw blanket, rug, floor lamp"},
+            {"id": "tv_wall", **_t("电视墙", "The TV Wall"),
+             "hint": "television, remote control, bookshelf, picture frame, houseplant, curtain, wall clock"},
+        ],
+    },
+    {
+        "slug": "bedroom", "category": "home", "icon": "bed.double.fill",
+        "title": _t("卧室", "The Bedroom"),
+        "zones": [
+            {"id": "the_bed", **_t("床", "The Bed"),
+             "hint": "bed, pillow, blanket, bed sheet, mattress, headboard, nightstand, alarm clock"},
+            {"id": "storage", **_t("收纳", "Storage & Corners"),
+             "hint": "wardrobe, closet, dresser, drawer, hanger, mirror, laundry basket, slippers"},
+        ],
+    },
+    {
+        "slug": "bathroom", "category": "home", "icon": "shower.fill",
+        "title": _t("浴室", "The Bathroom"),
+        "zones": [
+            {"id": "wash_area", **_t("洗漱区", "The Wash Area"),
+             "hint": "sink basin, faucet, mirror, toothbrush, toothpaste, soap, hand towel, razor"},
+            {"id": "shower_area", **_t("淋浴与马桶", "Shower & Toilet"),
+             "hint": "shower head, bathtub, shower curtain, toilet, toilet paper, bath towel, shampoo bottle, bath mat"},
+        ],
+    },
+    {
+        "slug": "cleaning", "category": "home", "icon": "bubbles.and.sparkles.fill",
+        "title": _t("家务与清洁", "Chores & Cleaning"),
+        "zones": [
+            {"id": "cleaning_tools", **_t("清洁工具", "Cleaning Tools"),
+             "hint": "broom, dustpan, mop, bucket, vacuum cleaner, feather duster, rubber gloves, trash bag"},
+            {"id": "supplies", **_t("清洁用品", "Supplies"),
+             "hint": "detergent bottle, dish soap, sponge, scrub brush, spray bottle, paper towel roll, laundry pod"},
+        ],
+    },
+    {
+        "slug": "tools", "category": "home", "icon": "hammer.fill",
+        "title": _t("工具与维修", "Tools & Repairs"),
+        "zones": [
+            {"id": "toolbox", **_t("工具箱", "The Toolbox"),
+             "hint": "hammer, screwdriver, wrench, pliers, nail, screw, tape measure, toolbox"},
+            {"id": "around_the_house", **_t("修修补补", "Fixing Things"),
+             "hint": "ladder, drill, saw, paint can, paintbrush, duct tape, light bulb, flashlight"},
+        ],
+    },
+    {
+        "slug": "appliances", "category": "home", "icon": "washer.fill",
+        "title": _t("家电", "Appliances"),
+        "zones": [
+            {"id": "big_appliances", **_t("大件", "The Big Ones"),
+             "hint": "washing machine, dryer, dishwasher, air conditioner, water heater, vacuum robot, heater"},
+            {"id": "small_appliances", **_t("小家电", "Small Appliances"),
+             "hint": "toaster, blender, rice cooker, electric fan, hair dryer, iron, coffee maker, power strip"},
+        ],
+    },
+    {
+        "slug": "balcony_garden", "category": "home", "icon": "leaf.fill",
+        "title": _t("阳台与庭院", "Balcony & Yard"),
+        "zones": [
+            {"id": "balcony", **_t("阳台", "On the Balcony"),
+             "hint": "clothesline, clothespin, drying rack, potted plant, railing, folding chair, watering can"},
+            {"id": "yard", **_t("庭院", "In the Yard"),
+             "hint": "lawn, garden hose, rake, shovel, flowerbed, mailbox post, garden gnome, barbecue grill"},
+        ],
+    },
+    {
+        "slug": "building", "category": "home", "icon": "building.2.fill",
+        "title": _t("公寓与楼道", "Apartment Building"),
+        "zones": [
+            {"id": "entrance", **_t("门口", "The Entrance"),
+             "hint": "front door, doorbell, door handle, keyhole, doormat, intercom panel, mailbox wall, house key"},
+            {"id": "hallway", **_t("楼道", "Halls & Stairs"),
+             "hint": "staircase, handrail, elevator door, hallway light, fire extinguisher, trash chute, parking garage"},
+        ],
+    },
 ]
 
 
