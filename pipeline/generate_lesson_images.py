@@ -91,10 +91,11 @@ HARD_RULES = (
 # （否则双重标签；且图内词可能与 GPT 选词不一致）。
 DAILY_HARD_RULES = (
     " ABSOLUTE RULES: NO text anywhere in the image — no labels, no captions, no title, "
-    "no letters at all. The app overlays its own interactive labels. NO real brand logos "
-    "or trademarks. Every listed item must be drawn large enough to be clearly "
-    "recognizable, fully visible, and NOT overlapping with other listed items. Spread "
-    "the listed items across the board."
+    "no letters at all. The app overlays its own interactive labels. NO brand logos, "
+    "trademarks, swooshes, stripes or any other mark resembling a real brand — draw every "
+    "item completely plain and unbranded. Every listed item must be drawn large enough to "
+    "be clearly recognizable, fully visible, and NOT overlapping with other listed items. "
+    "Spread the listed items across the board."
 )
 
 
