@@ -96,6 +96,7 @@ struct ContentView: View {
                     .environment(vocabularyStore)
                     .environment(lessonStore)
                     .environment(sentenceStore)
+                    .environment(subscriptionManager)
             }
         } else {
             OnboardingView()

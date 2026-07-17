@@ -10,7 +10,6 @@ struct PatternsTabView: View {
 
     @State private var expressionStore = ExpressionStore()
     @State private var showMySentences = false
-    @State private var showPaywall = false
     @State private var pagerTarget: ExpressionPagerTarget?
     @State private var allTarget: ExpressionCategoryIndexItem?
 
@@ -63,30 +62,24 @@ struct PatternsTabView: View {
                 item: target.category,
                 startIndex: target.index,
                 store: expressionStore,
-                isPro: subscriptionManager.isProUser,
-                onSubscribe: { requestPaywallAfterDismiss() }
+                isPro: subscriptionManager.isProUser
             )
             .environment(sentenceStore)
+            .environment(subscriptionManager)
         }
         .fullScreenCover(item: $allTarget) { item in
             ExpressionCategoryAllView(
                 item: item,
                 store: expressionStore,
-                isPro: subscriptionManager.isProUser,
                 onSelect: { index in
                     pagerTarget = ExpressionPagerTarget(category: item, index: index)
-                },
-                onLocked: { requestPaywallAfterDismiss() }
+                }
             )
             .environment(sentenceStore)
         }
         .fullScreenCover(isPresented: $showMySentences) {
             MySentencesView()
                 .environment(sentenceStore)
-        }
-        .sheet(isPresented: $showPaywall) {
-            PaywallView()
-                .environment(subscriptionManager)
         }
     }
 
@@ -183,26 +176,15 @@ struct PatternsTabView: View {
 
     @ViewBuilder
     private func categorySection(_ item: ExpressionCategoryIndexItem) -> some View {
-        // 分类可进入 = Pro 或 免费分类（寒暄开场，因它含免费首条）；否则整类锁
-        let hasAccess = categoryHasAccess(item)
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(item.zh)
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(Color.textPrimary)
-                if !hasAccess {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color.warning)
-                }
                 Spacer()
                 Button {
-                    if !hasAccess {
-                        trackPaywall(item)
-                        showPaywall = true
-                    } else {
-                        allTarget = item
-                    }
+                    // 浏览不放锁，「查看更多」直接进网格页
+                    allTarget = item
                 } label: {
                     HStack(spacing: 3) {
                         Text("查看更多")
@@ -218,18 +200,13 @@ struct PatternsTabView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 12) {
                         ForEach(Array(detail.expressions.enumerated()), id: \.element.id) { index, expression in
-                            let cardLocked = exprLocked(item.id, index)
+                            // 浏览不放锁，点卡直接进翻页详情；锁在详情页标题 + 动作按钮
                             ExpressionSceneCard(
                                 expression: expression,
                                 fallbackCover: item.cover ?? "",
-                                locked: cardLocked
+                                locked: false
                             ) {
-                                if cardLocked {
-                                    trackPaywall(item)
-                                    showPaywall = true
-                                } else {
-                                    pagerTarget = ExpressionPagerTarget(category: item, index: index)
-                                }
+                                pagerTarget = ExpressionPagerTarget(category: item, index: index)
                             }
                         }
                     }
@@ -268,28 +245,6 @@ struct PatternsTabView: View {
         let count = expressionStore.details[category.id]?.expressions.count ?? category.count
         let index = min(slot % ExpressionFreeGate.freePerCategory, max(count - 1, 0))
         pagerTarget = ExpressionPagerTarget(category: category, index: index)
-    }
-
-    /// 每个分类都含免费卡 → 分类恒可进入（锁只落在单条上）
-    private func categoryHasAccess(_ item: ExpressionCategoryIndexItem) -> Bool { true }
-
-    /// 单条表达是否锁定：每个分类前 freePerCategory 条免费，其余需订阅
-    private func exprLocked(_ categoryId: String, _ index: Int) -> Bool {
-        if subscriptionManager.isProUser { return false }
-        return !ExpressionFreeGate.isFree(index: index)
-    }
-
-    private func trackPaywall(_ item: ExpressionCategoryIndexItem) {
-        Analytics.track(.patternPaywallView, params: [
-            "category": item.id, "source": "patterns_tab",
-        ])
-    }
-
-    /// 子页（网格/翻页）里的锁定项请求付费墙：先等子页收起，再弹 paywall（避免双层 cover）
-    private func requestPaywallAfterDismiss() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            showPaywall = true
-        }
     }
 
     private var emptyState: some View {
@@ -387,11 +342,8 @@ struct ExpressionSceneCard: View {
 struct ExpressionCategoryAllView: View {
     let item: ExpressionCategoryIndexItem
     let store: ExpressionStore
-    let isPro: Bool
     /// 点卡片回调（父级负责打开翻页详情，避免双层 fullScreenCover 叠加崩溃）
     let onSelect: (Int) -> Void
-    /// 点锁定卡回调（父级弹付费墙）
-    let onLocked: () -> Void
 
     @Environment(\.dismiss) private var dismiss
 
@@ -399,11 +351,6 @@ struct ExpressionCategoryAllView: View {
         GridItem(.flexible(), spacing: 12),
         GridItem(.flexible(), spacing: 12),
     ]
-
-    /// 每个分类前 freePerCategory 条免费
-    private func locked(_ index: Int) -> Bool {
-        isPro ? false : !ExpressionFreeGate.isFree(index: index)
-    }
 
     var body: some View {
         ZStack {
@@ -416,15 +363,15 @@ struct ExpressionCategoryAllView: View {
                     if let detail = store.details[item.id] {
                         LazyVGrid(columns: columns, spacing: 12) {
                             ForEach(Array(detail.expressions.enumerated()), id: \.element.id) { index, expression in
-                                let cardLocked = locked(index)
+                                // 浏览不放锁，点卡直接进翻页详情；锁在详情页标题 + 动作按钮
                                 ExpressionSceneCard(
                                     expression: expression,
                                     fallbackCover: item.cover ?? "",
-                                    locked: cardLocked,
+                                    locked: false,
                                     onTap: {
                                         dismiss()
                                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                                            if cardLocked { onLocked() } else { onSelect(index) }
+                                            onSelect(index)
                                         }
                                     },
                                     width: nil
@@ -480,14 +427,15 @@ struct ExpressionPagerView: View {
     let startIndex: Int
     let store: ExpressionStore
     let isPro: Bool
-    let onSubscribe: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(SentenceStore.self) private var sentenceStore
+    @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var pageIndex: Int = 0
     @State private var appeared = false
+    @State private var showPaywall = false
 
-    /// 每个分类前 freePerCategory 条免费；其余页显示付费墙占位（防左右滑绕过闸门）
+    /// 每个分类前 freePerCategory 条免费；其余页内容照常可见，只在动作按钮处拦
     private func locked(_ index: Int) -> Bool {
         isPro ? false : !ExpressionFreeGate.isFree(index: index)
     }
@@ -502,16 +450,20 @@ struct ExpressionPagerView: View {
                 if let detail = store.details[item.id] {
                     TabView(selection: $pageIndex) {
                         ForEach(Array(detail.expressions.enumerated()), id: \.element.id) { index, expression in
-                            Group {
-                                if locked(index) {
-                                    lockedPage
-                                } else {
-                                    ExpressionPageView(expression: expression, categoryZh: detail.zh)
-                                        .onAppear {
-                                            // 每日任务：看了一条真实表达卡（锁定占位页不算；TaskEngine 按日去重）
-                                            NotificationCenter.default.post(name: .taskEventExpressionViewed, object: nil)
-                                        }
+                            ExpressionPageView(
+                                expression: expression,
+                                categoryZh: detail.zh,
+                                locked: locked(index),
+                                onGated: {
+                                    Analytics.track(.patternPaywallView, params: [
+                                        "category": item.id, "source": "pattern_pager",
+                                    ])
+                                    showPaywall = true
                                 }
+                            )
+                            .onAppear {
+                                // 每日任务：看了一条真实表达卡（TaskEngine 按日去重）
+                                NotificationCenter.default.post(name: .taskEventExpressionViewed, object: nil)
                             }
                             .tag(index)
                         }
@@ -532,33 +484,9 @@ struct ExpressionPagerView: View {
         .task {
             _ = await store.categoryDetail(id: item.id)
         }
-    }
-
-    private var lockedPage: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Image(systemName: "lock.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(Color.warning)
-            Text("订阅解锁全部句型")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(Color.textPrimary)
-            Text("免费仅体验寒暄开场的第一条")
-                .font(.system(size: 14))
-                .foregroundStyle(Color.textSecondary)
-            Button {
-                dismiss()
-                onSubscribe()
-            } label: {
-                Text("查看订阅")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 25))
-            }
-            .padding(.horizontal, 40)
-            Spacer()
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+                .environment(subscriptionManager)
         }
     }
 
@@ -589,6 +517,9 @@ struct ExpressionPagerView: View {
 struct ExpressionPageView: View {
     let expression: Expression
     let categoryZh: String
+    /// 锁定条：内容照常显示，发音/收藏/对话/例句按钮触发 onGated（弹付费墙）
+    var locked: Bool = false
+    var onGated: () -> Void = {}
 
     @Environment(SentenceStore.self) private var sentenceStore
     @State private var toast: String?
@@ -611,9 +542,16 @@ struct ExpressionPageView: View {
                 // 标题行：表达 + 意思，右上角 🔊 发音 / ＋ 加入我的句子（去掉文字按钮）
                 HStack(alignment: .top, spacing: 10) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(expression.english)
-                            .font(.system(size: 22, weight: .bold, design: .serif))
-                            .foregroundStyle(Color.textPrimary)
+                        HStack(alignment: .center, spacing: 7) {
+                            Text(expression.english)
+                                .font(.system(size: 22, weight: .bold, design: .serif))
+                                .foregroundStyle(Color.textPrimary)
+                            if locked {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.warning)
+                            }
+                        }
                         Text(expression.meaningZh)
                             .font(.system(size: 14))
                             .foregroundStyle(Color.textSecondary)
@@ -707,6 +645,7 @@ struct ExpressionPageView: View {
 
     private func dialogueBubble(_ line: ExpressionDialogueLine) -> some View {
         Button {
+            if locked { onGated(); return }
             LessonAudioPlayer.shared.play(line.audio) {
                 WordSpeaker.shared.speakSentence(line.en)
             }
@@ -754,6 +693,7 @@ struct ExpressionPageView: View {
 
     private var speakButton: some View {
         Button {
+            if locked { onGated(); return }
             LessonAudioPlayer.shared.play(expression.audio) {
                 WordSpeaker.shared.speakSentence(expression.english.replacingOccurrences(of: "___", with: "something"))
             }
@@ -768,6 +708,7 @@ struct ExpressionPageView: View {
 
     private var saveButton: some View {
         Button {
+            if locked { onGated(); return }
             guard !saved else { return }
             let added = sentenceStore.add(SavedSentence(
                 english: expression.english,
@@ -801,6 +742,7 @@ struct ExpressionPageView: View {
 
     private func exampleRow(_ example: ExpressionExample) -> some View {
         Button {
+            if locked { onGated(); return }
             LessonAudioPlayer.shared.play(example.audio) {
                 WordSpeaker.shared.speakSentence(example.en)
             }

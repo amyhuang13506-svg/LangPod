@@ -20,7 +20,6 @@ struct VocabularyView: View {
     @Environment(LessonStore.self) private var lessonStore
 
     @State private var selectedLesson: LessonOpenTarget?
-    @State private var showPaywall = false
     @State private var showMyVocabulary = false
     @State private var allTarget: LessonCategoryTarget?
 
@@ -53,6 +52,7 @@ struct VocabularyView: View {
                 .environment(store)
                 .environment(lessonStore)
                 .environment(sentenceStore)
+                .environment(subscriptionManager)
         }
         .fullScreenCover(isPresented: $showMyVocabulary) {
             MyVocabularyView()
@@ -64,16 +64,12 @@ struct VocabularyView: View {
             LessonCategoryAllView(
                 title: target.title,
                 lessons: target.lessons,
-                isLocked: { isLocked($0) },
+                isLocked: { _ in false },   // 浏览不放锁，锁在详情页标题；点进去动作才拦
                 isFree: { !subscriptionManager.isProUser && lessonStore.isFreeSample($0) },
                 isCompleted: { lessonStore.isCompleted($0.id) }
             ) { item in
                 open(item)
             }
-        }
-        .sheet(isPresented: $showPaywall) {
-            PaywallView()
-                .environment(subscriptionManager)
         }
     }
 
@@ -200,7 +196,7 @@ struct VocabularyView: View {
                     ForEach(lessonStore.themeLessonsInSelectedCategory) { item in
                         LessonCoverCard(
                             item: item,
-                            locked: isLocked(item),
+                            locked: false,   // 浏览不放锁，锁移到详情页标题；点进去动作才拦
                             free: !subscriptionManager.isProUser && lessonStore.isFreeSample(item),
                             completed: lessonStore.isCompleted(item.id),
                             onTap: {
@@ -275,7 +271,7 @@ struct VocabularyView: View {
                     ForEach(lessons) { item in
                         LessonCoverCard(
                             item: item,
-                            locked: isLocked(item),
+                            locked: false,   // 浏览不放锁，锁移到详情页标题；点进去动作才拦
                             free: !subscriptionManager.isProUser && lessonStore.isFreeSample(item),
                             completed: lessonStore.isCompleted(item.id),
                             onTap: { open(item) }
@@ -309,24 +305,10 @@ struct VocabularyView: View {
         .padding(.top, 80)
     }
 
-    private func isLocked(_ item: SceneLessonIndexItem) -> Bool {
-        if subscriptionManager.isProUser { return false }
-        // 今日每日课当天免费（与 LessonAccessGate.canAccess 一致）
-        if item.isDaily && LessonAccessGate.isToday(item.date) { return false }
-        return !lessonStore.isFreeSample(item)
-    }
-
-    /// 打开课堂。country 缺省用当前所选国家；今日全局卡/主题课传各自的国家。
+    /// 打开课堂。锁定课不再在入口拦——直接进详情看内容，动作按钮才弹付费墙。
+    /// country 缺省用当前所选国家；今日全局卡/主题课传各自的国家。
     private func open(_ item: SceneLessonIndexItem, country: LessonCountry? = nil) {
-        if isLocked(item) {
-            Analytics.track(.lessonPaywallView, params: [
-                "lesson_id": item.id,
-                "country": (country ?? lessonStore.currentCountry).id,
-            ])
-            showPaywall = true
-        } else {
-            selectedLesson = LessonOpenTarget(item: item, country: country ?? lessonStore.currentCountry)
-        }
+        selectedLesson = LessonOpenTarget(item: item, country: country ?? lessonStore.currentCountry)
     }
 }
 

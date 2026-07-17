@@ -10,6 +10,7 @@ struct LessonDetailView: View {
     @Environment(VocabularyStore.self) private var vocabularyStore
     @Environment(LessonStore.self) private var lessonStore
     @Environment(SentenceStore.self) private var sentenceStore
+    @Environment(SubscriptionManager.self) private var subscriptionManager
 
     @State private var lesson: SceneLesson?
     @State private var loadFailed = false
@@ -17,6 +18,21 @@ struct LessonDetailView: View {
     @State private var toast: String?
     @State private var addedAll = false
     @State private var showRolePlay = false
+    @State private var showPaywall = false
+
+    /// 锁定课：仍可进详情看内容，只在动作按钮处拦。免费的前 2 张 / 今日课 / Pro 不锁。
+    private var isLockedLesson: Bool {
+        lessonStore.isLocked(item, isPro: subscriptionManager.isProUser)
+    }
+
+    /// 动作闸门：锁定时弹付费墙、拦下动作；否则照常执行。返回 true = 已拦截。
+    @discardableResult
+    private func gatedByPaywall() -> Bool {
+        guard isLockedLesson else { return false }
+        Analytics.track(.lessonPaywallView, params: ["lesson_id": item.id, "country": country.id])
+        showPaywall = true
+        return true
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -56,10 +72,22 @@ struct LessonDetailView: View {
             LessonWordCard(
                 word: word,
                 accent: country.accent,
-                lessonTitle: lesson?.titleZh ?? item.titleZh
+                lessonTitle: lesson?.titleZh ?? item.titleZh,
+                locked: isLockedLesson,
+                onGated: {
+                    // 关掉单词卡再弹付费墙，避免 sheet 叠 sheet 的模态冲突
+                    selectedWord = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        gatedByPaywall()
+                    }
+                }
             )
             .environment(vocabularyStore)
             .environment(sentenceStore)
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+                .environment(subscriptionManager)
         }
     }
 
@@ -120,10 +148,17 @@ struct LessonDetailView: View {
                     .padding(.horizontal, 10).padding(.vertical, 5)
                     .background(Capsule().fill(Color.white))
             }
-            Text(lesson.titleZh)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(Color.textPrimary)
-                .padding(.top, 6)
+            HStack(alignment: .center, spacing: 8) {
+                Text(lesson.titleZh)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(Color.textPrimary)
+                if isLockedLesson {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 15))
+                        .foregroundColor(Color.warning)
+                }
+            }
+            .padding(.top, 6)
             Text("\(lesson.titleEn) · \(lesson.wordCount) 词")
                 .font(.system(size: 14))
                 .foregroundColor(Color.textSecondary)
@@ -230,6 +265,7 @@ struct LessonDetailView: View {
         let saved = sentenceStore.isSaved(sentence.english)
         return HStack(alignment: .top, spacing: 10) {
             Button {
+                if gatedByPaywall() { return }
                 LessonAudioPlayer.shared.play(sentence.audio) {
                     WordSpeaker.shared.speakSentence(sentence.english, accent: country.accent)
                 }
@@ -256,6 +292,7 @@ struct LessonDetailView: View {
 
             // 加入我的句子（场景 = 课堂标题）
             Button {
+                if gatedByPaywall() { return }
                 guard !saved, let lesson else { return }
                 let added = sentenceStore.add(SavedSentence(
                     english: sentence.english,
@@ -331,6 +368,7 @@ struct LessonDetailView: View {
 
                 if hasRoleplay {
                     Button {
+                        if gatedByPaywall() { return }
                         showRolePlay = true
                     } label: {
                         Text("模拟现场对话")
@@ -387,6 +425,7 @@ struct LessonDetailView: View {
     }
 
     private func addAllWords() {
+        if gatedByPaywall() { return }
         guard let lesson else { return }
         var added = 0
         for word in lesson.allWords {
@@ -404,6 +443,7 @@ struct LessonDetailView: View {
 
     /// 加号直接加词（不开单词卡），带顶部横条反馈
     private func addSingleWord(_ word: SceneWord) {
+        if gatedByPaywall() { return }
         guard !isAdded(word) else { return }
         let added = vocabularyStore.addWord(word.asVocabularyItem, sourceLabel: "scene_lesson")
         UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -523,6 +563,9 @@ struct LessonWordCard: View {
     let word: SceneWord
     let accent: String
     let lessonTitle: String
+    /// 锁定课的单词卡：内容照常显示，发音/收藏按钮触发 onGated（弹付费墙），且不自动朗读。
+    var locked: Bool = false
+    var onGated: () -> Void = {}
 
     @Environment(VocabularyStore.self) private var vocabularyStore
     @Environment(SentenceStore.self) private var sentenceStore
@@ -548,6 +591,7 @@ struct LessonWordCard: View {
                     .minimumScaleFactor(0.6)
                 Spacer()
                 Button {
+                    if locked { onGated(); return }
                     playWord()
                 } label: {
                     Image(systemName: "speaker.wave.2.fill")
@@ -579,6 +623,7 @@ struct LessonWordCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top, spacing: 10) {
                     Button {
+                        if locked { onGated(); return }
                         LessonAudioPlayer.shared.play(word.exampleAudio) {
                             WordSpeaker.shared.speakSentence(word.example, accent: accent)
                         }
@@ -605,6 +650,7 @@ struct LessonWordCard: View {
                     .buttonStyle(.plain)
 
                     Button {
+                        if locked { onGated(); return }
                         guard !exampleSaved else { return }
                         let added = sentenceStore.add(SavedSentence(
                             english: word.example,
@@ -638,6 +684,7 @@ struct LessonWordCard: View {
             .background(RoundedRectangle(cornerRadius: 14).fill(Color.appBackground))
 
             Button {
+                if locked { onGated(); return }
                 guard !isAdded else { return }
                 if vocabularyStore.addWord(word.asVocabularyItem, sourceLabel: "scene_lesson") {
                     justAdded = true
@@ -669,7 +716,7 @@ struct LessonWordCard: View {
         }
         .presentationDetents([.height(contentHeight)])
         .presentationDragIndicator(.visible)
-        .onAppear { playWord() }
+        .onAppear { if !locked { playWord() } }   // 锁定课不自动朗读（发音是被拦的动作）
     }
 
     private func playWord() {

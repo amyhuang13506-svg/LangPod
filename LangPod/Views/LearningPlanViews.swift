@@ -179,5 +179,6 @@ struct LearningPlanPage: View {
         .background(Color.appBackground)
         .navigationTitle("我的学习计划")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)   // 进详情页隐藏底部 tab bar
     }
 }

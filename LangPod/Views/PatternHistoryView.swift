@@ -148,18 +148,6 @@ struct PatternHistoryView: View {
 
     @ViewBuilder
     private func section(for group: PatternGroup) -> some View {
-        let anyAccessible = group.items.contains { pair in
-            PatternAccessGate.canAccess(
-                pattern: pair.pattern,
-                parentEpisode: pair.parent,
-                isPro: subscriptionManager.isProUser,
-                playedTodayIds: dataStore.dailyPatternIDsPlayedToday
-            )
-        }
-        // Show the header lock only when nothing in the group is playable —
-        // otherwise the per-row lock icons carry the information per-pattern.
-        let groupLocked = !anyAccessible
-
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
                 Text(group.dateDisplay)
@@ -174,11 +162,6 @@ struct PatternHistoryView: View {
                         .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 4))
                 }
                 Spacer()
-                if groupLocked {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color.warning)
-                }
             }
 
             ForEach(group.items, id: \.pattern.id) { item in
@@ -225,7 +208,6 @@ struct PatternHistoryView: View {
                             .font(.system(size: 16))
                             .foregroundStyle(Color(white: 0.35))
                     )
-                    .opacity(locked ? 0.5 : 1)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(pattern.template)
@@ -248,11 +230,8 @@ struct PatternHistoryView: View {
 
                 Spacer()
 
-                if locked {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color.warning)
-                } else if isPatternPlaying(pattern) {
+                // 去锁标：浏览不显示锁头，点锁定项才弹付费墙
+                if isPatternPlaying(pattern) {
                     NowPlayingBars(isAnimating: audioPlayer.isPlaying, barHeight: 14)
                 } else {
                     Image(systemName: "play.fill")

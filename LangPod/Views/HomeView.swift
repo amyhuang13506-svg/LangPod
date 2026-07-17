@@ -1000,7 +1000,7 @@ struct HomeView: View {
         let max = SubscriptionManager.freeMaxDailyPatterns
         let remaining = Swift.max(0, max - used)
         return HStack(spacing: 3) {
-            Image(systemName: remaining == 0 ? "lock.fill" : "sparkles")
+            Image(systemName: "sparkles")   // 去锁标：配额用完也不显示锁头
                 .font(.system(size: 10, weight: .semibold))
             Text("今日免费 \(remaining)/\(max)")
                 .font(.system(size: 11, weight: .semibold))
@@ -1079,7 +1079,7 @@ struct HomeView: View {
                         .lineLimit(1)
 
                     HStack(spacing: 4) {
-                        Image(systemName: accessible ? "play.circle.fill" : "lock.fill")
+                        Image(systemName: "play.circle.fill")   // 去锁标：浏览不显示锁头，点锁定项才弹付费墙
                             .font(.system(size: 12))
                         Text(pattern.durationDisplay)
                             .font(.system(size: 11, weight: .medium))
@@ -1096,7 +1096,6 @@ struct HomeView: View {
                 .background(cardColor(pattern: pattern))
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 3)
-                .opacity(accessible ? 1 : 0.55)
             }
         }
         .buttonStyle(.plain)
@@ -1341,7 +1340,7 @@ extension HomeView {
             }
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: accessible ? "quote.bubble.fill" : "lock.fill")
+                Image(systemName: "quote.bubble.fill")   // 去锁标：浏览不显示锁头，点锁定项才弹付费墙
                     .font(.system(size: 16))
                     .foregroundStyle(Color(hex: "E8B800"))
                     .frame(width: 36, height: 36)
@@ -1377,7 +1376,6 @@ extension HomeView {
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(Color.border, lineWidth: 1)
             )
-            .opacity(accessible ? 1 : 0.6)
         }
         .buttonStyle(.plain)
     }

@@ -204,6 +204,15 @@ class LessonStore {
         return freeSceneIds.contains(item.id) || freeThemeIds.contains(item.id)
     }
 
+    /// 该课是否锁定（Pro / 免费样本 / 今日课当天免费 → 不锁）。
+    /// 新付费模型：锁定课仍可进详情看内容，只在动作按钮处拦截 —— 这个判定供
+    /// LessonDetailView 决定是否显示标题锁标 + 拦动作，VocabularyView 不再用它挡入口。
+    func isLocked(_ item: SceneLessonIndexItem, isPro: Bool) -> Bool {
+        if isPro { return false }
+        if item.isDaily && LessonAccessGate.isToday(item.date) { return false }
+        return !isFreeSample(item)
+    }
+
     /// 每日任务「学一篇词汇小课堂」的目标：今日课优先（当天免费、天天新），
     /// 没有今日课时按日在免费课池里轮换 —— 保证任务每天都有内容可给。
     var dailyTaskLesson: (item: SceneLessonIndexItem, country: LessonCountry)? {
