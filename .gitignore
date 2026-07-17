@@ -22,6 +22,9 @@ pipeline/config.py.local
 *.p8
 AuthKey_*.p8
 
+# App Store Connect / ASA key pair (secrets, never commit)
+*.pem
+
 # YouTube auth cookies (extracted from logged-in browser, never commit)
 pipeline/youtube_cookies.txt
 
