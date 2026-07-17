@@ -431,7 +431,8 @@ def process_lesson(lesson_json_path):
     print("\n🎨 %s — %s" % (lesson["id"], lesson["title_zh"]))
     all_ok = True
     for zone in lesson["zones"]:
-        if zone.get("image") and os.path.exists(os.path.join(lesson_dir_abs, os.path.basename(zone["image"]))):
+        # 本地文件名固定 {zone_id}.jpg（OSS 端文件名带内容哈希，basename 对不上本地）
+        if zone.get("image") and os.path.exists(os.path.join(lesson_dir_abs, "%s.jpg" % zone["id"])):
             print("   ⏭ zone %s (image exists)" % zone["id"])
             continue
         print("   ▸ zone: %s (%s)" % (zone["id"], zone["name_zh"]))

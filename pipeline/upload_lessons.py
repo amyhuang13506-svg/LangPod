@@ -18,6 +18,7 @@ OSS 结构:
 
 import argparse
 import glob
+import hashlib
 import json
 import os
 import sys
@@ -61,6 +62,13 @@ def upload_file(bucket, local_path, oss_key):
     return "%s/%s" % (OSS_CDN_DOMAIN, oss_key)
 
 
+def content_hash(path):
+    """图片内容哈希（8 位）。图片 OSS 文件名带哈希做 cache-busting：
+    App 的 ImageCache 按 URL 缓存且不回源校验，同名覆盖上传老用户永远看不到新图。"""
+    with open(path, "rb") as f:
+        return hashlib.md5(f.read()).hexdigest()[:8]
+
+
 def upload_lesson(bucket, json_path):
     """上传单个课堂（图片 + JSON），重写 JSON 内路径为完整 OSS URL。"""
     with open(json_path, "r", encoding="utf-8") as f:
@@ -71,18 +79,22 @@ def upload_lesson(bucket, json_path):
 
     incomplete = False
     for zone in lesson["zones"]:
-        img_name = os.path.basename(zone.get("image") or "")
-        local = os.path.join(lesson_dir, img_name) if img_name else ""
-        if img_name and os.path.exists(local):
-            zone["image"] = upload_file(bucket, local, "%s/%s" % (prefix, img_name))
-            print("   ☁️  %s" % img_name)
+        # 本地文件名固定为 {zone_id}.jpg；OSS 端带内容哈希（cache-busting）。
+        # zone["image"] 若已是 http URL（上传过且本地无新图）则跳过。
+        img_name = "%s.jpg" % zone["id"]
+        local = os.path.join(lesson_dir, img_name)
+        if os.path.exists(local):
+            oss_name = "%s_%s.jpg" % (zone["id"], content_hash(local))
+            zone["image"] = upload_file(bucket, local, "%s/%s" % (prefix, oss_name))
+            print("   ☁️  %s" % oss_name)
         elif not (zone.get("image") or "").startswith("http"):
             print("   ⚠️  zone %s missing image" % zone["id"])
             incomplete = True
 
     cover_local = os.path.join(lesson_dir, "cover.jpg")
     if os.path.exists(cover_local):
-        lesson["cover"] = upload_file(bucket, cover_local, "%s/cover.jpg" % prefix)
+        lesson["cover"] = upload_file(
+            bucket, cover_local, "%s/cover_%s.jpg" % (prefix, content_hash(cover_local)))
     elif not (lesson.get("cover") or "").startswith("http"):
         incomplete = True
 
