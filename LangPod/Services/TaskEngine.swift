@@ -81,15 +81,16 @@ enum DailyTaskType: String, Codable, CaseIterable {
         }
     }
 
-    /// 打卡清单展示顺序：轻 → 重。先给几十秒能完成的单词练习（快速拿到完成感），
-    /// 再句型讲解（约 2 分钟），播客类压轴 —— 避免新用户一打开就面对最重的任务。
+    /// 打卡清单展示顺序：轻 → 重。第一位是内容轻任务（词汇小课堂 / 句型讲解，
+    /// 免费可完成、几分钟内有收获），然后练习类，播客类压轴 ——
+    /// 避免用户一打开就面对最重的任务（一集播客 12-20 分钟）。
     var displayOrder: Int {
         switch self {
-        case .practiceWordMatch: return 0
-        case .practiceSentence: return 1
-        case .practiceSceneQuiz: return 2
-        case .listenPattern: return 3
-        case .learnLesson: return 4
+        case .learnLesson: return 0
+        case .listenPattern: return 1
+        case .practiceWordMatch: return 2
+        case .practiceSentence: return 3
+        case .practiceSceneQuiz: return 4
         case .roleplayLesson: return 5
         case .listenEpisode: return 6
         case .rawPodcast10Min: return 7
@@ -196,11 +197,26 @@ final class TaskEngine {
         }
     }
 
+    /// 抽取逻辑版本：改 drawTasks 结构时 +1。当天无任何进度的旧版记录会按新逻辑重抽，
+    /// 已有进度的保留（不清用户当天成果）。
+    private static let drawLogicVersion = 2
+    private static let drawVersionKey = "taskDrawLogicVersion"
+
     /// 保证 record 是今天的：没有或过期 → 立即抽取并整体持久化。
     @discardableResult
     func ensureTodayRecord() -> DailyTaskRecord {
         let today = Self.todayKey()
-        if let r = record, r.dateKey == today { return r }
+        if let r = record, r.dateKey == today {
+            let stored = UserDefaults.standard.integer(forKey: Self.drawVersionKey)
+            if stored == Self.drawLogicVersion || r.doneFlags.contains(true) {
+                if stored != Self.drawLogicVersion {
+                    UserDefaults.standard.set(Self.drawLogicVersion, forKey: Self.drawVersionKey)
+                }
+                return r
+            }
+            // 版本落后且今天还没做任何任务 → 落到下面按新逻辑重抽
+        }
+        UserDefaults.standard.set(Self.drawLogicVersion, forKey: Self.drawVersionKey)
 
         let tasks = drawTasks()
         let fresh = DailyTaskRecord(
@@ -225,17 +241,25 @@ final class TaskEngine {
 
     private func drawTasks() -> [DailyTaskType] {
         let seed = LessonStore.dailyShuffleSeed()
-        var slots: [DailyTaskType] = [.listenEpisode]   // 格① 固定
+        var slots: [DailyTaskType] = []
         var usedPractices: Set<DailyTaskType> = []
         let practices = eligiblePractices()             // 场景模拟保底，永不为空
 
-        // 格②：句型；当天 cron 无产出 → 替换为练习类
-        if hasPatternToday() {
-            slots.append(.listenPattern)
-        } else if let sub = pickStable(from: practices.filter { !usedPractices.contains($0) }, seed: seed + "|slot2") {
+        // 格①（用户第一眼的任务）：内容轻任务 —— 词汇小课堂 / 今日句型 二选一。
+        // 免费用户可完成：深链开今日每日课（当天免费）/ 今日句型（当天免费额度内）。
+        // 两者都没有（课未加载且当天无句型）→ 用练习类顶上，保持 4 格。
+        var lightPool: [DailyTaskType] = []
+        if lessonStore?.lessons.isEmpty == false { lightPool.append(.learnLesson) }
+        if hasPatternToday() { lightPool.append(.listenPattern) }
+        if let light = pickStable(from: lightPool, seed: seed + "|slot1") {
+            slots.append(light)
+        } else if let sub = pickStable(from: practices.filter { !usedPractices.contains($0) }, seed: seed + "|slot1sub") {
             slots.append(sub)
             usedPractices.insert(sub)
         }
+
+        // 格②：播客固定在列（核心产品；displayOrder 让它展示时压轴）
+        slots.append(.listenEpisode)
 
         // 格③：练习三选一
         if let p = pickStable(from: practices.filter { !usedPractices.contains($0) }, seed: seed + "|slot3") {
@@ -243,12 +267,15 @@ final class TaskEngine {
             usedPractices.insert(p)
         }
 
-        // 格④：机动池（Pro 才含课堂类；免费池剔除）
+        // 格④：机动池（Pro 才含课堂类；免费池剔除格①已占的类型）
         var pool: [DailyTaskType] = []
         let isPro = subscriptionManager?.isProUser == true
         if isPro, lessonStore?.lessons.isEmpty == false {
-            pool.append(.learnLesson)
+            if !slots.contains(.learnLesson) { pool.append(.learnLesson) }
             pool.append(.roleplayLesson)
+        }
+        if hasPatternToday(), !slots.contains(.listenPattern) {
+            pool.append(.listenPattern)   // 今日句型免费，没进格①时可作机动
         }
         if hasRawPodcastForTask() {
             pool.append(.rawPodcast10Min)
