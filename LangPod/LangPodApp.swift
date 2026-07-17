@@ -258,8 +258,11 @@ struct LangPodApp: App {
                     // ATT 授权（FB 投放归因）：跟在推送授权后面排队弹出。
                     // 无论同意/拒绝都会放行 Adjust 首包（拒绝走 SKAdNetwork 归因）。
                     AdjustTracker.requestATTIfNeeded()
-                    // 记录 onboarding 完成日：当天不自动弹任务清单（不打断新用户首体验）
+                    // 记录 onboarding 完成日（分析/调试用；当天弹窗已放开）
                     UserDefaults.standard.set(TaskEngine.todayKey(), forKey: "onboardingCompletedDay")
+                    // 落地首页后直接弹今日计划：第一条是词汇小课堂/句型图文卡（免费可完成），
+                    // 承接 onboarding「专属计划」的承诺，给新用户明确的第一步。
+                    Task { await autoShowDailyTasksIfNeeded() }
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
@@ -321,8 +324,9 @@ struct LangPodApp: App {
         }
     }
 
-    /// 冷启动 / 回前台自动弹任务清单。条件（全部满足）：已 onboarding 且非 onboarding 当天、
+    /// 冷启动 / 回前台自动弹任务清单。条件（全部满足）：已 onboarding、
     /// 今日没自动弹过、没在播放、完成页/庆祝没在展示。首页渲染后延迟 1.5s。
+    /// onboarding 当天也弹（2026-07-17 放开）：第一条任务即图文轻任务，承接"专属计划"承诺。
     private func autoShowDailyTasksIfNeeded() async {
         guard dataStore.hasCompletedOnboarding else { return }
         try? await Task.sleep(nanoseconds: 1_500_000_000)
@@ -338,9 +342,7 @@ struct LangPodApp: App {
             return
         }
 
-        let onboardingDay = UserDefaults.standard.string(forKey: "onboardingCompletedDay")
-        guard onboardingDay != TaskEngine.todayKey(),
-              !engine.popupShownToday,
+        guard !engine.popupShownToday,
               !audioPlayer.isPlaying,
               !appState.showCompletePage,
               !appState.showTaskCelebration,

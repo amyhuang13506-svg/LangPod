@@ -18,6 +18,8 @@ extension Notification.Name {
     static let taskEventSceneQuizDone = Notification.Name("castlingo.task.sceneQuizDone")
     /// 课堂学完（LessonStore.markCompleted 方法体，自带 lessonId 去重）。userInfo: lesson_id
     static let taskEventLessonCompleted = Notification.Name("castlingo.task.lessonCompleted")
+    /// 看了一条口语表达图文卡（ExpressionPageView 出现，锁定占位页不算）
+    static let taskEventExpressionViewed = Notification.Name("castlingo.task.expressionViewed")
     /// 模拟现场对话走完（LessonRolePlayView.advance 首次 finished）
     static let taskEventRoleplayFinished = Notification.Name("castlingo.task.roleplayFinished")
     /// 真实播客（audio 类型）收听心跳，每 0.5s 一次（RawAudioController periodic observer，
@@ -32,11 +34,13 @@ extension Notification.Name {
 
 // MARK: - Task Types
 
-/// 每日任务类型。格① 固定听力；格② 句型（当天无产出则换练习）；格③ 练习三选一；
-/// 格④ 从剩余合格池抽（免费池剔除课堂类）。
+/// 每日任务类型。格① 图文轻任务（词汇小课堂/句型图文卡 二选一，免费可完成）；
+/// 格② 播客固定在列（展示压轴）；格③ 练习三选一；格④ 机动池（Pro 才含课堂类）。
+/// 展示顺序由 displayOrder 决定（轻 → 重），与抽取格序无关。
 enum DailyTaskType: String, Codable, CaseIterable {
     case listenEpisode = "listen_episode"
     case listenPattern = "listen_pattern"
+    case learnExpression = "learn_expression"
     case practiceWordMatch = "practice_word_match"
     case practiceSentence = "practice_sentence_build"
     case practiceSceneQuiz = "practice_scene_quiz"
@@ -47,11 +51,12 @@ enum DailyTaskType: String, Codable, CaseIterable {
     var title: String {
         switch self {
         case .listenEpisode: return "听一集学习播客"
-        case .listenPattern: return "学一个句型"
+        case .listenPattern: return "听一个句型讲解"
+        case .learnExpression: return "学一个句型"
         case .practiceWordMatch: return "词义配对一轮"
         case .practiceSentence: return "连词成句一轮"
         case .practiceSceneQuiz: return "场景模拟一轮"
-        case .learnLesson: return "学一篇场景课堂"
+        case .learnLesson: return "学一篇词汇小课堂"
         case .roleplayLesson: return "走一遍模拟对话"
         case .rawPodcast10Min: return "听 5 分钟真实播客"
         }
@@ -61,6 +66,7 @@ enum DailyTaskType: String, Codable, CaseIterable {
         switch self {
         case .listenEpisode: return "headphones"
         case .listenPattern: return "text.bubble"
+        case .learnExpression: return "quote.bubble"
         case .practiceWordMatch: return "rectangle.on.rectangle"
         case .practiceSentence: return "text.word.spacing"
         case .practiceSceneQuiz: return "person.2.wave.2"
@@ -74,6 +80,7 @@ enum DailyTaskType: String, Codable, CaseIterable {
         switch self {
         case .listenEpisode: return 5
         case .listenPattern: return 2
+        case .learnExpression: return 1
         case .practiceWordMatch, .practiceSentence, .practiceSceneQuiz: return 2
         case .learnLesson: return 3
         case .roleplayLesson: return 2
@@ -81,19 +88,20 @@ enum DailyTaskType: String, Codable, CaseIterable {
         }
     }
 
-    /// 打卡清单展示顺序：轻 → 重。第一位是内容轻任务（词汇小课堂 / 句型讲解，
-    /// 免费可完成、几分钟内有收获），然后练习类，播客类压轴 ——
+    /// 打卡清单展示顺序：轻 → 重。第一位是内容轻任务（词汇小课堂 / 句型图文卡，
+    /// 免费可完成、1-3 分钟内有收获），然后练习类，播客类压轴 ——
     /// 避免用户一打开就面对最重的任务（一集播客 12-20 分钟）。
     var displayOrder: Int {
         switch self {
         case .learnLesson: return 0
-        case .listenPattern: return 1
-        case .practiceWordMatch: return 2
-        case .practiceSentence: return 3
-        case .practiceSceneQuiz: return 4
-        case .roleplayLesson: return 5
-        case .listenEpisode: return 6
-        case .rawPodcast10Min: return 7
+        case .learnExpression: return 1
+        case .listenPattern: return 2
+        case .practiceWordMatch: return 3
+        case .practiceSentence: return 4
+        case .practiceSceneQuiz: return 5
+        case .roleplayLesson: return 6
+        case .listenEpisode: return 7
+        case .rawPodcast10Min: return 8
         }
     }
 
@@ -135,6 +143,8 @@ final class TaskEngine {
     private weak var subscriptionManager: SubscriptionManager?
 
     // UI 回调（LangPodApp 挂载；主线程调用）
+    /// 句型任务深链：ContentView 切到句型 tab 后置位，PatternsTabView 消费（打开免费分类首条）
+    var pendingExpressionDeepLink = false
     /// (完成的任务, 下一个未完成任务或 nil)
     var onTaskCompleted: ((DailyTaskType, DailyTaskType?) -> Void)?
     /// 4/4 全完成（幂等，只发一次）
@@ -199,7 +209,7 @@ final class TaskEngine {
 
     /// 抽取逻辑版本：改 drawTasks 结构时 +1。当天无任何进度的旧版记录会按新逻辑重抽，
     /// 已有进度的保留（不清用户当天成果）。
-    private static let drawLogicVersion = 2
+    private static let drawLogicVersion = 3
     private static let drawVersionKey = "taskDrawLogicVersion"
 
     /// 保证 record 是今天的：没有或过期 → 立即抽取并整体持久化。
@@ -245,17 +255,12 @@ final class TaskEngine {
         var usedPractices: Set<DailyTaskType> = []
         let practices = eligiblePractices()             // 场景模拟保底，永不为空
 
-        // 格①（用户第一眼的任务）：内容轻任务 —— 词汇小课堂 / 今日句型 二选一。
-        // 免费用户可完成：深链开今日每日课（当天免费）/ 今日句型（当天免费额度内）。
-        // 两者都没有（课未加载且当天无句型）→ 用练习类顶上，保持 4 格。
-        var lightPool: [DailyTaskType] = []
+        // 格①（用户第一眼的任务）：图文内容轻任务 —— 词汇小课堂 / 句型图文卡 二选一。
+        // 免费用户可完成：深链开今日每日课（当天免费）/ 句型免费分类首条（永久免费）。
+        var lightPool: [DailyTaskType] = [.learnExpression]   // 句型表达库全局内容，恒可用
         if lessonStore?.lessons.isEmpty == false { lightPool.append(.learnLesson) }
-        if hasPatternToday() { lightPool.append(.listenPattern) }
         if let light = pickStable(from: lightPool, seed: seed + "|slot1") {
             slots.append(light)
-        } else if let sub = pickStable(from: practices.filter { !usedPractices.contains($0) }, seed: seed + "|slot1sub") {
-            slots.append(sub)
-            usedPractices.insert(sub)
         }
 
         // 格②：播客固定在列（核心产品；displayOrder 让它展示时压轴）
@@ -338,6 +343,7 @@ final class TaskEngine {
         on(.taskEventSentenceBuildDone) { [weak self] _ in self?.complete(.practiceSentence) }
         on(.taskEventSceneQuizDone) { [weak self] _ in self?.complete(.practiceSceneQuiz) }
         on(.taskEventLessonCompleted) { [weak self] _ in self?.complete(.learnLesson) }
+        on(.taskEventExpressionViewed) { [weak self] _ in self?.complete(.learnExpression) }
         on(.taskEventRoleplayFinished) { [weak self] _ in self?.complete(.roleplayLesson) }
         on(.taskEventRawListenTick) { [weak self] note in
             let sec = note.userInfo?["seconds"] as? Double ?? 0.5

@@ -28,7 +28,7 @@ struct ContentView: View {
                     .tag(0)
                 VocabularyView()
                     .tabItem {
-                        Label("词汇", systemImage: "textformat.abc")
+                        Label("词汇", image: "vocabAa")
                     }
                     .tag(1)
                 PatternsTabView()
@@ -122,6 +122,12 @@ struct ContentView: View {
                 let items: [PlayItem] = pairs.map { .pattern($0.0, parentEpisode: $0.1) }
                 _ = audioPlayer.playPattern(first.0, parentEpisode: first.1, in: items)
             }
+
+        case .learnExpression:
+            // 句型 tab 图文表达库：切 tab 并置深链 flag，
+            // PatternsTabView 出现后自动打开免费分类第一条（免费用户可看）
+            selectedTab = 2
+            TaskEngine.shared.pendingExpressionDeepLink = true
 
         case .practiceWordMatch:
             selectedTab = 1
