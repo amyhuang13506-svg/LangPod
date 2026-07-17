@@ -108,25 +108,21 @@ struct VocabularyView: View {
 
     private var sectionSwitcher: some View {
         HStack(spacing: 10) {
-            sectionButton(.daily, title: "日常词汇", icon: "square.grid.2x2.fill")
-            sectionButton(.scene, title: "生活场景", icon: "map.fill")
+            sectionButton(.daily, title: "日常词汇")
+            sectionButton(.scene, title: "生活场景")
         }
     }
 
-    private func sectionButton(_ section: LessonSection, title: String, icon: String) -> some View {
+    private func sectionButton(_ section: LessonSection, title: String) -> some View {
         let selected = lessonStore.section == section
         return Button {
             guard !selected else { return }
             lessonStore.section = section
             Analytics.track(.vocabSectionSwitch, params: ["section": section.rawValue])
         } label: {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
-                Text(title)
-                    .font(.system(size: 15, weight: selected ? .bold : .semibold))
-            }
-            .foregroundColor(selected ? .white : Color.textSecondary)
+            Text(title)
+                .font(.system(size: 15, weight: selected ? .bold : .semibold))
+                .foregroundColor(selected ? .white : Color.textSecondary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .background(
