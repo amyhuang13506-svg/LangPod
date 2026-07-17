@@ -470,6 +470,11 @@ class DataStore {
         )
         rawPodcastHistory.insert(record, at: 0)
         saveRawPodcastHistory()
+
+        Analytics.track(.rawPlayStart, params: [
+            "podcast_id": podcast.id,
+            "media_type": podcast.mediaType.rawValue
+        ])
     }
 
     func toggleRawPodcastStar(_ record: ListenedRawPodcast) {

@@ -855,6 +855,14 @@ final class RawAudioController {
     /// 启动时从 UserDefaults 拉的恢复位置；status ready 后 seek 一次
     private var resumePosition: Double = 0
 
+    // 收听会话埋点（raw_listen_30s / raw_listen_end）。
+    // 一个 controller = 一次会话；关页不销毁（复用续播），切换 podcast 时 tearDown 结束会话。
+    private var listenAccumSeconds: Double = 0
+    private var listenSent30s = false
+    private var listenLastPersisted: Double = 0
+    private var didReportListenEnd = false
+    private static let danglingListenKey = "analytics_dangling_raw_session"
+
     static func savedPosition(for podcastId: String) -> Double {
         UserDefaults.standard.double(forKey: positionKeyPrefix + podcastId)
     }
@@ -936,6 +944,7 @@ final class RawAudioController {
                     object: nil,
                     userInfo: ["seconds": 0.5]
                 )
+                self.accumulateListenTime(0.5)
             }
             // 进度持久化：节流为 5s 一次，避免频繁 IO
             if seconds > 0 && abs(seconds - self.lastSavedTime) >= 5.0 {
@@ -1013,9 +1022,60 @@ final class RawAudioController {
         player.seek(to: t)
     }
 
+    // MARK: - 收听会话埋点
+
+    private func accumulateListenTime(_ delta: Double) {
+        listenAccumSeconds += delta
+        if !listenSent30s, listenAccumSeconds >= 30 {
+            listenSent30s = true
+            Analytics.track(.rawListen30s, params: [
+                "podcast_id": podcast.id,
+                "media_type": podcast.mediaType.rawValue
+            ])
+        }
+        // 每 10 秒落盘快照，杀进程后下次启动补报 raw_listen_end(reason=app_killed)
+        if listenAccumSeconds - listenLastPersisted >= 10 {
+            listenLastPersisted = listenAccumSeconds
+            UserDefaults.standard.set([
+                "podcast_id": podcast.id,
+                "media_type": podcast.mediaType.rawValue,
+                "seconds": "\(Int(listenAccumSeconds))"
+            ], forKey: Self.danglingListenKey)
+        }
+    }
+
+    private func reportListenEnd(reason: String) {
+        guard !didReportListenEnd else { return }
+        didReportListenEnd = true
+        UserDefaults.standard.removeObject(forKey: Self.danglingListenKey)
+        // 3 秒以内是误点，不算一次有效收听
+        guard listenAccumSeconds >= 3 else { return }
+        Analytics.track(.rawListenEnd, params: [
+            "podcast_id": podcast.id,
+            "media_type": podcast.mediaType.rawValue,
+            "listened_seconds": "\(Int(listenAccumSeconds))",
+            "reason": reason
+        ])
+    }
+
+    /// App 启动时调用（Analytics.setup 之后）：上次运行若在听原声途中被杀，
+    /// 用落盘快照补报一条 raw_listen_end。
+    static func reportDanglingSessionFromPreviousRun() {
+        guard let saved = UserDefaults.standard.dictionary(forKey: danglingListenKey)
+                as? [String: String] else { return }
+        UserDefaults.standard.removeObject(forKey: danglingListenKey)
+        Analytics.track(.rawListenEnd, params: [
+            "podcast_id": saved["podcast_id"] ?? "",
+            "media_type": saved["media_type"] ?? "",
+            "listened_seconds": saved["seconds"] ?? "0",
+            "reason": "app_killed"
+        ])
+    }
+
     /// 主动清理资源（被 RawPlaybackSession 在切换 podcast 时调用）。
     /// deinit 也会做同样的事，但 ARC 析构时机不可控，显式 tearDown 更稳。
     func tearDown() {
+        reportListenEnd(reason: "switch")
         if currentTime > 1.0 {
             Self.savePosition(currentTime, for: podcast.id)
         }
@@ -1034,6 +1094,7 @@ final class RawAudioController {
     }
 
     deinit {
+        reportListenEnd(reason: "deinit")
         // 控制器销毁前，保证最新进度被持久化（周期 saver 节流 5s，可能丢最后几秒）
         if currentTime > 1.0 {
             Self.savePosition(currentTime, for: podcast.id)

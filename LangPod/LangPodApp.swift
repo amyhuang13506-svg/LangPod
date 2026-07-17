@@ -197,6 +197,7 @@ struct LangPodApp: App {
                 Analytics.track(.appLaunch)
                 // 上次运行若在听集途中被杀进程，把落盘的会话快照补报为 abandon。
                 audioPlayer.reportDanglingSessionFromPreviousRun()
+                RawAudioController.reportDanglingSessionFromPreviousRun()
                 // Request notification permission after first launch.
                 // requestPushAuthorization() also asks iOS for permission, so
                 // we only need NotificationManager.requestPermission() to keep
