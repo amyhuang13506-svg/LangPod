@@ -743,6 +743,260 @@ THEME_BOARDS = [
              "hint": "statue, monument, ticket booth, map board, souvenir stand, viewpoint railing"},
         ],
     },
+
+    # ================= B4 批次：自然与动物 +10（新 chip 一次性满配）=================
+    {
+        "slug": "pets", "category": "nature", "icon": "pawprint.fill",
+        "title": _t("宠物", "Pets"),
+        "zones": [
+            {"id": "common_pets", **_t("常见宠物", "Common Pets"),
+             "hint": "dog, cat, rabbit, hamster, goldfish, parrot — each a distinct animal"},
+            {"id": "pet_things", **_t("宠物用品", "Pet Supplies"),
+             "hint": "leash, collar, pet bowl, dog house, bird cage, cat litter box"},
+        ],
+    },
+    {
+        "slug": "farm_animals", "category": "nature", "icon": "hare.fill",
+        "title": _t("农场动物", "Farm Animals"),
+        "zones": [
+            {"id": "livestock", **_t("家畜", "Livestock"),
+             "hint": "cow, pig, horse, sheep, goat, donkey"},
+            {"id": "poultry_barn", **_t("家禽与农场", "Poultry & Barn"),
+             "hint": "chicken, rooster, duck, goose, turkey, barn"},
+        ],
+    },
+    {
+        "slug": "wild_animals", "category": "nature", "icon": "pawprint",
+        "title": _t("野生动物", "Wild Animals"),
+        "zones": [
+            {"id": "big_wild", **_t("大型野兽", "Big Wild Animals"),
+             "hint": "lion, tiger, elephant, giraffe, bear, zebra"},
+            {"id": "more_wild", **_t("更多野兽", "More Wild Animals"),
+             "hint": "monkey, kangaroo, fox, deer, wolf, hippo"},
+        ],
+    },
+    {
+        "slug": "birds", "category": "nature", "icon": "bird.fill",
+        "title": _t("鸟类", "Birds"),
+        "zones": [
+            {"id": "city_birds", **_t("身边的鸟", "Everyday Birds"),
+             "hint": "sparrow, pigeon, crow, swallow, owl, woodpecker"},
+            {"id": "water_showy_birds", **_t("水鸟与彩鸟", "Water & Showy Birds"),
+             "hint": "swan, duck, peacock, flamingo, penguin, eagle"},
+        ],
+    },
+    {
+        "slug": "insects", "category": "nature", "icon": "ant.fill",
+        "title": _t("昆虫", "Insects & Bugs"),
+        "zones": [
+            {"id": "flying_bugs", **_t("会飞的虫", "Flying Bugs"),
+             "hint": "butterfly, bee, dragonfly, mosquito, moth, ladybug"},
+            {"id": "crawling_bugs", **_t("爬行的虫", "Crawling Bugs"),
+             "hint": "ant, spider, caterpillar, snail, beetle, grasshopper"},
+        ],
+    },
+    {
+        "slug": "sea_life", "category": "nature", "icon": "fish",
+        "title": _t("海洋生物", "Sea Life"),
+        "zones": [
+            {"id": "big_sea", **_t("大海生灵", "Ocean Creatures"),
+             "hint": "whale, dolphin, shark, octopus, jellyfish, sea turtle"},
+            {"id": "small_sea", **_t("浅海与贝类", "Reef & Shells"),
+             "hint": "crab, starfish, seahorse, shrimp, clam, coral"},
+        ],
+    },
+    {
+        "slug": "flowers_plants", "category": "nature", "icon": "leaf.fill",
+        "title": _t("花与植物", "Flowers & Plants"),
+        "zones": [
+            {"id": "flowers", **_t("花", "Flowers"),
+             "hint": "rose, tulip, sunflower, lily, daisy, cherry blossom"},
+            {"id": "green_plants", **_t("绿植", "Green Plants"),
+             "hint": "cactus, fern, bamboo, ivy, potted plant, mushroom. Put leaf, stem, root, petal in extra_words (parts, not whole plants)"},
+        ],
+    },
+    {
+        "slug": "trees_forest", "category": "nature", "icon": "tree.fill",
+        "title": _t("树与森林", "Trees & Forest"),
+        "zones": [
+            {"id": "trees", **_t("树", "Trees"),
+             "hint": "pine tree, oak tree, palm tree, willow, maple tree, tree stump"},
+            {"id": "forest_floor", **_t("林间", "In the Forest"),
+             "hint": "bush, log, acorn, pinecone, moss, vine"},
+        ],
+    },
+    {
+        "slug": "weather", "category": "nature", "icon": "cloud.sun.fill",
+        "title": _t("天气与季节", "Weather & Seasons"),
+        "zones": [
+            {"id": "weather", **_t("天气", "Weather"),
+             "hint": "each is a small sky scene: sunny, rainy, cloudy, snowy, windy, stormy",
+             "image_hint": "Six small square sky scenes in a grid with space between them, each showing ONE weather "
+                           "with NO text: a bright sun in blue sky; rain falling from a grey cloud; a sky of fluffy "
+                           "clouds; snow falling with white flakes; a tree bending in wind with leaves flying; "
+                           "a dark cloud with a lightning bolt"},
+            {"id": "sky_things", **_t("天空", "In the Sky"),
+             "hint": "rainbow, lightning, snowflake, raindrop, cloud, star"},
+        ],
+    },
+    {
+        "slug": "landscape", "category": "nature", "icon": "mountain.2.fill",
+        "title": _t("地形与风光", "Land & Scenery"),
+        "zones": [
+            {"id": "landforms", **_t("地形", "Landforms"),
+             "hint": "mountain, hill, river, lake, waterfall, valley"},
+            {"id": "more_scenery", **_t("更多风光", "More Scenery"),
+             "hint": "beach, desert, forest, island, cave, volcano"},
+        ],
+    },
+
+    # ================= B5 批次：工作与休闲 +13（新 chip 一次性满配）=================
+    {
+        "slug": "classroom", "category": "work", "icon": "graduationcap.fill",
+        "title": _t("教室与文具", "Classroom & Stationery"),
+        "zones": [
+            {"id": "classroom", **_t("教室", "The Classroom"),
+             "hint": "blackboard, desk, chair, globe, bookshelf, clock — a classroom scene"},
+            {"id": "stationery", **_t("文具", "Stationery"),
+             "hint": "pencil, eraser, ruler, scissors, glue stick, backpack"},
+        ],
+    },
+    {
+        "slug": "computer", "category": "work", "icon": "desktopcomputer",
+        "title": _t("电脑与办公", "Computer & Desk"),
+        "zones": [
+            {"id": "computer_set", **_t("电脑", "The Computer"),
+             "hint": "monitor, keyboard, mouse, laptop, printer, speaker — plain hardware, screens blank/off"},
+            {"id": "desk_supplies", **_t("桌面用品", "Desk Supplies"),
+             "hint": "stapler, folder, paper clip, sticky note, calculator, mug. Put email, file, download in extra_words (screen actions, not objects)"},
+        ],
+    },
+    {
+        "slug": "phone_apps", "category": "work", "icon": "iphone",
+        "title": _t("手机与配件", "Phone & Gadgets"),
+        "zones": [
+            {"id": "the_phone", **_t("手机", "The Phone"),
+             "hint": "smartphone (blank screen), phone case, screen, camera lens, charging port, power button — a plain phone and its parts, NO app icons or text on screen"},
+            {"id": "gadgets", **_t("数码配件", "Gadgets"),
+             "hint": "earbuds, charger cable, power bank, smartwatch, tablet, selfie stick"},
+        ],
+    },
+    {
+        "slug": "office", "category": "work", "icon": "building.2.fill",
+        "title": _t("办公室", "The Office"),
+        "zones": [
+            {"id": "office_room", **_t("办公室", "In the Office"),
+             "hint": "office desk, swivel chair, filing cabinet, whiteboard, water cooler, potted plant"},
+            {"id": "meeting", **_t("开会", "The Meeting Room"),
+             "hint": "projector, conference table, name tag, coffee mug, notepad, wall clock"},
+        ],
+    },
+    {
+        "slug": "jobs_1", "category": "work", "icon": "person.fill",
+        "title": _t("常见职业·上", "Jobs I"),
+        "zones": [
+            {"id": "uniform_jobs", **_t("制服职业", "In Uniform"),
+             "hint": "each person shown by their clear uniform and one tool: doctor, nurse, police officer, firefighter, chef, pilot",
+             "image_hint": "Six people, each a head-to-waist figure in the unmistakable uniform of their job holding "
+                           "one signature tool, NO text anywhere: a doctor in a white coat with a stethoscope; a nurse "
+                           "in scrubs; a police officer in a blue uniform and cap; a firefighter in a red helmet and "
+                           "coat; a chef in a white hat holding a pan; a pilot in a cap with wing badges"},
+            {"id": "service_jobs", **_t("服务职业", "Service Jobs"),
+             "hint": "each person by uniform and tool: teacher, waiter, farmer, mail carrier, cleaner, cashier",
+             "image_hint": "Six people, each a head-to-waist figure dressed for their job with one signature prop, "
+                           "NO text anywhere: a teacher by a small blackboard; a waiter in a vest holding a tray; a "
+                           "farmer in overalls and straw hat; a mail carrier with a letter bag; a cleaner holding a mop; "
+                           "a cashier at a small register"},
+        ],
+    },
+    {
+        "slug": "jobs_2", "category": "work", "icon": "person.2.fill",
+        "title": _t("常见职业·下", "Jobs II"),
+        "zones": [
+            {"id": "skilled_jobs", **_t("技术职业", "Skilled Trades"),
+             "hint": "each person by their tool: mechanic, electrician, plumber, carpenter, painter, barber",
+             "image_hint": "Six people, each a head-to-waist figure dressed for their trade holding its signature tool, "
+                           "NO text anywhere: a mechanic in overalls with a wrench; an electrician with pliers and wire; "
+                           "a plumber holding a pipe; a carpenter with a hammer and saw; a painter with a roller and can; "
+                           "a barber with scissors and comb"},
+            {"id": "creative_jobs", **_t("创意与专业", "Creative & Pro"),
+             "hint": "each person by their tool: artist, photographer, scientist, singer, athlete, dentist",
+             "image_hint": "Six people, each a head-to-waist figure with the clear tool of their work, NO text anywhere: "
+                           "an artist with a palette and brush; a photographer with a camera; a scientist in a lab coat "
+                           "with a flask; a singer with a microphone; an athlete in a jersey with a medal; a dentist "
+                           "with a dental mirror"},
+        ],
+    },
+    {
+        "slug": "money_bank", "category": "work", "icon": "banknote.fill",
+        "title": _t("银行与理财", "Bank & Money"),
+        "zones": [
+            {"id": "at_the_bank", **_t("在银行", "At the Bank"),
+             "hint": "ATM, bank card, safe/vault, teller window, coin stack, checkbook"},
+            {"id": "money_things", **_t("理财用品", "Money Matters"),
+             "hint": "piggy bank, gold coins, banknote bundle, wallet, calculator, credit card. Put save, spend, budget in extra_words (actions)"},
+        ],
+    },
+    {
+        "slug": "ball_sports", "category": "work", "icon": "sportscourt.fill",
+        "title": _t("球类运动", "Ball Sports"),
+        "zones": [
+            {"id": "balls", **_t("各种球", "The Balls"),
+             "hint": "soccer ball, basketball, tennis ball, baseball, volleyball, ping-pong ball"},
+            {"id": "gear", **_t("球具与场地", "Gear & Court"),
+             "hint": "tennis racket, baseball bat, goal net, basketball hoop, whistle, badminton racket"},
+        ],
+    },
+    {
+        "slug": "outdoor_sports", "category": "work", "icon": "figure.hiking",
+        "title": _t("户外与健身", "Outdoors & Fitness"),
+        "zones": [
+            {"id": "outdoor", **_t("户外运动", "Outdoor Sports"),
+             "hint": "bicycle, skateboard, tent, fishing rod, ski, surfboard"},
+            {"id": "gym_gear", **_t("健身器材", "Gym Gear"),
+             "hint": "dumbbell, jump rope, yoga mat, treadmill, kettlebell, exercise ball"},
+        ],
+    },
+    {
+        "slug": "music", "category": "work", "icon": "music.note",
+        "title": _t("音乐与乐器", "Music & Instruments"),
+        "zones": [
+            {"id": "string_key", **_t("弦与键", "Strings & Keys"),
+             "hint": "guitar, piano, violin, drums, harp, ukulele"},
+            {"id": "wind_more", **_t("管乐与更多", "Winds & More"),
+             "hint": "flute, trumpet, saxophone, harmonica, tambourine, microphone"},
+        ],
+    },
+    {
+        "slug": "screen_fun", "category": "work", "icon": "gamecontroller.fill",
+        "title": _t("影视与游戏", "Screen & Games"),
+        "zones": [
+            {"id": "watching", **_t("看片与听歌", "Watch & Listen"),
+             "hint": "television, remote control, headphones, movie clapperboard, popcorn bucket, speaker"},
+            {"id": "playing", **_t("玩乐", "Games & Play"),
+             "hint": "game controller, dice, playing cards, chess board, jigsaw puzzle, board game"},
+        ],
+    },
+    {
+        "slug": "travel", "category": "work", "icon": "suitcase.fill",
+        "title": _t("旅行与度假", "Travel & Vacation"),
+        "zones": [
+            {"id": "packing", **_t("行李与装备", "Packing"),
+             "hint": "suitcase, backpack, camera, sunglasses, sun hat, travel pillow"},
+            {"id": "on_vacation", **_t("度假", "On Vacation"),
+             "hint": "beach umbrella, beach ball, snorkel mask, map, compass, binoculars"},
+        ],
+    },
+    {
+        "slug": "holidays", "category": "work", "icon": "party.popper.fill",
+        "title": _t("节日与庆祝", "Holidays & Celebrations"),
+        "zones": [
+            {"id": "party", **_t("派对", "The Party"),
+             "hint": "balloon, birthday cake, gift box, party hat, candle, confetti"},
+            {"id": "festive", **_t("节庆物件", "Festive Things"),
+             "hint": "Christmas tree, jack-o-lantern, fireworks, lantern, wreath, ribbon bow"},
+        ],
+    },
 ]
 
 
