@@ -426,10 +426,10 @@ struct PaywallView: View {
         currentTrial != nil
     }
 
-    /// "Day 5" notification row is shown when the trial is long enough (≥ 5 days).
+    /// Reminder row is shown when the trial is long enough (≥ 3 days).
     private var reminderDay: Int? {
-        guard let days = currentTrial?.durationDays, days >= 5 else { return nil }
-        return max(3, days - 2)  // remind 2 days before trial ends, minimum day 3
+        guard let days = currentTrial?.durationDays, days >= 3 else { return nil }
+        return max(2, days - 1)  // remind 1 day before trial ends, minimum day 2
     }
 
     @ViewBuilder
@@ -468,7 +468,7 @@ struct PaywallView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(Color.warning)
                     .frame(width: 9, height: 9)
-                Text("第 \(reminderDay ?? 5) 天 · 提醒你试用到期")
+                Text("第 \(reminderDay ?? 2) 天 · 提醒你试用到期")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(Color.warning)
                 Spacer()
@@ -559,7 +559,7 @@ struct PaywallView: View {
                     if success {
                         if startsTrial {
                             // 试用开始：报 trial_start（无金额——此刻未扣费，FB 投放的主优化目标）。
-                            // 真实扣费在 7 天后转正，那笔收入由续订监听/服务端通知另行回传。
+                            // 真实扣费在 3 天后转正，那笔收入由续订监听/服务端通知另行回传。
                             Analytics.track(.trialStart, params: ["product": productID])
                         } else {
                             // 直接扣费：Adjust 收入回传（带 value + currency，FB ROAS 出价依赖这条）

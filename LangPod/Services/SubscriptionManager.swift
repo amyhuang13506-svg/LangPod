@@ -84,7 +84,7 @@ class SubscriptionManager {
         #if DEBUG
         guard mockHasTrialEnabled else { return nil }
         if let real = yearlyTrialInfo { return real }
-        return TrialInfo(productID: Self.yearlyID, durationDisplay: "7 天", durationDays: 7, isEligible: true)
+        return TrialInfo(productID: Self.yearlyID, durationDisplay: "3 天", durationDays: 3, isEligible: true)
         #else
         return yearlyTrialInfo
         #endif
@@ -387,7 +387,7 @@ class SubscriptionManager {
         #if DEBUG
         guard mockHasTrialEnabled else { return nil }
         if let real = yearlyTrialInfo { return real }
-        return TrialInfo(productID: Self.yearlyID, durationDisplay: "7 天", durationDays: 7, isEligible: true)
+        return TrialInfo(productID: Self.yearlyID, durationDisplay: "3 天", durationDays: 3, isEligible: true)
         #else
         return yearlyTrialInfo
         #endif
