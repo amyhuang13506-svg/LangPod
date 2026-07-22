@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct PaywallView: View {
+struct LegacyPaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SubscriptionManager.self) private var subscriptionManager
 
@@ -664,6 +664,6 @@ private struct DashedVerticalLine: Shape {
 }
 
 #Preview {
-    PaywallView()
+    LegacyPaywallView()
         .environment(SubscriptionManager())
 }

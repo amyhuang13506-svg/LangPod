@@ -547,6 +547,25 @@ struct ProfileView: View {
                 .tint(Color(hex: "8B5CF6"))
                 .padding(.horizontal, 18)
                 .padding(.vertical, 14)
+
+                divider
+
+                Toggle(isOn: Binding(
+                    get: { UserDefaults.standard.bool(forKey: "useLegacyPaywall") },
+                    set: { UserDefaults.standard.set($0, forKey: "useLegacyPaywall") }
+                )) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "hammer.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color(hex: "8B5CF6"))
+                        Text("[DEV] 使用旧付费墙")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color(hex: "8B5CF6"))
+                    }
+                }
+                .tint(Color(hex: "8B5CF6"))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
             }
             .background(.white, in: RoundedRectangle(cornerRadius: 16))
             .overlay(

@@ -89,6 +89,8 @@
 		B30001 /* EpisodeToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30002 /* EpisodeToast.swift */; };
 		B40001 /* WordSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40002 /* WordSpeaker.swift */; };
 		BF27984632099ED9EF48F8DA /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 755E9D1EFFDDE6527A77D96B /* RevenueCat */; };
+		BF27984632099ED9EF48F8DB /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 755E9D1EFFDDE6527A77D97B /* RevenueCatUI */; };
+		D50001 /* RemotePaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D50002 /* RemotePaywallView.swift */; };
 		C10001 /* ep-20260330-easy-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C20001 /* ep-20260330-easy-001_cover.jpg */; };
 		C10004 /* ep-20260330-easy-002_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C20004 /* ep-20260330-easy-002_cover.jpg */; };
 		C10007 /* ep-20260330-hard-001_cover.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C20007 /* ep-20260330-hard-001_cover.jpg */; };
@@ -177,6 +179,7 @@
 		A20031 /* LevelUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelUpView.swift; sourceTree = "<group>"; };
 		A20032 /* ShareCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareCardView.swift; sourceTree = "<group>"; };
 		A20033 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		D50002 /* RemotePaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePaywallView.swift; sourceTree = "<group>"; };
 		A20034 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		A20035 /* ListenedEpisode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenedEpisode.swift; sourceTree = "<group>"; };
 		A20042 /* EpisodeThumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeThumbnail.swift; sourceTree = "<group>"; };
@@ -265,6 +268,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BF27984632099ED9EF48F8DA /* RevenueCat in Frameworks */,
+				BF27984632099ED9EF48F8DB /* RevenueCatUI in Frameworks */,
 				AA53B5824034DAC2B4BB0CAA /* AdjustSdk in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -381,6 +385,7 @@
 				A20031 /* LevelUpView.swift */,
 				A20032 /* ShareCardView.swift */,
 				A20033 /* PaywallView.swift */,
+				D50002 /* RemotePaywallView.swift */,
 				A20042 /* EpisodeThumbnail.swift */,
 				CA0002 /* CachedAsyncImage.swift */,
 				A20046 /* AllEpisodesView.swift */,
@@ -480,6 +485,7 @@
 			name = LangPod;
 			packageProductDependencies = (
 				755E9D1EFFDDE6527A77D96B /* RevenueCat */,
+				755E9D1EFFDDE6527A77D97B /* RevenueCatUI */,
 				7C5F8C060DA074F2F06B3CE1 /* AdjustSdk */,
 			);
 			productName = LangPod;
@@ -634,6 +640,7 @@
 				A10029 /* LevelUpView.swift in Sources */,
 				A10030 /* ShareCardView.swift in Sources */,
 				A10031 /* PaywallView.swift in Sources */,
+				D50001 /* RemotePaywallView.swift in Sources */,
 				A10032 /* APIService.swift in Sources */,
 				A10033 /* ListenedEpisode.swift in Sources */,
 				LP0001 /* ListenedPattern.swift in Sources */,
@@ -921,6 +928,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 47B5FB07191EF60E1D903D23 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
+		};
+		755E9D1EFFDDE6527A77D97B /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 47B5FB07191EF60E1D903D23 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
