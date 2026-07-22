@@ -60,6 +60,20 @@ struct RemotePaywallView: View {
             .onAppear {
                 Analytics.track(.paywallView)
             }
+            // Paywalls v2 模板忽略 displayCloseButton，自己叠一个关闭按钮保证能退出
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 30, height: 30)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                .padding(.top, 10)
+                .padding(.trailing, 16)
+            }
     }
 }
 #endif
