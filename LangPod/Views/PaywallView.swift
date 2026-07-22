@@ -8,10 +8,9 @@ struct LegacyPaywallView: View {
     @State private var breathePhase = false
     @State private var headerAppeared = false
     @State private var iconFloat = false
-    @State private var featuresAppeared: [Bool] = Array(repeating: false, count: 6)
+    @State private var featuresAppeared: [Bool] = Array(repeating: false, count: 5)
     @State private var planRowsAppeared: [Bool] = [false, false]
     @State private var trialRowsAppeared: [Bool] = [false, false, false]
-    @State private var topBarHeight: CGFloat = 44
     @State private var fixedBottomHeight: CGFloat = 160
 
     enum PricePlan { case monthly, yearly }
@@ -27,22 +26,15 @@ struct LegacyPaywallView: View {
                     .zIndex(1000)
                 #endif
                 VStack(spacing: 0) {
-                    topBar
-                        .background(
-                            GeometryReader { geo in
-                                Color.clear.preference(key: TopBarHeightKey.self, value: geo.size.height)
-                            }
-                        )
-
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 16) {
                             // Above-fold: hero flexes to fill the space that features + yearly + timeline don't use.
                             // Sized to exactly the visible area so monthly row sits just below the fold.
                             VStack(spacing: 16) {
                                 heroSection
-                                    .frame(maxHeight: .infinity, alignment: .center)
 
                                 featureCard
+                                    .padding(.horizontal, 24)
 
                                 // Yearly row + trial timeline (always above-fold)
                                 VStack(spacing: 12) {
@@ -57,9 +49,10 @@ struct LegacyPaywallView: View {
 
                                     trialDetails()
                                 }
+                                .padding(.horizontal, 24)
                             }
                             .frame(
-                                minHeight: max(480, outerGeo.size.height - topBarHeight - fixedBottomHeight - 14),
+                                minHeight: max(480, outerGeo.size.height - fixedBottomHeight - 14),
                                 alignment: .top
                             )
 
@@ -72,11 +65,12 @@ struct LegacyPaywallView: View {
                             )
                             .opacity(planRowsAppeared[1] ? 1 : 0)
                             .offset(x: planRowsAppeared[1] ? 0 : -20)
+                            .padding(.horizontal, 24)
                         }
-                        .padding(.horizontal, 24)
                         .padding(.bottom, 16)
                         .animation(.easeInOut(duration: 0.25), value: selectedPlan)
                     }
+                    .ignoresSafeArea(edges: .top)
 
                     fixedBottom
                         .background(
@@ -85,8 +79,10 @@ struct LegacyPaywallView: View {
                             }
                         )
                 }
+
+                // 关闭按钮悬浮在头图上
+                topBar
             }
-            .onPreferenceChange(TopBarHeightKey.self) { if $0 > 0 { topBarHeight = $0 } }
             .onPreferenceChange(FixedBottomHeightKey.self) { if $0 > 0 { fixedBottomHeight = $0 } }
         }
         .onAppear {
@@ -149,23 +145,8 @@ struct LegacyPaywallView: View {
     // MARK: - Background
 
     private var background: some View {
-        ZStack {
-            LinearGradient(
-                stops: [
-                    .init(color: Color(hex: "DBEAFE"), location: 0),
-                    .init(color: Color(hex: "E0E7FF"), location: 0.15),
-                    .init(color: Color(hex: "EEF2FF"), location: 0.35),
-                    .init(color: Color(hex: "F7F8FC"), location: 0.55),
-                    .init(color: Color(hex: "FFFFFF"), location: 1.0),
-                ],
-                startPoint: .top, endPoint: .bottom
-            )
-            RadialGradient(
-                colors: [Color(hex: "93C5FD").opacity(0.3), Color(hex: "A5B4FC").opacity(0.15), .clear],
-                center: .init(x: 0.5, y: 0.12), startRadius: 10, endRadius: 250
-            )
-        }
-        .ignoresSafeArea()
+        Color(hex: "FDFDFD")
+            .ignoresSafeArea()
     }
 
     // MARK: - Top Bar
@@ -174,9 +155,10 @@ struct LegacyPaywallView: View {
         HStack {
             Button { dismiss() } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Color.textSecondary)
-                    .frame(width: 32, height: 32)
+                    .frame(width: 30, height: 30)
+                    .background(.ultraThinMaterial, in: Circle())
             }
             Spacer()
         }
@@ -188,7 +170,8 @@ struct LegacyPaywallView: View {
 
     private func startAnimations() {
         withAnimation(.easeOut(duration: 0.6)) { headerAppeared = true }
-        withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) { iconFloat = true }
+        // 头图 Ken Burns 缓慢缩放（原浮动动效迁移到插画上）
+        withAnimation(.easeInOut(duration: 7).repeatForever(autoreverses: true)) { iconFloat = true }
         withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) { breathePhase = true }
 
         // Stage 1: feature card rows (8 features, 0.18s interval)
@@ -225,25 +208,22 @@ struct LegacyPaywallView: View {
 
     private var heroSection: some View {
         VStack(spacing: 10) {
-            Image(systemName: "headphones")
-                .font(.system(size: 56, weight: .thin))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.appPrimary, Color(hex: "6366F1")],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    )
-                )
-                .shadow(color: Color.appPrimary.opacity(0.15), radius: 20, y: iconFloat ? 10 : 4)
-                .offset(y: iconFloat ? -8 : 8)
-                .padding(.top, 6)
+            // 全宽插画头图：弧形底边 + Ken Burns 缓慢缩放（浮动动效的替代表达）
+            Image("PaywallHero")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(maxWidth: .infinity)
+                .frame(height: 250)
+                .scaleEffect(iconFloat ? 1.06 : 1.0)
+                .clipShape(ConvexBottomShape())
 
             (
                 Text("Castlingo ")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                 + Text("Pro")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.system(size: 22, weight: .bold))
             )
-            .foregroundStyle(Color(hex: "1E3A5F"))
+            .foregroundStyle(Color.appPrimary)
 
             Text("坚持一整年，流利说英语")
                 .font(.system(size: 28, weight: .bold))
@@ -251,96 +231,93 @@ struct LegacyPaywallView: View {
                 .multilineTextAlignment(.center)
 
             Text("每天 6 分钟，随时随地")
-                .font(.system(size: 18, weight: .medium))
+                .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(Color.bodyText)
-
-            Text("内容免费看，解锁发音 · 收藏 · 练习")
-                .font(.system(size: 14))
-                .foregroundStyle(Color.textTertiary)
         }
         .opacity(headerAppeared ? 1 : 0)
         .offset(y: headerAppeared ? 0 : 12)
     }
 
+    /// 底边向下凸起的弧形裁切（还原 RC 模板头图的 convex 造型）
+    private struct ConvexBottomShape: Shape {
+        func path(in rect: CGRect) -> Path {
+            var p = Path()
+            p.move(to: .zero)
+            p.addLine(to: CGPoint(x: rect.maxX, y: 0))
+            p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - 28))
+            p.addQuadCurve(
+                to: CGPoint(x: 0, y: rect.maxY - 28),
+                control: CGPoint(x: rect.midX, y: rect.maxY + 28)
+            )
+            p.closeSubpath()
+            return p
+        }
+    }
+
     // MARK: - Feature Card
 
     private struct ComparisonRow {
-        let freeText: String  // shown in free column; empty = show ✗
-        let proText: String
+        let name: String          // feature label
+        let freeIncluded: Bool    // free column: check or minus
     }
 
     private let comparisons: [ComparisonRow] = [
-        ComparisonRow(freeText: "每类前2课",  proText: "6国60+课，发音收藏全解锁"),
-        ComparisonRow(freeText: "每类前2条",  proText: "227条地道表达，全部能听能存"),
-        ComparisonRow(freeText: "每日2集4遍",  proText: "集数不限，完整5遍磨耳朵"),
-        ComparisonRow(freeText: "仅英文字幕",  proText: "双语字幕，点哪个词查哪个"),
-        ComparisonRow(freeText: "每集限3词",   proText: "整集生词一个不落"),
-        ComparisonRow(freeText: "每天限1轮",   proText: "配对造句，想练就练"),
+        ComparisonRow(name: "每日新播客",              freeIncluded: true),
+        ComparisonRow(name: "播客集数不限 · 完整5遍",  freeIncluded: false),
+        ComparisonRow(name: "60+情景课 · 227条表达",   freeIncluded: false),
+        ComparisonRow(name: "双语字幕 · 点词查询",     freeIncluded: false),
+        ComparisonRow(name: "生词无限保存 · 无限练习", freeIncluded: false),
     ]
+
+    private let iconColumnWidth: CGFloat = 52
 
     private var featureCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Castlingo Pro")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(Color.textPrimary)
-                .padding(.bottom, 12)
-
-            // Column headers
+            // Column headers: 权益 | 免费版 | PRO
             HStack(spacing: 0) {
+                Text("会员权益")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                 Text("免费版")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.textTertiary)
-                    .frame(width: 88, alignment: .leading)
+                    .frame(width: iconColumnWidth)
 
-                // Short dashed divider in the header row
-                DashedVerticalLine()
-                    .stroke(Color.textTertiary, style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
-                    .frame(width: 1, height: 16)
-
-                Text("Pro 版")
-                    .font(.system(size: 12, weight: .semibold))
+                Text("PRO")
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(Color.appPrimary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 14)
+                    .frame(width: iconColumnWidth)
             }
-            .padding(.bottom, 8)
+            .padding(.bottom, 10)
 
             Rectangle()
                 .fill(Color.border)
                 .frame(height: 1)
-                .padding(.bottom, 8)
+                .padding(.bottom, 6)
 
-            // Comparison rows — each row has its own dashed divider that animates with the row
+            // Comparison rows — feature label + free/pro icons (RC 模板样式)
             ForEach(Array(comparisons.enumerated()), id: \.offset) { i, row in
                 HStack(spacing: 0) {
-                    // Free column — left-aligned, fixed width
-                    Text(row.freeText)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.textTertiary)
+                    Text(row.name)
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color.bodyText)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
-                        .frame(width: 88, alignment: .leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                    // Per-row dashed divider — animates with the row
-                    DashedVerticalLine()
-                        .stroke(Color.textTertiary, style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
-                        .frame(width: 1, height: 18)
+                    Image(systemName: row.freeIncluded ? "checkmark" : "minus")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(row.freeIncluded ? Color.textSecondary : Color.textQuaternary)
+                        .frame(width: iconColumnWidth)
 
-                    // Pro column — left-aligned, flexible
-                    HStack(spacing: 9) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 15))
-                            .foregroundStyle(Color.appPrimary)
-                        Text(row.proText)
-                            .font(.system(size: 14))
-                            .foregroundStyle(Color.bodyText)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 14)
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Color.appPrimary)
+                        .frame(width: iconColumnWidth)
                 }
-                .padding(.vertical, 6)
+                .padding(.vertical, 8)
                 .opacity(featuresAppeared[i] ? 1 : 0)
                 .offset(x: featuresAppeared[i] ? 0 : -20)
             }
@@ -638,28 +615,11 @@ struct LegacyPaywallView: View {
     }
 }
 
-/// Preference keys for measuring the fixed top bar and bottom CTA heights.
-private struct TopBarHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-
+/// Preference key for measuring the fixed bottom CTA height.
 private struct FixedBottomHeightKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
-    }
-}
-
-/// Vertical dashed line shape used as the column divider in the Free vs Pro comparison table.
-private struct DashedVerticalLine: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
-        return path
     }
 }
 

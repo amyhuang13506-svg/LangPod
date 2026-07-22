@@ -5,19 +5,16 @@ import RevenueCatUI
 #endif
 
 // 付费墙统一入口：所有调用点继续用 PaywallView()。
-// 默认走 RevenueCat 后台配置的模板付费墙；DEBUG 可切回旧手写付费墙。
+// 默认走本地手写付费墙（RC 模板视觉 + 动效 + 试用时间线）；
+// DEBUG 可切到 RevenueCat 后台远程模板对比效果。
 struct PaywallView: View {
     var body: some View {
-        #if canImport(RevenueCatUI)
-        #if DEBUG
-        if UserDefaults.standard.bool(forKey: "useLegacyPaywall") {
-            LegacyPaywallView()
-        } else {
+        #if canImport(RevenueCatUI) && DEBUG
+        if UserDefaults.standard.bool(forKey: "useRemotePaywall") {
             RemotePaywallView()
+        } else {
+            LegacyPaywallView()
         }
-        #else
-        RemotePaywallView()
-        #endif
         #else
         LegacyPaywallView()
         #endif

@@ -551,14 +551,14 @@ struct ProfileView: View {
                 divider
 
                 Toggle(isOn: Binding(
-                    get: { UserDefaults.standard.bool(forKey: "useLegacyPaywall") },
-                    set: { UserDefaults.standard.set($0, forKey: "useLegacyPaywall") }
+                    get: { UserDefaults.standard.bool(forKey: "useRemotePaywall") },
+                    set: { UserDefaults.standard.set($0, forKey: "useRemotePaywall") }
                 )) {
                     HStack(spacing: 10) {
                         Image(systemName: "hammer.fill")
                             .font(.system(size: 18))
                             .foregroundStyle(Color(hex: "8B5CF6"))
-                        Text("[DEV] 使用旧付费墙")
+                        Text("[DEV] 使用RC远程付费墙")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(Color(hex: "8B5CF6"))
                     }
