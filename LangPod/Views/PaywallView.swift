@@ -80,8 +80,9 @@ struct LegacyPaywallView: View {
                         )
                 }
 
-                // 关闭按钮悬浮在头图上
+                // 关闭按钮悬浮在头图右上角（zIndex 提到最高，避免被其他浮层挡住）
                 topBar
+                    .zIndex(2000)
             }
             .onPreferenceChange(FixedBottomHeightKey.self) { if $0 > 0 { fixedBottomHeight = $0 } }
         }
@@ -153,16 +154,19 @@ struct LegacyPaywallView: View {
 
     private var topBar: some View {
         HStack {
+            Spacer()
             Button { dismiss() } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Color.textSecondary)
                     .frame(width: 30, height: 30)
                     .background(.ultraThinMaterial, in: Circle())
+                    .frame(width: 44, height: 44)   // 扩大点击区域
+                    .contentShape(Rectangle())
             }
-            Spacer()
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .padding(.top, 4)
     }
 
