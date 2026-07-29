@@ -112,6 +112,7 @@
 		P10001 /* Pattern.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20001 /* Pattern.swift */; };
 		P10002 /* PlayItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20002 /* PlayItem.swift */; };
 		P10003 /* PatternAccessGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20003 /* PatternAccessGate.swift */; };
+		P10099 /* ReviewPrompter.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20099 /* ReviewPrompter.swift */; };
 		P10004 /* PatternPlayerContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20004 /* PatternPlayerContent.swift */; };
 		P10005 /* PatternHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20005 /* PatternHistoryView.swift */; };
 		PS0001 /* PushService.swift in Sources */ = {isa = PBXBuildFile; fileRef = PS0002 /* PushService.swift */; };
@@ -237,6 +238,7 @@
 		P20001 /* Pattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pattern.swift; sourceTree = "<group>"; };
 		P20002 /* PlayItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayItem.swift; sourceTree = "<group>"; };
 		P20003 /* PatternAccessGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternAccessGate.swift; sourceTree = "<group>"; };
+		P20099 /* ReviewPrompter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewPrompter.swift; sourceTree = "<group>"; };
 		P20004 /* PatternPlayerContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternPlayerContent.swift; sourceTree = "<group>"; };
 		P20005 /* PatternHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternHistoryView.swift; sourceTree = "<group>"; };
 		PS0002 /* PushService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushService.swift; sourceTree = "<group>"; };
@@ -348,6 +350,7 @@
 				AJ0002 /* AdjustTracker.swift */,
 				RC0002 /* RemoteCommandRouter.swift */,
 				P20003 /* PatternAccessGate.swift */,
+				P20099 /* ReviewPrompter.swift */,
 				RP0072 /* WordLookupService.swift */,
 				RP0102 /* BilingualSearch.swift */,
 			);
@@ -632,6 +635,7 @@
 				P10001 /* Pattern.swift in Sources */,
 				P10002 /* PlayItem.swift in Sources */,
 				P10003 /* PatternAccessGate.swift in Sources */,
+				P10099 /* ReviewPrompter.swift in Sources */,
 				P10004 /* PatternPlayerContent.swift in Sources */,
 				P10005 /* PatternHistoryView.swift in Sources */,
 				A10026 /* WordMatchView.swift in Sources */,

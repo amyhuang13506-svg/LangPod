@@ -464,6 +464,15 @@ struct ProfileView: View {
                 menuRow(icon: "square.and.arrow.up", iconColor: "94A3B8", title: "分享给朋友")
             }
             divider
+            if let reviewURL = ReviewPrompter.writeReviewURL {
+                Link(destination: reviewURL) {
+                    menuRow(icon: "star", iconColor: "F59E0B", title: "给我们评分")
+                }
+                .simultaneousGesture(TapGesture().onEnded {
+                    Analytics.track(.reviewEntryTap)
+                })
+            }
+            divider
             if let privacyURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/privacy.html") {
                 Link(destination: privacyURL) {
                     menuRow(icon: "shield", iconColor: "94A3B8", title: "隐私政策")

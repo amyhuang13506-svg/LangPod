@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 struct EpisodeCompleteView: View {
     let episode: Episode
@@ -9,6 +10,7 @@ struct EpisodeCompleteView: View {
     @Environment(DataStore.self) private var dataStore
     @Environment(VocabularyStore.self) private var vocabularyStore
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(\.requestReview) private var requestReview
     @State private var encounteredWords: [SavedWord] = []
     @State private var showPaywall = false
 
@@ -125,6 +127,14 @@ struct EpisodeCompleteView: View {
             encounteredWords = vocabularyStore.detectEncounteredWords(in: episode)
                 .filter { !newVocabWords.contains($0.word.lowercased()) } // exclude this episode's own vocab
                 .filter { $0.encounterCount > 1 }
+
+            // 完播是最佳好评时机：第 3 次完播起请求系统评分弹窗（60 天冷却）
+            if ReviewPrompter.shouldAsk(episodesCompleted: dataStore.episodesCompleted) {
+                ReviewPrompter.recordAsked()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    requestReview()
+                }
+            }
         }
     }
 
