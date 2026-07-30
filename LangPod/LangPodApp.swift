@@ -46,6 +46,11 @@ struct LangPodApp: App {
             Purchases.logLevel = .info
             #endif
             Purchases.configure(withAPIKey: RevenueCatConfig.apiKey)
+            // Apple Search Ads 归因：让 RevenueCat 自动采集 AdServices token 并回传，
+            // 之后可在 RC Charts 按 ASA campaign / ad group / keyword 拆分订阅与收入。
+            // AdServices 框架由 RC SDK 自动引入，无需用户授权（标准归因，非 IDFA）。
+            // 需在 RC 后台 Integrations → Apple AdServices 里启用一次。
+            Purchases.shared.attribution.enableAdServicesAttributionTokenCollection()
         }
         #endif
     }
