@@ -14,6 +14,9 @@ struct RawPodcast: Codable, Identifiable, Hashable {
     let mediaType: MediaType            // 原源类型：video (keynote) / audio (podcast)
     let youtubeId: String?              // 原始 YouTube ID（保留用于「在 YouTube 打开」link）
     let audioUrl: String?               // 实际播放 URL（一律走 OSS，国内可访问；可能是 mp4 含视频轨）
+    /// 纯音轨 m4a（体积 ≈ mp4 的 1/4）。2026-08 成本止血：听的场景默认播它，
+    /// 用户点「看视频」才加载 audioUrl 的 mp4。老数据可能没有（nil → 回退 mp4）。
+    let audioOnlyUrl: String?
     let thumbnail: String?              // OSS 上的缩略图 URL
     let hasVideo: Bool?                 // 真值：audio_url 指向的文件含视频画面，App 用 VideoPlayerLayerView 展示
     let transcriptUrl: String?          // 字幕 JSON URL（OSS 上的，{segments: [{start,end,en,zh}]}）
@@ -36,6 +39,7 @@ struct RawPodcast: Codable, Identifiable, Hashable {
         case mediaType = "media_type"
         case youtubeId = "youtube_id"
         case audioUrl = "audio_url"
+        case audioOnlyUrl = "audio_only_url"
         case hasVideo = "has_video"
         case transcriptUrl = "transcript_url"
         case publishedAt = "published_at"

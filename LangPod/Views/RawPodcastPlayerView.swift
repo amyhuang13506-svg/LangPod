@@ -536,7 +536,7 @@ struct RawPodcastPlayerView: View {
 
     @ViewBuilder
     private var coverHeader: some View {
-        if let c = controller, podcast.hasVideo == true {
+        if let c = controller, c.isVideoMode {
             // 视频源：底铺缩略图（AVPlayer 缓冲首帧前防止黑屏），视频层叠在上面，
             // 首帧就绪后自然盖住缩略图。
             ZStack {
@@ -553,6 +553,37 @@ struct RawPodcastPlayerView: View {
             }
             .aspectRatio(16.0 / 9.0, contentMode: .fit)
             .frame(maxWidth: .infinity)
+        } else if controller != nil, podcast.hasVideo == true {
+            // 音频模式但有视频可看（默认态，省流量）：缩略图 + 「看视频」入口
+            ZStack(alignment: .bottomTrailing) {
+                if let thumb = podcast.displayThumbnailUrl {
+                    CachedAsyncImage(url: thumb) {
+                        bgGradient
+                    }
+                    .scaledToFill()
+                    .clipped()
+                } else {
+                    bgGradient
+                }
+                Button {
+                    switchToVideoMode()
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "play.rectangle.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("看视频")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.black.opacity(0.55), in: Capsule())
+                }
+                .padding(10)
+            }
+            .aspectRatio(16.0 / 9.0, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .clipped()
         } else if let thumb = podcast.displayThumbnailUrl {
             CachedAsyncImage(url: thumb) {
                 bgGradient
@@ -570,6 +601,14 @@ struct RawPodcastPlayerView: View {
                         .foregroundStyle(.white.opacity(0.22))
                 )
         }
+    }
+
+    /// 音频模式 → 视频模式：换 controller 加载 mp4。旧实例 tearDown 时存了进度，
+    /// 新实例 readyToPlay 后 seek 回来，位置无缝衔接。
+    private func switchToVideoMode() {
+        let c = RawPlaybackSession.shared.controller(for: podcast, preferVideo: true)
+        controller = c
+        c?.play()
     }
 
     private var bgGradient: some View {
@@ -808,14 +847,25 @@ final class RawPlaybackSession {
 
     /// 返回当前 podcast 的 controller —— 同一条则复用（断点续播），不同条则换。
     /// 没有 audioUrl 的返回 nil。
-    func controller(for podcast: RawPodcast) -> RawAudioController? {
-        if let existing = controller, existing.podcast.id == podcast.id {
+    ///
+    /// 2026-08 成本止血：默认播纯音轨 m4a（audioOnlyUrl，体积 ≈ mp4 的 1/4），
+    /// `preferVideo: true`（用户点「看视频」）才加载 mp4。老数据没有 m4a 时回退 mp4。
+    /// 已是视频模式的实例在 preferVideo=false 时不降级——保住"秒续播"的复用。
+    func controller(for podcast: RawPodcast, preferVideo: Bool = false) -> RawAudioController? {
+        let wantsVideo = preferVideo || podcast.audioOnlyUrl == nil
+        if let existing = controller, existing.podcast.id == podcast.id,
+           existing.isVideoMode == (wantsVideo && podcast.hasVideo == true) || !preferVideo {
             return existing
         }
         controller?.tearDown()
         controller = nil
-        guard let urlStr = podcast.audioUrl, let url = URL(string: urlStr) else { return nil }
-        let c = RawAudioController(url: url, podcast: podcast)
+        let urlStr = wantsVideo ? podcast.audioUrl : podcast.audioOnlyUrl
+        guard let urlStr, let url = URL(string: urlStr) else { return nil }
+        let c = RawAudioController(
+            url: url,
+            podcast: podcast,
+            isVideoMode: wantsVideo && podcast.hasVideo == true
+        )
         controller = c
         return c
     }
@@ -835,6 +885,9 @@ final class RawPlaybackSession {
 final class RawAudioController {
     let player: AVPlayer
     let podcast: RawPodcast
+    /// true = 正在播含视频轨的 mp4（用户点了「看视频」或该条没有 m4a）；
+    /// false = 纯音轨 m4a，封面区显示缩略图。
+    let isVideoMode: Bool
     var isPlaying: Bool = false
     var currentTime: Double = 0
     var duration: Double = 0
@@ -875,8 +928,9 @@ final class RawAudioController {
         UserDefaults.standard.removeObject(forKey: positionKeyPrefix + podcastId)
     }
 
-    init(url: URL, podcast: RawPodcast) {
+    init(url: URL, podcast: RawPodcast, isVideoMode: Bool = true) {
         self.podcast = podcast
+        self.isVideoMode = isVideoMode
         // 必须先把 AVAudioSession 切到 playback，否则 AVPlayer 不会出声
         do {
             let session = AVAudioSession.sharedInstance()
@@ -889,7 +943,7 @@ final class RawAudioController {
         // 视频内容首播时让 AVPlayer 等待足够缓冲再 start，避免出现"音频响但画面停在
         // 封面"的撕裂（首帧 keyframe 可能在视频开头 1-3s，缓冲未到时画面空）。
         // 纯音频时仍可走快速启动。
-        self.player.automaticallyWaitsToMinimizeStalling = (podcast.hasVideo == true)
+        self.player.automaticallyWaitsToMinimizeStalling = isVideoMode
         // 预设 3s 前向缓冲，让 first frame 决策有充足数据。
         self.player.currentItem?.preferredForwardBufferDuration = 3.0
         // 读上次保存的进度（>1s 才算有意义；接近结尾也忽略，让用户从头听）
@@ -1129,8 +1183,8 @@ final class RawAudioController {
         if let art = artwork {
             info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: art.size) { _ in art }
         }
-        // hasVideo == true 时标记 video 类型，锁屏会显示「正在播放视频」icon
-        info[MPNowPlayingInfoPropertyMediaType] = (podcast.hasVideo == true)
+        // 视频模式时标记 video 类型，锁屏会显示「正在播放视频」icon
+        info[MPNowPlayingInfoPropertyMediaType] = isVideoMode
             ? MPNowPlayingInfoMediaType.video.rawValue
             : MPNowPlayingInfoMediaType.audio.rawValue
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info

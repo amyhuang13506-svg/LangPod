@@ -17,6 +17,7 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 from datetime import datetime, timedelta, timezone
@@ -111,9 +112,13 @@ def candidate_to_master_entry(
     thumbnail_oss_url: Optional[str],
     has_video: bool,
     transcript_oss_url: Optional[str] = None,
+    audio_only_oss_url: Optional[str] = None,
 ) -> dict:
     """转成 App 的 RawPodcast Codable schema。"""
     return {
+        # 纯音轨版（m4a，体积 ≈ mp4 的 1/4）。新版 App 默认播这个，只有用户
+        # 打开视频画面才拉 audio_url 的 mp4；老版 App 不认识该字段，无影响。
+        "audio_only_url":      audio_only_oss_url,
         "id":                  candidate_id(c),
         "title":               c["title"],
         "speaker":             c["speaker"],
@@ -316,6 +321,27 @@ def process_candidate(c: dict, bucket) -> Optional[dict]:
         has_video = content_type.startswith("video/")
         print(f"   ☁️  {'video' if has_video else 'audio'}: {media_oss_url}")
 
+        # 视频源额外抽一份纯音轨 m4a（acodec copy，秒级完成）。听的场景走它，
+        # 流量 ≈ mp4 的 1/4；抽取失败不影响主流程（App 会回退 mp4）。
+        audio_only_oss_url = None
+        if has_video:
+            m4a_local = tmpd / "media.m4a"
+            try:
+                subprocess.run(
+                    ["ffmpeg", "-y", "-i", str(media_local), "-vn",
+                     "-acodec", "copy", str(m4a_local)],
+                    check=True, capture_output=True, timeout=300,
+                )
+                m4a_key = f"raw_podcasts/{cid}/media.m4a"
+                bucket.put_object(m4a_key, m4a_local.read_bytes(),
+                                  headers={"Content-Type": "audio/mp4"})
+                audio_only_oss_url = f"{OSS_CDN_DOMAIN}/{m4a_key}"
+                print(f"   ☁️  audio-only: {m4a_local.stat().st_size/1024/1024:.1f}MB → {audio_only_oss_url}")
+            except Exception as e:
+                print(f"  ⚠️  m4a 抽取失败（不影响主流程）：{e}")
+        elif content_type.startswith("audio/"):
+            audio_only_oss_url = media_oss_url
+
         thumb_oss_url = None
         if thumb_local.exists():
             thumb_oss_key = f"raw_podcasts/{cid}/thumbnail.jpg"
@@ -348,7 +374,10 @@ def process_candidate(c: dict, bucket) -> Optional[dict]:
             except Exception as e:
                 print(f"  ⚠️  pretranslate_words 失败（不影响主流程）：{e}")
 
-    return candidate_to_master_entry(c, media_oss_url, thumb_oss_url, has_video, transcript_oss_url)
+    return candidate_to_master_entry(
+        c, media_oss_url, thumb_oss_url, has_video, transcript_oss_url,
+        audio_only_oss_url=audio_only_oss_url,
+    )
 
 
 # =============================================================
