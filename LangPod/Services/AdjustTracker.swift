@@ -59,6 +59,20 @@ enum AdjustTracker {
 
     // MARK: - ATT（App Tracking Transparency）
 
+    /// 2026-08 弹窗改造：ATT 弹框延到第二次冷启动，避免和落地时刻的产品弹窗
+    /// 叠加砸脸。已决策过的用户不受门槛影响（直接放行首包，永远不会重复弹）。
+    static func requestATTDeferred() {
+        if ATTrackingManager.trackingAuthorizationStatus == .notDetermined,
+           UserDefaults.standard.integer(forKey: "appColdLaunchCount") < 2 {
+            // 首启不弹框，但必须立即放行首包（无 IDFA → SKAdNetwork 归因），
+            // 否则 onboarding_complete 等投放信号被扣整个首次会话——对一次性
+            // 用户等于永远丢失。第二次冷启动起再弹框争取 IDFA。
+            resolveTrackingGate()
+            return
+        }
+        requestATTIfNeeded()
+    }
+
     /// 主界面出现后调用。已决策过（同意/拒绝）则直接放行首包，不再弹框。
     /// 必须在 App .active 状态下请求，否则 iOS 会静默回 .denied。
     static func requestATTIfNeeded() {

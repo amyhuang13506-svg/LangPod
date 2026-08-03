@@ -130,7 +130,20 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [dailyID])
 
-        guard isAuthorized else { return }
+        // 实时查权限而不是用启动时缓存的 isAuthorized——用户可能刚在完成页
+        // 铺垫卡里授权（2026-08 弹窗改造），当晚的推送就该排上。
+        center.getNotificationSettings { [weak self] settings in
+            DispatchQueue.main.async {
+                let authorized = settings.authorizationStatus == .authorized
+                self?.isAuthorized = authorized
+                guard authorized else { return }
+                self?.scheduleDaily(context: c)
+            }
+        }
+    }
+
+    private func scheduleDaily(context c: NotificationContext) {
+        let center = UNUserNotificationCenter.current()
         guard let intent = pickIntent(context: c) else { return }
 
         let content = UNMutableNotificationContent()

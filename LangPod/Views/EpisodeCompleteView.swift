@@ -1,11 +1,14 @@
 import SwiftUI
 import StoreKit
+import UserNotifications
 
 struct EpisodeCompleteView: View {
     let episode: Episode
     var onNextEpisode: () -> Void
     var onSaveVocabulary: () -> Void
     var onPlayPatterns: (() -> Void)? = nil
+    /// 2026-08 完成结构改革：完成页在第 1 遍后弹出，此 CTA 继续第 2-5 遍。
+    var onContinueListening: (() -> Void)? = nil
 
     @Environment(DataStore.self) private var dataStore
     @Environment(VocabularyStore.self) private var vocabularyStore
@@ -13,6 +16,10 @@ struct EpisodeCompleteView: View {
     @Environment(\.requestReview) private var requestReview
     @State private var encounteredWords: [SavedWord] = []
     @State private var showPaywall = false
+    /// 推送授权铺垫卡（2026-08 弹窗改造：授权弹窗从落地时刻挪到这里）
+    @State private var showPushPrePrompt = false
+
+    private static let pushDeclineCountKey = "pushPrePromptDeclineCount"
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -37,6 +44,12 @@ struct EpisodeCompleteView: View {
 
                     // Stats row
                     statsRow
+
+                    // 推送授权铺垫卡：价值时刻才开口要权限（点「允许」再弹系统框，
+                    // 点「暂不」不消耗系统弹窗机会，streak ≥3 天时再问一次）
+                    if showPushPrePrompt {
+                        pushPrePromptCard
+                    }
 
                     // Encountered words (recycled from previous episodes)
                     if !encounteredWords.isEmpty {
@@ -109,7 +122,7 @@ struct EpisodeCompleteView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 62)
-                .padding(.bottom, 180)  // leave room for fixed CTA bar
+                .padding(.bottom, 240)  // leave room for fixed CTA bar (3 rows)
             }
 
             // Fixed bottom CTAs (don't scroll with content)
@@ -135,7 +148,80 @@ struct EpisodeCompleteView: View {
                     requestReview()
                 }
             }
+
+            evaluatePushPrePrompt()
         }
+    }
+
+    // MARK: - Push Pre-Prompt
+
+    /// 系统权限还没问过（notDetermined）且铺垫卡没被拒绝过（或拒绝过一次但
+    /// streak 已 ≥3 天）时展示。评分弹窗和它同刻出现的概率极低（第 3 次完播
+    /// 时权限一般早已决定），不做互斥。
+    private func evaluatePushPrePrompt() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            guard settings.authorizationStatus == .notDetermined else { return }
+            let declines = UserDefaults.standard.integer(forKey: Self.pushDeclineCountKey)
+            let eligible = declines == 0 || (declines == 1 && dataStore.streakDays >= 3)
+            guard eligible else { return }
+            DispatchQueue.main.async {
+                withAnimation(.easeOut(duration: 0.25)) { showPushPrePrompt = true }
+            }
+        }
+    }
+
+    private var pushPrePromptCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Text("🔔")
+                    .font(.system(size: 18))
+                Text("明天新内容上线时提醒你？")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+            }
+            Text("每天最多一条，可随时在设置里关闭")
+                .font(.system(size: 12))
+                .foregroundStyle(Color.textTertiary)
+
+            HStack(spacing: 10) {
+                Button {
+                    let declines = UserDefaults.standard.integer(forKey: Self.pushDeclineCountKey)
+                    let source = declines == 0 ? "first_complete" : "streak3"
+                    PushService.shared.requestPushAuthorization(source: source)
+                    withAnimation { showPushPrePrompt = false }
+                } label: {
+                    Text("好，提醒我")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 40)
+                        .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 12))
+                }
+                Button {
+                    let declines = UserDefaults.standard.integer(forKey: Self.pushDeclineCountKey)
+                    UserDefaults.standard.set(declines + 1, forKey: Self.pushDeclineCountKey)
+                    withAnimation { showPushPrePrompt = false }
+                } label: {
+                    Text("暂不")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.textSecondary)
+                        .frame(width: 88)
+                        .frame(height: 40)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.border, lineWidth: 1)
+                        )
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.primaryLight, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.appPrimary.opacity(0.25), lineWidth: 1)
+        )
     }
 
     // MARK: - Patterns Section (list rows, same style as vocab rows)
@@ -194,6 +280,22 @@ struct EpisodeCompleteView: View {
             .frame(height: 16)
 
             VStack(spacing: 10) {
+                // Row 0: 再听加深（第 1 遍完成即弹完成页，2-5 遍变成这里的选项）
+                if let onContinueListening {
+                    Button(action: onContinueListening) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "headphones")
+                                .font(.system(size: 14, weight: .semibold))
+                            Text("再听加深 · 磨耳朵模式")
+                                .font(.system(size: 15, weight: .semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+                    }
+                }
+
                 // Row 1: 播放句型讲解 | 下一集
                 HStack(spacing: 10) {
                     if let patterns = episode.patterns, !patterns.isEmpty,
@@ -233,10 +335,13 @@ struct EpisodeCompleteView: View {
                     Button(action: onNextEpisode) {
                         Text("下一集")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(onContinueListening == nil ? .white : Color.appPrimary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 48)
-                            .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+                            .background(
+                                onContinueListening == nil ? Color.appPrimary : Color.primaryLight,
+                                in: RoundedRectangle(cornerRadius: 14)
+                            )
                     }
                 }
 

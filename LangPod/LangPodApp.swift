@@ -170,6 +170,12 @@ struct LangPodApp: App {
                             guard let first = episode.patterns?.first else { return }
                             appState.showCompletePage = false
                             audioPlayer.playPattern(first, parentEpisode: episode, in: audioPlayer.playQueue)
+                        },
+                        onContinueListening: {
+                            appState.showCompletePage = false
+                            if audioPlayer.currentEpisode?.id == episode.id {
+                                audioPlayer.continueDeepening()
+                            }
                         }
                     )
                     .environment(dataStore)
@@ -203,13 +209,13 @@ struct LangPodApp: App {
                 // 上次运行若在听集途中被杀进程，把落盘的会话快照补报为 abandon。
                 audioPlayer.reportDanglingSessionFromPreviousRun()
                 RawAudioController.reportDanglingSessionFromPreviousRun()
-                // Request notification permission after first launch.
-                // requestPushAuthorization() also asks iOS for permission, so
-                // we only need NotificationManager.requestPermission() to keep
-                // its `isAuthorized` flag in sync for the local-push arbiter.
+                // 冷启动计数：ATT 延到第 2 次冷启动的依据（2026-08 弹窗改造）。
+                let coldLaunches = UserDefaults.standard.integer(forKey: "appColdLaunchCount") + 1
+                UserDefaults.standard.set(coldLaunches, forKey: "appColdLaunchCount")
+                // 2026-08 弹窗改造：冷启动不再弹推送授权框——授权统一由首集
+                // 完成页的铺垫卡触发。这里只静默同步已授权用户的 APNs token。
                 if dataStore.hasCompletedOnboarding {
-                    notificationManager.requestPermission()
-                    PushService.shared.requestPushAuthorization()
+                    PushService.shared.registerIfAuthorized()
                 }
                 // 晚间内容推送要用今日新场景课（today.json）——提前拉，保证进后台重排时已就绪。
                 lessonStore.loadTodayIfNeeded()
@@ -237,6 +243,9 @@ struct LangPodApp: App {
             .onReceive(NotificationCenter.default.publisher(for: .reminderTimeChanged)) { _ in
                 refreshDailyNotification()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .playerViewDisappeared)) { _ in
+                setupDefaultFinishedHandler()
+            }
             .onReceive(NotificationCenter.default.publisher(for: .dailyTasksChanged)) { _ in
                 // 任务完成/重抽 → 重排每日推送（「只差 1 个」档要用最新进度）
                 refreshDailyNotification()
@@ -254,15 +263,12 @@ struct LangPodApp: App {
                 PushService.shared.reuploadForLevelChange(newLevel: newLevel.rawValue)
             }
             .onChange(of: dataStore.hasCompletedOnboarding) { _, completed in
-                // First time finishing onboarding → ask for push permission so
-                // the user can start receiving new-episode notifications today,
-                // not on next cold launch.
+                // 2026-08 弹窗改造：落地时刻只留「今日计划」弹窗。推送授权挪到
+                // 首集完成页铺垫卡，ATT 延到第二次冷启动（requestATTDeferred）。
                 if completed {
-                    notificationManager.requestPermission()
-                    PushService.shared.requestPushAuthorization()
-                    // ATT 授权（FB 投放归因）：跟在推送授权后面排队弹出。
-                    // 无论同意/拒绝都会放行 Adjust 首包（拒绝走 SKAdNetwork 归因）。
-                    AdjustTracker.requestATTIfNeeded()
+                    // 首次会话不弹 ATT 框，但要立即放行 Adjust 首包（SKAdNetwork
+                    // 归因），保证 onboarding_complete 投放信号当场发出。
+                    AdjustTracker.requestATTDeferred()
                     // 记录 onboarding 完成日（分析/调试用；当天弹窗已放开）
                     UserDefaults.standard.set(TaskEngine.todayKey(), forKey: "onboardingCompletedDay")
                     // 落地首页后直接弹今日计划：第一条是词汇小课堂/句型图文卡（免费可完成），
@@ -271,10 +277,10 @@ struct LangPodApp: App {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                // 老用户（已过 onboarding）：每次激活时机会性地弹 ATT / 放行 Adjust 首包。
-                // 已决策过则内部直接放行，不会重复弹框。新用户等 onboarding 完成再弹。
+                // ATT：第二次冷启动起才弹框；首次会话放行首包走 SKAdNetwork。
+                // 已决策过的用户内部直接放行，不会重复弹框。
                 if dataStore.hasCompletedOnboarding {
-                    AdjustTracker.requestATTIfNeeded()
+                    AdjustTracker.requestATTDeferred()
                 }
             }
         }
@@ -405,12 +411,30 @@ struct LangPodApp: App {
             if let ep = audioPlayer.currentEpisode {
                 vocabularyStore.saveWords(from: ep)
             }
-            dataStore.completeEpisode(
+            // 通常第 1 遍时已记过完成，这里兜底（比如跳遍直接到结尾的路径）。
+            dataStore.recordCompletionIfNeeded(
                 totalWords: vocabularyStore.totalCount,
                 episode: audioPlayer.currentEpisode
             )
             audioPlayer.skipToNextEpisode()
             refreshDailyNotification()
+        }
+
+        // 2026-08 完成结构改革：第 1 遍完成即完播。前台弹完成页（返回 true
+        // 让播放器停在第 2 遍开头），后台/当日已弹过则照旧续播。
+        // PlayerView 可见时会换成它自己的版本（本地 overlay），onDisappear 还原。
+        audioPlayer.onFirstRoundFinished = { [self] in
+            guard let ep = audioPlayer.currentEpisode else { return false }
+            vocabularyStore.saveWords(from: ep)
+            let recorded = dataStore.recordCompletionIfNeeded(
+                totalWords: vocabularyStore.totalCount,
+                episode: ep
+            )
+            refreshDailyNotification()
+            guard recorded, UIApplication.shared.applicationState == .active else { return false }
+            appState.completedEpisode = ep
+            appState.showCompletePage = true
+            return true
         }
     }
 

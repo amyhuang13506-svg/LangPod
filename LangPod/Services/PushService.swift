@@ -40,11 +40,18 @@ class PushService: NSObject, UIApplicationDelegate {
 
     /// Ask iOS for permission, then register for remote pushes if granted.
     /// Idempotent — safe to call repeatedly (system caches the answer).
-    func requestPushAuthorization() {
+    /// `source` 非空时上报 push_permission_result（铺垫卡触发的场景）。
+    func requestPushAuthorization(source: String? = nil) {
         // 截图/调试用：simctl launch 传 -debug_screenshot_mode YES 跳过授权弹框
         if UserDefaults.standard.bool(forKey: "debug_screenshot_mode") { return }
         let center = UNUserNotificationCenter.current()
         center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+            if let source {
+                Analytics.track(.pushPermissionResult, params: [
+                    "granted": granted ? "1" : "0",
+                    "source": source
+                ])
+            }
             guard granted else { return }
             DispatchQueue.main.async {
                 UIApplication.shared.registerForRemoteNotifications()

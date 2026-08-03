@@ -42,6 +42,7 @@ enum Analytics {
         case purchaseFail = "purchase_fail"
         case shareCard = "share_card"
         case pushOpened = "push_opened"
+        case pushPermissionResult = "push_permission_result"
         case reviewPromptRequest = "review_prompt_request"
         case reviewEntryTap = "review_entry_tap"
         case patternOpen = "pattern_open"

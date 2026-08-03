@@ -1,6 +1,11 @@
 import SwiftUI
 import UIKit
 
+extension Notification.Name {
+    /// PlayerView 关闭 → LangPodApp 重装全局播放完成回调。
+    static let playerViewDisappeared = Notification.Name("castlingo.playerViewDisappeared")
+}
+
 struct PlayerView: View {
     @Environment(AudioPlayer.self) private var player
     @Environment(DataStore.self) private var dataStore
@@ -62,6 +67,10 @@ struct PlayerView: View {
                         guard let first = episode.patterns?.first else { return }
                         showComplete = false
                         player.playPattern(first, parentEpisode: episode, in: player.playQueue)
+                    },
+                    onContinueListening: {
+                        showComplete = false
+                        player.continueDeepening()
                     }
                 )
             } else {
@@ -69,36 +78,33 @@ struct PlayerView: View {
             }
         }
         .onAppear {
+            // 2026-08 完成结构改革：完成页在第 1 遍结束时弹（onFirstRoundFinished）。
+            // 全遍数听完（onEpisodeFinished）只兜底记录 + 自动切下一集，不再重复弹页。
+            player.onFirstRoundFinished = {
+                guard let ep = player.currentEpisode else { return false }
+                vocabularyStore.saveWords(from: ep)
+                let recorded = dataStore.recordCompletionIfNeeded(
+                    totalWords: vocabularyStore.totalCount,
+                    episode: ep
+                )
+                guard recorded, UIApplication.shared.applicationState == .active else { return false }
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showComplete = true
+                }
+                return true
+            }
             player.onEpisodeFinished = {
                 if let ep = player.currentEpisode {
                     vocabularyStore.saveWords(from: ep)
                 }
-                dataStore.completeEpisode(totalWords: vocabularyStore.totalCount, episode: player.currentEpisode)
-                // Lock screen / background: auto-advance like a podcast.
-                // Foreground: show completion page for vocab + stats review.
-                if UIApplication.shared.applicationState == .active {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showComplete = true
-                    }
-                } else {
-                    player.skipToNextEpisode()
-                }
+                dataStore.recordCompletionIfNeeded(totalWords: vocabularyStore.totalCount, episode: player.currentEpisode)
+                player.skipToNextEpisode()
             }
         }
         .onDisappear {
-            // Restore default handler: record history + auto-advance even when PlayerView is not visible.
-            // Previously this handler forgot to call skipToNextEpisode, so playback silently stopped
-            // after one episode when the user wasn't looking at the full player.
-            player.onEpisodeFinished = { [dataStore, vocabularyStore, player] in
-                if let ep = player.currentEpisode {
-                    vocabularyStore.saveWords(from: ep)
-                }
-                dataStore.completeEpisode(
-                    totalWords: vocabularyStore.totalCount,
-                    episode: player.currentEpisode
-                )
-                player.skipToNextEpisode()
-            }
+            // Restore default handlers (LangPodApp.setupDefaultFinishedHandler 重装
+            // onEpisodeFinished + onFirstRoundFinished 两个全局版本)。
+            NotificationCenter.default.post(name: .playerViewDisappeared, object: nil)
         }
         .fullScreenCover(isPresented: $showShareCard) {
             ShareCardView()

@@ -165,6 +165,12 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
     // Completion callback — more reliable than onChange for enum
     var onEpisodeFinished: (() -> Void)?
 
+    /// 2026-08 完成结构改革：第 1 遍英语听完即视为完播。
+    /// 返回 true = UI 接管（弹完成页），播放器暂停在第 2 遍开头，等
+    /// `continueDeepening()` 或用户切集；返回 false = 照旧自动进第 2 遍
+    /// （后台/锁屏收听、当日已弹过完成页等场景）。
+    var onFirstRoundFinished: (() -> Bool)?
+
     /// Gate check before playing a new episode. Return true to allow, false to block.
     var playGate: ((Episode) -> Bool)?
 
@@ -369,8 +375,23 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
                 "level": currentEpisode?.level ?? "",
                 "listened_seconds": "\(Int(listenAccumSeconds))"
             ])
+            // 完成结构改革后第 1 遍 = 完播，弃听会话到此收口：之后切集/杀进程
+            // 不再算 episode_abandon（abandon 语义收窄为"第 1 遍没听完就走"）。
+            endListenSessionCompleted()
             phase = .englishRound(2)
-            startAfterDelay(1.0)
+            if onFirstRoundFinished?() == true {
+                // 完成页接管：停在第 2 遍开头。此时上一遍的 player 已播完，
+                // 清掉它避免锁屏播放键把第 1 遍音频从头再放一次。
+                player?.stop()
+                player = nil
+                stopStreamPlayer()
+                stopTimer()
+                isPlaying = false
+                userPaused = true
+                updateNowPlayingInfo()
+            } else {
+                startAfterDelay(1.0)
+            }
         case .englishRound(2):
             phase = .englishRound(3)
             startAfterDelay(1.0)
@@ -640,6 +661,9 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         } else {
             userPaused.toggle()
             isPlaying = !userPaused
+            // 完成页把播放器停在第 2 遍开头时 player == nil 且无 mock 定时器，
+            // 锁屏/播放键恢复要真正把这一遍放出来，而不是只翻标志位。
+            if isPlaying, timer == nil { startCurrentPhase() }
         }
         // 立刻把新状态推给锁屏 widget，否则要等下一次 0.5s 定时刷新才更新，
         // 用户会觉得"按了没反应"。同时确保自己是 active —— 任何外部触发的
@@ -751,6 +775,13 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
 
     @discardableResult
     func skipToPreviousEpisode() -> Bool { skipToPrevious() }
+
+    /// 完成页「再听加深」：从被完成页暂停的第 2 遍继续 5 遍循环。
+    func continueDeepening() {
+        guard case .episode = currentPlayItem else { return }
+        userPaused = false
+        startCurrentPhase()
+    }
 
     func skipCurrentRound() {
         stopTimer()

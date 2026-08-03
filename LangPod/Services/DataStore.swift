@@ -303,6 +303,22 @@ class DataStore {
         ])
     }
 
+    /// 2026-08 完成结构改革：第 1 遍完成即算完播，全遍数听完时 onEpisodeFinished
+    /// 会再走一次记录——用这个包装保证同一集同一天只记一次（episodesCompleted、
+    /// episode_complete 事件、任务打勾都不能翻倍）。
+    private var completionRecordedKeys: Set<String> = []
+
+    @discardableResult
+    func recordCompletionIfNeeded(totalWords: Int, episode: Episode?) -> Bool {
+        guard let ep = episode ?? currentEpisode else { return false }
+        let day = DateFormatter.episodeDate.string(from: Date())
+        let key = "\(ep.id)|\(day)"
+        guard !completionRecordedKeys.contains(key) else { return false }
+        completionRecordedKeys.insert(key)
+        completeEpisode(totalWords: totalWords, episode: ep)
+        return true
+    }
+
     /// Called when all rounds finish. Updates listening time and level progress.
     /// History + streak were already recorded in recordPlayStart.
     func completeEpisode(totalWords: Int, episode: Episode? = nil) {

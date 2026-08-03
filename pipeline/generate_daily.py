@@ -203,6 +203,18 @@ def run_pipeline(target_level=None):
                     bucket = get_bucket()
                 upload_episode(bucket, json_path, level)
 
+                # 入推送队列：17:00 的 flush --type episode 按级别去重后发出
+                # （每级只发最早入队的一集）。失败非致命。
+                try:
+                    from enqueue_push import enqueue_episode
+                    enqueue_episode(
+                        episode_id=episode["id"],
+                        level=level,
+                        title=episode["title"],
+                    )
+                except Exception as e:
+                    log.warning(f"   ⚠️ Push enqueue failed (non-fatal): {e}")
+
                 generated += 1
                 log.info(f"   ✅ Episode complete!")
 

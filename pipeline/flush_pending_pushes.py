@@ -5,10 +5,13 @@ Drain the pending-push queue and fire APNs.
 Two cron slots, one type each, so a given user gets at most TWO buzzes per day:
 
     30 7 * * *  flush_pending_pushes.py --type raw_podcast    # morning YouTube (07:30 CST)
+    0 17 * * *  flush_pending_pushes.py --type episode        # afternoon GPT episode (17:00 CST)
 
-Note: the afternoon GPT-episode flush is intentionally NOT scheduled — users get
-exactly two buzzes a day: the 07:30 YouTube push (server) and the 20:00 evening
-content push (on-device local arbiter: 今日句型 / 今日单词, alternating by date).
+(2026-08-03) The afternoon episode flush IS scheduled now — the earlier
+"exactly two buzzes" note assumed the morning raw push was reliable, but the
+7-26→8-03 proxy outage showed a single content source means a single point of
+push failure. Ceiling is now three per day: 07:30 raw (server), 17:00 episode
+(server), 20:00 evening content (on-device local arbiter).
 
 Behaviour with `--type`:
   - Only items of that type are flushed and removed from the queue.
