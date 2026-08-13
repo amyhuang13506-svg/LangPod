@@ -8,9 +8,9 @@ enum MemoryState: String, Codable, CaseIterable {
 
     var label: String {
         switch self {
-        case .strong: "已掌握"
-        case .fading: "复习中"
-        case .forgetting: "新词"
+        case .strong: String(localized: "已掌握")
+        case .fading: String(localized: "复习中")
+        case .forgetting: String(localized: "新词")
         }
     }
 
@@ -40,10 +40,10 @@ enum MasteryLevel: Int, Codable, CaseIterable, Comparable {
 
     var label: String {
         switch self {
-        case .heard: "听懂"
-        case .recognized: "认出"
-        case .canUse: "会用"
-        case .canTeach: "能教"
+        case .heard: String(localized: "听懂")
+        case .recognized: String(localized: "认出")
+        case .canUse: String(localized: "会用")
+        case .canTeach: String(localized: "能教")
         }
     }
 

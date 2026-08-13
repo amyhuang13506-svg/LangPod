@@ -50,15 +50,15 @@ enum DailyTaskType: String, Codable, CaseIterable {
 
     var title: String {
         switch self {
-        case .listenEpisode: return "听一集学习播客"
-        case .listenPattern: return "听一个句型讲解"
-        case .learnExpression: return "学一个句型"
-        case .practiceWordMatch: return "词义配对一轮"
-        case .practiceSentence: return "连词成句一轮"
-        case .practiceSceneQuiz: return "场景模拟一轮"
-        case .learnLesson: return "学一篇词汇小课堂"
-        case .roleplayLesson: return "走一遍模拟对话"
-        case .rawPodcast10Min: return "听 5 分钟真实播客"
+        case .listenEpisode: return String(localized: "听一集学习播客")
+        case .listenPattern: return String(localized: "听一个句型讲解")
+        case .learnExpression: return String(localized: "学一个句型")
+        case .practiceWordMatch: return String(localized: "词义配对一轮")
+        case .practiceSentence: return String(localized: "连词成句一轮")
+        case .practiceSceneQuiz: return String(localized: "场景模拟一轮")
+        case .learnLesson: return String(localized: "学一篇词汇小课堂")
+        case .roleplayLesson: return String(localized: "走一遍模拟对话")
+        case .rawPodcast10Min: return String(localized: "听 5 分钟真实播客")
         }
     }
 

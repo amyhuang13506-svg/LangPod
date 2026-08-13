@@ -13,13 +13,13 @@ enum PatternSection: String, Codable, CaseIterable {
 
     var label: String {
         switch self {
-        case .pronunciation: "读音"
-        case .pronunciationDrill: "跟读练习"
-        case .meaning: "字面意思"
-        case .sceneAndFeeling: "场景与感觉"
-        case .example1: "例句 1"
-        case .example2: "例句 2"
-        case .example3: "例句 3"
+        case .pronunciation: String(localized: "读音")
+        case .pronunciationDrill: String(localized: "跟读练习")
+        case .meaning: String(localized: "字面意思")
+        case .sceneAndFeeling: String(localized: "场景与感觉")
+        case .example1: String(localized: "例句 1")
+        case .example2: String(localized: "例句 2")
+        case .example3: String(localized: "例句 3")
         }
     }
 
@@ -81,9 +81,9 @@ struct Pattern: Codable, Identifiable {
         if durationSeconds >= 60 {
             let min = durationSeconds / 60
             let sec = durationSeconds % 60
-            return sec > 0 ? "\(min)分\(sec)秒" : "\(min)分钟"
+            return sec > 0 ? String(localized: "\(min)分\(sec)秒") : String(localized: "\(min)分钟")
         }
-        return "\(durationSeconds)秒"
+        return String(localized: "\(durationSeconds)秒")
     }
 
     enum CodingKeys: String, CodingKey {

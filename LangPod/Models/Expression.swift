@@ -31,8 +31,8 @@ enum ExpressionSection: String, CaseIterable {
 
     var translation: String {
         switch self {
-        case .social: "日常社交"
-        case .business: "商务英语"
+        case .social: String(localized: "日常社交")
+        case .business: String(localized: "商务英语")
         }
     }
 }

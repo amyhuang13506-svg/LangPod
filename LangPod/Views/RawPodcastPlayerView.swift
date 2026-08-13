@@ -522,7 +522,7 @@ struct RawPodcastPlayerView: View {
             audio: ""
         )
         let added = vocabularyStore.addWord(vocab, sourceLabel: "raw_podcast")
-        let toastText = added ? "「\(word)」已加入生词本" : "「\(word)」已在生词本"
+        let toastText = added ? String(localized: "「\(word)」已加入生词本") : String(localized: "「\(word)」已在生词本")
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             addedWordToast = toastText
         }

@@ -15,7 +15,7 @@ struct RawPodcastFeedView: View {
     @State private var searchText: String = ""
 
     init(
-        title: String = "今日推荐",
+        title: String = String(localized: "今日推荐"),
         podcasts: [RawPodcast],
         onSelect: @escaping (RawPodcast) -> Void
     ) {

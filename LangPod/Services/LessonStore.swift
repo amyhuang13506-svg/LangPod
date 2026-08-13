@@ -84,7 +84,7 @@ class LessonStore {
     /// 伪国家 daily 的元数据：详情页发音口音固定美音。
     /// ⚠️ 不进 countries.json（老版本会把它当国家渲染），App 端直接引用这个常量。
     static let themeCountry = LessonCountry(
-        id: "daily", nameTranslation: "日常词汇", flag: "📖", accent: "en-US", lessonCount: 0
+        id: "daily", nameTranslation: String(localized: "日常词汇"), flag: "📖", accent: "en-US", lessonCount: 0
     )
 
     /// 全局今日每日课（跨国家，独立于所选国家），来自 lessons/today.json

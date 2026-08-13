@@ -1,7 +1,7460 @@
 {
-  "sourceLanguage" : "zh-Hans",
-  "strings" : {
-
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "": {},
+    "\n": {},
+    " 自动续费": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " Auto Renew"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " 자동 갱신"
+          }
+        }
+      }
+    },
+    " 自动续费，可随时取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " Auto Renew, Cancel Anytime"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " 자동 갱신, 언제든 취소 가능"
+          }
+        }
+      }
+    },
+    "\"%@\"": {},
+    "\"%@\" 已完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"%@\" Completed"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"%@\" 완료"
+          }
+        }
+      }
+    },
+    "\"纯英语解释\"模式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"Pure English\" Mode"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"Pure English\" 모드"
+          }
+        }
+      }
+    },
+    "%@ %@": {},
+    "%@ = %@": {},
+    "%@ · %@": {},
+    "%@ · %@ · %lld 个生词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@ · %lld Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@ · %lld개 단어"
+          }
+        }
+      }
+    },
+    "%@ · %lld 词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %lld Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %lld 단어"
+          }
+        }
+      }
+    },
+    "%@%@ 场景对话，学几个地道说法": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@%@ Scene Conversation, Learn Natural Phrases"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@%@ 상황 대화, 자연스러운 표현 배우기"
+          }
+        }
+      }
+    },
+    "%@%@｜%lld 个地道说法，3 分钟学会": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@%@｜%lld Natural Phrases in 3 Minutes"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@%@ ｜ %lld개의 자연스러운 표현, 3분 만에 배워요"
+          }
+        }
+      }
+    },
+    "%@免费试用，之后按 ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Free Trial, Then "
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 무료 체험, 이후 "
+          }
+        }
+      }
+    },
+    "%@：": {},
+    "%lld": {},
+    "%lld 个月": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Months"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld개월"
+          }
+        }
+      }
+    },
+    "%lld 个词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 단어"
+          }
+        }
+      }
+    },
+    "%lld 个课堂": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Lessons"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 클래스"
+          }
+        }
+      }
+    },
+    "%lld 句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Sentences"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld문"
+          }
+        }
+      }
+    },
+    "%lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Days"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld일"
+          }
+        }
+      }
+    },
+    "%lld 天的连续记录就快断了，3 分钟就能续上": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld-Day Streak About to End, 3 Minutes to Extend"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld일 연속 기록이 곧 끊어집니다, 3분이면 이어질 수 있어요."
+          }
+        }
+      }
+    },
+    "%lld 年": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Years"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld년"
+          }
+        }
+      }
+    },
+    "%lld 期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round %lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 회차"
+          }
+        }
+      }
+    },
+    "%lld 词 · %lld 个场景%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Words · %lld Scenes%@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 단어 · %lld 상황%@"
+          }
+        }
+      }
+    },
+    "%lld 词%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Words%@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 단어%@"
+          }
+        }
+      }
+    },
+    "%lld/%lld": {},
+    "%lld/%lld 已解锁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld Unlocked"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld 개 잠금 해제됨"
+          }
+        }
+      }
+    },
+    "%lld个月": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Months"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld개월"
+          }
+        }
+      }
+    },
+    "%lld分%lld秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Min %lld Sec"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld분 %lld초"
+          }
+        }
+      }
+    },
+    "%lld分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Min"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld분"
+          }
+        }
+      }
+    },
+    "%lld周": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Weeks"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld주"
+          }
+        }
+      }
+    },
+    "%lld天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Days"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld일"
+          }
+        }
+      }
+    },
+    "%lld年": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Years"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld년"
+          }
+        }
+      }
+    },
+    "%lld月%lld日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld월 %lld일"
+          }
+        }
+      }
+    },
+    "%lld秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Sec"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld초"
+          }
+        }
+      }
+    },
+    "1000词以内 · 慢速 · 3-5分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Under 1000 Words · Slow · 3-5 Min"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1000단어 이하 · 느린 속도 · 3-5분"
+          }
+        }
+      }
+    },
+    "3 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 Days"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3일"
+          }
+        }
+      }
+    },
+    "3000词以内 · 中速 · 5-8分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Under 3000 Words · Medium · 5-8 Min"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3000단어 이하 · 중간 속도 · 5-8분"
+          }
+        }
+      }
+    },
+    "60+情景课 · 227条表达": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60+ Scene Lessons · 227 Expressions"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60+ 상황 수업 · 227 표현"
+          }
+        }
+      }
+    },
+    "7 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 Days"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7일"
+          }
+        }
+      }
+    },
+    "App Store 推荐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store Recommended"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앱 스토어 추천"
+          }
+        }
+      }
+    },
+    "App Store 搜索下载": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download from App Store"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store에서 다운로드"
+          }
+        }
+      }
+    },
+    "B站": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilibili"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilibili"
+          }
+        }
+      }
+    },
+    "Castlingo": {},
+    "Castlingo ": {},
+    "Castlingo v%@": {},
+    "Castlingo · 今日句型讲解": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Castlingo · Today's Pattern Explainer"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Castlingo · 오늘의 문형 해설"
+          }
+        }
+      }
+    },
+    "Castlingo · 听播客，学英语": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Castlingo · Listen to Podcasts, Learn English"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Castlingo · 팟캐스트 듣고 영어 배우기"
+          }
+        }
+      }
+    },
+    "Explorer": {},
+    "Hard 频道 · 新闻和深度话题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hard Channel · News & In-Depth Topics"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hard 채널 · 뉴스와 심도 있는 주제"
+          }
+        }
+      }
+    },
+    "Lv.%lld": {},
+    "Lv.%lld %@": {},
+    "Medium 频道 · 生活和文化话题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium Channel · Lifestyle & Culture"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medium 채널 · 생활과 문화"
+          }
+        }
+      }
+    },
+    "NEW": {},
+    "PRO": {},
+    "Pipeline 正在扫描 TED / Huberman / Hot Ones 等热门频道，明日上线": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pipeline Scanning Popular Channels Like TED / Huberman / Hot Ones, Available Tomorrow"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pipeline에서 TED / Huberman / Hot Ones 등의 인기 채널을 스캔 중, 내일 출시"
+          }
+        }
+      }
+    },
+    "Pipeline 正在扫描 TED / Huberman / Veritasium 等频道，明日开始上线": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pipeline Scanning TED / Huberman / Veritasium, Available Tomorrow"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pipeline이 TED / Huberman / Veritasium 채널을 스캔 중, 내일 시작"
+          }
+        }
+      }
+    },
+    "Pro": {},
+    "Pro 专属：第 5 遍英语原音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro Exclusive: English Audio Round 5"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro 전용: 영어 원음 5회차"
+          }
+        }
+      }
+    },
+    "Pro 解锁中文 + 单词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock Pro for Translation + Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro 해제하고 한국어 및 단어 보기"
+          }
+        }
+      }
+    },
+    "Pro 解锁中文翻译 + 点词加生词本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro Unlock Translation + Tap Words to Add to Vocab"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro 한국어 번역 해제 + 단어 클릭해 생단어장 추가"
+          }
+        }
+      }
+    },
+    "TED / Huberman / Veritasium 等热门英文 YouTube 内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TED / Huberman / Veritasium Top Content"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TED / Huberman / Veritasium 인기 콘텐츠"
+          }
+        }
+      }
+    },
+    "YouTube 原声播客": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube Raw Podcasts"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YouTube 원어민 팟캐스트"
+          }
+        }
+      }
+    },
+    "[DEV] Mock Pro": {},
+    "[DEV] Mock Trial (Paywall)": {},
+    "[DEV] 使用RC远程付费墙": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[DEV] Use RC Remote Pro"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[DEV] RC 리모트 Pro 사용"
+          }
+        }
+      }
+    },
+    "_______________": {},
+    "¥0": {},
+    "¥298/年": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¥298/Year"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¥298/년"
+          }
+        }
+      }
+    },
+    "¥48/月": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¥48/Month"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¥48/월"
+          }
+        }
+      }
+    },
+    "·": {},
+    "· %lld": {},
+    "· %lld 个": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· %lld Items"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· %lld개"
+          }
+        }
+      }
+    },
+    "· 累计%lld句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· Total %lld Sentences"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· 총 %lld문장"
+          }
+        }
+      }
+    },
+    "· 累计%lld词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· Total %lld Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "· 총 %lld개 단어"
+          }
+        }
+      }
+    },
+    "☕️ 点单": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "☕️ Order"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "☕️ 주문"
+          }
+        }
+      }
+    },
+    "✈️ 机场": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✈️ Airport"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✈️ 공항"
+          }
+        }
+      }
+    },
+    "✓ 已加入我的句子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Added to My Sentences"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ 내 문장에 추가됨"
+          }
+        }
+      }
+    },
+    "「%@」已加入单词本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added 「%@」 to Vocabulary"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」단어장에 추가됨"
+          }
+        }
+      }
+    },
+    "「%@」已加入生词本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added 「%@」 to Word Book"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」어휘장에 추가됨"
+          }
+        }
+      }
+    },
+    "「%@」已在单词本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Already in Vocabulary: 「%@」"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」이미 단어장에 있음"
+          }
+        }
+      }
+    },
+    "「%@」已在生词本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Already in Word Book: 「%@」"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」이미 어휘장에 있음"
+          }
+        }
+      }
+    },
+    "「%@」没有匹配的内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Content Matches 「%@」"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」에 해당하는 콘텐츠 없음"
+          }
+        }
+      }
+    },
+    "七日坚持": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7-Day Streak"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7일 연속"
+          }
+        }
+      }
+    },
+    "三十日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30-Day"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30일"
+          }
+        }
+      }
+    },
+    "三日坚持": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3-Day Streak"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3일 연속"
+          }
+        }
+      }
+    },
+    "下一句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next Sentence"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다음 문장"
+          }
+        }
+      }
+    },
+    "下一集": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next Episode"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다음 화"
+          }
+        }
+      }
+    },
+    "下一题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다음 문제"
+          }
+        }
+      }
+    },
+    "下次走进这个场景，这些话就是条件反射": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next Time in This Scene, These Words Will Be Automatic"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다음에 이 상황에 들어가면 자동으로 나올 거예요."
+          }
+        }
+      }
+    },
+    "不开字幕也能跟上英文原声播客和视频": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow English Podcasts & Videos Without Subtitles"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "자막 없이 영어 원어 팟캐스트·영상 따라가기"
+          }
+        }
+      }
+    },
+    "不确定就点喇叭试听，选能听懂一半的那档": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unsure? Tap Speaker to Listen, Choose Level You Understand Half"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "확실하지 않으면 스피커로 들어보고 반 이해할 수 있는 걸 선택하세요"
+          }
+        }
+      }
+    },
+    "不背单词，不做题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Memorizing Words, No Tests"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단어 외우지 않기, 문제 풀지 않기"
+          }
+        }
+      }
+    },
+    "两性 · 心理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relationships · Psychology"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연애 · 심리"
+          }
+        }
+      }
+    },
+    "中文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translation"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한국어"
+          }
+        }
+      }
+    },
+    "中级": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intermediate"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "중급"
+          }
+        }
+      }
+    },
+    "中级毕业": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intermediate Graduate"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "중급 졸업"
+          }
+        }
+      }
+    },
+    "中英": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilingual"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영한"
+          }
+        }
+      }
+    },
+    "中英双语字幕，检验真实语速听力": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilingual Subtitles, Test Real Speed Listening"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영한 자막, 실제 속도로 듣기 테스트"
+          }
+        }
+      }
+    },
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘"
+          }
+        }
+      }
+    },
+    "今天 · 解锁全部 Pro 功能": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today · Unlock All Pro Features"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 · 모든 Pro 기능 잠금 해제"
+          }
+        }
+      }
+    },
+    "今天还没听！%lldh 后记录清零": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Listened Yet! Reset in %lldh"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 아직 듣지 않음! %lld시간 후 기록 초기화"
+          }
+        }
+      }
+    },
+    "今日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘"
+          }
+        }
+      }
+    },
+    "今日 %lld/%lld：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today %lld/%lld: %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 %lld/%lld: %@"
+          }
+        }
+      }
+    },
+    "今日任务 %lld/%lld 全部完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Tasks %lld/%lld Completed"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 임무 %lld/%lld 완료"
+          }
+        }
+      }
+    },
+    "今日免费 %lld/%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Free %lld/%lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 무료 %lld/%lld"
+          }
+        }
+      }
+    },
+    "今日句型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Pattern"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 문형"
+          }
+        }
+      }
+    },
+    "今日句型 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Pattern · %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 문형 · %@"
+          }
+        }
+      }
+    },
+    "今日句型讲解": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Pattern Explainer"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 문형 해설"
+          }
+        }
+      }
+    },
+    "今日句型讲解 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Pattern Explainer · %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 문형 해설 · %@"
+          }
+        }
+      }
+    },
+    "今日句型讲解已更新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Pattern Explainer Updated"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 문형 해설 업데이트됨"
+          }
+        }
+      }
+    },
+    "今日已点亮！完成 %lld/%lld 任务解锁完美一天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Lit! Complete %lld/%lld Tasks for a Perfect Day"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 이미 점등됨! %lld/%lld 임무 완료해 완벽한 하루 해제"
+          }
+        }
+      }
+    },
+    "今日推荐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Picks"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 추천"
+          }
+        }
+      }
+    },
+    "今日播客": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Podcast"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 팟캐스트"
+          }
+        }
+      }
+    },
+    "今日新场景 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's New Scene · %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 새로운 상황 · %@"
+          }
+        }
+      }
+    },
+    "今日新场景已上线": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's New Scene Added"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘 새로운 상황 추가됨"
+          }
+        }
+      }
+    },
+    "今日的 3 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's 3 Minutes"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 3분"
+          }
+        }
+      }
+    },
+    "从当天播客拆出来，讲透场景和语感": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extracted From Daily Podcast, Explains Scene & Nuance"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "당일 팟캐스트에서 추출, 상황·어감 설명"
+          }
+        }
+      }
+    },
+    "从真实场景，学实用英语": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn Practical English from Real Scenes"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실제 상황에서 실용 영어 배우기"
+          }
+        }
+      }
+    },
+    "会员权益": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Membership Benefits"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "회원 혜택"
+          }
+        }
+      }
+    },
+    "会用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can Use"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사용 가능"
+          }
+        }
+      }
+    },
+    "你为什么学英语？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why Learn English?"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "왜 영어를 배우세요?"
+          }
+        }
+      }
+    },
+    "你已经听完 %lld 集播客\n掌握了 %lld 个单词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've Listened to %lld Podcasts\nMastered %lld Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld개 팟캐스트 청취 완료\n%lld개 단어 마스터함"
+          }
+        }
+      }
+    },
+    "你是怎么发现 Castlingo 的？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How Did You Discover Castlingo?"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Castlingo를 어떻게 발견했나요?"
+          }
+        }
+      }
+    },
+    "你现在的听力水平？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What's Your Listening Level?"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "현재 듣기 수준이 어떻게 되세요?"
+          }
+        }
+      }
+    },
+    "你的专属听力计划": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Listening Plan"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "맞춤 듣기 계획"
+          }
+        }
+      }
+    },
+    "你的旧词又出现了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Old Words Reappeared"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기존 단어가 다시 나타났어요"
+          }
+        }
+      }
+    },
+    "使用条款": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terms of Use"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이용 약관"
+          }
+        }
+      }
+    },
+    "例句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Example"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "예문"
+          }
+        }
+      }
+    },
+    "例句 1": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Example 1"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "예문 1"
+          }
+        }
+      }
+    },
+    "例句 2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Example 2"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "예문 2"
+          }
+        }
+      }
+    },
+    "例句 3": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Example 3"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "예문 3"
+          }
+        }
+      }
+    },
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "저장"
+          }
+        }
+      }
+    },
+    "保存到我的词汇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save to My Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내 단어에 저장"
+          }
+        }
+      }
+    },
+    "保存到相册": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save to Album"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앨범에 저장"
+          }
+        }
+      }
+    },
+    "光听就学会了 %lld 个英语词汇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn %lld English Words by Listening"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "듣기만 해도 %lld개의 영어 단어를 익히기"
+          }
+        }
+      }
+    },
+    "免费版": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free Version"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "무료 버전"
+          }
+        }
+      }
+    },
+    "免费用户每日 1 轮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free Users 1 Round a Day"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "무료 사용자는 하루 1회"
+          }
+        }
+      }
+    },
+    "入门听众": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entry-Level Listener"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "입문 청취자"
+          }
+        }
+      }
+    },
+    "全能学者": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All-Round Scholar"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "만능 학자"
+          }
+        }
+      }
+    },
+    "全英": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English Only"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영어 전용"
+          }
+        }
+      }
+    },
+    "全部加入单词本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add All to Wordbook"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단어장에 모두 추가"
+          }
+        }
+      }
+    },
+    "全部播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play All"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모두 재생"
+          }
+        }
+      }
+    },
+    "关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "닫기"
+          }
+        }
+      }
+    },
+    "其他": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기타"
+          }
+        }
+      }
+    },
+    "再不听就要清零了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen Now, or Streak Ends"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "안 들으면 기록이 초기화돼요."
+          }
+        }
+      }
+    },
+    "再不回来等级要降了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Level Will Drop Soon"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "곧 레벨이 내려갑니다"
+          }
+        }
+      }
+    },
+    "再听一遍加深记忆": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen Again to Reinforce Memory"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한 번 더 들어 기억 강화"
+          }
+        }
+      }
+    },
+    "再听加深 · 磨耳朵模式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replay to Deepen · Ear Training Mode"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "재청취 · 귀 기울이기 모드"
+          }
+        }
+      }
+    },
+    "再坚持 %lld 天点亮 %lld 天徽章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld More Days to Earn %lld-Day Badge"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld일 더 지속해 %lld일 배지 밝힘"
+          }
+        }
+      }
+    },
+    "再来一组": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another Set"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다시 한 세트"
+          }
+        }
+      }
+    },
+    "再来一轮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another Round"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한 번 더"
+          }
+        }
+      }
+    },
+    "再来一遍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try Again"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다시 해요"
+          }
+        }
+      }
+    },
+    "再试一次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try Again"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다시 시도하세요"
+          }
+        }
+      }
+    },
+    "几个地道说法 + 真实场景，3 分钟学会": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn Natural Phrases and Real Scenes in 3 Minutes"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "자연스러운 표현과 실제 상황, 3분만에 배워요"
+          }
+        }
+      }
+    },
+    "出国场景课堂": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abroad Scene Class"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "해외 상황 강의"
+          }
+        }
+      }
+    },
+    "出国旅行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Travel Abroad"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "해외 여행"
+          }
+        }
+      }
+    },
+    "分享到朋友圈": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share to Moments"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "타임라인에 공유"
+          }
+        }
+      }
+    },
+    "分享给朋友": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share with Friends"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "친구에게 공유"
+          }
+        }
+      }
+    },
+    "列表循环": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "List Loop"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "목록 반복"
+          }
+        }
+      }
+    },
+    "创业 · 商业": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Startups · Business"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "창업 · 비즈니스"
+          }
+        }
+      }
+    },
+    "初次播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First Playback"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "첫 재생"
+          }
+        }
+      }
+    },
+    "初级": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beginner"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "초급"
+          }
+        }
+      }
+    },
+    "初级毕业": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beginner Graduate"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "초급 졸업"
+          }
+        }
+      }
+    },
+    "删除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "삭제"
+          }
+        }
+      }
+    },
+    "刷懂英文原声视频": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Understand English Videos"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영어 원어 영상 이해하기"
+          }
+        }
+      }
+    },
+    "剩余 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remaining %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "남은 %@"
+          }
+        }
+      }
+    },
+    "办事、就医、社交都能自己搞定，不用再靠翻译软件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Handle Tasks, Medical Visits & Socials Without Translation Apps"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일 처리·진료·사회적 교류, 번역 앱 필요 없음"
+          }
+        }
+      }
+    },
+    "加入单词本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to Wordbook"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단어장에 추가"
+          }
+        }
+      }
+    },
+    "加入生词本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to Wordbook"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단어장에 추가"
+          }
+        }
+      }
+    },
+    "加拿大": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canada"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캐나다"
+          }
+        }
+      }
+    },
+    "加载中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "로딩 중…"
+          }
+        }
+      }
+    },
+    "加载失败，请检查网络": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Load Failed, Please Check Network"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "불러오기에 실패했습니다. 네트워크를 확인하세요."
+          }
+        }
+      }
+    },
+    "升Lv.%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Level Up to Lv.%lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lv.%lld로 상승"
+          }
+        }
+      }
+    },
+    "升级 Pro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upgrade to Pro"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro로 업그레이드"
+          }
+        }
+      }
+    },
+    "升级 Pro 继续练习": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upgrade to Pro to Continue"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro로 업그레이드하여 계속 연습하기"
+          }
+        }
+      }
+    },
+    "单集循环": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Single Episode Loop"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단일 에피소드 반복"
+          }
+        }
+      }
+    },
+    "即将播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up Next"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "곧 재생"
+          }
+        }
+      }
+    },
+    "即将清零！还有 %lldh": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resetting Soon! %lldh Left"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "곧 초기화! %lld시간 남음"
+          }
+        }
+      }
+    },
+    "原声 · 演讲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raw · Speech"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "원어민 · 강연"
+          }
+        }
+      }
+    },
+    "去听一集": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen to a Podcast"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "팟캐스트 듣기"
+          }
+        }
+      }
+    },
+    "去完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Complete Now"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "가서 완료하기"
+          }
+        }
+      }
+    },
+    "双人深度对话系列": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dual Deep Dialogue Series"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2인 심층 대화 시리즈"
+          }
+        }
+      }
+    },
+    "双语字幕 · 点词查询": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilingual Subtitles · Tap to Lookup"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영한 자막 · 단어 검색"
+          }
+        }
+      }
+    },
+    "取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "취소"
+          }
+        }
+      }
+    },
+    "句型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pattern"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문형"
+          }
+        }
+      }
+    },
+    "句型上口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pattern Sticks"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문형이 입에 붙다"
+          }
+        }
+      }
+    },
+    "句型讲解": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pattern Explainer"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문형 해설"
+          }
+        }
+      }
+    },
+    "可以试试 演讲者、单词、句型、级别（初级/中级/高级）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try Speaker, Words, Pattern, Level (Beginner/Intermediate/Advanced)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연설자, 단어, 문형, 수준(초급/중급/고급) 등을 시도해보세요"
+          }
+        }
+      }
+    },
+    "可在 App Store 设置中随时取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel Anytime in App Store Settings"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store 설정에서 언제든 취소 가능"
+          }
+        }
+      }
+    },
+    "听 5 分钟真实播客": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen to 5-Minute Raw Podcast"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5분 원어민 팟캐스트 듣기"
+          }
+        }
+      }
+    },
+    "听一个句型讲解": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen to a Pattern Explainer"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문형 해설 듣기"
+          }
+        }
+      }
+    },
+    "听一集学习播客": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen to a Learning Podcast"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "학습 팟캐스트 1회 듣기"
+          }
+        }
+      }
+    },
+    "听一集播客，词汇会自动收藏到这里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen to a Podcast to Collect Words Here"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "팟캐스트를 들으면 단어가 여기에 자동 저장됩니다"
+          }
+        }
+      }
+    },
+    "听懂": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Understand"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "들음"
+          }
+        }
+      }
+    },
+    "周": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Week"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "주"
+          }
+        }
+      }
+    },
+    "商务英语": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Business English"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "비즈니스 영어"
+          }
+        }
+      }
+    },
+    "商品未加载，请稍后重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Product not loaded. Please try again later."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상품 로드 실패. 잠시 후 다시 시도하세요."
+          }
+        }
+      }
+    },
+    "在句型和小课堂里点 ＋ 收藏句子\n（句子需 ≤12 个单词）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap ＋ in Patterns or Vocab Lessons to Save Sentences\n(Sentences ≤12 Words)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문형과 어휘 클래스에서 ＋ 클릭해 문장 저장\n(12단어 이하 문장)"
+          }
+        }
+      }
+    },
+    "在句型详情和小课堂的常用句型里\n点 ＋ 把句子收进来": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap ＋ in Pattern Details and Vocab Lesson to Add Sentences"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문형 상세와 어휘 클래스에서\n＋를 눌러 문장을 추가하세요."
+          }
+        }
+      }
+    },
+    "在国外生活": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Living Abroad"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "해외 생활"
+          }
+        }
+      }
+    },
+    "场景与感觉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scene and Feeling"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상황과 느낌"
+          }
+        }
+      }
+    },
+    "场景对话准备中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing Scene Dialogue"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상황 대화 준비 중"
+          }
+        }
+      }
+    },
+    "场景模拟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scene Simulation"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상황 시뮬레이션"
+          }
+        }
+      }
+    },
+    "场景模拟一轮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scene Simulation Round"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상황 시뮬레이터 1회"
+          }
+        }
+      }
+    },
+    "场景通关！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scene Cleared!"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상황 클리어!"
+          }
+        }
+      }
+    },
+    "坚持一整年，流利说英语": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fluent English in a Year"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1년 지속, 영어 유창해져요"
+          }
+        }
+      }
+    },
+    "坚持下去，你会听到变化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Going, You'll Hear Change"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "계속하면 변화를 들을 수 있어요"
+          }
+        }
+      }
+    },
+    "复习中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reviewing"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복습 중"
+          }
+        }
+      }
+    },
+    "天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Days"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일"
+          }
+        }
+      }
+    },
+    "好": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "좋아요"
+          }
+        }
+      }
+    },
+    "好，提醒我": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yes, Remind Me"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "네, 알림 설정"
+          }
+        }
+      }
+    },
+    "娱乐 · 文化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entertainment · Culture"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "엔터테인먼트 · 문화"
+          }
+        }
+      }
+    },
+    "字幕": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subtitles"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "자막"
+          }
+        }
+      }
+    },
+    "字幕加载中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading Subtitles…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "자막 로드 중…"
+          }
+        }
+      }
+    },
+    "字面意思": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Literal Meaning"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "직역"
+          }
+        }
+      }
+    },
+    "学一个句型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn a Pattern"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문형 배우기"
+          }
+        }
+      }
+    },
+    "学一篇词汇小课堂": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn a Vocab Lesson"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "어휘 클래스 배우기"
+          }
+        }
+      }
+    },
+    "学习": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "학습"
+          }
+        }
+      }
+    },
+    "学习时长": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Study Duration"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "학습 시간"
+          }
+        }
+      }
+    },
+    "完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "완료"
+          }
+        }
+      }
+    },
+    "完成 %lld 个词的连词成句练习": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed Sentence Builder with %lld Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld개의 단어로 문장 만들기 완료"
+          }
+        }
+      }
+    },
+    "完成 %lld 句连词成句练习": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed %lld Sentence Builder Exercises"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 문장 문장 만들기 연습 완료"
+          }
+        }
+      }
+    },
+    "完美一天！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perfect Day!"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "완벽한 하루!"
+          }
+        }
+      }
+    },
+    "完美一天！%lld 个任务全部完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perfect Day! All %lld Tasks Completed"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "완벽한 하루! %lld개 임무 모두 완료"
+          }
+        }
+      }
+    },
+    "定时播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timed Playback"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "타이머 재생"
+          }
+        }
+      }
+    },
+    "实用口语": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practical English"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실용 회화"
+          }
+        }
+      }
+    },
+    "对话完成！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conversation Complete!"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "대화 완료!"
+          }
+        }
+      }
+    },
+    "将 %lld 个已掌握的词移出词汇本。这些词你已经学会了！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove %lld Mastered Words from Vocabulary List. You've Learned Them!"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "마스터한 %lld개의 단어를 단어장에서 제거합니다. 이 단어들은 이미 배웠어요!"
+          }
+        }
+      }
+    },
+    "小红书": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xiaohongshu"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "샤오홍슈"
+          }
+        }
+      }
+    },
+    "少而稳定比多而三天打鱼更有效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Less But Steady Beats More But Sporadic"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "적게 꾸준히 하는 게 더 많이 하다 흐지부지하는 것보다 효과적이에요"
+          }
+        }
+      }
+    },
+    "工作需要": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Work Needs"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "업무 필요"
+          }
+        }
+      }
+    },
+    "差%lld集": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Episodes Left"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld개 남음"
+          }
+        }
+      }
+    },
+    "已保存 %lld 个新词 · 即将播放下一集": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld New Words Saved · Next Episode Playing Soon"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld개의 새 단어 저장됨 · 다음 회차 재생 대기 중"
+          }
+        }
+      }
+    },
+    "已保存到相册": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved to Album"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "앨범에 저장됨"
+          }
+        }
+      }
+    },
+    "已全部加入 ✓": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All Added ✓"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모두 추가됨 ✓"
+          }
+        }
+      }
+    },
+    "已加入 %lld 个新词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added %lld New Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld개 새 단어 추가됨"
+          }
+        }
+      }
+    },
+    "已加入句型库": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added to Pattern Library"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문형에 추가됨"
+          }
+        }
+      }
+    },
+    "已加入我的单词 ✓": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added to My Words ✓"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내 단어에 추가됨 ✓"
+          }
+        }
+      }
+    },
+    "已听到 %lld 次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heard %lld Times"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld번 들음"
+          }
+        }
+      }
+    },
+    "已完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "완료됨"
+          }
+        }
+      }
+    },
+    "已完成：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed: %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "완료됨: %@"
+          }
+        }
+      }
+    },
+    "已完成：%@ · 下一个：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed: %@ · Next: %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "완료됨: %@ · 다음: %@"
+          }
+        }
+      }
+    },
+    "已掌握": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mastered"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "마스터함"
+          }
+        }
+      }
+    },
+    "已清零": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset Done"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "초기화됨"
+          }
+        }
+      }
+    },
+    "已满级": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Max Level"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "최고 레벨"
+          }
+        }
+      }
+    },
+    "已订阅 Pro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subscribed to Pro"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro 구독 중"
+          }
+        }
+      }
+    },
+    "年": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Year"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "년"
+          }
+        }
+      }
+    },
+    "年付": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annual Payment"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연 결제"
+          }
+        }
+      }
+    },
+    "开启我的计划": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start My Plan"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "계획 시작하기"
+          }
+        }
+      }
+    },
+    "开始免费试用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Free Trial"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "무료 체험 시작"
+          }
+        }
+      }
+    },
+    "开始定制": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Customization"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "맞춤 시작"
+          }
+        }
+      }
+    },
+    "开始对话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Conversation"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "대화 시작"
+          }
+        }
+      }
+    },
+    "当前级别": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current Level"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "현재 레벨"
+          }
+        }
+      }
+    },
+    "往期句型回顾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Past Pattern Review"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "지난 문형 복습"
+          }
+        }
+      }
+    },
+    "往期回顾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Past Review"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이전 회고"
+          }
+        }
+      }
+    },
+    "微信": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WeChat"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "웨이신"
+          }
+        }
+      }
+    },
+    "思想 · 访谈": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thoughts · Interviews"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "생각 · 인터뷰"
+          }
+        }
+      }
+    },
+    "恢复购买": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore Purchase"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "구매 복원"
+          }
+        }
+      }
+    },
+    "恭喜升级！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Congratulations on Leveling Up!"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "업그레이드 축하해요!"
+          }
+        }
+      }
+    },
+    "成就徽章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Achievement Badge"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "업적 배지"
+          }
+        }
+      }
+    },
+    "我们会按你的目标安排学习内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We'll Tailor Content to Your Goals"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "목표에 맞춰 학습 내용을 준비할게요"
+          }
+        }
+      }
+    },
+    "我的": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "프로필"
+          }
+        }
+      }
+    },
+    "我的句子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Sentences"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내 문장"
+          }
+        }
+      }
+    },
+    "我的学习计划": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Learning Plan"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내 학습 계획"
+          }
+        }
+      }
+    },
+    "我的词汇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Vocabulary"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내 단어"
+          }
+        }
+      }
+    },
+    "所有词汇都练过了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All Words Practiced"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모든 단어를 연습했습니다"
+          }
+        }
+      }
+    },
+    "打开 Castlingo，继续你的听力训练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Castlingo and Continue Listening Practice"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Castlingo를 열어 듣기 연습을 계속하세요."
+          }
+        }
+      }
+    },
+    "打开系统设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "시스템 설정 열기"
+          }
+        }
+      }
+    },
+    "把这句话拼出来：": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Build This Sentence:"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 문장을 완성하세요:"
+          }
+        }
+      }
+    },
+    "抖音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TikTok"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "틱톡"
+          }
+        }
+      }
+    },
+    "按 ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Based on "
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "따라 "
+          }
+        }
+      }
+    },
+    "掌握句型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mastered Patterns"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문형 마스터"
+          }
+        }
+      }
+    },
+    "掌握词汇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mastered Vocabulary"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "어휘 마스터"
+          }
+        }
+      }
+    },
+    "探索": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "탐색"
+          }
+        }
+      }
+    },
+    "探索内容生成中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exploring Content"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "콘텐츠 탐색 중"
+          }
+        }
+      }
+    },
+    "推荐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recommended"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "추천"
+          }
+        }
+      }
+    },
+    "提升自己": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Self Improvement"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "자기 발전"
+          }
+        }
+      }
+    },
+    "搜索": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "검색"
+          }
+        }
+      }
+    },
+    "搜索每日播客 / 句型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Daily Podcasts / Patterns"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매일 팟캐스트 / 문형 검색"
+          }
+        }
+      }
+    },
+    "搜索演讲 / 访谈": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Speeches / Interviews"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연설 / 인터뷰 검색"
+          }
+        }
+      }
+    },
+    "搜索演讲者 / 标题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Speaker / Title"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "발표자 / 제목 검색"
+          }
+        }
+      }
+    },
+    "搜索话题...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Topics..."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "주제 검색..."
+          }
+        }
+      }
+    },
+    "播客": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podcast"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "팟캐스트"
+          }
+        }
+      }
+    },
+    "播客集数不限 · 完整5遍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlimited Podcast · Complete 5 Rounds"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "팟캐스트 무제한 · 5회차 완료"
+          }
+        }
+      }
+    },
+    "播放句型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play Pattern"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문형 재생"
+          }
+        }
+      }
+    },
+    "播放完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playback Complete"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "재생 완료"
+          }
+        }
+      }
+    },
+    "收藏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorite"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "즐겨찾기"
+          }
+        }
+      }
+    },
+    "新加坡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Singapore"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "싱가포르"
+          }
+        }
+      }
+    },
+    "新句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Sentence"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "새 문장"
+          }
+        }
+      }
+    },
+    "新手听众": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beginner Listener"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "초급 청취자"
+          }
+        }
+      }
+    },
+    "新西兰": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Zealand"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "뉴질랜드"
+          }
+        }
+      }
+    },
+    "新词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "새 단어"
+          }
+        }
+      }
+    },
+    "新闻、商务，自然语速": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "News, Business, Natural Speed"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "뉴스, 비즈니스, 자연 속도"
+          }
+        }
+      }
+    },
+    "旅行常用场景对话不慌不忙，点单问路都能自己来": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Handle Travel Dialogues With Ease, Order & Ask Directions Yourself"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "여행 상황에서 당황하지 않고 주문·길찾기 가능"
+          }
+        }
+      }
+    },
+    "无限制 · 自然语速 · 8-12分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Limits · Natural Speed · 8-12 Min"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "제한 없음 · 자연 속도 · 8-12분"
+          }
+        }
+      }
+    },
+    "日常对话不用暂停回放也能跟上大意，敢在真实场景里开口回应": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow Casual Chats Without Pausing, Speak Up in Real Situations"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일상 대화를 중단 없이 대강 따라가고, 실제 상황에서 대답 가능"
+          }
+        }
+      }
+    },
+    "日常社交": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Social"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일상 소셜"
+          }
+        }
+      }
+    },
+    "日常词汇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily Vocabulary"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일상 어휘"
+          }
+        }
+      }
+    },
+    "日常词汇即将上线": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily Vocabulary Coming Soon"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일상 어휘 곧 출시"
+          }
+        }
+      }
+    },
+    "明天新内容上线时提醒你？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remind You When New Content Arrives Tomorrow?"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내일 새 내용 알림 받을까요?"
+          }
+        }
+      }
+    },
+    "昨天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yesterday"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "어제"
+          }
+        }
+      }
+    },
+    "暂不": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Now"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "보류"
+          }
+        }
+      }
+    },
+    "暂无往期内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Past Content"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이전 내용 없음"
+          }
+        }
+      }
+    },
+    "暂无往期句型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Past Patterns"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "지난 문형 없음"
+          }
+        }
+      }
+    },
+    "暂无词汇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단어 없음"
+          }
+        }
+      }
+    },
+    "暂时无法购买，请稍后重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purchase unavailable. Please try again later."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "구매 불가. 잠시 후 다시 시도하세요."
+          }
+        }
+      }
+    },
+    "更多表达": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More Expressions"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "더 많은 표현"
+          }
+        }
+      }
+    },
+    "最后一个问题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Final Question"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "마지막 질문"
+          }
+        }
+      }
+    },
+    "月": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Month"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "월"
+          }
+        }
+      }
+    },
+    "月付": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monthly Payment"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "월 결제"
+          }
+        }
+      }
+    },
+    "朋友推荐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Friend Referral"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "친구 추천"
+          }
+        }
+      }
+    },
+    "本周精选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly Picks"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 주 추천"
+          }
+        }
+      }
+    },
+    "本周进度": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Week's Progress"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 주 진도"
+          }
+        }
+      }
+    },
+    "本期延伸学习": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extended Learning This Episode"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 화 확장 학습"
+          }
+        }
+      }
+    },
+    "本次已练 %lld 词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practiced %lld Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld단어 연습함"
+          }
+        }
+      }
+    },
+    "本次累计已练 %lld 个词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practiced %lld Words This Time"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번에 %lld개 단어 연습 완료"
+          }
+        }
+      }
+    },
+    "本次累计已练 %lld 句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Sentences Practiced This Time"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번에 %lld문장 연습 완료"
+          }
+        }
+      }
+    },
+    "本组完成！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set Complete!"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 그룹 완료!"
+          }
+        }
+      }
+    },
+    "本集完成！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Episode Complete!"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 화 완료!"
+          }
+        }
+      }
+    },
+    "本集重点生词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key Words This Episode"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 화의 주요 단어"
+          }
+        }
+      }
+    },
+    "机场、酒店、餐厅，旅行场景课优先安排": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Airport, Hotel, Restaurant - Priority Travel Scene Lessons"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "공항·호텔·레스토랑, 여행 상황 수업 우선"
+          }
+        }
+      }
+    },
+    "来自：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From: %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "출처: %@"
+          }
+        }
+      }
+    },
+    "查看全部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View All"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모두 보기"
+          }
+        }
+      }
+    },
+    "查看往期句型回顾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View Past Pattern Review"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이전 문형 회고 보기"
+          }
+        }
+      }
+    },
+    "查看更多": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See More"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "더보기"
+          }
+        }
+      }
+    },
+    "查词中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searching Words…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단어 검색 중…"
+          }
+        }
+      }
+    },
+    "查词失败，请稍后重试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Word Search Failed, Please Try Again Later"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단어 검색 실패, 잠시 후 다시 시도하세요"
+          }
+        }
+      }
+    },
+    "校园、社交、日常琐事，留学场景课优先安排": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Campus, Social, Daily Tasks - Priority Study Abroad Lessons"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캠퍼스·사회적·일상 소소한 것, 유학 상황 수업 우선"
+          }
+        }
+      }
+    },
+    "模拟现场对话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simulate Live Conversation"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "현장 대화 연습"
+          }
+        }
+      }
+    },
+    "正在准备场景…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing Scene…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "상황 준비 중…"
+          }
+        }
+      }
+    },
+    "正在播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playing"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "재생 중"
+          }
+        }
+      }
+    },
+    "正在生成你的专属计划…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Creating Your Custom Plan…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "맞춤 계획 생성 중…"
+          }
+        }
+      }
+    },
+    "正确答案：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct Answer: %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "정답: %@"
+          }
+        }
+      }
+    },
+    "正确！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct!"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "정답!"
+          }
+        }
+      }
+    },
+    "母语级": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Native-Level"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모국어 수준"
+          }
+        }
+      }
+    },
+    "每天 %lld 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Minutes a Day"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매일 %lld분"
+          }
+        }
+      }
+    },
+    "每天 1 集%@播客": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 Episode of %@ Podcast Daily"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매일 1편 %@ 팟캐스트"
+          }
+        }
+      }
+    },
+    "每天 10 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10 Minutes a Day"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하루 10분"
+          }
+        }
+      }
+    },
+    "每天 15 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 Minutes a Day"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하루 15분"
+          }
+        }
+      }
+    },
+    "每天 20 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "20 Minutes a Day"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하루 20분"
+          }
+        }
+      }
+    },
+    "每天 30 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 Minutes a Day"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하루 30분"
+          }
+        }
+      }
+    },
+    "每天 5 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 Minutes a Day"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하루 5분"
+          }
+        }
+      }
+    },
+    "每天 6 分钟，随时随地": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "6 Minutes a Day, Anytime, Anywhere"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하루 6분, 언제 어디서나"
+          }
+        }
+      }
+    },
+    "每天任务打卡，滴水穿石！": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily Check-In, Consistent Effort!"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매일 체크인, 꾸준히 노력하세요!"
+          }
+        }
+      }
+    },
+    "每天做什么": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily Routine"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매일 무엇을 할까"
+          }
+        }
+      }
+    },
+    "每天想投入多久？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How Much Time Daily?"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매일 얼마나 투자하고 싶으세요?"
+          }
+        }
+      }
+    },
+    "每天最多一条，可随时在设置里关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to One a Day, Disable Anytime in Settings"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하루 최대 한 개, 설정에서 언제든지 끌 수 있어요"
+          }
+        }
+      }
+    },
+    "每日任务打卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily Task Check-In"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매일 임무 체크인"
+          }
+        }
+      }
+    },
+    "每日学习": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily Study"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매일 공부"
+          }
+        }
+      }
+    },
+    "每日提醒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily Reminder"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일일 알림"
+          }
+        }
+      }
+    },
+    "每日新播客": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily New Podcast"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매일 신규 팟캐스트"
+          }
+        }
+      }
+    },
+    "没有匹配的内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Matching Content"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일치하는 내용 없음"
+          }
+        }
+      }
+    },
+    "没有找到相关内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Relevant Content Found"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "관련 내용 없음"
+          }
+        }
+      }
+    },
+    "流利听众": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fluent Listener"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "유창한 청취자"
+          }
+        }
+      }
+    },
+    "清除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "삭제"
+          }
+        }
+      }
+    },
+    "清除已掌握词汇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Mastered Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "마스터한 단어 삭제"
+          }
+        }
+      }
+    },
+    "清除所有数据": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear All Data"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모든 데이터 삭제"
+          }
+        }
+      }
+    },
+    "清零": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "초기화"
+          }
+        }
+      }
+    },
+    "源自 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From · %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "출처 · %@"
+          }
+        }
+      }
+    },
+    "澳洲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Australia"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "호주"
+          }
+        }
+      }
+    },
+    "炫耀一下": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Off"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "자랑하기"
+          }
+        }
+      }
+    },
+    "点击下方单词组成句子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap the Words Below to Form a Sentence"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아래 단어를 클릭하여 문장을 만드세요"
+          }
+        }
+      }
+    },
+    "点击左边英文，再点右边中文释义进行配对": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Left English, Then Right Translation to Match"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "왼쪽 영어 클릭, 오른쪽 한국어 번역 클릭해 매칭"
+          }
+        }
+      }
+    },
+    "点单、租房、看病、机场，学了就能用\n每天几分钟，听得懂，开得了口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordering, Renting, Doctor Visits, Airports\nA Few Minutes Daily, You'll Understand and Speak"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "주문, 집 임대, 병원, 공항 등\n매일 몇 분씩, 들을 수 있고 말할 수 있어요"
+          }
+        }
+      }
+    },
+    "点单、租房、看病，按真实场景分类的实用课": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Order, Rent, Medical - Practical Scene-Based Lessons"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "주문·집 임대·진료, 실제 상황 분류 실용 수업"
+          }
+        }
+      }
+    },
+    "点开学一个地道句型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to Learn a Natural Pattern"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "눌러서 자연스러운 문형 배우기"
+          }
+        }
+      }
+    },
+    "生活、文化、旅行话题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Life, Culture, Travel Topics"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "생활, 문화, 여행"
+          }
+        }
+      }
+    },
+    "生活场景": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everyday Scenes"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "생활 상황"
+          }
+        }
+      }
+    },
+    "生词无限保存 · 无限练习": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlimited Word Save · Unlimited Practice"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단어 무제한 저장 · 무제한 연습"
+          }
+        }
+      }
+    },
+    "用户协议": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "User Agreement"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이용 약관"
+          }
+        }
+      }
+    },
+    "用时": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time Used"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "소요 시간"
+          }
+        }
+      }
+    },
+    "用这个词组成正确的句子：": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make a Correct Sentence Using This Word:"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 단어로 올바른 문장을 만드세요:"
+          }
+        }
+      }
+    },
+    "留学生活": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Study Abroad Life"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "유학 생활"
+          }
+        }
+      }
+    },
+    "看视频": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Watch Video"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영상 보기"
+          }
+        }
+      }
+    },
+    "真的用得上": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Truly Useful"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "정말 쓸모있음"
+          }
+        }
+      }
+    },
+    "确认": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "확인"
+          }
+        }
+      }
+    },
+    "科技 · 评测": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tech · Reviews"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기술 · 리뷰"
+          }
+        }
+      }
+    },
+    "科普 · 科学": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Science · Education"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "과학 상식 · 과학"
+          }
+        }
+      }
+    },
+    "租房、看病、办事，海外生活场景课优先安排": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renting, Medical, Tasks - Priority Living Abroad Lessons"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "집 임대·진료·일 처리, 해외 생활 상황 수업 우선"
+          }
+        }
+      }
+    },
+    "立即订阅": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subscribe Now"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "지금 구독"
+          }
+        }
+      }
+    },
+    "第 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day %lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld일차"
+          }
+        }
+      }
+    },
+    "第 %lld 天 · 提醒你试用到期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day %lld · Trial Ending Reminder"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld일차 · 체험 종료 알림"
+          }
+        }
+      }
+    },
+    "第 %lld 天 · 满意续费，不满意取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day %lld · Renew if Satisfied, Cancel if Not"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld일차 · 만족시 갱신, 불만족시 취소"
+          }
+        }
+      }
+    },
+    "第 %lld/%lld 轮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round %lld/%lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld회차"
+          }
+        }
+      }
+    },
+    "第 %lld/%lld 遍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round %lld/%lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld회차"
+          }
+        }
+      }
+    },
+    "第 %lld/%lld 遍 · 英语原音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round %lld/%lld · English Audio"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld회차 · 영어 원음"
+          }
+        }
+      }
+    },
+    "第 1/%lld 遍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round 1/%lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1/%lld회차"
+          }
+        }
+      }
+    },
+    "第 4/%lld 遍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round 4/%lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4/%lld회차"
+          }
+        }
+      }
+    },
+    "第 4/%lld 遍 · 中文翻译": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round 4/%lld · Translation"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4/%lld회차 · 한국어 번역"
+          }
+        }
+      }
+    },
+    "第 4/4 遍 · 播放完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round 4/4 · Playback Complete"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4/4회차 · 재생 완료"
+          }
+        }
+      }
+    },
+    "答对 %lld/%lld 题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct %lld/%lld"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld/%lld 문제 정답"
+          }
+        }
+      }
+    },
+    "简单日常对话，慢速播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simple Daily Conversation, Slow Playback"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일상 회화, 느린 재생"
+          }
+        }
+      }
+    },
+    "累计": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "누적"
+          }
+        }
+      }
+    },
+    "累计活跃 %lld 天 · 90 天里程碑全部达成 🎉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active for %lld Days · All 90-Day Milestones Achieved 🎉"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "누적 %lld일 활약 · 90일 이정표 모두 달성 🎉"
+          }
+        }
+      }
+    },
+    "累计活跃 %lld 天 · 还有 %lld 天到「%@」": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld active days · %2$lld days to “%3$@”"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "누적 활동 %1$lld일 · 「%3$@」까지 %2$lld일 남음"
+          }
+        }
+      }
+    },
+    "约 %lld 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %lld Minutes"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "약 %lld분"
+          }
+        }
+      }
+    },
+    "给我们评分": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rate Us"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "평가하기"
+          }
+        }
+      }
+    },
+    "继续学习": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue Learning"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "계속 학습"
+          }
+        }
+      }
+    },
+    "美国": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USA"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "미국"
+          }
+        }
+      }
+    },
+    "翻译语言": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translation"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "번역 언어"
+          }
+        }
+      }
+    },
+    "翻译语言跟随系统语言。可在系统设置中修改。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translation follows system language. Change in system settings."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "번역 언어는 시스템 언어를 따릅니다. 시스템 설정에서 변경 가능합니다."
+          }
+        }
+      }
+    },
+    "耳朵热起来": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warm Up Ears"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "귀가 익숙해지다"
+          }
+        }
+      }
+    },
+    "职场沟通高频场景课优先安排": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Priority Work Communication Lessons"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "직장 소통 고빈도 상황 수업 우선"
+          }
+        }
+      }
+    },
+    "职场高频表达张口就来，开会邮件不再卡壳": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effortless Work Phrases, No Hesitation in Meetings & Emails"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "직장 고빈도 표현 자유롭게, 회의·이메일 끊김 없음"
+          }
+        }
+      }
+    },
+    "能教": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can Teach"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "가르칠 수 있음"
+          }
+        }
+      }
+    },
+    "英国": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UK"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영국"
+          }
+        }
+      }
+    },
+    "英语 ×3 → 中文 ×1 → 英语 ×1，重复成本能": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eng ×3 → Trans ×1 → Eng ×1, Repeat Ability"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영어 ×3 → 한국어 ×1 → 영어 ×1, 반복 학습"
+          }
+        }
+      }
+    },
+    "英语听力形成条件反射，把'学过'变成'用得上'": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn Learning Into Reflexive Listening"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "영어 듣기 반사 작용, 배운 것을 활용"
+          }
+        }
+      }
+    },
+    "表达库即将上线": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expression Library Coming Soon"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "표현 라이브러리 곧 출시"
+          }
+        }
+      }
+    },
+    "视频源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video Source"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "비디오 소스"
+          }
+        }
+      }
+    },
+    "解锁 Pro 查看全部 %lld 个生词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock Pro to View All %lld Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro 해제하고 모든 %lld개 단어 보기"
+          }
+        }
+      }
+    },
+    "认出": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recognize"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "인식함"
+          }
+        }
+      }
+    },
+    "词义配对": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Word Match"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단어 매칭"
+          }
+        }
+      }
+    },
+    "词义配对一轮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Word Match Round"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단어 매칭 1회"
+          }
+        }
+      }
+    },
+    "词汇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vocabulary"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "어휘"
+          }
+        }
+      }
+    },
+    "词汇 + 句型练习，连续打卡不断档": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vocab + Pattern Practice, Consistent Check-In"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "어휘 + 문형 연습, 지속적 체크인"
+          }
+        }
+      }
+    },
+    "词汇小课堂": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vocab Lesson"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "어휘 클래스"
+          }
+        }
+      }
+    },
+    "词汇新手": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vocab Rookie"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "어휘 초보"
+          }
+        }
+      }
+    },
+    "词汇达人": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vocab Pro"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "어휘 고수"
+          }
+        }
+      }
+    },
+    "该国家的课堂即将上线": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Country-Specific Lesson Coming Soon"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "해당 국가 클래스 곧 출시"
+          }
+        }
+      }
+    },
+    "请检查网络后重试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check Network and Try Again"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "네트워크 확인 후 다시 시도하세요"
+          }
+        }
+      }
+    },
+    "读音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pronunciation"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "발음"
+          }
+        }
+      }
+    },
+    "课堂内外的日常交流跟得上，社交场合敢开口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Up With Daily & Social Conversations"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "교실 안팎의 일상 대화, 사회적 상황에서 자신감"
+          }
+        }
+      }
+    },
+    "购买失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purchase Failed: %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "구매 실패: %@"
+          }
+        }
+      }
+    },
+    "购买已完成，但未获得 Pro 权益，请稍后重试或联系客服。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purchase complete, but Pro benefits not activated. Please try again later or contact support."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "구매 완료. 아직 Pro 혜택을 받지 못했어요. 잠시 후 다시 시도하거나 고객 센터에 연락하세요."
+          }
+        }
+      }
+    },
+    "购买未完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purchase Incomplete"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "구매 미완료"
+          }
+        }
+      }
+    },
+    "走一遍模拟对话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practice a Simulated Conversation"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모의 대화 1회"
+          }
+        }
+      }
+    },
+    "超出硅谷的英文世界": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beyond Silicon Valley"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실리콘밸리 밖 영어 세계"
+          }
+        }
+      }
+    },
+    "跟上对话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Up With Dialogue"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "대화 따라잡기"
+          }
+        }
+      }
+    },
+    "跟读三遍，把一个地道句型变成条件反射": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read Three Times to Make a Pattern Automatic"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "세 번 읽어 자연스러운 문형이 자동으로 나와요."
+          }
+        }
+      }
+    },
+    "跟读练习": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeat Exercise"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "따라 말하기 연습"
+          }
+        }
+      }
+    },
+    "跳过": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "건너뛰기"
+          }
+        }
+      }
+    },
+    "返回我的句子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to My Sentences"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내 문장으로 돌아가기"
+          }
+        }
+      }
+    },
+    "返回词汇本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return to Vocab Book"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "어휘장으로 돌아가기"
+          }
+        }
+      }
+    },
+    "还没有可以练习的句子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Sentences to Practice"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연습할 문장이 없어요"
+          }
+        }
+      }
+    },
+    "还没有可以练习的词汇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Words to Practice"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연습 가능한 단어가 없습니다"
+          }
+        }
+      }
+    },
+    "还没有已掌握的句子，多练几轮连词成句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Mastered Sentences Yet, Practice Sentence Builder More"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아직 마스터한 문장이 없습니다. 문장 만들기를 더 연습하세요."
+          }
+        }
+      }
+    },
+    "还没有收藏句子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Favorite Sentences Yet"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아직 즐겨찾기에 문장이 없습니다."
+          }
+        }
+      }
+    },
+    "这个分类暂时没有句子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Sentences in This Category"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 카테고리에 문장이 없습니다."
+          }
+        }
+      }
+    },
+    "这些词都已在单词本里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All Words Already in Vocabulary"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모든 단어가 이미 단어장에 있음"
+          }
+        }
+      }
+    },
+    "这将清除所有学习记录、词汇和设置。此操作不可撤销。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This will clear all study history, vocabulary, and settings. This action cannot be undone."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모든 학습 기록, 단어 및 설정이 삭제됩니다. 이 작업은 취소할 수 없습니다."
+          }
+        }
+      }
+    },
+    "进阶听众": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intermediate Listener"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "중급 청취자"
+          }
+        }
+      }
+    },
+    "连续": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Streak"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연속"
+          }
+        }
+      }
+    },
+    "连续 %lld 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld-Day Streak"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연속 %lld일"
+          }
+        }
+      }
+    },
+    "连词成句": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sentence Builder"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문장 만들기"
+          }
+        }
+      }
+    },
+    "连词成句一轮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sentence Builder Round"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문장 만들기 1회"
+          }
+        }
+      }
+    },
+    "适应 5 遍精听的节奏，能从整句里抓到关键词，英语不再是一片模糊的背景音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adapt to 5-Time Intensive Listening, Catch Keywords, No More Blur"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5회 반복 청취에 익숙해지면 문장 속 키워드 파악 가능, 영어가 더 이상 희미하지 않음"
+          }
+        }
+      }
+    },
+    "选择恰当的句子填空": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the Right Sentence to Fill in the Blanks"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "적절한 문장 선택 후 빈칸 채우기"
+          }
+        }
+      }
+    },
+    "选择级别": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Level"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "레벨 선택"
+          }
+        }
+      }
+    },
+    "速度": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speed"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "속도"
+          }
+        }
+      }
+    },
+    "造句达人": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sentence Expert"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "문장 고수"
+          }
+        }
+      }
+    },
+    "配对": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Match"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매칭"
+          }
+        }
+      }
+    },
+    "配对高手": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Matchmaster"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매칭 고수"
+          }
+        }
+      }
+    },
+    "重试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "재시도"
+          }
+        }
+      }
+    },
+    "随时取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel Anytime"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "언제든 취소 가능"
+          }
+        }
+      }
+    },
+    "随机播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle Play"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "랜덤 재생"
+          }
+        }
+      }
+    },
+    "随着每日播客更新，句型讲解会陆续积累": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pattern Explainers Accumulate Daily with Podcasts"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "매일 팟캐스트로 문형 해설이 축적됩니다"
+          }
+        }
+      }
+    },
+    "隐私政策": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy Policy"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "개인정보 보호정책"
+          }
+        }
+      }
+    },
+    "隐藏诊断": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Diagnosis"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "진단 숨기기"
+          }
+        }
+      }
+    },
+    "音频源处理中，请稍后再试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Processing Audio Source, Please Try Again Later"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오디오 소스 처리 중, 잠시 후 다시 시도"
+          }
+        }
+      }
+    },
+    "首页": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "홈"
+          }
+        }
+      }
+    },
+    "高级": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "고급"
+          }
+        }
+      }
+    },
+    "高级毕业": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced Graduate"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "고급 졸업"
+          }
+        }
+      }
+    },
+    "高频句型开始形成条件反射，听到熟悉的场景，能直接反应出该说的那句话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frequent Patterns Become Reflexive, Respond Instantly to Familiar Scenes"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "고빈도 문형이 조건반사로 익숙한 상황에서 바로 말할 수 있음"
+          }
+        }
+      }
+    },
+    "高频句型讲解": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frequent Pattern Explainer"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "고빈도 문형 해설"
+          }
+        }
+      }
+    },
+    "🌍": {},
+    "🍽️ 餐厅": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🍽️ Restaurant"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🍽️ 레스토랑"
+          }
+        }
+      }
+    },
+    "🎉": {},
+    "🎉 %@": {},
+    "🎬": {},
+    "🏠 租房": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🏠 Rent"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🏠 주택 임대"
+          }
+        }
+      }
+    },
+    "🏦 银行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🏦 Bank"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🏦 은행"
+          }
+        }
+      }
+    },
+    "🏨 酒店": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🏨 Hotel"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🏨 호텔"
+          }
+        }
+      }
+    },
+    "🐛 Debug · 每日任务": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🐛 Debug · Daily Quest"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🐛 Debug · 데일리 퀘스트"
+          }
+        }
+      }
+    },
+    "👋 社交": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "👋 Social"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "👋 소셜"
+          }
+        }
+      }
+    },
+    "💇 理发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "💇 Haircut"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "💇 이발"
+          }
+        }
+      }
+    },
+    "💡 文化小贴士": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "💡 Culture Tips"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "💡 문화 팁"
+          }
+        }
+      }
+    },
+    "💬 常用句型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "💬 Common Patterns"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "💬 자주 쓰이는 문형"
+          }
+        }
+      }
+    },
+    "📦 快递": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "📦 Delivery"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "📦 택배"
+          }
+        }
+      }
+    },
+    "📱 办卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "📱 New Card"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "📱 카드 개설"
+          }
+        }
+      }
+    },
+    "🔍 诊断": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🔍 Diagnosis"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🔍 진단"
+          }
+        }
+      }
+    },
+    "🔓 已解锁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🔓 Unlocked"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🔓 해제됨"
+          }
+        }
+      }
+    },
+    "🔔": {},
+    "🔥": {},
+    "🔥 连续 %lld 天 · 累计听 %@ · 掌握 %lld 个词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🔥 %lld-Day Streak · Listened %@ · %lld Words Mastered"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🔥 연속 %lld일 · 총 %@ 듣기 · %lld개 단어 마스터함"
+          }
+        }
+      }
+    },
+    "🚇 地铁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🚇 Subway"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🚇 지하철"
+          }
+        }
+      }
+    },
+    "🚕 打车": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🚕 Taxi"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🚕 택시"
+          }
+        }
+      }
+    },
+    "🛃 过关": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🛃 Customs"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🛃 출입국"
+          }
+        }
+      }
+    },
+    "🛒 超市": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🛒 Supermarket"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🛒 마트"
+          }
+        }
+      }
+    },
+    "🧾 退货": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🧾 Returns"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🧾 반품"
+          }
+        }
+      }
+    },
+    "🩺 看病": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🩺 Doctor"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🩺 진료"
+          }
+        }
+      }
+    }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

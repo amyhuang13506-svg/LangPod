@@ -100,9 +100,9 @@ struct ProfileView: View {
     private var planProgressCaption: String {
         let days = dataStore.activeDays
         if let next = plan.nextMilestone(activeDays: days) {
-            return "累计活跃 \(days) 天 · 还有 \(next.day - days) 天到「\(next.title)」"
+            return String(localized: "累计活跃 \(days) 天 · 还有 \(next.day - days) 天到「\(next.title)」")
         }
-        return "累计活跃 \(days) 天 · 90 天里程碑全部达成 🎉"
+        return String(localized: "累计活跃 \(days) 天 · 90 天里程碑全部达成 🎉")
     }
 
     /// 「我的学习计划」卡：整卡可点，进计划详情页。累计活跃 ≠ streakCard 的连续天数。
@@ -236,13 +236,13 @@ struct ProfileView: View {
         if listenedToday {
             let done = TaskEngine.shared.completedCount
             let total = TaskEngine.shared.totalCount
-            if total > 0 && done >= total { return "完美一天！\(total) 个任务全部完成" }
-            return "今日已点亮！完成 \(done)/\(total) 任务解锁完美一天"
+            if total > 0 && done >= total { return String(localized: "完美一天！\(total) 个任务全部完成") }
+            return String(localized: "今日已点亮！完成 \(done)/\(total) 任务解锁完美一天")
         }
         if hoursUntilReset <= 3 {
-            return "即将清零！还有 \(hoursUntilReset)h"
+            return String(localized: "即将清零！还有 \(hoursUntilReset)h")
         }
-        return "今天还没听！\(hoursUntilReset)h 后记录清零"
+        return String(localized: "今天还没听！\(hoursUntilReset)h 后记录清零")
     }
 
     private var streakColor: Color {
@@ -261,9 +261,9 @@ struct ProfileView: View {
 
     private var statsRow: some View {
         HStack(spacing: 10) {
-            statCard(value: dataStore.totalListeningTimeDisplay, label: "学习时长")
-            statCard(value: "\(vocabularyStore.strongWords.count)", label: "掌握词汇")
-            statCard(value: "\(sentenceStore.strongSentences.count)", label: "掌握句型")
+            statCard(value: dataStore.totalListeningTimeDisplay, label: String(localized: "学习时长"))
+            statCard(value: "\(vocabularyStore.strongWords.count)", label: String(localized: "掌握词汇"))
+            statCard(value: "\(sentenceStore.strongSentences.count)", label: String(localized: "掌握句型"))
         }
     }
 
@@ -422,19 +422,19 @@ struct ProfileView: View {
 
     private var sleepTimerDisplayValue: String {
         if let minutes = audioPlayer.sleepTimerMinutes {
-            return "\(minutes)分钟"
+            return String(localized: "\(minutes)分钟")
         }
-        return "关闭"
+        return String(localized: "关闭")
     }
 
     private var settingsSection: some View {
         VStack(spacing: 0) {
             // 升级 Pro（放最前）
             if subscriptionManager.isProUser {
-                menuRow(icon: "crown.fill", iconColor: "F59E0B", title: "已订阅 Pro")
+                menuRow(icon: "crown.fill", iconColor: "F59E0B", title: String(localized: "已订阅 Pro"))
             } else {
                 Button { showPaywall = true } label: {
-                    menuRow(icon: "crown", iconColor: "F59E0B", title: "升级 Pro")
+                    menuRow(icon: "crown", iconColor: "F59E0B", title: String(localized: "升级 Pro"))
                 }
             }
             divider
@@ -442,14 +442,14 @@ struct ProfileView: View {
                 LevelSelectPage(dataStore: dataStore)
             } label: {
                 settingsRow(icon: "antenna.radiowaves.left.and.right", iconColor: "3B82F6",
-                            title: "当前级别", value: dataStore.selectedLevel.tabName)
+                            title: String(localized: "当前级别"), value: dataStore.selectedLevel.tabName)
             }
             divider
             NavigationLink {
                 SleepTimerPage(audioPlayer: audioPlayer)
             } label: {
                 settingsRow(icon: "moon.zzz", iconColor: "8B5CF6",
-                            title: "定时播放", value: sleepTimerDisplayValue)
+                            title: String(localized: "定时播放"), value: sleepTimerDisplayValue)
             }
             divider
             NavigationLink {
@@ -457,16 +457,16 @@ struct ProfileView: View {
                     .environment(dataStore)
                     .environment(vocabularyStore)
             } label: {
-                menuRow(icon: "trophy", iconColor: "94A3B8", title: "成就徽章")
+                menuRow(icon: "trophy", iconColor: "94A3B8", title: String(localized: "成就徽章"))
             }
             divider
             Button { showShareCard = true } label: {
-                menuRow(icon: "square.and.arrow.up", iconColor: "94A3B8", title: "分享给朋友")
+                menuRow(icon: "square.and.arrow.up", iconColor: "94A3B8", title: String(localized: "分享给朋友"))
             }
             divider
             if let reviewURL = ReviewPrompter.writeReviewURL {
                 Link(destination: reviewURL) {
-                    menuRow(icon: "star", iconColor: "F59E0B", title: "给我们评分")
+                    menuRow(icon: "star", iconColor: "F59E0B", title: String(localized: "给我们评分"))
                 }
                 .simultaneousGesture(TapGesture().onEnded {
                     Analytics.track(.reviewEntryTap)
@@ -475,13 +475,13 @@ struct ProfileView: View {
             divider
             if let privacyURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/privacy.html") {
                 Link(destination: privacyURL) {
-                    menuRow(icon: "shield", iconColor: "94A3B8", title: "隐私政策")
+                    menuRow(icon: "shield", iconColor: "94A3B8", title: String(localized: "隐私政策"))
                 }
             }
             divider
             if let termsURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/terms.html") {
                 Link(destination: termsURL) {
-                    menuRow(icon: "doc.text", iconColor: "94A3B8", title: "用户协议")
+                    menuRow(icon: "doc.text", iconColor: "94A3B8", title: String(localized: "用户协议"))
                 }
             }
         }
@@ -687,16 +687,37 @@ struct LevelSelectPage: View {
 // MARK: - Language Select Page
 
 struct LanguageSelectPage: View {
+    /// 当前内容语言的展示名（用系统 locale 拼出本地化语言名）
+    private var currentLanguageName: String {
+        let id = ContentLanguage.current == .zh ? "zh-Hans" : ContentLanguage.current.rawValue
+        return Locale.current.localizedString(forIdentifier: id) ?? id
+    }
+
     var body: some View {
         List {
-            HStack(spacing: 12) {
-                Text("中文")
-                    .font(.system(size: 16))
-                    .foregroundStyle(Color.textPrimary)
-                Spacer()
-                Image(systemName: "checkmark")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color.appPrimary)
+            Section {
+                HStack(spacing: 12) {
+                    Text(currentLanguageName)
+                        .font(.system(size: 16))
+                        .foregroundStyle(Color.textPrimary)
+                    Spacer()
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.appPrimary)
+                }
+            } footer: {
+                Text("翻译语言跟随系统语言。可在系统设置中修改。")
+            }
+            Section {
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Text("打开系统设置")
+                        .font(.system(size: 16))
+                        .foregroundStyle(Color.appPrimary)
+                }
             }
         }
         .navigationTitle("翻译语言")

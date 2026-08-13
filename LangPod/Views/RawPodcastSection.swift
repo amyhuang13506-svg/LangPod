@@ -21,7 +21,7 @@ struct RawPodcastSection: View {
     @State private var pendingFeedSelection: RawPodcast?
 
     init(
-        title: String = "今日推荐",
+        title: String = String(localized: "今日推荐"),
         podcasts: [RawPodcast],
         allPodcasts: [RawPodcast]? = nil,
         compact: Bool = false,

@@ -77,11 +77,11 @@ struct MySentencesView: View {
 
     private var statsCards: some View {
         HStack(spacing: 10) {
-            filterCard(.strong, count: sentenceStore.strongSentences.count, label: "已掌握",
+            filterCard(.strong, count: sentenceStore.strongSentences.count, label: String(localized: "已掌握"),
                        textColor: Color(hex: "16A34A"), bgColor: Color.successLight, activeBorder: Color.success)
-            filterCard(.fading, count: sentenceStore.fadingSentences.count, label: "复习中",
+            filterCard(.fading, count: sentenceStore.fadingSentences.count, label: String(localized: "复习中"),
                        textColor: Color(hex: "D97706"), bgColor: Color.warningLight, activeBorder: Color.warning)
-            filterCard(.new, count: sentenceStore.newSentences.count, label: "新句",
+            filterCard(.new, count: sentenceStore.newSentences.count, label: String(localized: "新句"),
                        textColor: Color.appPrimary, bgColor: Color.primaryLight, activeBorder: Color.appPrimary)
         }
     }

@@ -104,8 +104,8 @@ struct VocabularyView: View {
 
     private var sectionSwitcher: some View {
         HStack(spacing: 10) {
-            sectionButton(.daily, title: "日常词汇")
-            sectionButton(.scene, title: "生活场景")
+            sectionButton(.daily, title: String(localized: "日常词汇"))
+            sectionButton(.scene, title: String(localized: "生活场景"))
         }
     }
 

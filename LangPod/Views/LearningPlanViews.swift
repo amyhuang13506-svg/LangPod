@@ -122,9 +122,9 @@ struct LearningPlanPage: View {
     private var progressCaption: String {
         if let next = plan.nextMilestone(activeDays: activeDays) {
             let remain = next.day - activeDays
-            return "累计活跃 \(activeDays) 天 · 还有 \(remain) 天到「\(next.title)」"
+            return String(localized: "累计活跃 \(activeDays) 天 · 还有 \(remain) 天到「\(next.title)」")
         }
-        return "累计活跃 \(activeDays) 天 · 90 天里程碑全部达成 🎉"
+        return String(localized: "累计活跃 \(activeDays) 天 · 90 天里程碑全部达成 🎉")
     }
 
     var body: some View {

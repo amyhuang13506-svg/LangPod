@@ -105,7 +105,7 @@ struct AllEpisodesView: View {
               let day = Int(parts[2]) else {
             return dateString
         }
-        return "\(month)月\(day)日"
+        return String(localized: "\(month)月\(day)日")
     }
 
     // MARK: - Row

@@ -437,7 +437,7 @@ struct LessonDetailView: View {
         Analytics.track(.lessonAddAll, params: [
             "lesson_id": lesson.id, "country": country.id, "added": "\(added)",
         ])
-        showToast(added > 0 ? "已加入 \(added) 个新词" : "这些词都已在单词本里")
+        showToast(added > 0 ? String(localized: "已加入 \(added) 个新词") : String(localized: "这些词都已在单词本里"))
         UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 
@@ -447,7 +447,7 @@ struct LessonDetailView: View {
         guard !isAdded(word) else { return }
         let added = vocabularyStore.addWord(word.asVocabularyItem, sourceLabel: "scene_lesson")
         UINotificationFeedbackGenerator().notificationOccurred(.success)
-        showToast(added ? "「\(word.word)」已加入单词本" : "「\(word.word)」已在单词本")
+        showToast(added ? String(localized: "「\(word.word)」已加入单词本") : String(localized: "「\(word.word)」已在单词本"))
     }
 
     private func showToast(_ text: String) {

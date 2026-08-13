@@ -725,7 +725,7 @@ struct ExpressionPageView: View {
             if added {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    toast = "已加入句型库"
+                    toast = String(localized: "已加入句型库")
                 }
                 Task {
                     try? await Task.sleep(nanoseconds: 1_500_000_000)

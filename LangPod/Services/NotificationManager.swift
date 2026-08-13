@@ -245,8 +245,8 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         if !c.listenedToday {
             return Intent(
                 type: "daily_reminder",
-                title: "今日的 3 分钟",
-                body: "打开 Castlingo，继续你的听力训练",
+                title: String(localized: "今日的 3 分钟"),
+                body: String(localized: "打开 Castlingo，继续你的听力训练"),
                 fireTomorrow: firesTomorrow
             )
         }
@@ -257,8 +257,8 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     private func streakIntent(streakDays: Int, fireTomorrow: Bool) -> Intent {
         Intent(
             type: "streak_risk",
-            title: "再不听就要清零了",
-            body: "\(streakDays) 天的连续记录就快断了，3 分钟就能续上",
+            title: String(localized: "再不听就要清零了"),
+            body: String(localized: "\(streakDays) 天的连续记录就快断了，3 分钟就能续上"),
             fireTomorrow: fireTomorrow
         )
     }
@@ -268,8 +268,8 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         if evergreen {
             return Intent(
                 type: "daily_pattern",
-                title: "今日句型讲解已更新",
-                body: "跟读三遍，把一个地道句型变成条件反射",
+                title: String(localized: "今日句型讲解已更新"),
+                body: String(localized: "跟读三遍，把一个地道句型变成条件反射"),
                 deeplink: DailyTaskType.listenPattern.rawValue
             )
         }
@@ -277,13 +277,13 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         let scene = c.todayPatternScene ?? ""
         let body: String = {
             guard let zh = c.todayPatternTranslation, !zh.isEmpty else {
-                return "点开学一个地道句型"
+                return String(localized: "点开学一个地道句型")
             }
             return scene.isEmpty ? zh : "\(zh)｜\(scene)"
         }()
         return Intent(
             type: "daily_pattern",
-            title: "今日句型 · \(template)",
+            title: String(localized: "今日句型 · \(template)"),
             body: body,
             deeplink: DailyTaskType.listenPattern.rawValue
         )
@@ -294,8 +294,8 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         if evergreen {
             return Intent(
                 type: "daily_word",
-                title: "今日新场景已上线",
-                body: "几个地道说法 + 真实场景，3 分钟学会",
+                title: String(localized: "今日新场景已上线"),
+                body: String(localized: "几个地道说法 + 真实场景，3 分钟学会"),
                 deeplink: DailyTaskType.learnLesson.rawValue
             )
         }
@@ -304,13 +304,13 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         let country = c.todayLessonCountryTranslation ?? ""
         let body: String = {
             if let wc = c.todayLessonWordCount {
-                return "\(flag)\(country)｜\(wc) 个地道说法，3 分钟学会"
+                return String(localized: "\(flag)\(country)｜\(wc) 个地道说法，3 分钟学会")
             }
-            return "\(flag)\(country) 场景对话，学几个地道说法"
+            return String(localized: "\(flag)\(country) 场景对话，学几个地道说法")
         }()
         return Intent(
             type: "daily_word",
-            title: "今日新场景 · \(title)",
+            title: String(localized: "今日新场景 · \(title)"),
             body: body,
             deeplink: DailyTaskType.learnLesson.rawValue
         )

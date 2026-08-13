@@ -34,11 +34,9 @@ struct Episode: Codable, Identifiable {
     }
 
     var dateDisplay: String {
-        // "2026-04-02" → "4月2日"
+        // "2026-04-02" → "4月2日" / "4월 2일" / "Apr 2"（跟随系统语言）
         if let d = DateFormatter.episodeDate.date(from: date) {
-            let f = DateFormatter()
-            f.dateFormat = "M月d日"
-            return f.string(from: d)
+            return d.formatted(.dateTime.month().day())
         }
         return date
     }
@@ -47,9 +45,9 @@ struct Episode: Codable, Identifiable {
         if durationSeconds >= 60 {
             let min = durationSeconds / 60
             let sec = durationSeconds % 60
-            return sec > 0 ? "\(min)分\(sec)秒" : "\(min)分钟"
+            return sec > 0 ? String(localized: "\(min)分\(sec)秒") : String(localized: "\(min)分钟")
         }
-        return "\(durationSeconds)秒"
+        return String(localized: "\(durationSeconds)秒")
     }
 }
 

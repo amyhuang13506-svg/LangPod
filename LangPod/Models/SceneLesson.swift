@@ -18,12 +18,12 @@ struct LessonCountry: Codable, Identifiable, Hashable {
 
     /// 离线兜底：服务器 countries.json 拉不到时使用
     static let defaults: [LessonCountry] = [
-        LessonCountry(id: "us", nameTranslation: "美国", flag: "🇺🇸", accent: "en-US", lessonCount: 0),
-        LessonCountry(id: "uk", nameTranslation: "英国", flag: "🇬🇧", accent: "en-GB", lessonCount: 0),
-        LessonCountry(id: "au", nameTranslation: "澳洲", flag: "🇦🇺", accent: "en-AU", lessonCount: 0),
-        LessonCountry(id: "ca", nameTranslation: "加拿大", flag: "🇨🇦", accent: "en-US", lessonCount: 0),
-        LessonCountry(id: "nz", nameTranslation: "新西兰", flag: "🇳🇿", accent: "en-AU", lessonCount: 0),
-        LessonCountry(id: "sg", nameTranslation: "新加坡", flag: "🇸🇬", accent: "en-SG", lessonCount: 0),
+        LessonCountry(id: "us", nameTranslation: String(localized: "美国"), flag: "🇺🇸", accent: "en-US", lessonCount: 0),
+        LessonCountry(id: "uk", nameTranslation: String(localized: "英国"), flag: "🇬🇧", accent: "en-GB", lessonCount: 0),
+        LessonCountry(id: "au", nameTranslation: String(localized: "澳洲"), flag: "🇦🇺", accent: "en-AU", lessonCount: 0),
+        LessonCountry(id: "ca", nameTranslation: String(localized: "加拿大"), flag: "🇨🇦", accent: "en-US", lessonCount: 0),
+        LessonCountry(id: "nz", nameTranslation: String(localized: "新西兰"), flag: "🇳🇿", accent: "en-AU", lessonCount: 0),
+        LessonCountry(id: "sg", nameTranslation: String(localized: "新加坡"), flag: "🇸🇬", accent: "en-SG", lessonCount: 0),
     ]
 }
 
@@ -220,9 +220,9 @@ struct SceneWord: Codable, Identifiable, Hashable {
 
     var difficultyLabel: String {
         switch difficulty {
-        case "easy": "初级"
-        case "medium": "中级"
-        case "hard": "高级"
+        case "easy": String(localized: "初级")
+        case "medium": String(localized: "中级")
+        case "hard": String(localized: "高级")
         default: ""
         }
     }

@@ -57,9 +57,7 @@ struct RawPodcast: Codable, Identifiable, Hashable {
 
     var dateDisplay: String {
         if let d = DateFormatter.episodeDate.date(from: publishedAt) {
-            let f = DateFormatter()
-            f.dateFormat = "M月d日"
-            return f.string(from: d)
+            return d.formatted(.dateTime.month().day())
         }
         return publishedAt
     }
@@ -142,12 +140,12 @@ enum ExploreCategory: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .entertainment: return "娱乐 · 文化"
-        case .relationship:  return "两性 · 心理"
-        case .mind:          return "思想 · 访谈"
-        case .science:       return "科普 · 科学"
-        case .business:      return "创业 · 商业"
-        case .tech:          return "科技 · 评测"
+        case .entertainment: return String(localized: "娱乐 · 文化")
+        case .relationship:  return String(localized: "两性 · 心理")
+        case .mind:          return String(localized: "思想 · 访谈")
+        case .science:       return String(localized: "科普 · 科学")
+        case .business:      return String(localized: "创业 · 商业")
+        case .tech:          return String(localized: "科技 · 评测")
         }
     }
 

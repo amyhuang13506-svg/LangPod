@@ -105,7 +105,7 @@ struct MyVocabularyView: View {
             filterCard(
                 filter: .strong,
                 count: store.strongWords.count,
-                label: "已掌握",
+                label: String(localized: "已掌握"),
                 textColor: Color(hex: "16A34A"),
                 bgColor: Color.successLight,
                 activeBorder: Color.success
@@ -113,7 +113,7 @@ struct MyVocabularyView: View {
             filterCard(
                 filter: .fading,
                 count: store.fadingWords.count,
-                label: "复习中",
+                label: String(localized: "复习中"),
                 textColor: Color(hex: "D97706"),
                 bgColor: Color.warningLight,
                 activeBorder: Color.warning
@@ -121,7 +121,7 @@ struct MyVocabularyView: View {
             filterCard(
                 filter: .new,
                 count: newWords.count,
-                label: "新词",
+                label: String(localized: "新词"),
                 textColor: Color.appPrimary,
                 bgColor: Color.primaryLight,
                 activeBorder: Color.appPrimary

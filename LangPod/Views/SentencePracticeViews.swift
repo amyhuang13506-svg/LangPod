@@ -587,8 +587,8 @@ struct SceneQuizView: View {
 
             if completed {
                 PracticeCompleteView(
-                    title: "场景通关！",
-                    subtitle: "答对 \(correctCount)/\(questions.count) 题",
+                    title: String(localized: "场景通关！"),
+                    subtitle: String(localized: "答对 \(correctCount)/\(questions.count) 题"),
                     onRestart: { Task { await startGame() } },
                     onClose: { dismiss() }
                 )
@@ -747,7 +747,7 @@ struct SceneQuizView: View {
 
     private var quizContent: some View {
         VStack(spacing: 16) {
-            practiceHeader(title: "场景模拟", progress: "\(currentIndex + 1)/\(questions.count)") { dismiss() }
+            practiceHeader(title: String(localized: "场景模拟"), progress: "\(currentIndex + 1)/\(questions.count)") { dismiss() }
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
@@ -907,7 +907,7 @@ struct SceneQuizView: View {
 
     private var emptyContent: some View {
         VStack(spacing: 12) {
-            practiceHeader(title: "场景模拟", progress: "") { dismiss() }
+            practiceHeader(title: String(localized: "场景模拟"), progress: "") { dismiss() }
             Spacer()
             Image(systemName: "theatermasks")
                 .font(.system(size: 40))

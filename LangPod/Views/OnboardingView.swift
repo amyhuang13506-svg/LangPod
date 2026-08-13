@@ -151,22 +151,22 @@ struct OnboardingView: View {
 
     /// 欢迎页浮动的场景短句：长短混搭（十几条轮换，控制在单行宽度内）
     private static let heroPhrases: [(scene: String, en: String)] = [
-        ("☕️ 点单", "To go, please!"),
-        ("✈️ 机场", "Where's gate B12?"),
-        ("🏠 租房", "Is the deposit refundable?"),
-        ("🩺 看病", "Can I book an appointment?"),
-        ("🛒 超市", "Where's the dairy aisle?"),
-        ("🚕 打车", "Right here is fine!"),
-        ("🍽️ 餐厅", "Can we get the check?"),
-        ("🏦 银行", "I'd like to open an account."),
-        ("🏨 酒店", "A late check-out, please?"),
-        ("🚇 地铁", "Does this go downtown?"),
-        ("📱 办卡", "A SIM card, please."),
-        ("🛃 过关", "Just here for vacation."),
-        ("💇 理发", "Just a trim."),
-        ("📦 快递", "Where's my package?"),
-        ("🧾 退货", "Can I get a refund?"),
-        ("👋 社交", "Wanna grab a coffee?"),
+        (String(localized: "☕️ 点单"), "To go, please!"),
+        (String(localized: "✈️ 机场"), "Where's gate B12?"),
+        (String(localized: "🏠 租房"), "Is the deposit refundable?"),
+        (String(localized: "🩺 看病"), "Can I book an appointment?"),
+        (String(localized: "🛒 超市"), "Where's the dairy aisle?"),
+        (String(localized: "🚕 打车"), "Right here is fine!"),
+        (String(localized: "🍽️ 餐厅"), "Can we get the check?"),
+        (String(localized: "🏦 银行"), "I'd like to open an account."),
+        (String(localized: "🏨 酒店"), "A late check-out, please?"),
+        (String(localized: "🚇 地铁"), "Does this go downtown?"),
+        (String(localized: "📱 办卡"), "A SIM card, please."),
+        (String(localized: "🛃 过关"), "Just here for vacation."),
+        (String(localized: "💇 理发"), "Just a trim."),
+        (String(localized: "📦 快递"), "Where's my package?"),
+        (String(localized: "🧾 退货"), "Can I get a refund?"),
+        (String(localized: "👋 社交"), "Wanna grab a coffee?"),
     ]
 
     private static let heroSlotCount = 7
@@ -557,24 +557,24 @@ struct OnboardingView: View {
                     level: .easy,
                     dotFill: Color.success,
                     dotBg: Color.successLight,
-                    name: "初级",
-                    desc: "简单日常对话，慢速播放",
+                    name: String(localized: "初级"),
+                    desc: String(localized: "简单日常对话，慢速播放"),
                     detail: "适合基础薄弱、久没碰英语"
                 )
                 trialLevelCard(
                     level: .medium,
                     dotFill: Color.appPrimary,
                     dotBg: Color.primaryLighter,
-                    name: "中级",
-                    desc: "生活、文化、旅行话题",
+                    name: String(localized: "中级"),
+                    desc: String(localized: "生活、文化、旅行话题"),
                     detail: "适合能听懂慢速、想再上一层"
                 )
                 trialLevelCard(
                     level: .hard,
                     dotFill: Color.hardOrange,
                     dotBg: Color.warningLight,
-                    name: "高级",
-                    desc: "新闻、商务，自然语速",
+                    name: String(localized: "高级"),
+                    desc: String(localized: "新闻、商务，自然语速"),
                     detail: "适合想挑战原声语速"
                 )
             }
@@ -682,11 +682,11 @@ struct OnboardingView: View {
     }
 
     private let timeOptions: [TimeOption] = [
-        TimeOption(minutes: 5, label: "每天 5 分钟", detail: "极简 · 先把每天听英语的习惯养起来", isRecommended: false),
-        TimeOption(minutes: 10, label: "每天 10 分钟", detail: "轻松 · 一集播客，加一个句型讲解", isRecommended: false),
-        TimeOption(minutes: 15, label: "每天 15 分钟", detail: "推荐 · 播客、句型，加每日任务打卡", isRecommended: true),
-        TimeOption(minutes: 20, label: "每天 20 分钟", detail: "认真 · 再加一篇出国场景课堂", isRecommended: false),
-        TimeOption(minutes: 30, label: "每天 30 分钟", detail: "沉浸 · 全部内容，加原声播客磨耳朵", isRecommended: false),
+        TimeOption(minutes: 5, label: String(localized: "每天 5 分钟"), detail: "极简 · 先把每天听英语的习惯养起来", isRecommended: false),
+        TimeOption(minutes: 10, label: String(localized: "每天 10 分钟"), detail: "轻松 · 一集播客，加一个句型讲解", isRecommended: false),
+        TimeOption(minutes: 15, label: String(localized: "每天 15 分钟"), detail: "推荐 · 播客、句型，加每日任务打卡", isRecommended: true),
+        TimeOption(minutes: 20, label: String(localized: "每天 20 分钟"), detail: "认真 · 再加一篇出国场景课堂", isRecommended: false),
+        TimeOption(minutes: 30, label: String(localized: "每天 30 分钟"), detail: "沉浸 · 全部内容，加原声播客磨耳朵", isRecommended: false),
     ]
 
     @State private var selectedMinutes: Int? = nil
@@ -787,7 +787,7 @@ struct OnboardingView: View {
     private var planBuildSteps: [String] {
         [
             "分析听力水平 · \(plan.level.tabName)",
-            "按目标匹配学习内容 · \(plan.goal?.label ?? "实用口语")",
+            "按目标匹配学习内容 · \(plan.goal?.label ?? String(localized: "实用口语"))",
             "生成每日 \(plan.dailyMinutes) 分钟计划",
         ]
     }
@@ -939,13 +939,13 @@ struct OnboardingView: View {
     }
 
     private let sourceOptions: [SourceOption] = [
-        SourceOption(icon: "person.2.fill", label: "朋友推荐", color: Color(hex: "3B82F6"), bgColor: Color(hex: "EFF6FF")),
-        SourceOption(icon: "camera.fill", label: "小红书", color: Color(hex: "FF2442"), bgColor: Color(hex: "FFF1F2")),
-        SourceOption(icon: "bag.fill", label: "App Store 推荐", color: Color(hex: "007AFF"), bgColor: Color(hex: "E8F4FD")),
-        SourceOption(icon: "video.fill", label: "抖音", color: Color(hex: "000000"), bgColor: Color(hex: "F1F5F9")),
-        SourceOption(icon: "play.tv.fill", label: "B站", color: Color(hex: "00A1D6"), bgColor: Color(hex: "E8F7FC")),
-        SourceOption(icon: "message.fill", label: "微信", color: Color(hex: "07C160"), bgColor: Color(hex: "ECFDF5")),
-        SourceOption(icon: "ellipsis.circle.fill", label: "其他", color: Color(hex: "94A3B8"), bgColor: Color(hex: "F1F5F9")),
+        SourceOption(icon: "person.2.fill", label: String(localized: "朋友推荐"), color: Color(hex: "3B82F6"), bgColor: Color(hex: "EFF6FF")),
+        SourceOption(icon: "camera.fill", label: String(localized: "小红书"), color: Color(hex: "FF2442"), bgColor: Color(hex: "FFF1F2")),
+        SourceOption(icon: "bag.fill", label: String(localized: "App Store 推荐"), color: Color(hex: "007AFF"), bgColor: Color(hex: "E8F4FD")),
+        SourceOption(icon: "video.fill", label: String(localized: "抖音"), color: Color(hex: "000000"), bgColor: Color(hex: "F1F5F9")),
+        SourceOption(icon: "play.tv.fill", label: String(localized: "B站"), color: Color(hex: "00A1D6"), bgColor: Color(hex: "E8F7FC")),
+        SourceOption(icon: "message.fill", label: String(localized: "微信"), color: Color(hex: "07C160"), bgColor: Color(hex: "ECFDF5")),
+        SourceOption(icon: "ellipsis.circle.fill", label: String(localized: "其他"), color: Color(hex: "94A3B8"), bgColor: Color(hex: "F1F5F9")),
     ]
 
     private var userSourcePage: some View {

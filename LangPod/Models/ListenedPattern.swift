@@ -49,10 +49,8 @@ struct ListenedPattern: Codable, Identifiable {
 
     var dayString: String {
         let calendar = Calendar.current
-        if calendar.isDateInToday(listenedAt) { return "今天" }
-        if calendar.isDateInYesterday(listenedAt) { return "昨天" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "M月d日"
-        return formatter.string(from: listenedAt)
+        if calendar.isDateInToday(listenedAt) { return String(localized: "今天") }
+        if calendar.isDateInYesterday(listenedAt) { return String(localized: "昨天") }
+        return listenedAt.formatted(.dateTime.month().day())
     }
 }

@@ -84,7 +84,7 @@ class SubscriptionManager {
         #if DEBUG
         guard mockHasTrialEnabled else { return nil }
         if let real = yearlyTrialInfo { return real }
-        return TrialInfo(productID: Self.yearlyID, durationDisplay: "3 天", durationDays: 3, isEligible: true)
+        return TrialInfo(productID: Self.yearlyID, durationDisplay: String(localized: "3 天"), durationDays: 3, isEligible: true)
         #else
         return yearlyTrialInfo
         #endif
@@ -104,14 +104,14 @@ class SubscriptionManager {
         if let pkg = yearlyPackage {
             return Self.formatPriceWithPeriod(pkg.storeProduct)
         }
-        return "¥298/年"
+        return String(localized: "¥298/年")
     }
 
     var monthlyPriceDisplay: String {
         if let pkg = monthlyPackage {
             return Self.formatPriceWithPeriod(pkg.storeProduct)
         }
-        return "¥48/月"
+        return String(localized: "¥48/月")
     }
 
     /// 订阅成功后给 Adjust 回传收入用（ROAS 出价）。商店未加载时回退写死 CNY 定价。
@@ -131,10 +131,10 @@ class SubscriptionManager {
     private static func periodUnitDisplay(_ period: RevenueCat.SubscriptionPeriod) -> String {
         let value = period.value
         switch period.unit {
-        case .day:   return value == 1 ? "天" : "\(value)天"
-        case .week:  return value == 1 ? "周" : "\(value)周"
-        case .month: return value == 1 ? "月" : "\(value)个月"
-        case .year:  return value == 1 ? "年" : "\(value)年"
+        case .day:   return value == 1 ? String(localized: "天") : String(localized: "\(value)天")
+        case .week:  return value == 1 ? String(localized: "周") : String(localized: "\(value)周")
+        case .month: return value == 1 ? String(localized: "月") : String(localized: "\(value)个月")
+        case .year:  return value == 1 ? String(localized: "年") : String(localized: "\(value)年")
         @unknown default: return ""
         }
     }
@@ -248,10 +248,10 @@ class SubscriptionManager {
     private static func displayFromPeriod(_ period: RevenueCat.SubscriptionPeriod) -> String {
         let value = period.value
         switch period.unit {
-        case .day:   return "\(value) 天"
-        case .week:  return value == 1 ? "7 天" : "\(value * 7) 天"
-        case .month: return "\(value) 个月"
-        case .year:  return "\(value) 年"
+        case .day:   return String(localized: "\(value) 天")
+        case .week:  return value == 1 ? String(localized: "7 天") : String(localized: "\(value * 7) 天")
+        case .month: return String(localized: "\(value) 个月")
+        case .year:  return String(localized: "\(value) 年")
         @unknown default: return ""
         }
     }
@@ -259,7 +259,7 @@ class SubscriptionManager {
     @MainActor
     func purchase(_ productID: String) async -> Bool {
         guard Purchases.isConfigured else {
-            lastPurchaseError = "RevenueCat 未配置（appl_ API key 未填），暂时无法购买。"
+            lastPurchaseError = String(localized: "暂时无法购买，请稍后重试。")
             return false
         }
 
@@ -271,7 +271,7 @@ class SubscriptionManager {
         }
 
         guard let pkg = package else {
-            lastPurchaseError = "商品未加载（offering 空），请稍后重试。ID: \(productID)"
+            lastPurchaseError = String(localized: "商品未加载，请稍后重试。")
             return false
         }
 
@@ -284,11 +284,11 @@ class SubscriptionManager {
             let active = result.customerInfo.entitlements[RevenueCatConfig.entitlementID]?.isActive == true
             isPro = active
             if !active {
-                lastPurchaseError = "购买已完成，但未获得 Pro 权益，请稍后重试或联系客服。"
+                lastPurchaseError = String(localized: "购买已完成，但未获得 Pro 权益，请稍后重试或联系客服。")
             }
             return active
         } catch {
-            lastPurchaseError = "购买失败：\(error.localizedDescription)"
+            lastPurchaseError = String(localized: "购买失败：\(error.localizedDescription)")
             return false
         }
     }
@@ -387,7 +387,7 @@ class SubscriptionManager {
         #if DEBUG
         guard mockHasTrialEnabled else { return nil }
         if let real = yearlyTrialInfo { return real }
-        return TrialInfo(productID: Self.yearlyID, durationDisplay: "3 天", durationDays: 3, isEligible: true)
+        return TrialInfo(productID: Self.yearlyID, durationDisplay: String(localized: "3 天"), durationDays: 3, isEligible: true)
         #else
         return yearlyTrialInfo
         #endif
@@ -408,7 +408,7 @@ class SubscriptionManager {
         if let product = products.first(where: { $0.id == Self.yearlyID }) {
             return Self.formatPriceWithPeriod(product)
         }
-        return "¥298/年"
+        return String(localized: "¥298/年")
     }
 
     /// Monthly price with localized currency + period.
@@ -416,7 +416,7 @@ class SubscriptionManager {
         if let product = products.first(where: { $0.id == Self.monthlyID }) {
             return Self.formatPriceWithPeriod(product)
         }
-        return "¥48/月"
+        return String(localized: "¥48/月")
     }
 
     /// 订阅成功后给 Adjust 回传收入用（ROAS 出价）。商店未加载时回退写死 CNY 定价。
@@ -437,10 +437,10 @@ class SubscriptionManager {
     private static func periodUnitDisplay(_ period: Product.SubscriptionPeriod) -> String {
         let value = period.value
         switch period.unit {
-        case .day:   return value == 1 ? "天" : "\(value)天"
-        case .week:  return value == 1 ? "周" : "\(value)周"
-        case .month: return value == 1 ? "月" : "\(value)个月"
-        case .year:  return value == 1 ? "年" : "\(value)年"
+        case .day:   return value == 1 ? String(localized: "天") : String(localized: "\(value)天")
+        case .week:  return value == 1 ? String(localized: "周") : String(localized: "\(value)周")
+        case .month: return value == 1 ? String(localized: "月") : String(localized: "\(value)个月")
+        case .year:  return value == 1 ? String(localized: "年") : String(localized: "\(value)年")
         @unknown default: return ""
         }
     }
@@ -567,10 +567,10 @@ class SubscriptionManager {
     private static func displayFromPeriod(_ period: Product.SubscriptionPeriod) -> String {
         let value = period.value
         switch period.unit {
-        case .day:   return "\(value) 天"
-        case .week:  return value == 1 ? "7 天" : "\(value * 7) 天"
-        case .month: return "\(value) 个月"
-        case .year:  return "\(value) 年"
+        case .day:   return String(localized: "\(value) 天")
+        case .week:  return value == 1 ? String(localized: "7 天") : String(localized: "\(value * 7) 天")
+        case .month: return String(localized: "\(value) 个月")
+        case .year:  return String(localized: "\(value) 年")
         @unknown default: return ""
         }
     }
@@ -578,7 +578,7 @@ class SubscriptionManager {
     @MainActor
     func purchase(_ productID: String) async -> Bool {
         guard let product = products.first(where: { $0.id == productID }) else {
-            lastPurchaseError = "商品未加载（products 空），请稍后重试。ID: \(productID)"
+            lastPurchaseError = String(localized: "商品未加载，请稍后重试。")
             return false
         }
 
@@ -595,17 +595,17 @@ class SubscriptionManager {
                     isPro = true
                     return true
                 case .unverified(_, let error):
-                    lastPurchaseError = "交易验证失败：\(error.localizedDescription)"
+                    lastPurchaseError = String(localized: "交易验证失败：\(error.localizedDescription)")
                 }
             case .userCancelled:
                 break  // user intentionally closed the sheet — no error
             case .pending:
-                lastPurchaseError = "购买待处理：可能需要家长批准或账号验证，请去 设置 → Apple ID 完成验证后重试。"
+                lastPurchaseError = String(localized: "购买待处理：可能需要家长批准或账号验证，请去 设置 → Apple ID 完成验证后重试。")
             @unknown default:
-                lastPurchaseError = "未知购买结果类型。"
+                lastPurchaseError = String(localized: "未知购买结果类型。")
             }
         } catch {
-            lastPurchaseError = "购买失败：\(error.localizedDescription)"
+            lastPurchaseError = String(localized: "购买失败：\(error.localizedDescription)")
         }
         return false
     }

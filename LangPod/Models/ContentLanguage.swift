@@ -17,7 +17,8 @@ enum ContentLanguage: String, CaseIterable, Codable, Sendable {
     /// 已上线内容的语言。未上线语言即使命中系统语言也回落 zh，
     /// 避免 App 去请求 OSS 上还不存在的 `_xx` 文件。
     /// 每上线一门语言，把它加进来即可。
-    static let enabled: Set<ContentLanguage> = [.zh]
+    /// ko: 2026-08-14 起 OSS 有 index_ko/episode_ko（存量回填进行中）。
+    static let enabled: Set<ContentLanguage> = [.zh, .ko]
 
     /// 启动时解析一次即可。
     static let current: ContentLanguage = resolve(from: Locale.preferredLanguages)

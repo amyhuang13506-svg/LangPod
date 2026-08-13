@@ -72,7 +72,7 @@ struct HomeView: View {
             .searchable(
                 text: $searchText,
                 placement: .navigationBarDrawer(displayMode: .always),
-                prompt: topTab == .home ? "搜索演讲 / 访谈" : "搜索每日播客 / 句型"
+                prompt: topTab == .home ? String(localized: "搜索演讲 / 访谈") : String(localized: "搜索每日播客 / 句型")
             )
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
@@ -160,7 +160,7 @@ struct HomeView: View {
         }()
         let subtitleText: String = {
             if case .pattern(_, _) = audioPlayer.currentPlayItem {
-                return "今日句型讲解"
+                return String(localized: "今日句型讲解")
             }
             return audioPlayer.phase.roundDisplay(isPro: subscriptionManager.isProUser)
         }()
@@ -361,12 +361,12 @@ struct HomeView: View {
     private func nowPlayingBadge(for episode: Episode) -> String {
         // When a pattern is playing, show a different badge instead of "第 X/5 遍"
         if case .pattern = audioPlayer.currentPlayItem {
-            return "句型讲解"
+            return String(localized: "句型讲解")
         }
         if audioPlayer.currentEpisode?.id == episode.id {
             return audioPlayer.phase.roundDisplay(isPro: subscriptionManager.isProUser)
         }
-        return "第 1/\(subscriptionManager.isProUser ? 5 : 4) 遍"
+        return String(localized: "第 1/\(subscriptionManager.isProUser ? 5 : 4) 遍")
     }
 
     private var nowPlayingCard: some View {
@@ -548,7 +548,7 @@ struct HomeView: View {
 
         if !podcasts.isEmpty {
             RawPodcastSection(
-                title: "今日推荐",
+                title: String(localized: "今日推荐"),
                 podcasts: podcasts,
                 showSeeMore: false
             )
@@ -1137,7 +1137,7 @@ extension HomeView {
         } else {
             VStack(alignment: .leading, spacing: 24) {
                 if !podcastMatches.isEmpty {
-                    searchGroup(title: "原声 · 演讲", count: podcastMatches.count) {
+                    searchGroup(title: String(localized: "原声 · 演讲"), count: podcastMatches.count) {
                         VStack(spacing: 8) {
                             ForEach(podcastMatches) { p in
                                 searchRawPodcastRow(p)
@@ -1146,7 +1146,7 @@ extension HomeView {
                     }
                 }
                 if !episodeMatches.isEmpty {
-                    searchGroup(title: "每日学习", count: episodeMatches.count) {
+                    searchGroup(title: String(localized: "每日学习"), count: episodeMatches.count) {
                         VStack(spacing: 8) {
                             ForEach(episodeMatches) { ep in
                                 episodeRow(ep)
@@ -1155,7 +1155,7 @@ extension HomeView {
                     }
                 }
                 if !patternMatches.isEmpty {
-                    searchGroup(title: "句型讲解", count: patternMatches.count) {
+                    searchGroup(title: String(localized: "句型讲解"), count: patternMatches.count) {
                         VStack(spacing: 8) {
                             ForEach(patternMatches, id: \.pattern.id) { item in
                                 searchPatternRow(pattern: item.pattern, parent: item.parent)
