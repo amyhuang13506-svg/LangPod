@@ -28,6 +28,8 @@
 		A10019 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20021 /* PlayerView.swift */; };
 		A10020 /* SubtitleOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20022 /* SubtitleOverlay.swift */; };
 		A10021 /* EpisodeCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20023 /* EpisodeCompleteView.swift */; };
+		CL0001 /* ContentLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CL0002 /* ContentLanguage.swift */; };
+		CD0001 /* CastlingoDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0002 /* CastlingoDecoder.swift */; };
 		A10022 /* SavedWord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20024 /* SavedWord.swift */; };
 		A1991111 /* ExpressionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991111 /* ExpressionStore.swift */; };
 		A1991110 /* Expression.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2991110 /* Expression.swift */; };
@@ -156,6 +158,8 @@
 		A20021 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
 		A20022 /* SubtitleOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubtitleOverlay.swift; sourceTree = "<group>"; };
 		A20023 /* EpisodeCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeCompleteView.swift; sourceTree = "<group>"; };
+		CL0002 /* ContentLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentLanguage.swift; sourceTree = "<group>"; };
+		CD0002 /* CastlingoDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CastlingoDecoder.swift; sourceTree = "<group>"; };
 		A20024 /* SavedWord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWord.swift; sourceTree = "<group>"; };
 		A2991111 /* ExpressionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpressionStore.swift; sourceTree = "<group>"; };
 		A2991110 /* Expression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Expression.swift; sourceTree = "<group>"; };
@@ -321,6 +325,7 @@
 				LP0002 /* ListenedPattern.swift */,
 				LR0002 /* ListenedRawPodcast.swift */,
 				P20001 /* Pattern.swift */,
+				CL0002 /* ContentLanguage.swift */,
 				P20002 /* PlayItem.swift */,
 				RP0002 /* RawPodcast.swift */,
 				RP0052 /* RawTranscript.swift */,
@@ -341,6 +346,7 @@
 				A20020 /* AudioPlayer.swift */,
 				A20025 /* VocabularyStore.swift */,
 				A20034 /* APIService.swift */,
+				CD0002 /* CastlingoDecoder.swift */,
 				B40002 /* WordSpeaker.swift */,
 				NM0002 /* NotificationManager.swift */,
 				PS0002 /* PushService.swift */,
@@ -612,6 +618,8 @@
 				A10020 /* SubtitleOverlay.swift in Sources */,
 				A10021 /* EpisodeCompleteView.swift in Sources */,
 				A10022 /* SavedWord.swift in Sources */,
+				CD0001 /* CastlingoDecoder.swift in Sources */,
+				CL0001 /* ContentLanguage.swift in Sources */,
 				A1991111 /* ExpressionStore.swift in Sources */,
 				A1991110 /* Expression.swift in Sources */,
 				A1991301 /* LearningPlan.swift in Sources */,

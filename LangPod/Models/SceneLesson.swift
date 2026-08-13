@@ -5,25 +5,25 @@ import Foundation
 /// 国家元数据（词汇小课堂按国家分类，随时可切，像平级频道）
 struct LessonCountry: Codable, Identifiable, Hashable {
     let id: String        // "us" / "uk" / "au" / "ca" / "nz" / "sg"
-    let nameZh: String
+    let nameTranslation: String
     let flag: String
     let accent: String    // BCP-47 口音代码，发音跟随课堂国家
     let lessonCount: Int
 
     enum CodingKeys: String, CodingKey {
         case id, flag, accent
-        case nameZh = "name_zh"
+        case nameTranslation = "name_translation"
         case lessonCount = "lesson_count"
     }
 
     /// 离线兜底：服务器 countries.json 拉不到时使用
     static let defaults: [LessonCountry] = [
-        LessonCountry(id: "us", nameZh: "美国", flag: "🇺🇸", accent: "en-US", lessonCount: 0),
-        LessonCountry(id: "uk", nameZh: "英国", flag: "🇬🇧", accent: "en-GB", lessonCount: 0),
-        LessonCountry(id: "au", nameZh: "澳洲", flag: "🇦🇺", accent: "en-AU", lessonCount: 0),
-        LessonCountry(id: "ca", nameZh: "加拿大", flag: "🇨🇦", accent: "en-US", lessonCount: 0),
-        LessonCountry(id: "nz", nameZh: "新西兰", flag: "🇳🇿", accent: "en-AU", lessonCount: 0),
-        LessonCountry(id: "sg", nameZh: "新加坡", flag: "🇸🇬", accent: "en-SG", lessonCount: 0),
+        LessonCountry(id: "us", nameTranslation: "美国", flag: "🇺🇸", accent: "en-US", lessonCount: 0),
+        LessonCountry(id: "uk", nameTranslation: "英国", flag: "🇬🇧", accent: "en-GB", lessonCount: 0),
+        LessonCountry(id: "au", nameTranslation: "澳洲", flag: "🇦🇺", accent: "en-AU", lessonCount: 0),
+        LessonCountry(id: "ca", nameTranslation: "加拿大", flag: "🇨🇦", accent: "en-US", lessonCount: 0),
+        LessonCountry(id: "nz", nameTranslation: "新西兰", flag: "🇳🇿", accent: "en-AU", lessonCount: 0),
+        LessonCountry(id: "sg", nameTranslation: "新加坡", flag: "🇸🇬", accent: "en-SG", lessonCount: 0),
     ]
 }
 
@@ -34,14 +34,14 @@ struct LessonCountriesResponse: Codable {
 /// 课堂目录条目（lessons/{country}/index.json）
 struct SceneLessonIndex: Codable {
     let country: String
-    let countryZh: String
+    let countryTranslation: String
     let flag: String
     let lessons: [SceneLessonIndexItem]
     let total: Int
 
     enum CodingKeys: String, CodingKey {
         case country, flag, lessons, total
-        case countryZh = "country_zh"
+        case countryTranslation = "country_translation"
     }
 }
 
@@ -49,7 +49,7 @@ struct SceneLessonIndex: Codable {
 /// App 不依赖当前所选国家，顶部固定展示当天这一课。
 struct SceneLessonToday: Codable {
     let country: String
-    let countryZh: String
+    let countryTranslation: String
     let flag: String
     let accent: String?
     let date: String
@@ -57,16 +57,16 @@ struct SceneLessonToday: Codable {
 
     enum CodingKeys: String, CodingKey {
         case country, flag, accent, date, lesson
-        case countryZh = "country_zh"
+        case countryTranslation = "country_translation"
     }
 }
 
 struct SceneLessonIndexItem: Codable, Identifiable, Hashable {
     let id: String
-    let titleZh: String
+    let titleTranslation: String
     let titleEn: String
     let category: String
-    let categoryZh: String
+    let categoryTranslation: String
     let icon: String
     let cover: String
     let isFree: Bool
@@ -77,9 +77,9 @@ struct SceneLessonIndexItem: Codable, Identifiable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case id, category, icon, cover, date
-        case titleZh = "title_zh"
+        case titleTranslation = "title_translation"
         case titleEn = "title_en"
-        case categoryZh = "category_zh"
+        case categoryTranslation = "category_translation"
         case isFree = "is_free"
         case isDaily = "is_daily"
         case wordCount = "word_count"
@@ -91,10 +91,10 @@ struct SceneLessonIndexItem: Codable, Identifiable, Hashable {
 struct SceneLesson: Codable, Identifiable {
     let id: String
     let country: String
-    let titleZh: String
+    let titleTranslation: String
     let titleEn: String
     let category: String
-    let categoryZh: String
+    let categoryTranslation: String
     let icon: String
     let cover: String
     let isFree: Bool
@@ -103,19 +103,19 @@ struct SceneLesson: Codable, Identifiable {
     let wordCount: Int
     let zones: [SceneZone]
     let sentences: [SceneSentence]
-    let cultureTipsZh: [String]?
+    let cultureTips: [String]?
     /// 模拟现场对话（角色扮演，可选：老课堂没有该字段）
     var roleplay: LessonRoleplay?
 
     enum CodingKeys: String, CodingKey {
         case id, country, category, icon, cover, date, zones, sentences, roleplay
-        case titleZh = "title_zh"
+        case titleTranslation = "title_translation"
         case titleEn = "title_en"
-        case categoryZh = "category_zh"
+        case categoryTranslation = "category_translation"
         case isFree = "is_free"
         case isDaily = "is_daily"
         case wordCount = "word_count"
-        case cultureTipsZh = "culture_tips_zh"
+        case cultureTips = "culture_tips"
     }
 
     /// 全部单词（图上 + 更多表达），用于「全部加入单词本」
@@ -133,9 +133,9 @@ struct SceneLesson: Codable, Identifiable {
 
 /// 模拟现场对话：进入场景后的完整角色扮演（你 = 顾客视角，对方 = 店员/柜员等）
 struct LessonRoleplay: Codable, Hashable {
-    let setupZh: String       // 场景设定（"你走进 Chase 网点，要开一个 checking account"）
-    let yourRoleZh: String    // 你的角色（"顾客"）
-    let otherRoleZh: String   // 对方角色（"银行柜员"）
+    let setup: String       // 场景设定（"你走进 Chase 网点，要开一个 checking account"）
+    let yourRole: String    // 你的角色（"顾客"）
+    let otherRole: String   // 对方角色（"银行柜员"）
     let dialogue: [RoleplayLine]
     /// gpt-image-1 生成的人物头像（缺失时回落 person.fill 圆形图标）
     var youAvatar: String?
@@ -143,9 +143,9 @@ struct LessonRoleplay: Codable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case dialogue
-        case setupZh = "setup_zh"
-        case yourRoleZh = "your_role_zh"
-        case otherRoleZh = "other_role_zh"
+        case setup = "setup"
+        case yourRole = "your_role"
+        case otherRole = "other_role"
         case youAvatar = "you_avatar"
         case otherAvatar = "other_avatar"
     }
@@ -154,15 +154,15 @@ struct LessonRoleplay: Codable, Hashable {
 struct RoleplayLine: Codable, Identifiable, Hashable {
     let speaker: String       // "you" / "other"
     let en: String
-    let zh: String
+    let translation: String
     let audio: String?
     /// GPT 教学解析（关键表达/语气/文化习惯，场景模拟答题后展示）
-    var noteZh: String?
+    var note: String?
     var id: String { speaker + en }
 
     enum CodingKeys: String, CodingKey {
-        case speaker, en, zh, audio
-        case noteZh = "note_zh"
+        case speaker, en, translation, audio
+        case note = "note"
     }
 
     var isYou: Bool { speaker == "you" }
@@ -170,7 +170,7 @@ struct RoleplayLine: Codable, Identifiable, Hashable {
 
 struct SceneZone: Codable, Identifiable {
     let id: String
-    let nameZh: String
+    let nameTranslation: String
     let nameEn: String
     let image: String
     let hotspots: [SceneWord]
@@ -178,7 +178,7 @@ struct SceneZone: Codable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case id, image, hotspots
-        case nameZh = "name_zh"
+        case nameTranslation = "name_translation"
         case nameEn = "name_en"
         case extraWords = "extra_words"
     }
@@ -189,9 +189,9 @@ struct SceneZone: Codable, Identifiable {
 struct SceneWord: Codable, Identifiable, Hashable {
     let word: String
     let phonetic: String
-    let translationZh: String
+    let translation: String
     let example: String
-    let exampleZh: String?
+    let exampleTranslation: String?
     let difficulty: String?
     let audio: String?
     let exampleAudio: String?
@@ -202,8 +202,8 @@ struct SceneWord: Codable, Identifiable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case word, phonetic, example, difficulty, audio, x, y
-        case translationZh = "translation_zh"
-        case exampleZh = "example_zh"
+        case translation = "translation"
+        case exampleTranslation = "example_translation"
         case exampleAudio = "example_audio"
     }
 
@@ -211,9 +211,9 @@ struct SceneWord: Codable, Identifiable, Hashable {
         VocabularyItem(
             word: word,
             phonetic: phonetic,
-            translationZh: translationZh,
+            translation: translation,
             example: example,
-            exampleZh: exampleZh,
+            exampleTranslation: exampleTranslation,
             audio: ""
         )
     }
@@ -230,7 +230,7 @@ struct SceneWord: Codable, Identifiable, Hashable {
 
 struct SceneSentence: Codable, Identifiable, Hashable {
     let english: String
-    let chinese: String
+    let translation: String
     let audio: String?
     var id: String { english }
 }

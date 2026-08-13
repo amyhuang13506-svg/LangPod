@@ -29,7 +29,7 @@ enum ExpressionSection: String, CaseIterable {
     case social
     case business
 
-    var zh: String {
+    var translation: String {
         switch self {
         case .social: "日常社交"
         case .business: "商务英语"
@@ -39,7 +39,7 @@ enum ExpressionSection: String, CaseIterable {
 
 struct ExpressionGroup: Codable, Identifiable, Hashable {
     let id: String        // daily / reactions / social / express / skills / native / biz_*
-    let zh: String        // 今天 / 日常 / 玩梗 / 观点 / 会话技巧 / 进阶地道 / 会议…
+    let translation: String        // 今天 / 日常 / 玩梗 / 观点 / 会话技巧 / 进阶地道 / 会议…
     let icon: String
     let desc: String
     /// 所属区块（social / business）。老数据没这个字段 → 默认 social。
@@ -53,14 +53,14 @@ struct ExpressionGroup: Codable, Identifiable, Hashable {
 
 struct ExpressionCategoryIndexItem: Codable, Identifiable, Hashable {
     let id: String
-    let zh: String
+    let translation: String
     let count: Int
     let isFree: Bool
     /// 分类封面插画（gpt-image-1 生成，主页网格卡 + 详情页顶部共用）
     var cover: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, zh, count, cover
+        case id, translation, count, cover
         case isFree = "is_free"
     }
 }
@@ -68,16 +68,16 @@ struct ExpressionCategoryIndexItem: Codable, Identifiable, Hashable {
 /// 一个分类的完整内容（expressions/{id}.json）
 struct ExpressionCategory: Codable, Identifiable {
     let id: String
-    let zh: String
+    let translation: String
     let groupId: String
-    let groupZh: String
+    let groupTranslation: String
     let isFree: Bool
     let expressions: [Expression]
 
     enum CodingKeys: String, CodingKey {
-        case id, zh, expressions
+        case id, translation, expressions
         case groupId = "group_id"
-        case groupZh = "group_zh"
+        case groupTranslation = "group_translation"
         case isFree = "is_free"
     }
 }
@@ -86,9 +86,9 @@ struct ExpressionCategory: Codable, Identifiable {
 /// 按实用频率排序，无难度分级。
 struct Expression: Codable, Identifiable, Hashable {
     let english: String
-    let meaningZh: String
-    let usageZh: String
-    let countryNoteZh: String?
+    let meaning: String
+    let usage: String
+    let countryNote: String?
     let audio: String?
     /// 卡片封面插画（按句意生成的视觉隐喻图，区别于详情页的对话场景图）
     var cover: String?
@@ -99,40 +99,40 @@ struct Expression: Codable, Identifiable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case english, audio, cover, examples, scene
-        case meaningZh = "meaning_zh"
-        case usageZh = "usage_zh"
-        case countryNoteZh = "country_note_zh"
+        case meaning = "meaning"
+        case usage = "usage"
+        case countryNote = "country_note"
     }
 
     var hasCountryNote: Bool {
-        !(countryNoteZh ?? "").isEmpty
+        !(countryNote ?? "").isEmpty
     }
 }
 
 struct ExpressionExample: Codable, Identifiable, Hashable {
     let en: String
-    let zh: String
+    let translation: String
     let audio: String?
     var id: String { en }
 }
 
 /// 场景示例：具体场景描述 + 一来一回的迷你对话（其中一句用到本表达）
 struct ExpressionScene: Codable, Hashable {
-    let setupZh: String
+    let setup: String
     let dialogue: [ExpressionDialogueLine]
     /// 场景插画（A 左 B 右、上方留白，App 在图上叠加对话气泡）
     var image: String?
 
     enum CodingKeys: String, CodingKey {
         case dialogue, image
-        case setupZh = "setup_zh"
+        case setup = "setup"
     }
 }
 
 struct ExpressionDialogueLine: Codable, Identifiable, Hashable {
     let speaker: String   // "A" / "B"
     let en: String
-    let zh: String
+    let translation: String
     let audio: String?
     var id: String { speaker + en }
 }

@@ -490,10 +490,10 @@ struct LangPodApp: App {
             reminderHour: reminderHour,
             reminderMinute: reminderMinute,
             todayPatternTemplate: todayPattern?.template,
-            todayPatternTranslationZh: todayPattern?.translationZh,
+            todayPatternTranslation: todayPattern?.translation,
             todayPatternScene: todayPattern?.scene,
-            todayLessonTitle: todayCard?.item.titleZh,
-            todayLessonCountryZh: todayCard?.country.nameZh,
+            todayLessonTitle: todayCard?.item.titleTranslation,
+            todayLessonCountryTranslation: todayCard?.country.nameTranslation,
             todayLessonFlag: todayCard?.country.flag,
             todayLessonWordCount: todayCard?.item.wordCount
         )

@@ -168,15 +168,17 @@ class VocabularyStore {
         migrateExampleTranslations()
     }
 
-    /// Fill in missing exampleZh from latest episode data
+    /// Fill in missing exampleTranslation from latest episode data.
+    /// zh only：bundle 里的例句翻译是中文，绝不能回填进其他语言的快照。
     private func migrateExampleTranslations() {
+        guard ContentLanguage.current == .zh else { return }
         let allVocab = MockDataLoader.loadAllEpisodes().flatMap(\.vocabulary)
         var updated = false
         for i in words.indices {
-            if words[i].exampleZh == nil || words[i].exampleZh?.isEmpty == true {
+            if words[i].exampleTranslation == nil || words[i].exampleTranslation?.isEmpty == true {
                 if let match = allVocab.first(where: { $0.word == words[i].word }) {
-                    if let zh = match.exampleZh, !zh.isEmpty {
-                        words[i].exampleZh = zh
+                    if let zh = match.exampleTranslation, !zh.isEmpty {
+                        words[i].exampleTranslation = zh
                         updated = true
                     }
                 }

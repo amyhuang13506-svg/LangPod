@@ -336,7 +336,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         case .englishRound:
             urlString = episode.audio.english
         case .translationRound:
-            urlString = episode.audio.translationZh
+            urlString = episode.audio.translation
         case .proUpsell, .finished:
             return
         }

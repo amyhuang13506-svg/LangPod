@@ -227,7 +227,7 @@ struct VocabularyView: View {
                         lessonStore.selectedThemeCategory = cat.id
                         Analytics.track(.themeCategoryFilter, params: ["category": cat.id])
                     } label: {
-                        Text(cat.zh)
+                        Text(cat.translation)
                             .font(.system(size: 13, weight: selected ? .semibold : .medium))
                             .foregroundColor(selected ? .white : Color.textSecondary)
                             .padding(.horizontal, 14)

@@ -31,7 +31,7 @@ struct RawPodcast: Codable, Identifiable, Hashable {
     let durationSeconds: Int
     let topic: String
     let thumbnailColor: String?
-    let summaryZh: String?
+    let summary: String?
     let relatedEpisodeIds: [String]?
 
     enum CodingKeys: String, CodingKey {
@@ -46,7 +46,7 @@ struct RawPodcast: Codable, Identifiable, Hashable {
         case crawledAt = "crawled_at"
         case durationSeconds = "duration_seconds"
         case thumbnailColor = "thumbnail_color"
-        case summaryZh = "summary_zh"
+        case summary = "summary"
         case relatedEpisodeIds = "related_episode_ids"
     }
 

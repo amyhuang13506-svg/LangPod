@@ -16,7 +16,7 @@ struct RawTranscriptSegment: Codable, Identifiable {
     let start: Double
     let end: Double
     let en: String
-    let zh: String?
+    let translation: String?
     /// 词级时间戳（pipeline v2 起新加，老 transcript.json 没有）。
     /// 用于 Karaoke 风格 —— 当前正在说的词高亮、点词跳音频
     let words: [WordTimestamp]?
@@ -48,7 +48,7 @@ struct RawPodcastWords: Codable, Sendable {
     struct WordEntry: Codable, Sendable {
         let phonetic: String?
         let pos: String?
-        let zh: String
+        let translation: String
         let example: String?
     }
 }

@@ -75,11 +75,11 @@ extension Episode {
 
 struct EpisodeAudio: Codable {
     let english: String
-    let translationZh: String
+    let translation: String
 
     enum CodingKeys: String, CodingKey {
         case english
-        case translationZh = "translation_zh"
+        case translation = "translation"
     }
 }
 
@@ -88,29 +88,29 @@ struct ScriptLine: Codable, Identifiable {
     let text: String
     var start: Double?
     var end: Double?
-    let translationZh: String
+    let translation: String
 
     var id: String { "\(speaker)-\(text.prefix(20))" }
 
     enum CodingKeys: String, CodingKey {
         case speaker, text, start, end
-        case translationZh = "translation_zh"
+        case translation = "translation"
     }
 }
 
 struct VocabularyItem: Codable, Identifiable {
     let word: String
     let phonetic: String
-    let translationZh: String
+    let translation: String
     let example: String
-    var exampleZh: String?
+    var exampleTranslation: String?
     let audio: String
 
     var id: String { word }
 
     enum CodingKeys: String, CodingKey {
         case word, phonetic, example, audio
-        case translationZh = "translation_zh"
-        case exampleZh = "example_zh"
+        case translation = "translation"
+        case exampleTranslation = "example_translation"
     }
 }

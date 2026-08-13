@@ -477,7 +477,7 @@ struct RawPodcastPlayerView: View {
             pendingLookup = WordLookup(
                 phonetic: entry.phonetic,
                 partOfSpeech: entry.pos,
-                translation: entry.zh,
+                translation: entry.translation,
                 example: entry.example
             )
             isLookingUp = false
@@ -516,9 +516,9 @@ struct RawPodcastPlayerView: View {
         let vocab = VocabularyItem(
             word: word,
             phonetic: lookup?.phonetic ?? "",
-            translationZh: lookup?.translation ?? (segment.zh ?? ""),
+            translation: lookup?.translation ?? (segment.translation ?? ""),
             example: segment.en,
-            exampleZh: segment.zh,
+            exampleTranslation: segment.translation,
             audio: ""
         )
         let added = vocabularyStore.addWord(vocab, sourceLabel: "raw_podcast")

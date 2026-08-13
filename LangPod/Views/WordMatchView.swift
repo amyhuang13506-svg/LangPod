@@ -177,7 +177,7 @@ struct WordMatchView: View {
                 // Right column - Chinese
                 VStack(spacing: 12) {
                     ForEach(shuffledTranslations, id: \.self) { translation in
-                        let matchedWord = currentWords.first { $0.translationZh == translation && matchedPairs.contains($0.word) }
+                        let matchedWord = currentWords.first { $0.translation == translation && matchedPairs.contains($0.word) }
                         matchCard(
                             text: matchedWord != nil ? "\(translation) ✓" : translation,
                             isSelected: selectedRight == translation,
@@ -414,7 +414,7 @@ struct WordMatchView: View {
             roundWords.append(gameWords[(startIdx + i) % gameWords.count])
         }
         currentWords = roundWords
-        shuffledTranslations = roundWords.map(\.translationZh).shuffled()
+        shuffledTranslations = roundWords.map(\.translation).shuffled()
     }
 
     private func selectLeft(_ word: String) {
@@ -437,7 +437,7 @@ struct WordMatchView: View {
     }
 
     private func checkMatch(left: String, right: String) {
-        if let word = currentWords.first(where: { $0.word == left }), word.translationZh == right {
+        if let word = currentWords.first(where: { $0.word == left }), word.translation == right {
             // Correct match
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             _ = withAnimation(.easeInOut(duration: 0.3)) {

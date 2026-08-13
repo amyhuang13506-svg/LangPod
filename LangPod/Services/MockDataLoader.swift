@@ -8,7 +8,7 @@ struct MockDataLoader {
             return []
         }
         do {
-            return try JSONDecoder().decode([Episode].self, from: data)
+            return try JSONDecoder.castlingo().decode([Episode].self, from: data)
         } catch {
             return []
         }

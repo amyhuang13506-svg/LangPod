@@ -1073,7 +1073,7 @@ struct HomeView: View {
 
                     Spacer(minLength: 0)
 
-                    Text(pattern.translationZh)
+                    Text(pattern.translation)
                         .font(.system(size: 11))
                         .foregroundStyle(Color(white: 0.32))
                         .lineLimit(1)
@@ -1208,7 +1208,7 @@ extension HomeView {
 
     fileprivate func matchingAllRawPodcasts() -> [RawPodcast] {
         return dataStore.rawPodcasts.filter { p in
-            let combined = [p.title, p.speaker, p.event, p.topic, p.summaryZh ?? ""]
+            let combined = [p.title, p.speaker, p.event, p.topic, p.summary ?? ""]
                 .joined(separator: " ")
             return BilingualSearch.matches(query: searchText, in: combined)
         }
@@ -1225,20 +1225,20 @@ extension HomeView {
         var parts: [String] = [e.title, e.level, e.podcastLevel?.tabName ?? ""]
         for v in e.vocabulary {
             parts.append(v.word)
-            parts.append(v.translationZh)
-            if let zh = v.exampleZh { parts.append(zh) }
+            parts.append(v.translation)
+            if let zh = v.exampleTranslation { parts.append(zh) }
             parts.append(v.example)
         }
         if let recycled = e.recycledWords { parts.append(contentsOf: recycled) }
         // Lightweight episodes have empty script — that's fine, just skip.
         for line in e.script {
             parts.append(line.text)
-            parts.append(line.translationZh)
+            parts.append(line.translation)
         }
         if let patterns = e.patterns {
             for p in patterns {
                 parts.append(p.template)
-                parts.append(p.translationZh)
+                parts.append(p.translation)
                 parts.append(p.scene)
             }
         }
@@ -1253,10 +1253,10 @@ extension HomeView {
             }
         }
         return pool.filter { (p, _) in
-            var parts = [p.template, p.translationZh, p.scene]
+            var parts = [p.template, p.translation, p.scene]
             for ex in p.exampleSentences {
                 parts.append(ex.english)
-                parts.append(ex.chinese)
+                parts.append(ex.translation)
             }
             return BilingualSearch.matches(query: searchText, in: parts.joined(separator: " "))
         }

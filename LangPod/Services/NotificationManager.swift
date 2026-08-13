@@ -24,10 +24,10 @@ struct NotificationContext {
 
     // 晚间 20:00 内容推送（句型 / 单词按天交替）的数据源。缺内容时该类不发、回退另一类。
     let todayPatternTemplate: String?   // 今日第一个句型的模板文字
-    let todayPatternTranslationZh: String?
+    let todayPatternTranslation: String?
     let todayPatternScene: String?
-    let todayLessonTitle: String?       // 今日新场景课标题（titleZh）
-    let todayLessonCountryZh: String?
+    let todayLessonTitle: String?       // 今日新场景课标题（titleTranslation）
+    let todayLessonCountryTranslation: String?
     let todayLessonFlag: String?
     let todayLessonWordCount: Int?
 }
@@ -276,7 +276,7 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         guard let template = c.todayPatternTemplate else { return nil }
         let scene = c.todayPatternScene ?? ""
         let body: String = {
-            guard let zh = c.todayPatternTranslationZh, !zh.isEmpty else {
+            guard let zh = c.todayPatternTranslation, !zh.isEmpty else {
                 return "点开学一个地道句型"
             }
             return scene.isEmpty ? zh : "\(zh)｜\(scene)"
@@ -301,7 +301,7 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         }
         guard let title = c.todayLessonTitle else { return nil }
         let flag = c.todayLessonFlag ?? ""
-        let country = c.todayLessonCountryZh ?? ""
+        let country = c.todayLessonCountryTranslation ?? ""
         let body: String = {
             if let wc = c.todayLessonWordCount {
                 return "\(flag)\(country)｜\(wc) 个地道说法，3 分钟学会"

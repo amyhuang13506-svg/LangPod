@@ -38,16 +38,16 @@ enum PatternSection: String, Codable, CaseIterable {
 /// `start` / `end` are seconds; nullable for fallback when timestamps are missing.
 struct PatternScriptLine: Codable, Identifiable {
     let section: PatternSection
-    let textZh: String              // 中文讲解
+    let textTranslation: String              // 中文讲解
     let textEn: String              // 英文示范 (跟读段或例句段才有内容)
     var start: Double?
     var end: Double?
 
-    var id: String { "\(section.rawValue)-\(textZh.prefix(20))" }
+    var id: String { "\(section.rawValue)-\(textTranslation.prefix(20))" }
 
     enum CodingKeys: String, CodingKey {
         case section
-        case textZh = "text_zh"
+        case textTranslation = "text_translation"
         case textEn = "text_en"
         case start, end
     }
@@ -57,7 +57,7 @@ struct PatternScriptLine: Codable, Identifiable {
 /// Phase 2: feed these into the connect-words practice pool.
 struct PatternExample: Codable, Identifiable {
     let english: String
-    let chinese: String
+    let translation: String
 
     var id: String { english }
 }
@@ -69,7 +69,7 @@ struct Pattern: Codable, Identifiable {
     let id: String                  // "pattern_easy_20260420_1"
     let episodeId: String           // 关联回所属 episode
     let template: String            // "Could I ___ ___, please?"
-    let translationZh: String       // "我可以...吗？（礼貌请求）"
+    let translation: String       // "我可以...吗？（礼貌请求）"
     let scene: String               // "餐厅 / 借东西 / 公共请求"
     let audioUrl: String            // OSS 讲解音频 URL
     let durationSeconds: Int
@@ -89,7 +89,7 @@ struct Pattern: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id, template, scene
         case episodeId = "episode_id"
-        case translationZh = "translation_zh"
+        case translation = "translation"
         case audioUrl = "audio_url"
         case durationSeconds = "duration_seconds"
         case explainerScript = "explainer_script"

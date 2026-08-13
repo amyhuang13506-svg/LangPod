@@ -28,7 +28,7 @@ struct SubtitleOverlay: View {
                     // Chinese translation (only during translation round or if toggled)
                     // — cap at 2 lines. Combined with EN: ≤ 5 lines total.
                     if showTranslation || phase == .translationRound {
-                        Text(line.translationZh)
+                        Text(line.translation)
                             .font(.system(size: 14))
                             .foregroundStyle(Color.textSecondary)
                             .multilineTextAlignment(.center)

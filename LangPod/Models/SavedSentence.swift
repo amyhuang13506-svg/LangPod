@@ -4,7 +4,7 @@ import Foundation
 /// 支撑场景模拟练习（给场景选句子）。
 struct SavedSentence: Codable, Identifiable, Hashable {
     let english: String
-    let chinese: String
+    let translation: String
     /// 使用场景：小课堂句子 = 课堂标题（"在 CVS 买非处方药"）；
     /// 句型例句 = pattern.scene（"日常请求 / 寻求许可"）
     let scene: String
@@ -49,15 +49,20 @@ struct SavedSentence: Codable, Identifiable, Hashable {
 // decodeIfPresent 兼容旧数据（没有 practiceCorrectCount / lastPracticeDate 字段）。
 extension SavedSentence {
     enum CodingKeys: String, CodingKey {
-        case english, chinese, scene, source, sourceLabel
+        case english, translation, scene, source, sourceLabel
         case audioUrl, audioStart, audioEnd, savedDate
         case practiceCorrectCount, lastPracticeDate
     }
 
+    /// 兼容 rename 前老数据（key 为 "chinese"）。
+    private enum LegacyKeys: String, CodingKey { case chinese }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
+        let legacy = try decoder.container(keyedBy: LegacyKeys.self)
         english = try c.decode(String.self, forKey: .english)
-        chinese = try c.decode(String.self, forKey: .chinese)
+        translation = try c.decodeIfPresent(String.self, forKey: .translation)
+            ?? legacy.decode(String.self, forKey: .chinese)
         scene = try c.decode(String.self, forKey: .scene)
         source = try c.decode(String.self, forKey: .source)
         sourceLabel = try c.decode(String.self, forKey: .sourceLabel)

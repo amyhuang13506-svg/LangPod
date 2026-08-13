@@ -110,7 +110,7 @@ struct FeynmanChallengeView: View {
                 Text(word.phonetic)
                     .font(.system(size: 14))
                     .foregroundStyle(Color.textTertiary)
-                Text(word.translationZh)
+                Text(word.translation)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Color.appPrimary)
             }
@@ -267,13 +267,13 @@ struct FeynmanChallengeView: View {
                     .buttonStyle(.plain)
 
                     // Sentence translation
-                    if let exampleZh = challengeWords[currentIndex].exampleZh, !exampleZh.isEmpty {
-                        Text(exampleZh)
+                    if let exampleTranslation = challengeWords[currentIndex].exampleTranslation, !exampleTranslation.isEmpty {
+                        Text(exampleTranslation)
                             .font(.system(size: 14))
                             .foregroundStyle(Color.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
-                        Text("\(challengeWords[currentIndex].word) = \(challengeWords[currentIndex].translationZh)")
+                        Text("\(challengeWords[currentIndex].word) = \(challengeWords[currentIndex].translation)")
                             .font(.system(size: 13))
                             .foregroundStyle(Color.textTertiary)
                             .frame(maxWidth: .infinity, alignment: .leading)

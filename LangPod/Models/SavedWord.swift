@@ -64,9 +64,12 @@ enum MasteryLevel: Int, Codable, CaseIterable, Comparable {
 struct SavedWord: Codable, Identifiable {
     let word: String
     let phonetic: String
-    let translationZh: String
+    let translation: String
     let example: String
-    var exampleZh: String?
+    var exampleTranslation: String?
+    /// 快照语言（ContentLanguage.rawValue）。老数据无此字段 → 解码补 "zh"。
+    /// 换系统语言后老快照按原语言显示（V1 不迁移不隐藏）。
+    var language: String
     var masteryLevel: MasteryLevel
     var lastPracticeDate: Date
     var matchCorrectCount: Int      // 配对答对次数
@@ -101,14 +104,24 @@ struct SavedWord: Codable, Identifiable {
         return .forgetting
     }
 
-    // Custom decoder for backward compatibility (old data without encounterCount)
+    /// 老 UserDefaults 数据的字段名（rename 前的属性名，JSONEncoder 直接用属性名做 key）。
+    private enum LegacyKeys: String, CodingKey {
+        case translationZh, exampleZh
+    }
+
+    // Custom decoder for backward compatibility
+    // (old data without encounterCount / language, and pre-rename zh key names)
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        let legacy = try decoder.container(keyedBy: LegacyKeys.self)
         word = try container.decode(String.self, forKey: .word)
         phonetic = try container.decode(String.self, forKey: .phonetic)
-        translationZh = try container.decode(String.self, forKey: .translationZh)
+        translation = try container.decodeIfPresent(String.self, forKey: .translation)
+            ?? legacy.decode(String.self, forKey: .translationZh)
         example = try container.decode(String.self, forKey: .example)
-        exampleZh = try container.decodeIfPresent(String.self, forKey: .exampleZh)
+        exampleTranslation = try container.decodeIfPresent(String.self, forKey: .exampleTranslation)
+            ?? legacy.decodeIfPresent(String.self, forKey: .exampleZh)
+        language = try container.decodeIfPresent(String.self, forKey: .language) ?? ContentLanguage.zh.rawValue
         masteryLevel = try container.decode(MasteryLevel.self, forKey: .masteryLevel)
         lastPracticeDate = try container.decode(Date.self, forKey: .lastPracticeDate)
         matchCorrectCount = try container.decode(Int.self, forKey: .matchCorrectCount)
@@ -121,9 +134,10 @@ struct SavedWord: Codable, Identifiable {
     init(from vocab: VocabularyItem) {
         self.word = vocab.word
         self.phonetic = vocab.phonetic
-        self.translationZh = vocab.translationZh
+        self.translation = vocab.translation
         self.example = vocab.example
-        self.exampleZh = vocab.exampleZh
+        self.exampleTranslation = vocab.exampleTranslation
+        self.language = ContentLanguage.current.rawValue
         self.masteryLevel = .heard
         self.lastPracticeDate = Date()
         self.matchCorrectCount = 0

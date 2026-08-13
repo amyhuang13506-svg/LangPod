@@ -250,7 +250,7 @@ struct EpisodeCompleteView: View {
                 .foregroundStyle(Color.textPrimary)
                 .lineLimit(1)
 
-            Text(pattern.translationZh)
+            Text(pattern.translation)
                 .font(.system(size: 13))
                 .foregroundStyle(Color(hex: "14B8A6"))
 
@@ -432,7 +432,7 @@ struct EpisodeCompleteView: View {
                     .foregroundStyle(Color.textTertiary)
             }
 
-            Text(word.translationZh)
+            Text(word.translation)
                 .font(.system(size: 13))
                 .foregroundStyle(Color.appPrimary)
 
