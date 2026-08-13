@@ -122,6 +122,17 @@ def upload_localized_episode(bucket, json_path: str, level: str, lang: str) -> b
     elif not episode["audio"].get("translation"):
         print(f"   ⚠️  Translation audio not found: {tr_local}")
 
+    # Localized pattern explainer audios → patterns_{lang}/{pid}.mp3.
+    # Idempotent: skips patterns whose audio_url is already an http(s) URL.
+    for p in episode.get("patterns") or []:
+        local = p.get("audio_url", "")
+        if not local or local.startswith("http://") or local.startswith("https://"):
+            continue
+        if not os.path.exists(local):
+            print(f"   ⚠️  Pattern audio missing: {local}")
+            continue
+        p["audio_url"] = upload_file(bucket, local, f"{oss_prefix}/patterns{suffix}/{p['id']}.mp3")
+
     episode_json_key = f"{oss_prefix}/episode{suffix}.json"
     bucket.put_object(episode_json_key, json.dumps(episode, ensure_ascii=False, indent=2).encode("utf-8"))
     print(f"   ☁️  Uploaded: {episode_json_key}")

@@ -33,7 +33,7 @@ LANGUAGES = {
         "name_en": "Korean",
         "prompt_lang": "Korean (South Korea)",
         # 字幕/翻译长度规则（App 单行字幕上限；上线前 UI 实测校准）
-        "subtitle_max_chars": 24,          # 讲解字幕（含空格）
+        "subtitle_max_chars": 44,          # 讲解字幕单块上限（含空格，≈3 行）
         "podcast_seg_max_chars": 40,       # 播客整句翻译软上限
         "char_range": ("가", "힣"),  # 韩文音节块（가-힣）
         # MiniMax speech-02-hd 韩语系统音色（2026-08-14 试听 49 个可用音色后初选，
