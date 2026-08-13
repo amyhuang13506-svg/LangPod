@@ -40,14 +40,37 @@ actor WordLookupService {
         let w = word.lowercased()
         // 上下文 hash 防止命中错误意思
         let ctxHash = String(context.lowercased().hashValue)
-        return "\(w)|\(ctxHash)"
+        // 语言后缀防止切系统语言后命中另一语言的释义（zh 为空 = 老缓存继续有效）
+        return "\(w)|\(ctxHash)\(ContentLanguage.current.cacheSuffix)"
     }
 
     // MARK: - GPT 查词
 
+    /// 各内容语言的词典 prompt 参数（目标语描述 + 释义/专有名词指令）。
+    private var dictionaryTarget: (langName: String, glossRule: String, properNounRule: String) {
+        switch ContentLanguage.current {
+        case .ko:
+            return ("EN→KO", "1-2 common Korean glosses, comma-separated, fitting this sentence's context",
+                    "set translation to \"(고유명사) <standard Korean transliteration>\"")
+        case .ja:
+            return ("EN→JA", "1-2 common Japanese glosses, comma-separated, fitting this sentence's context",
+                    "set translation to \"（固有名詞）<standard Japanese transliteration>\"")
+        case .es:
+            return ("EN→ES", "1-2 common Spanish glosses, comma-separated, fitting this sentence's context",
+                    "set translation to \"(nombre propio) <name>\"")
+        case .ptBR:
+            return ("EN→PT-BR", "1-2 common Brazilian Portuguese glosses, comma-separated, fitting this sentence's context",
+                    "set translation to \"(nome próprio) <name>\"")
+        case .zh, .zhHant:
+            return ("EN→ZH", "1-2 个中文常用释义，逗号分隔，要符合本句上下文",
+                    "set translation to \"（专有名词）<音译或公司名>\"")
+        }
+    }
+
     private func fetchFromGPT(word: String, context: String) async -> WordLookup? {
+        let target = dictionaryTarget
         let prompt = """
-        You are a bilingual EN→ZH dictionary. Look up the word "\(word)" as it appears in this sentence:
+        You are a bilingual \(target.langName) dictionary. Look up the word "\(word)" as it appears in this sentence:
 
         "\(context)"
 
@@ -55,11 +78,11 @@ actor WordLookupService {
         {
           "phonetic": "/IPA/",
           "part_of_speech": "n." | "v." | "adj." | "adv." | "phr." | "...",
-          "translation": "1-2 个中文常用释义，逗号分隔，要符合本句上下文",
-          "example": "\(word) 在另一个常见语境中的简单英文例句（可选）"
+          "translation": "\(target.glossRule)",
+          "example": "a simple English example sentence using \(word) in another common context (optional)"
         }
 
-        If the word is a proper noun (person/company name), set translation to "（专有名词）<音译或公司名>" and part_of_speech to "n.".
+        If the word is a proper noun (person/company name), \(target.properNounRule) and part_of_speech to "n.".
         """
         guard let url = URL(string: "https://api.v3.cm/v1/chat/completions") else { return nil }
         var req = URLRequest(url: url)
