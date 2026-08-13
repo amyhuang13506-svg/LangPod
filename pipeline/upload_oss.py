@@ -98,14 +98,58 @@ def upload_episode(bucket, json_path: str, level: str) -> bool:
     return True
 
 
-def update_episode_list(bucket, level: str):
-    """Generate and upload the episode list index for a level.
-    Reads all episode.json files from OSS to build a complete index."""
+def upload_localized_episode(bucket, json_path: str, level: str, lang: str) -> bool:
+    """Upload one language's derivative files: {lang}.mp3 + episode_{lang}.json.
+    English audio / cover are shared with the zh upload — URLs already baked
+    into the localized JSON by translate_episode (copied from episode.json).
+    zh legacy files are never touched here."""
+    from languages import lang_suffix
+
+    suffix = lang_suffix(lang)
+    with open(json_path, "r", encoding="utf-8") as f:
+        episode = json.load(f)
+
+    ep_id = episode["id"]
+    oss_prefix = f"episodes/{level}/{ep_id}"
+    print(f"\n📤 Uploading [{lang}]: {episode['title']} ({ep_id})")
+
+    # Localized JSON sits next to episode.json as {ep_id}{suffix}.json;
+    # its audio dir is the shared {ep_id}/ directory.
+    episode_dir = os.path.join(os.path.dirname(json_path), ep_id)
+    tr_local = os.path.join(episode_dir, f"{lang}.mp3")
+    if os.path.exists(tr_local):
+        episode["audio"]["translation"] = upload_file(bucket, tr_local, f"{oss_prefix}/{lang}.mp3")
+    elif not episode["audio"].get("translation"):
+        print(f"   ⚠️  Translation audio not found: {tr_local}")
+
+    episode_json_key = f"{oss_prefix}/episode{suffix}.json"
+    bucket.put_object(episode_json_key, json.dumps(episode, ensure_ascii=False, indent=2).encode("utf-8"))
+    print(f"   ☁️  Uploaded: {episode_json_key}")
+
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(episode, f, ensure_ascii=False, indent=2)
+
+    print(f"   ✅ Upload complete [{lang}]")
+    return True
+
+
+def update_episode_list(bucket, level: str, lang: str = None):
+    """Generate and upload the episode list index for a level (and language).
+    Reads all episode{suffix}.json files from OSS to build a complete index.
+    lang=None → legacy zh index.json (unchanged behavior). lang="ko" →
+    index_ko.json built from episode_ko.json files only (partial coverage
+    during backfill is expected and fine)."""
+    from languages import lang_suffix
+
+    suffix = lang_suffix(lang) if lang else ""
     prefix = f"episodes/{level}/"
     episodes = []
 
     for obj in oss2.ObjectIterator(bucket, prefix=prefix):
-        if obj.key.endswith("/episode.json"):
+        # endswith("/episode.json") naturally excludes "/episode_ko.json" and vice versa
+        if obj.key.endswith(f"/episode{suffix}.json"):
+            if not suffix and obj.key.rsplit("/", 1)[-1] != "episode.json":
+                continue  # belt & braces: legacy pass must not swallow language files
             try:
                 data = bucket.get_object(obj.key).read()
                 ep = json.loads(data)
@@ -127,7 +171,9 @@ def update_episode_list(bucket, level: str):
 
     episodes.sort(key=lambda x: x["date"])
     index = {"level": level, "episodes": episodes, "total": len(episodes)}
-    index_key = f"{prefix}index.json"
+    if lang:
+        index["lang"] = lang
+    index_key = f"{prefix}index{suffix}.json"
     bucket.put_object(index_key, json.dumps(index, ensure_ascii=False, indent=2).encode("utf-8"))
     print(f"\n📋 Updated index: {index_key} ({len(episodes)} episodes)")
 

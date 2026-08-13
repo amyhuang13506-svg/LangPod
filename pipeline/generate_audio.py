@@ -242,23 +242,25 @@ def generate_english_audio(episode, output_dir):
     return audio_path, timestamps
 
 
-def generate_chinese_audio(episode, output_dir):
-    """Generate Chinese translation audio with matching male/female voices.
-    Returns (audio_path, skipped_count)."""
+def synthesize_translation_track(episode, output_dir, voice_male, voice_female,
+                                 text_key="translation_zh", filename="zh.mp3"):
+    """Language-agnostic translation track: per-line TTS with gender-matched
+    voices, same pause cadence as the original Chinese path. Callers must run
+    detect_speakers(episode) first. Returns (audio_path, skipped, total)."""
     combined = AudioSegment.empty()
     pause = AudioSegment.silent(duration=PAUSE_BETWEEN_LINES_MS)
     skipped = 0
     total = 0
 
     for i, line in enumerate(episode["script"]):
-        voice = MINIMAX_VOICE_ZH_MALE if speakers.get(line["speaker"], "male") == "male" else MINIMAX_VOICE_ZH_FEMALE
-        text = line.get("translation_zh", "")
+        voice = voice_male if speakers.get(line["speaker"], "male") == "male" else voice_female
+        text = line.get(text_key, "")
         if not text:
             continue
         total += 1
 
         emotion = line.get("emotion", "neutral")
-        print("   🎤 [%s 中文] (%s) %s..." % (line["speaker"], emotion, text[:25]))
+        print("   🎤 [%s %s] (%s) %s..." % (line["speaker"], text_key, emotion, text[:25]))
         segment = synthesize_long_text(text, voice, emotion=emotion)
         if segment is None:
             skipped += 1
@@ -268,10 +270,20 @@ def generate_chinese_audio(episode, output_dir):
         if i < len(episode["script"]) - 1:
             combined += pause
 
-    audio_path = os.path.join(output_dir, "zh.mp3")
+    audio_path = os.path.join(output_dir, filename)
     combined.export(audio_path, format="mp3", bitrate="128k")
-    print("   🔊 Chinese audio: %s (%.1fs, %d/%d lines skipped)" % (audio_path, len(combined) / 1000.0, skipped, total))
+    print("   🔊 Translation audio: %s (%.1fs, %d/%d lines skipped)" % (audio_path, len(combined) / 1000.0, skipped, total))
     return audio_path, skipped, total
+
+
+def generate_chinese_audio(episode, output_dir):
+    """Generate Chinese translation audio with matching male/female voices.
+    Returns (audio_path, skipped_count). Thin wrapper — behavior unchanged."""
+    return synthesize_translation_track(
+        episode, output_dir,
+        voice_male=MINIMAX_VOICE_ZH_MALE, voice_female=MINIMAX_VOICE_ZH_FEMALE,
+        text_key="translation_zh", filename="zh.mp3",
+    )
 
 
 # NAME_PAIRS mirrors generate_script.py — used only as fallback for legacy episodes
