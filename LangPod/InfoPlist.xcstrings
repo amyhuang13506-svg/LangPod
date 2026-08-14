@@ -1,20 +1,74 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Castlingo"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "LangPod"
+          }
+        }
+      }
+    },
     "NSPhotoLibraryAddUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "保存分享卡片到相册" } },
-        "ko" : { "stringUnit" : { "state" : "translated", "value" : "공유 카드를 앨범에 저장합니다" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save share cards to your photo library" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save share cards to your photo library"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공유 카드를 앨범에 저장합니다"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存分享卡片到相册"
+          }
+        }
       }
     },
     "NSUserTrackingUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "允许追踪能帮我们了解广告效果，为你推荐更符合兴趣的英语学习内容。我们不会收集你的姓名、地址、通讯录等个人信息。" } },
-        "ko" : { "stringUnit" : { "state" : "translated", "value" : "추적을 허용하면 광고 효과를 파악하고 관심사에 맞는 영어 학습 콘텐츠를 추천하는 데 도움이 됩니다. 이름, 주소, 연락처 등 개인정보는 수집하지 않습니다." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tracking helps us understand ad performance and recommend English-learning content that fits your interests. We never collect your name, address, or contacts." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracking helps us understand ad performance and recommend English-learning content that fits your interests. We never collect your name, address, or contacts."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "추적을 허용하면 광고 효과를 파악하고 관심사에 맞는 영어 학습 콘텐츠를 추천하는 데 도움이 됩니다. 이름, 주소, 연락처 등 개인정보는 수집하지 않습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许追踪能帮我们了解广告效果，为你推荐更符合兴趣的英语学习内容。我们不会收集你的姓名、地址、通讯录等个人信息。"
+          }
+        }
       }
     }
   },

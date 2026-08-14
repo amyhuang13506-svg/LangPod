@@ -73,10 +73,10 @@ struct RawPodcastFeedView: View {
         }
 
         var groups: [(String, [RawPodcast])] = []
-        if !todayItems.isEmpty { groups.append(("今天", todayItems)) }
-        if !weekItems.isEmpty { groups.append(("本周", weekItems)) }
-        if !monthItems.isEmpty { groups.append(("本月", monthItems)) }
-        if !olderItems.isEmpty { groups.append(("更早", olderItems)) }
+        if !todayItems.isEmpty { groups.append((String(localized: "今天"), todayItems)) }
+        if !weekItems.isEmpty { groups.append((String(localized: "本周"), weekItems)) }
+        if !monthItems.isEmpty { groups.append((String(localized: "本月"), monthItems)) }
+        if !olderItems.isEmpty { groups.append((String(localized: "更早"), olderItems)) }
         return groups
     }
 
@@ -148,7 +148,7 @@ struct RawPodcastFeedView: View {
                             selectedTopic = (topic == "全部") ? nil : topic
                         }
                     } label: {
-                        Text(topic)
+                        Text(topic == "全部" ? String(localized: "全部") : topic)
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(isSelected ? .white : Color.textSecondary)
                             .padding(.horizontal, 14)

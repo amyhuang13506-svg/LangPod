@@ -33,6 +33,8 @@ struct RawPodcast: Codable, Identifiable, Hashable {
     let thumbnailColor: String?
     let summary: String?
     let relatedEpisodeIds: [String]?
+    /// 语言无关的探索分类 slug（多语言 master 带此字段；zh 老 master 无 → 回落中文关键词匹配）
+    let exploreCategorySlug: String?
 
     enum CodingKeys: String, CodingKey {
         case id, title, speaker, event, topic, thumbnail, category
@@ -48,6 +50,7 @@ struct RawPodcast: Codable, Identifiable, Hashable {
         case thumbnailColor = "thumbnail_color"
         case summary = "summary"
         case relatedEpisodeIds = "related_episode_ids"
+        case exploreCategorySlug = "explore_category"
     }
 
     enum MediaType: String, Codable {
@@ -116,6 +119,10 @@ struct RawPodcast: Codable, Identifiable, Hashable {
     /// 探索区分类：根据 topic 关键词归到 6 大类之一。
     /// 用于首页「探索」分类横滑展示。
     var exploreCategory: ExploreCategory? {
+        // 多语言 master 直接带 slug；zh 老数据回落中文 topic 关键词匹配
+        if let slug = exploreCategorySlug, let c = ExploreCategory(rawValue: slug) {
+            return c
+        }
         let t = topic
         if t.contains("娱乐") || t.contains("时尚") || t.contains("文化") { return .entertainment }
         if t.contains("两性") || t.contains("心理") || t.contains("关系") { return .relationship }

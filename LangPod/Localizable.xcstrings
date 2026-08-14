@@ -475,6 +475,7 @@
       }
     },
     "3 天": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -774,6 +775,7 @@
     "[DEV] Mock Pro": {},
     "[DEV] Mock Trial (Paywall)": {},
     "[DEV] 使用RC远程付费墙": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1178,6 +1180,7 @@
       }
     },
     "中文": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1322,6 +1325,7 @@
       }
     },
     "今日 %lld/%lld：%@": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1925,6 +1929,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "영어 전용"
+          }
+        }
+      }
+    },
+    "全部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "전체"
           }
         }
       }
@@ -4601,6 +4621,22 @@
         }
       }
     },
+    "更早": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Earlier"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이전"
+          }
+        }
+      }
+    },
     "最后一个问题": {
       "localizations": {
         "en": {
@@ -4665,6 +4701,22 @@
         }
       }
     },
+    "本周": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Week"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 주"
+          }
+        }
+      }
+    },
     "本周精选": {
       "localizations": {
         "en": {
@@ -4693,6 +4745,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "이번 주 진도"
+          }
+        }
+      }
+    },
+    "本月": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Month"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 달"
           }
         }
       }
@@ -7018,6 +7086,7 @@
       }
     },
     "隐藏诊断": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7198,6 +7267,7 @@
       }
     },
     "🐛 Debug · 每日任务": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7310,6 +7380,7 @@
       }
     },
     "🔍 诊断": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
