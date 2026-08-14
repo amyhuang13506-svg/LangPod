@@ -257,19 +257,41 @@ def explore_slug(topic):
 
 
 def translate_segments_en(en_list):
-    """en→ko subtitle segments, batched with count validation."""
+    """en→ko subtitle segments, batched with count validation.
+    A batch that fails twice degrades to per-segment translation; a segment
+    that still fails yields None (App shows English-only for that line)."""
     out = []
     B = 25
     for i in range(0, len(en_list), B):
         chunk = en_list[i:i + B]
+        ok = False
         for attempt in (1, 2):
-            result = _call_gpt([{"role": "user", "content":
-                                 EN2KO_SEGMENTS_PROMPT.format(payload=json.dumps(chunk, ensure_ascii=False))}])
+            try:
+                result = _call_gpt([{"role": "user", "content":
+                                     EN2KO_SEGMENTS_PROMPT.format(payload=json.dumps(chunk, ensure_ascii=False))}])
+            except Exception:
+                continue
+            if isinstance(result, dict):  # GPT sometimes wraps the array
+                for v in result.values():
+                    if isinstance(v, list):
+                        result = v
+                        break
             if isinstance(result, list) and len(result) == len(chunk) and all(_qc_ko(s) for s in result):
                 out.extend(s.strip() for s in result)
+                ok = True
                 break
-            if attempt == 2:
-                raise RuntimeError("segment batch failed at %d" % i)
+        if not ok:
+            print("   ⚠️  batch %d degraded to per-segment" % i)
+            for seg in chunk:
+                try:
+                    r = _call_gpt([{"role": "user", "content":
+                                    EN2KO_SEGMENTS_PROMPT.format(payload=json.dumps([seg], ensure_ascii=False))}])
+                    if isinstance(r, list) and len(r) == 1 and _qc_ko(r[0]):
+                        out.append(r[0].strip())
+                        continue
+                except Exception:
+                    pass
+                out.append(None)  # English-only fallback for this line
     return out
 
 
@@ -308,11 +330,16 @@ def run_raw(bucket, lang, transcript_limit=20, force=False):
             continue
         segs = tr.get("segments", [])
         print("== transcript %s (%d segments) ==" % (pid, len(segs)))
-        ko_texts = translate_segments_en([s.get("en", "") for s in segs])
+        try:
+            ko_texts = translate_segments_en([s.get("en", "") for s in segs])
+        except Exception as e:
+            print("   ❌ transcript %s failed (%s) — skipping" % (pid, e))
+            continue
         out_segs = []
         for s, ko in zip(segs, ko_texts):
             ns = {k: v for k, v in s.items() if k != "zh"}
-            ns["translation"] = ko
+            if ko:
+                ns["translation"] = ko
             out_segs.append(ns)
         put_json(bucket, out_key, {"podcast_id": pid, "lang": lang, "segments": out_segs})
         item["transcript_url"] = turl.replace("transcript.json", "transcript%s.json" % suffix)
