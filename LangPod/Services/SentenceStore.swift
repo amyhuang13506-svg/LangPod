@@ -19,12 +19,19 @@ class SentenceStore {
     // 老中文快照。译文从英文原句直翻（质量优于中转），只盖显示层不写回快照。
 
     private var relocalized: [String: String] = [:]   // english_lower → 当前语言译文
+    private var relocalizedLabels: [String: String] = [:]   // 中文场景/来源标签 → 当前语言
     private var relocalizeInFlight = false
     private var relocalizedKey: String { "relocalizedSentences_\(ContentLanguage.current.rawValue)" }
+    private var relocalizedLabelsKey: String { "relocalizedLabels_\(ContentLanguage.current.rawValue)" }
 
     private func needsRelocalization(_ s: SavedSentence) -> Bool {
         ContentLanguage.current != .zh
             && s.translation.contains(where: { "一" <= $0 && $0 <= "鿿" })
+    }
+
+    private func isLegacyLabel(_ label: String) -> Bool {
+        ContentLanguage.current != .zh
+            && label.contains(where: { "一" <= $0 && $0 <= "鿿" })
     }
 
     func displayTranslation(_ s: SavedSentence) -> String {
@@ -32,36 +39,73 @@ class SentenceStore {
         return relocalized[s.english.lowercased()] ?? s.translation
     }
 
+    /// 场景胶囊 / 「来自：」标签的显示文案（老中文快照 → 当前语言缓存）。
+    func displayScene(_ s: SavedSentence) -> String { displayLabel(s.scene) }
+    func displaySourceLabel(_ s: SavedSentence) -> String { displayLabel(s.sourceLabel) }
+
+    private func displayLabel(_ label: String) -> String {
+        guard isLegacyLabel(label) else { return label }
+        return relocalizedLabels[label] ?? label
+    }
+
     private func loadRelocalized() {
-        guard let data = UserDefaults.standard.data(forKey: relocalizedKey),
-              let cached = try? JSONDecoder().decode([String: String].self, from: data) else { return }
-        relocalized = cached
+        if let data = UserDefaults.standard.data(forKey: relocalizedKey),
+           let cached = try? JSONDecoder().decode([String: String].self, from: data) {
+            relocalized = cached
+        }
+        if let data = UserDefaults.standard.data(forKey: relocalizedLabelsKey),
+           let cached = try? JSONDecoder().decode([String: String].self, from: data) {
+            relocalizedLabels = cached
+        }
     }
 
     private func persistRelocalized() {
         if let data = try? JSONEncoder().encode(relocalized) {
             UserDefaults.standard.set(data, forKey: relocalizedKey)
         }
+        if let data = try? JSONEncoder().encode(relocalizedLabels) {
+            UserDefaults.standard.set(data, forKey: relocalizedLabelsKey)
+        }
     }
 
-    /// 批量补齐缺失的当前语言译文（单次 GPT 调用，≤60 句）。失败静默，下次启动重试。
+    /// 批量补齐缺失的当前语言译文 + 场景/来源标签（每次 GPT 调用 ≤60 条，循环到翻完）。
+    /// 失败静默，下次启动重试。
     func relocalizeIfNeeded() {
-        guard ContentLanguage.current != .zh else { return }
+        let lang = ContentLanguage.current
+        guard lang != .zh else { return }
         let pending = sentences.filter {
             needsRelocalization($0) && relocalized[$0.english.lowercased()] == nil
         }
-        guard !pending.isEmpty, !relocalizeInFlight else { return }
+        let pendingLabels = Array(Set(
+            sentences.flatMap { [$0.scene, $0.sourceLabel] }
+                .filter { isLegacyLabel($0) && relocalizedLabels[$0] == nil }
+        ))
+        guard !pending.isEmpty || !pendingLabels.isEmpty, !relocalizeInFlight else { return }
         relocalizeInFlight = true
-        let batch = Array(pending.prefix(60))
         Task {
             defer { relocalizeInFlight = false }
-            guard let result = await SentenceRelocalizer.translate(
-                batch.map(\.english), to: ContentLanguage.current) else { return }
-            for (en, tr) in result {
-                relocalized[en.lowercased()] = tr
+            // 注意不能用递归续批 —— inFlight 要到 Task 结束才复位，递归调用会被 guard 挡掉
+            var remaining = pending
+            while !remaining.isEmpty {
+                let batch = Array(remaining.prefix(60))
+                remaining.removeFirst(batch.count)
+                guard let result = await SentenceRelocalizer.translate(
+                    batch.map(\.english), to: lang) else { break }
+                for (en, tr) in result {
+                    relocalized[en.lowercased()] = tr
+                }
+                persistRelocalized()
             }
-            persistRelocalized()
-            if pending.count > batch.count { relocalizeIfNeeded() }
+            var remainingLabels = pendingLabels
+            while !remainingLabels.isEmpty {
+                let batch = Array(remainingLabels.prefix(40))
+                remainingLabels.removeFirst(batch.count)
+                guard let result = await LabelRelocalizer.translate(batch, to: lang) else { break }
+                for (zh, tr) in result {
+                    relocalizedLabels[zh] = tr
+                }
+                persistRelocalized()
+            }
         }
     }
 

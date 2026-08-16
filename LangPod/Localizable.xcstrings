@@ -987,6 +987,22 @@
         }
       }
     },
+    "「%@」是〈%@〉场景里的说法（%@），放到这段对话里接不上。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” is a phrase from the <%@> scene (%@) and doesn't fit this conversation."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」는 〈%@〉 상황의 표현(%@)이어서 대화에 맞지 않아요."
+          }
+        }
+      }
+    },
     "「%@」没有匹配的内容": {
       "localizations": {
         "en": {
@@ -999,6 +1015,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "「%@」에 해당하는 콘텐츠 없음"
+          }
+        }
+      }
+    },
+    "「%@」（%@）虽然也是这个场景的话，但对不上空格处的上下文。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” (%@) is also from this scene, but doesn't match the context of the space."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」(%@)도 같은 상황이지만, 빈칸의 문맥에 맞지 않아요."
           }
         }
       }
@@ -1977,6 +2009,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "모두 재생"
+          }
+        }
+      }
+    },
+    "全部词汇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All Words"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모든 단어"
           }
         }
       }

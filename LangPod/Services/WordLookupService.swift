@@ -215,6 +215,66 @@ enum SentenceRelocalizer {
     }
 }
 
+// MARK: - 中文标签跨语言重翻译（句子快照的场景/来源标签显示层用）
+
+/// 老中文快照里的短标签（分类名/场景名，如「厨房」「口头禅与填充词」）批量翻到当前内容语言。
+enum LabelRelocalizer {
+    static func translate(_ labels: [String], to lang: ContentLanguage) async -> [String: String]? {
+        guard !labels.isEmpty else { return [:] }
+        let langName: String
+        switch lang {
+        case .ko: langName = "Korean"
+        case .ja: langName = "Japanese"
+        case .es: langName = "Spanish"
+        case .ptBR: langName = "Brazilian Portuguese"
+        case .zh, .zhHant: langName = "Chinese"
+        }
+        guard let payloadData = try? JSONSerialization.data(withJSONObject: labels),
+              let payloadStr = String(data: payloadData, encoding: .utf8) else { return nil }
+
+        let prompt = """
+        These are short Chinese category/tag labels from an English-learning app \
+        (e.g. lesson scene names, expression category names). Translate each into a \
+        concise, natural \(langName) label. Keep them short (a few words). \
+        Never output Chinese characters in \(langName) output.
+
+        INPUT: \(payloadStr)
+
+        OUTPUT strict JSON only: {"<chinese label>": "<\(langName) label>", ...} — \
+        every label exactly once, keys copied verbatim.
+        """
+
+        guard let url = URL(string: "https://api.v3.cm/v1/chat/completions") else { return nil }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(GPTAPIKey)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any] = [
+            "model": "gpt-4o-mini",
+            "messages": [["role": "user", "content": prompt]],
+            "response_format": ["type": "json_object"],
+            "temperature": 0.2,
+        ]
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        guard let (data, response) = try? await URLSession.shared.data(for: req),
+              let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let decoded = try? JSONDecoder().decode(ChatCompletion.self, from: data),
+              let content = decoded.choices.first?.message.content,
+              let contentData = content.data(using: .utf8),
+              let raw = try? JSONSerialization.jsonObject(with: contentData) as? [String: String]
+        else { return nil }
+
+        var result: [String: String] = [:]
+        for label in labels {
+            guard let t = raw[label], !t.isEmpty else { continue }
+            if lang != .zh && lang != .zhHant && t.contains(where: { "一" <= $0 && $0 <= "鿿" }) { continue }
+            result[label] = t
+        }
+        return result
+    }
+}
+
 // MARK: - 词汇快照跨语言重翻译（单词本显示层用）
 
 /// 把老语言快照的释义批量翻成当前内容语言（单次 GPT 调用）。

@@ -92,7 +92,7 @@ struct SentencePracticeView: View {
 
             // 题卡：场景 tag + 中文翻译（对应词汇版的 单词+音标+释义）
             VStack(spacing: 8) {
-                Text(sentence.scene)
+                Text(sentenceStore.displayScene(sentence))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(Color.gold)
                     .padding(.horizontal, 10)
@@ -701,9 +701,9 @@ struct SceneQuizView: View {
         if let sel = selectedOption, sel != current.answer.en,
            let picked = current.options.first(where: { $0.line.en == sel }) {
             if picked.sourceTitle != current.lessonTitle {
-                out.append("「\(sel)」是〈\(picked.sourceTitle)〉场景里的说法（\(picked.line.translation)），放到这段对话里接不上。")
+                out.append(String(localized: "「\(sel)」是〈\(picked.sourceTitle)〉场景里的说法（\(picked.line.translation)），放到这段对话里接不上。"))
             } else {
-                out.append("「\(sel)」（\(picked.line.translation)）虽然也是这个场景的话，但对不上空格处的上下文。")
+                out.append(String(localized: "「\(sel)」（\(picked.line.translation)）虽然也是这个场景的话，但对不上空格处的上下文。"))
             }
         }
         if let note = current.answer.note, !note.isEmpty {

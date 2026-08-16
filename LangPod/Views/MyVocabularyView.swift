@@ -174,10 +174,10 @@ struct MyVocabularyView: View {
 
     private var sectionTitle: String {
         switch filter {
-        case .all: "全部词汇"
-        case .strong: "已掌握"
-        case .fading: "复习中"
-        case .new: "新词"
+        case .all: String(localized: "全部词汇")
+        case .strong: String(localized: "已掌握")
+        case .fading: String(localized: "复习中")
+        case .new: String(localized: "新词")
         }
     }
 

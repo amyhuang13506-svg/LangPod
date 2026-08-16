@@ -65,7 +65,7 @@ class VocabularyStore {
         }
     }
 
-    /// 批量补齐缺失的当前语言释义（单次 GPT 调用，≤80 词）。失败静默，下次启动重试。
+    /// 批量补齐缺失的当前语言释义（每次 GPT 调用 ≤80 词，循环到翻完）。失败静默，下次启动重试。
     func relocalizeIfNeeded() {
         let lang = ContentLanguage.current
         guard lang != .zh else { return }  // zh 快照即原生，且 zh 用户不受影响
@@ -74,16 +74,19 @@ class VocabularyStore {
         }
         guard !pending.isEmpty, !relocalizeInFlight else { return }
         relocalizeInFlight = true
-        let batch = Array(pending.prefix(80))
         Task {
             defer { relocalizeInFlight = false }
-            guard let result = await GlossRelocalizer.translate(batch, to: lang) else { return }
-            for (word, gloss) in result {
-                relocalized[word.lowercased()] = gloss
+            // 注意不能用递归续批 —— inFlight 要到 Task 结束才复位，递归调用会被 guard 挡掉
+            var remaining = pending
+            while !remaining.isEmpty {
+                let batch = Array(remaining.prefix(80))
+                remaining.removeFirst(batch.count)
+                guard let result = await GlossRelocalizer.translate(batch, to: lang) else { break }
+                for (word, gloss) in result {
+                    relocalized[word.lowercased()] = gloss
+                }
+                persistRelocalized()
             }
-            persistRelocalized()
-            // 超过 80 词的下一批
-            if pending.count > batch.count { relocalizeIfNeeded() }
         }
     }
 
