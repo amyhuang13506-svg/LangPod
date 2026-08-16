@@ -99,6 +99,7 @@ struct RawPodcastPlayerView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            RawPlaybackSession.shared.viewAppeared()
             // 进入油管播客播放页时，主播客（每日 AI 节目）若在播则中断
             if audioPlayer.isPlaying {
                 audioPlayer.togglePlayPause()
@@ -118,6 +119,7 @@ struct RawPodcastPlayerView: View {
             // 只暂停，不销毁 —— controller 仍由 RawPlaybackSession 持有。
             // 下次再开同一条直接续播，画面无 reload。
             controller?.pause()
+            RawPlaybackSession.shared.viewDisappeared()
         }
         .task {
             await loadTranscriptIfNeeded()
@@ -844,6 +846,32 @@ final class RawPlaybackSession {
     private init() {}
 
     var controller: RawAudioController?
+
+    /// 当前可见的 RawPodcastPlayerView 数量。设计意图是"退出即暂停"，但 iOS 18
+    /// fullScreenCover + preferredColorScheme(.dark) 偶发丢 onDisappear / 乱序，
+    /// 导致音频漏暂停还没有任何可见入口。用计数 + 延迟复查兜底：
+    /// 只要没有任何播放页可见，controller 必须处于暂停态。
+    private var visibleViews = 0
+
+    func viewAppeared() {
+        visibleViews += 1
+    }
+
+    func viewDisappeared() {
+        visibleViews = max(0, visibleViews - 1)
+        pauseIfNoneVisible()
+        // SwiftUI 偶发 appear/disappear 乱序 —— 稍后再确认一次
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+            self?.pauseIfNoneVisible()
+        }
+    }
+
+    private func pauseIfNoneVisible() {
+        guard visibleViews == 0 else { return }
+        if let c = controller, c.player.timeControlStatus == .playing {
+            c.pause()
+        }
+    }
 
     /// 返回当前 podcast 的 controller —— 同一条则复用（断点续播），不同条则换。
     /// 没有 audioUrl 的返回 nil。
