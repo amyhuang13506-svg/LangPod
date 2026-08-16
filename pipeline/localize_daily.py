@@ -97,11 +97,15 @@ def main():
                 localize_one(bucket, level, episode_id, lang)
                 mark(episode_id, lang, success=True)
                 touched_levels[lang].add(level)
+                # 每集完成立刻重建该语言 index —— 长回填（数天）期间内容边产边上线，
+                # 也避免中途 kill/重启丢掉 touched 集合导致 index 永不更新
+                update_episode_list(bucket, level, lang=lang)
             except Exception as e:
                 print("   ❌ %s [%s] failed: %s" % (episode_id, lang, e))
                 traceback.print_exc()
                 mark(episode_id, lang, success=False)
 
+    # 收尾兜底再刷一遍（幂等）
     for lang, levels in touched_levels.items():
         for level in sorted(levels):
             update_episode_list(bucket, level, lang=lang)
