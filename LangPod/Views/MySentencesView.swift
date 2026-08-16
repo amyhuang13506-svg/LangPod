@@ -174,7 +174,7 @@ struct MySentencesView: View {
                         .foregroundStyle(Color.appPrimary)
                         .padding(.top, 3)
                 }
-                Text(sentence.translation)
+                Text(sentenceStore.displayTranslation(sentence))
                     .font(.system(size: 13))
                     .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.leading)

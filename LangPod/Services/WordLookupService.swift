@@ -156,3 +156,135 @@ private struct ChatCompletion: Decodable {
         let content: String
     }
 }
+
+// MARK: - 句子快照跨语言重翻译（我的句子/连词成句显示层用）
+
+/// 英文句子批量直翻到当前内容语言（单次 GPT 调用）。
+enum SentenceRelocalizer {
+    static func translate(_ sentences: [String], to lang: ContentLanguage) async -> [String: String]? {
+        guard !sentences.isEmpty else { return [:] }
+        let langName: String
+        switch lang {
+        case .ko: langName = "Korean"
+        case .ja: langName = "Japanese"
+        case .es: langName = "Spanish"
+        case .ptBR: langName = "Brazilian Portuguese"
+        case .zh, .zhHant: langName = "Chinese"
+        }
+        guard let payloadData = try? JSONSerialization.data(withJSONObject: sentences),
+              let payloadStr = String(data: payloadData, encoding: .utf8) else { return nil }
+
+        let prompt = """
+        Translate these English sentences (from an English-learning app) into natural, \
+        conversational \(langName). Never output Chinese characters in \(langName) output.
+
+        INPUT: \(payloadStr)
+
+        OUTPUT strict JSON only: {"<english sentence>": "<\(langName) translation>", ...} — \
+        every sentence exactly once, keys copied verbatim.
+        """
+
+        guard let url = URL(string: "https://api.v3.cm/v1/chat/completions") else { return nil }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(GPTAPIKey)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any] = [
+            "model": "gpt-4o-mini",
+            "messages": [["role": "user", "content": prompt]],
+            "response_format": ["type": "json_object"],
+            "temperature": 0.2,
+        ]
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        guard let (data, response) = try? await URLSession.shared.data(for: req),
+              let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let decoded = try? JSONDecoder().decode(ChatCompletion.self, from: data),
+              let content = decoded.choices.first?.message.content,
+              let contentData = content.data(using: .utf8),
+              let raw = try? JSONSerialization.jsonObject(with: contentData) as? [String: String]
+        else { return nil }
+
+        var result: [String: String] = [:]
+        for s in sentences {
+            guard let t = raw[s], !t.isEmpty else { continue }
+            if lang != .zh && lang != .zhHant && t.contains(where: { "一" <= $0 && $0 <= "鿿" }) { continue }
+            result[s] = t
+        }
+        return result
+    }
+}
+
+// MARK: - 词汇快照跨语言重翻译（单词本显示层用）
+
+/// 把老语言快照的释义批量翻成当前内容语言（单次 GPT 调用）。
+/// 输入带原释义 + 例句做上下文，输出目标语言的词典式释义 + 例句翻译。
+enum GlossRelocalizer {
+    static func translate(
+        _ words: [SavedWord],
+        to lang: ContentLanguage
+    ) async -> [String: VocabularyStore.RelocalizedGloss]? {
+        guard !words.isEmpty else { return [:] }
+        let langName: String
+        switch lang {
+        case .ko: langName = "Korean"
+        case .ja: langName = "Japanese"
+        case .es: langName = "Spanish"
+        case .ptBR: langName = "Brazilian Portuguese"
+        case .zh, .zhHant: langName = "Chinese"
+        }
+
+        let payload = words.map { w in
+            ["word": w.word, "old_gloss": w.translation,
+             "example": w.example, "old_example_tr": w.exampleTranslation ?? ""]
+        }
+        guard let payloadData = try? JSONSerialization.data(withJSONObject: payload),
+              let payloadStr = String(data: payloadData, encoding: .utf8) else { return nil }
+
+        let prompt = """
+        These are saved vocabulary entries from an English-learning app, with glosses in \
+        another language. Produce \(langName) glosses instead.
+        For each entry output: "t" = concise dictionary-style \(langName) gloss of the word \
+        (match the sense shown by old_gloss/example), "et" = natural \(langName) translation \
+        of the example sentence ("" if no example).
+        Never output Chinese characters in \(langName) output.
+
+        INPUT: \(payloadStr)
+
+        OUTPUT strict JSON only: {"<word>": {"t": "...", "et": "..."}, ...} — every word exactly once.
+        """
+
+        guard let url = URL(string: "https://api.v3.cm/v1/chat/completions") else { return nil }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(GPTAPIKey)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any] = [
+            "model": "gpt-4o-mini",
+            "messages": [["role": "user", "content": prompt]],
+            "response_format": ["type": "json_object"],
+            "temperature": 0.2,
+        ]
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        guard let (data, response) = try? await URLSession.shared.data(for: req),
+              let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let decoded = try? JSONDecoder().decode(ChatCompletion.self, from: data),
+              let content = decoded.choices.first?.message.content,
+              let contentData = content.data(using: .utf8),
+              let raw = try? JSONSerialization.jsonObject(with: contentData) as? [String: [String: String]]
+        else { return nil }
+
+        var result: [String: VocabularyStore.RelocalizedGloss] = [:]
+        for w in words {
+            guard let entry = raw[w.word] ?? raw[w.word.lowercased()],
+                  let t = entry["t"], !t.isEmpty else { continue }
+            // 目标语言不是中文时，汉字串漏 = 没翻，丢弃（下次重试）
+            if lang != .zh && lang != .zhHant && t.contains(where: { "一" <= $0 && $0 <= "鿿" }) { continue }
+            let et = entry["et"] ?? ""
+            result[w.word] = VocabularyStore.RelocalizedGloss(
+                translation: t, exampleTranslation: et.isEmpty ? nil : et)
+        }
+        return result
+    }
+}

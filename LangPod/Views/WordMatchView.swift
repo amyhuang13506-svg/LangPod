@@ -413,8 +413,9 @@ struct WordMatchView: View {
         for i in 0..<min(wordsPerRound, gameWords.count) {
             roundWords.append(gameWords[(startIdx + i) % gameWords.count])
         }
-        currentWords = roundWords
-        shuffledTranslations = roundWords.map(\.translation).shuffled()
+        // 跨语言快照 → 显示层重翻译副本（配对值与展示一致）
+        currentWords = roundWords.map { store.displayWord($0) }
+        shuffledTranslations = currentWords.map(\.translation).shuffled()
     }
 
     private func selectLeft(_ word: String) {

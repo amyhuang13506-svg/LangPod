@@ -131,6 +131,24 @@ struct SavedWord: Codable, Identifiable {
         lastEncounterDate = try container.decodeIfPresent(Date.self, forKey: .lastEncounterDate)
     }
 
+    /// 显示层副本：仅替换释义字段（跨语言重翻译用），学习状态原样。
+    /// 只用于展示/游戏，绝不写回存储 —— 快照本体保持存词时的原语言。
+    init(copying w: SavedWord, translation: String, exampleTranslation: String?) {
+        self.word = w.word
+        self.phonetic = w.phonetic
+        self.translation = translation
+        self.example = w.example
+        self.exampleTranslation = exampleTranslation
+        self.language = w.language
+        self.masteryLevel = w.masteryLevel
+        self.lastPracticeDate = w.lastPracticeDate
+        self.matchCorrectCount = w.matchCorrectCount
+        self.sentenceCorrectCount = w.sentenceCorrectCount
+        self.savedDate = w.savedDate
+        self.encounterCount = w.encounterCount
+        self.lastEncounterDate = w.lastEncounterDate
+    }
+
     init(from vocab: VocabularyItem) {
         self.word = vocab.word
         self.phonetic = vocab.phonetic

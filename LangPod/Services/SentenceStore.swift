@@ -9,6 +9,60 @@ class SentenceStore {
 
     init() {
         load()
+        loadRelocalized()
+        relocalizeIfNeeded()
+    }
+
+    // MARK: - 跨语言快照的显示层重翻译（非破坏性，仿 VocabularyStore）
+    //
+    // SavedSentence 快照没有语言标记 —— 用「当前语言非中文 && 译文含汉字」判定为
+    // 老中文快照。译文从英文原句直翻（质量优于中转），只盖显示层不写回快照。
+
+    private var relocalized: [String: String] = [:]   // english_lower → 当前语言译文
+    private var relocalizeInFlight = false
+    private var relocalizedKey: String { "relocalizedSentences_\(ContentLanguage.current.rawValue)" }
+
+    private func needsRelocalization(_ s: SavedSentence) -> Bool {
+        ContentLanguage.current != .zh
+            && s.translation.contains(where: { "一" <= $0 && $0 <= "鿿" })
+    }
+
+    func displayTranslation(_ s: SavedSentence) -> String {
+        guard needsRelocalization(s) else { return s.translation }
+        return relocalized[s.english.lowercased()] ?? s.translation
+    }
+
+    private func loadRelocalized() {
+        guard let data = UserDefaults.standard.data(forKey: relocalizedKey),
+              let cached = try? JSONDecoder().decode([String: String].self, from: data) else { return }
+        relocalized = cached
+    }
+
+    private func persistRelocalized() {
+        if let data = try? JSONEncoder().encode(relocalized) {
+            UserDefaults.standard.set(data, forKey: relocalizedKey)
+        }
+    }
+
+    /// 批量补齐缺失的当前语言译文（单次 GPT 调用，≤60 句）。失败静默，下次启动重试。
+    func relocalizeIfNeeded() {
+        guard ContentLanguage.current != .zh else { return }
+        let pending = sentences.filter {
+            needsRelocalization($0) && relocalized[$0.english.lowercased()] == nil
+        }
+        guard !pending.isEmpty, !relocalizeInFlight else { return }
+        relocalizeInFlight = true
+        let batch = Array(pending.prefix(60))
+        Task {
+            defer { relocalizeInFlight = false }
+            guard let result = await SentenceRelocalizer.translate(
+                batch.map(\.english), to: ContentLanguage.current) else { return }
+            for (en, tr) in result {
+                relocalized[en.lowercased()] = tr
+            }
+            persistRelocalized()
+            if pending.count > batch.count { relocalizeIfNeeded() }
+        }
     }
 
     var totalCount: Int { sentences.count }

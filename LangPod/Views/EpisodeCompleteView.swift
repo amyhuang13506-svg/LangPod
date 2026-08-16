@@ -373,7 +373,7 @@ struct EpisodeCompleteView: View {
             divider
             statItem(value: "\(vocabularyStore.totalCount)", label: String(localized: "累计"), color: Color.textPrimary)
             divider
-            statItem(value: "🔥\(dataStore.streakDays)天", label: String(localized: "连续"), color: Color.warning)
+            statItem(value: String(localized: "🔥\(dataStore.streakDays)天"), label: String(localized: "连续"), color: Color.warning)
             divider
             statItem(value: levelProgressText, label: levelProgressLabel, color: Color.appPrimary)
         }

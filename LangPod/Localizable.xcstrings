@@ -7430,6 +7430,22 @@
         }
       }
     },
+    "🔥%lld天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🔥%lld-Day Streak"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🔥연속 %lld일"
+          }
+        }
+      }
+    },
     "🚇 地铁": {
       "localizations": {
         "en": {

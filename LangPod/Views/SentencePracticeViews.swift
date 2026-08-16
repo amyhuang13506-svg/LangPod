@@ -98,7 +98,7 @@ struct SentencePracticeView: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 3)
                     .background(Capsule().fill(Color.warningLight))
-                Text(sentence.translation)
+                Text(sentenceStore.displayTranslation(sentence))
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(Color.textPrimary)
                     .multilineTextAlignment(.center)
@@ -255,7 +255,7 @@ struct SentencePracticeView: View {
                     }
                     .buttonStyle(.plain)
 
-                    Text(challengeSentences[currentIndex].translation)
+                    Text(sentenceStore.displayTranslation(challengeSentences[currentIndex]))
                         .font(.system(size: 14))
                         .foregroundStyle(Color.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)

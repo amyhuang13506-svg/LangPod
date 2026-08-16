@@ -577,7 +577,7 @@ struct FeynmanChallengeView: View {
             }
         }
 
-        challengeWords = Array(pool.prefix(maxWordsPerSet))
+        challengeWords = Array(pool.prefix(maxWordsPerSet)).map { store.displayWord($0) }
         currentIndex = 0
         completed = false
         if !challengeWords.isEmpty {

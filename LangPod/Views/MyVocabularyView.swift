@@ -255,7 +255,7 @@ struct MyVocabularyView: View {
 
             Spacer()
 
-            Text(word.translation)
+            Text(store.displayTranslation(word))
                 .font(.system(size: 14))
                 .foregroundStyle(Color.textSecondary)
         }
