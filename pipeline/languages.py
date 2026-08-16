@@ -81,7 +81,14 @@ LANGUAGES = {
         # 日文混用汉字/假名 → 目标字符 = 假名 + CJK 汉字（多区间）
         "char_range": [("぀", "ヿ"), ("一", "鿿")],
         "reject_han": False,  # 日语正常含汉字，汉字≠中文串漏
-        "tts": {"provider": "minimax", "voice_male": None, "voice_female": None},  # TODO 试听
+        # 2026-08-16 试听 9 个候选后选定（用户委托）
+        "tts": {
+            "provider": "minimax",
+            "voice_male": "Japanese_LoyalKnight",
+            "voice_female": "Japanese_KindLady",
+            "voice_teacher_male": "Japanese_IntellectualSenior",
+            "voice_teacher_female": "Japanese_CalmLady",
+        },
         "push_copy_episode": {
             "easy": "今日の新エピソード（初級）",
             "medium": "今日の新エピソード（中級）",
@@ -99,7 +106,14 @@ LANGUAGES = {
         "subtitle_max_chars": 42,
         "podcast_seg_max_chars": 70,
         "char_range": None,
-        "tts": {"provider": "minimax", "voice_male": None, "voice_female": None},  # TODO 试听
+        # 2026-08-16 试听 10 个候选后选定（用户委托）
+        "tts": {
+            "provider": "minimax",
+            "voice_male": "Spanish_ThoughtfulMan",
+            "voice_female": "Spanish_SereneWoman",
+            "voice_teacher_male": "Spanish_Steadymentor",
+            "voice_teacher_female": "Spanish_ConfidentWoman",
+        },
         "push_copy_episode": {
             "easy": "Nuevo episodio de hoy (básico)",
             "medium": "Nuevo episodio de hoy (intermedio)",
@@ -117,7 +131,14 @@ LANGUAGES = {
         "subtitle_max_chars": 42,
         "podcast_seg_max_chars": 70,
         "char_range": None,
-        "tts": {"provider": "minimax", "voice_male": None, "voice_female": None},  # TODO 试听
+        # 2026-08-16 试听 10 个候选后选定（用户委托）
+        "tts": {
+            "provider": "minimax",
+            "voice_male": "Portuguese_ThoughtfulMan",
+            "voice_female": "Portuguese_SereneWoman",
+            "voice_teacher_male": "Portuguese_CaptivatingStoryteller",
+            "voice_teacher_female": "Portuguese_Wiselady",
+        },
         "push_copy_episode": {
             "easy": "Novo episódio de hoje (básico)",
             "medium": "Novo episódio de hoje (intermediário)",
@@ -130,9 +151,8 @@ LANGUAGES = {
 }
 
 # 当前开启每日生成/回填的新语言（zh 走 legacy 主流程，不在此列）
-# zh-Hant 音频复用 zh、文本 OpenCC，全链路零音色依赖 → 直接开。
-# ja / es / pt-BR 待 TTS 音色终选后加入（audition_voices.py 样本已生成）。
-NEW_LANGS = ["ko", "zh-Hant"]
+# 5 语全开（2026-08-16 音色终选完成）。zh 走 legacy 主流程不在此列。
+NEW_LANGS = ["ko", "zh-Hant", "ja", "es", "pt-BR"]
 
 
 def lang_suffix(lang):

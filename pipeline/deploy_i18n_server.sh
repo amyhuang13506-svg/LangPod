@@ -10,6 +10,11 @@ DEST="/opt/langpod/pipeline"
 FILES=(
   languages.py
   prompts_ko.py
+  prompts_ja.py
+  prompts_es.py
+  prompts_pt_br.py
+  hant.py
+  localize_content.py
   translate_episode.py
   localize_patterns.py
   localize_queue.py
@@ -32,8 +37,11 @@ echo "== 服务器侧验证 import + 加 cron =="
 ssh "$SERVER" bash -s <<'REMOTE'
 set -e
 cd /opt/langpod/pipeline
+# zh-Hant 通道依赖 OpenCC
+python3 -c "import opencc" 2>/dev/null || pip3 install opencc opencc-python-reimplemented 2>&1 | tail -1
 python3 - <<'PY'
-import languages, prompts_ko, localize_queue, translate_episode
+import languages, prompts_ko, prompts_ja, prompts_es, prompts_pt_br
+import localize_queue, translate_episode, localize_content, hant
 import localize_patterns, localize_daily, backfill_localization
 from qc import rules, judge
 print("✓ all i18n modules import OK, NEW_LANGS =", languages.NEW_LANGS)
