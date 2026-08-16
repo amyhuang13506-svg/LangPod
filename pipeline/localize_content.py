@@ -47,7 +47,8 @@ LEGACY_MAP = {
     "chinese": "translation",
 }
 # generic-named keys whose zh VALUES still need translation (no rename)
-TRANSLATE_IN_PLACE = {"desc", "topic"}
+# scene: zh pattern 的场景 tag 是中文字符串（表达库里的 scene 是对象，会正常递归，不受影响）
+TRANSLATE_IN_PLACE = {"desc", "topic", "scene"}
 
 BATCH = 50
 
@@ -99,58 +100,99 @@ def substitute(obj, translated):
 
 # ---------- translation ----------
 
-ZH2KO_PROMPT = """You are localizing a language-learning app's content from Simplified
-Chinese to natural Korean, for Korean learners of ENGLISH.
+# 各语言语体规则（prompt 片段）。zh-Hant 不在此列 —— 走 OpenCC 机械转换。
+LANG_STYLE = {
+    "ko": {
+        "name": "Korean",
+        "sentence_rule": "sentences use 해요체",
+        "audience": "KOREAN",
+        "seg_rule": "해요체 where speech-like; proper nouns in standard Korean transliteration",
+    },
+    "ja": {
+        "name": "Japanese",
+        "sentence_rule": "sentences use natural です・ます体",
+        "audience": "JAPANESE",
+        "seg_rule": "natural spoken Japanese; proper nouns in standard katakana transliteration",
+    },
+    "es": {
+        "name": "Spanish (neutral Latin American)",
+        "sentence_rule": "sentences use natural spoken Spanish (tuteo)",
+        "audience": "SPANISH-SPEAKING",
+        "seg_rule": "natural spoken Spanish (tú); keep proper nouns as-is",
+    },
+    "pt-BR": {
+        "name": "Brazilian Portuguese",
+        "sentence_rule": "sentences use natural spoken Brazilian Portuguese (você)",
+        "audience": "BRAZILIAN",
+        "seg_rule": "natural spoken Brazilian Portuguese (você); keep proper nouns as-is",
+    },
+}
+
+LOC_PROMPT = """You are localizing a language-learning app's content from Simplified
+Chinese to natural {lang_name}, for {audience} learners of ENGLISH.
 
 Content types you'll see: word glosses, example-sentence translations, usage/nuance
 notes, culture tips, category names, scene descriptions, topics.
 
 RULES:
-1. Natural Korean; short labels stay short (category/topic names 2-6 words);
-   sentences use 해요체.
-2. NEVER output Chinese characters. Keep embedded English words/brand names as-is.
+1. Natural {lang_name}; short labels stay short (category/topic names 2-6 words);
+   {sentence_rule}.
+2. {purity} Keep embedded English words/brand names as-is.
 3. Culture tips or notes written from a Chinese-speaker perspective (e.g. comparing
-   to Chinese habits/language) → rewrite for a KOREAN audience (keep the English
+   to Chinese habits/language) → rewrite for a {audience} audience (keep the English
    knowledge point, swap the frame of reference).
 4. Word glosses stay dictionary-style concise.
 
 INPUT (id → Chinese text):
 {payload}
 
-OUTPUT: valid JSON only: {{"<id>": "<Korean>", ...}} — every id exactly once."""
+OUTPUT: valid JSON only: {{"<id>": "<{lang_name}>", ...}} — every id exactly once."""
 
-EN2KO_SEGMENTS_PROMPT = """Translate these English video-subtitle segments into natural
-Korean (해요체 where speech-like). Rules: keep proper nouns in standard Korean
-transliteration; never output Chinese characters; one translation per segment,
+SEGMENTS_PROMPT = """Translate these English video-subtitle segments into natural
+{lang_name}. Rules: {seg_rule}; {purity_short} one translation per segment,
 same count and order; concise — these are subtitles.
 
 INPUT (JSON array of English segments):
 {payload}
 
-OUTPUT: valid JSON array of Korean strings, same length."""
+OUTPUT: valid JSON array of {lang_name} strings, same length."""
 
 
-def _qc_ko(text):
-    return bool(text and text.strip()) and not contains_han(text)
+def _purity(lang):
+    from languages import rejects_han
+    if rejects_han(lang):
+        return ("NEVER output Chinese characters.", "never output Chinese characters;")
+    return ("The output must read as native %s, not Chinese glossed over." % LANG_STYLE[lang]["name"], "")
 
 
-def translate_texts(texts):
-    """zh→ko batch translation with QC + one retry per failed batch."""
+def _qc_out(text, lang):
+    from languages import rejects_han
+    if not (text and text.strip()):
+        return False
+    return not (rejects_han(lang) and contains_han(text))
+
+
+def translate_texts(texts, lang):
+    """zh→{lang} batch translation with QC + one retry per failed batch."""
+    style = LANG_STYLE[lang]
+    purity, _ = _purity(lang)
     out = {}
     ids = list(texts.keys())
     for i in range(0, len(ids), BATCH):
         chunk = ids[i:i + BATCH]
         payload = json.dumps({t: texts[t] for t in chunk}, ensure_ascii=False)
+        prompt = LOC_PROMPT.format(lang_name=style["name"], audience=style["audience"],
+                                   sentence_rule=style["sentence_rule"], purity=purity,
+                                   payload=payload)
         for attempt in (1, 2):
             try:
-                result = _call_gpt([{"role": "user", "content": ZH2KO_PROMPT.format(payload=payload)}])
-                bad = [t for t in chunk if not _qc_ko(result.get(t, ""))]
+                result = _call_gpt([{"role": "user", "content": prompt}])
+                bad = [t for t in chunk if not _qc_out(result.get(t, ""), lang)]
                 if not bad:
                     out.update({t: result[t].strip() for t in chunk})
                     break
                 if attempt == 2:
                     raise RuntimeError("QC failed for %d items: %s" % (len(bad), bad[:3]))
-                payload = json.dumps({t: texts[t] for t in chunk}, ensure_ascii=False)
             except Exception as e:
                 if attempt == 2:
                     raise
@@ -164,7 +206,11 @@ def localize_json(doc, lang="ko"):
     skeleton = collect_and_rename(doc, texts)
     if not texts:
         return skeleton
-    translated = translate_texts(texts)
+    if lang == "zh-Hant":
+        from hant import to_hant
+        translated = {t: to_hant(src) for t, src in texts.items()}
+    else:
+        translated = translate_texts(texts, lang)
     return substitute(skeleton, translated)
 
 
@@ -256,10 +302,18 @@ def explore_slug(topic):
     return None
 
 
-def translate_segments_en(en_list):
-    """en→ko subtitle segments, batched with count validation.
+def translate_segments_en(en_list, lang):
+    """en→{lang} subtitle segments, batched with count validation.
     A batch that fails twice degrades to per-segment translation; a segment
     that still fails yields None (App shows English-only for that line)."""
+    style = LANG_STYLE[lang]
+    _, purity_short = _purity(lang)
+
+    def _prompt(payload):
+        return SEGMENTS_PROMPT.format(lang_name=style["name"], seg_rule=style["seg_rule"],
+                                      purity_short=purity_short,
+                                      payload=json.dumps(payload, ensure_ascii=False))
+
     out = []
     B = 25
     for i in range(0, len(en_list), B):
@@ -267,8 +321,7 @@ def translate_segments_en(en_list):
         ok = False
         for attempt in (1, 2):
             try:
-                result = _call_gpt([{"role": "user", "content":
-                                     EN2KO_SEGMENTS_PROMPT.format(payload=json.dumps(chunk, ensure_ascii=False))}])
+                result = _call_gpt([{"role": "user", "content": _prompt(chunk)}])
             except Exception:
                 continue
             if isinstance(result, dict):  # GPT sometimes wraps the array
@@ -276,7 +329,7 @@ def translate_segments_en(en_list):
                     if isinstance(v, list):
                         result = v
                         break
-            if isinstance(result, list) and len(result) == len(chunk) and all(_qc_ko(s) for s in result):
+            if isinstance(result, list) and len(result) == len(chunk) and all(_qc_out(s, lang) for s in result):
                 out.extend(s.strip() for s in result)
                 ok = True
                 break
@@ -284,9 +337,8 @@ def translate_segments_en(en_list):
             print("   ⚠️  batch %d degraded to per-segment" % i)
             for seg in chunk:
                 try:
-                    r = _call_gpt([{"role": "user", "content":
-                                    EN2KO_SEGMENTS_PROMPT.format(payload=json.dumps([seg], ensure_ascii=False))}])
-                    if isinstance(r, list) and len(r) == 1 and _qc_ko(r[0]):
+                    r = _call_gpt([{"role": "user", "content": _prompt([seg])}])
+                    if isinstance(r, list) and len(r) == 1 and _qc_out(r[0], lang):
                         out.append(r[0].strip())
                         continue
                 except Exception:
@@ -330,16 +382,21 @@ def run_raw(bucket, lang, transcript_limit=20, force=False):
             continue
         segs = tr.get("segments", [])
         print("== transcript %s (%d segments) ==" % (pid, len(segs)))
-        try:
-            ko_texts = translate_segments_en([s.get("en", "") for s in segs])
-        except Exception as e:
-            print("   ❌ transcript %s failed (%s) — skipping" % (pid, e))
-            continue
+        if lang == "zh-Hant":
+            # 特殊通道：直接繁化已有中文字幕，零 GPT 成本
+            from hant import to_hant
+            tr_texts = [to_hant(s.get("zh")) if s.get("zh") else None for s in segs]
+        else:
+            try:
+                tr_texts = translate_segments_en([s.get("en", "") for s in segs], lang)
+            except Exception as e:
+                print("   ❌ transcript %s failed (%s) — skipping" % (pid, e))
+                continue
         out_segs = []
-        for s, ko in zip(segs, ko_texts):
+        for s, t in zip(segs, tr_texts):
             ns = {k: v for k, v in s.items() if k != "zh"}
-            if ko:
-                ns["translation"] = ko
+            if t:
+                ns["translation"] = t
             out_segs.append(ns)
         put_json(bucket, out_key, {"podcast_id": pid, "lang": lang, "segments": out_segs})
         item["transcript_url"] = turl.replace("transcript.json", "transcript%s.json" % suffix)

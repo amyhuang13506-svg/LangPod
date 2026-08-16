@@ -61,8 +61,16 @@ def localize_one(bucket, level, episode_id, lang):
                 synthesize_localized_audio(json.load(f), json_path, lang)
 
     # 2. patterns (non-fatal per-pattern QC skips happen inside)
-    if lang == "ko":  # pattern prompts registered per language
+    # zh-Hant 走 OpenCC+音频复用；其余语言要求 prompts_{lang} 已注册
+    if lang == "zh-Hant":
         process_episode_patterns(json_path, lang)
+    else:
+        from languages import prompt_module
+        try:
+            prompt_module(lang)
+            process_episode_patterns(json_path, lang)
+        except ImportError:
+            print("   ⏭  no pattern prompts for %s — skipping patterns" % lang)
 
     # 3. upload
     upload_localized_episode(bucket, loc_path, level, lang)

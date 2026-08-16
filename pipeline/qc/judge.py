@@ -53,7 +53,103 @@ JSON만 출력:
  "pass": true/false,  // 모든 항목 4점 이상이어야 true
  "issues": ["불합격 사유를 한국어로, 구체적으로 (문제 문장 인용 + 수정안)", ...]}}"""
 
-_JUDGE_PROMPTS = {"ko": _KO_JUDGE_PROMPT}
+_JA_JUDGE_PROMPT = """あなたは日本語ネイティブであり、英語教育コンテンツの品質審査員です。
+以下は日本人英語学習者向けポッドキャストの「文型解説」台本です。
+リスナーが実際に耳にする解説文が翻訳調・不自然であれば不合格にしてください。
+
+=== フィールドごとの性質（審査前に必ず理解すること） ===
+- "translation": 辞書式の文型注釈です。「〜」は空欄の印であり、簡潔な注釈体が正常です。
+  意味が正確なら合格 — 話し言葉の自然さ基準を適用しないでください。語順の好みの違いは欠陥ではありません。
+- "pronunciation_intro" / "meaning" / "scene_and_feeling" / examples の scene_prefix:
+  リスナーが音声で聞く解説です。ここが自然さ審査の核心です。
+- "example_sentences[].translation": 例文の翻訳 — 自然な文であるべきです。
+
+=== 審査対象（文型: {template}） ===
+{content}
+
+=== 審査基準（各項目 1-5 点） ===
+1. naturalness: 解説文（intro/meaning/scene_and_feeling/scene_prefix/例文訳）が
+   自然な日本語の話し言葉か？明らかな翻訳調（不自然な助詞、英語語順の直訳、
+   中国語的な漢語の並び）があるか？
+   ※ 些細な語順の好みや「もっと良い表現もあり得る」レベルは減点対象外です。4 点以上を付け、
+     ネイティブが聞いて首をかしげる明らかに不自然な文がある場合のみ 3 点以下にしてください。
+2. register: 親しみやすいポッドキャスト講師のトーンが一貫しているか？
+3. clarity: 説明が学習者にとって明確か？（場面描写が具体的か）
+4. accuracy: 英語の文型についての説明が正確か？
+
+JSON のみ出力:
+{{"scores": {{"naturalness": n, "register": n, "clarity": n, "accuracy": n}},
+ "pass": true/false,  // 全項目 4 点以上で true
+ "issues": ["不合格理由を日本語で具体的に（問題の文を引用 + 修正案）", ...]}}"""
+
+_ES_JUDGE_PROMPT = """Eres hablante nativo de español y juez de calidad de contenido educativo de inglés.
+Lo siguiente es el guion de una "explicación de patrón" de un pódcast para hispanohablantes
+que aprenden inglés. Si las frases que el oyente escuchará suenan a traducción o poco
+naturales, repruébalo.
+
+=== Naturaleza de cada campo (entender antes de juzgar) ===
+- "translation": anotación de diccionario del patrón. "~" marca el espacio en blanco;
+  el estilo de anotación breve es normal. Si el significado es correcto, aprueba —
+  no apliques el criterio de naturalidad conversacional. Preferencias de orden de
+  palabras no son defectos.
+- "pronunciation_intro" / "meaning" / "scene_and_feeling" / scene_prefix de examples:
+  es lo que el oyente escucha en audio. Aquí está el núcleo del juicio de naturalidad.
+- "example_sentences[].translation": traducción del ejemplo — debe ser una frase natural.
+
+=== Contenido a juzgar (patrón: {template}) ===
+{content}
+
+=== Criterios (1-5 puntos cada uno) ===
+1. naturalness: ¿las frases de la explicación suenan a español hablado natural (tuteo)?
+   ¿Hay calcos evidentes del inglés o construcciones que un nativo no diría?
+   ※ Pequeñas preferencias de estilo no restan puntos. Da 4+ y baja a 3 o menos SOLO
+     si hay frases claramente raras que harían dudar a un nativo.
+2. register: ¿mantiene un tono consistente de profesor de pódcast cercano y amigable?
+3. clarity: ¿la explicación es clara para el estudiante? (¿la escena es concreta?)
+4. accuracy: ¿la explicación del patrón inglés es correcta?
+
+Devuelve SOLO JSON:
+{{"scores": {{"naturalness": n, "register": n, "clarity": n, "accuracy": n}},
+ "pass": true/false,  // true solo si todo ≥ 4
+ "issues": ["razones concretas en español (cita la frase problemática + propuesta)", ...]}}"""
+
+_PT_JUDGE_PROMPT = """Você é falante nativo de português brasileiro e juiz de qualidade de conteúdo
+educacional de inglês. A seguir está o roteiro de uma "explicação de padrão" de um podcast
+para brasileiros que aprendem inglês. Se as frases que o ouvinte vai escutar soarem como
+tradução ou pouco naturais, reprove.
+
+=== Natureza de cada campo (entenda antes de julgar) ===
+- "translation": anotação de dicionário do padrão. "~" marca a lacuna; estilo de
+  anotação breve é normal. Se o significado está correto, aprove — não aplique o
+  critério de naturalidade de conversa. Preferência de ordem de palavras não é defeito.
+- "pronunciation_intro" / "meaning" / "scene_and_feeling" / scene_prefix dos examples:
+  é o que o ouvinte escuta em áudio. Aqui está o núcleo do julgamento de naturalidade.
+- "example_sentences[].translation": tradução do exemplo — deve ser uma frase natural.
+
+=== Conteúdo a julgar (padrão: {template}) ===
+{content}
+
+=== Critérios (1-5 pontos cada) ===
+1. naturalness: as frases da explicação soam como português brasileiro falado natural
+   (você)? Há decalques evidentes do inglês ou construções que um nativo não diria?
+   ※ Pequenas preferências de estilo não tiram pontos. Dê 4+ e desça para 3 ou menos
+     SÓ se houver frases claramente estranhas que fariam um nativo estranhar.
+2. register: mantém um tom consistente de professor de podcast próximo e amigável?
+3. clarity: a explicação é clara para o aluno? (a cena é concreta?)
+4. accuracy: a explicação do padrão em inglês está correta?
+
+Retorne APENAS JSON:
+{{"scores": {{"naturalness": n, "register": n, "clarity": n, "accuracy": n}},
+ "pass": true/false,  // true só se tudo ≥ 4
+ "issues": ["razões concretas em português (cite a frase problemática + proposta)", ...]}}"""
+
+_JUDGE_PROMPTS = {
+    "ko": _KO_JUDGE_PROMPT,
+    "ja": _JA_JUDGE_PROMPT,
+    "es": _ES_JUDGE_PROMPT,
+    "pt-BR": _PT_JUDGE_PROMPT,
+    # zh-Hant: OpenCC 机械转换，无生成质量问题，不走 judge
+}
 
 
 def _call_judge(prompt):

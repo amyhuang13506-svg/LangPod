@@ -78,7 +78,9 @@ LANGUAGES = {
         "prompt_lang": "Japanese",
         "subtitle_max_chars": 22,
         "podcast_seg_max_chars": 36,
-        "char_range": None,  # 日文混用汉字/假名，QC 用假名占比判定（TODO P-ja）
+        # 日文混用汉字/假名 → 目标字符 = 假名 + CJK 汉字（多区间）
+        "char_range": [("぀", "ヿ"), ("一", "鿿")],
+        "reject_han": False,  # 日语正常含汉字，汉字≠中文串漏
         "tts": {"provider": "minimax", "voice_male": None, "voice_female": None},  # TODO 试听
         "push_copy_episode": {
             "easy": "今日の新エピソード（初級）",
@@ -128,7 +130,9 @@ LANGUAGES = {
 }
 
 # 当前开启每日生成/回填的新语言（zh 走 legacy 主流程，不在此列）
-NEW_LANGS = ["ko"]
+# zh-Hant 音频复用 zh、文本 OpenCC，全链路零音色依赖 → 直接开。
+# ja / es / pt-BR 待 TTS 音色终选后加入（audition_voices.py 样本已生成）。
+NEW_LANGS = ["ko", "zh-Hant"]
 
 
 def lang_suffix(lang):
@@ -142,15 +146,30 @@ def contains_han(text):
     return any("一" <= c <= "鿿" for c in text)
 
 
+def rejects_han(lang):
+    """Whether a CJK ideograph in this language's output means an
+    untranslated-Chinese leak (ja / zh 系 normally contain them)."""
+    cfg = LANGUAGES[lang]
+    return cfg.get("reject_han", lang not in ("zh", "zh-Hant", "ja"))
+
+
 def target_char_ratio(text, lang):
     """Share of target-language characters among letter-ish chars (0..1).
-    Only meaningful for languages with char_range (ko)."""
+    char_range is a (lo, hi) tuple or a list of tuples; None → 1.0
+    (Latin-script languages share the alphabet with English — ratio is
+    meaningless there, purity is the judge's job)."""
     rng = LANGUAGES[lang].get("char_range")
     if not rng:
         return 1.0
-    lo, hi = rng
+    ranges = rng if isinstance(rng, list) else [rng]
     relevant = [c for c in text if c.isalpha()]
     if not relevant:
         return 1.0
-    hits = sum(1 for c in relevant if lo <= c <= hi)
+    hits = sum(1 for c in relevant if any(lo <= c <= hi for lo, hi in ranges))
     return hits / len(relevant)
+
+
+def prompt_module(lang):
+    """Import prompts_{lang} (e.g. prompts_ko, prompts_pt_br)."""
+    import importlib
+    return importlib.import_module("prompts_" + lang.lower().replace("-", "_"))

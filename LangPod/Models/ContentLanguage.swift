@@ -54,4 +54,25 @@ enum ContentLanguage: String, CaseIterable, Codable, Sendable {
 
     /// 本地缓存文件名后缀，规则同上（zh 老缓存文件名不变，升级无感）。
     var cacheSuffix: String { fileSuffix }
+
+    /// GPT prompt 里的语言名（重翻译/词典共用一处，防各处 switch 漂移）。
+    var englishName: String {
+        switch self {
+        case .zh: "Chinese (Simplified)"
+        case .zhHant: "Traditional Chinese (Taiwan)"
+        case .ko: "Korean"
+        case .ja: "Japanese"
+        case .es: "Spanish (Latin American)"
+        case .ptBR: "Brazilian Portuguese"
+        }
+    }
+
+    /// GPT 输出里出现汉字是否视为「中文串漏」直接拒收。
+    /// ja/zh/zh-Hant 的正常文本本身含汉字，不能用这个检查。
+    var rejectsHanInOutput: Bool {
+        switch self {
+        case .ko, .es, .ptBR: true
+        case .zh, .zhHant, .ja: false
+        }
+    }
 }

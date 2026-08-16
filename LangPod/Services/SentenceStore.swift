@@ -24,14 +24,16 @@ class SentenceStore {
     private var relocalizedKey: String { "relocalizedSentences_\(ContentLanguage.current.rawValue)" }
     private var relocalizedLabelsKey: String { "relocalizedLabels_\(ContentLanguage.current.rawValue)" }
 
+    /// 快照语言 ≠ 当前内容语言 → 需要显示层重翻译。
+    /// language=="zh" 可能是真中文快照，也可能是加字段前存的（当时任何语言都补 "zh"）——
+    /// 用「译文含汉字」二次确认；其他语言值直接信字段（日语译文含汉字，不能用汉字判）。
     private func needsRelocalization(_ s: SavedSentence) -> Bool {
-        ContentLanguage.current != .zh
-            && s.translation.contains(where: { "一" <= $0 && $0 <= "鿿" })
-    }
-
-    private func isLegacyLabel(_ label: String) -> Bool {
-        ContentLanguage.current != .zh
-            && label.contains(where: { "一" <= $0 && $0 <= "鿿" })
+        let current = ContentLanguage.current
+        guard s.language != current.rawValue else { return false }
+        if s.language == ContentLanguage.zh.rawValue {
+            return s.translation.contains(where: { "一" <= $0 && $0 <= "鿿" })
+        }
+        return true
     }
 
     func displayTranslation(_ s: SavedSentence) -> String {
@@ -39,12 +41,12 @@ class SentenceStore {
         return relocalized[s.english.lowercased()] ?? s.translation
     }
 
-    /// 场景胶囊 / 「来自：」标签的显示文案（老中文快照 → 当前语言缓存）。
-    func displayScene(_ s: SavedSentence) -> String { displayLabel(s.scene) }
-    func displaySourceLabel(_ s: SavedSentence) -> String { displayLabel(s.sourceLabel) }
+    /// 场景胶囊 / 「来自：」标签的显示文案（异语言快照 → 当前语言缓存）。
+    func displayScene(_ s: SavedSentence) -> String { displayLabel(s.scene, of: s) }
+    func displaySourceLabel(_ s: SavedSentence) -> String { displayLabel(s.sourceLabel, of: s) }
 
-    private func displayLabel(_ label: String) -> String {
-        guard isLegacyLabel(label) else { return label }
+    private func displayLabel(_ label: String, of s: SavedSentence) -> String {
+        guard needsRelocalization(s) else { return label }
         return relocalizedLabels[label] ?? label
     }
 
@@ -77,8 +79,9 @@ class SentenceStore {
             needsRelocalization($0) && relocalized[$0.english.lowercased()] == nil
         }
         let pendingLabels = Array(Set(
-            sentences.flatMap { [$0.scene, $0.sourceLabel] }
-                .filter { isLegacyLabel($0) && relocalizedLabels[$0] == nil }
+            sentences.filter { needsRelocalization($0) }
+                .flatMap { [$0.scene, $0.sourceLabel] }
+                .filter { !$0.isEmpty && relocalizedLabels[$0] == nil }
         ))
         guard !pending.isEmpty || !pendingLabels.isEmpty, !relocalizeInFlight else { return }
         relocalizeInFlight = true

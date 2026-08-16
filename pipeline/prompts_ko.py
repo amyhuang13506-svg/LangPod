@@ -154,3 +154,4 @@ the skeleton; "translation" is a natural Korean rendering (not literal).
 5. Natural spoken 해요체 throughout — a Korean native should hear a friendly teacher, not a translation
 """
 
+PATTERN_SCENE_HINT = "식당 / 물건 빌리기"

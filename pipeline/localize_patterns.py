@@ -176,14 +176,15 @@ def build_zh_reference(zh_pattern):
 
 def localize_pattern_text(zh_pattern, lang, level):
     """GPT-write the localized explainer fields. Returns dict or None (skip)."""
-    if lang != "ko":
+    from languages import prompt_module
+    try:
+        pm = prompt_module(lang)
+        PATTERN_INTRO_LISTEN = pm.PATTERN_INTRO_LISTEN
+        PATTERN_INTRO_PREVIEW_PREFIX = pm.PATTERN_INTRO_PREVIEW_PREFIX
+        PATTERN_FEELING_ENDING_PREFIX = pm.PATTERN_FEELING_ENDING_PREFIX
+        PATTERN_LOCALIZATION_PROMPT = pm.PATTERN_LOCALIZATION_PROMPT
+    except (ImportError, AttributeError):
         raise ValueError("no pattern localization prompt for lang=%s" % lang)
-    from prompts_ko import (
-        PATTERN_INTRO_LISTEN,
-        PATTERN_INTRO_PREVIEW_PREFIX,
-        PATTERN_FEELING_ENDING_PREFIX,
-        PATTERN_LOCALIZATION_PROMPT,
-    )
 
     skeleton = extract_skeleton(zh_pattern)
     trap_rule = ("If the pattern's literal meaning is a trap (idiom), START meaning with a "
@@ -198,7 +199,9 @@ def localize_pattern_text(zh_pattern, lang, level):
         listen_line=PATTERN_INTRO_LISTEN,
         feeling_ending_prefix=PATTERN_FEELING_ENDING_PREFIX,
         trap_rule=trap_rule,
-    ) + '\n\nAlso include "scene": a short Korean scene tag (2-5 words, e.g. "식당 / 물건 빌리기") in the JSON.'
+    ) + '\n\nAlso include "scene": a short %s scene tag (2-5 words, e.g. "%s") in the JSON.' % (
+        LANGUAGES[lang].get("prompt_lang", lang),
+        getattr(pm, "PATTERN_SCENE_HINT", "식당 / 물건 빌리기"))
 
     messages = [{"role": "user", "content": prompt}]
     loc = None
@@ -235,10 +238,11 @@ def localize_pattern_text(zh_pattern, lang, level):
 def synthesize_localized_pattern_audio(loc, skeleton, output_dir, lang, level):
     """Mixed-language explainer audio, mirroring extract_patterns'
     synthesize_pattern_audio structure. Returns (path, script_lines, duration)."""
-    if lang == "ko":
-        from prompts_ko import PATTERN_DRILL_LEADIN, PATTERN_DRILL_LEADIN_SUBTITLE
-        drill_leadin, drill_leadin_sub = PATTERN_DRILL_LEADIN, PATTERN_DRILL_LEADIN_SUBTITLE
-    else:
+    from languages import prompt_module
+    try:
+        pm = prompt_module(lang)
+        drill_leadin, drill_leadin_sub = pm.PATTERN_DRILL_LEADIN, pm.PATTERN_DRILL_LEADIN_SUBTITLE
+    except (ImportError, AttributeError):
         raise ValueError("no fixed lines for lang=%s" % lang)
 
     demo_speed = PATTERN_DEMO_SPEED.get(level, 1.0)
@@ -358,6 +362,16 @@ def process_episode_patterns(episode_json_path, lang, force=False):
     zh_patterns = episode.get("patterns") or []
     if not zh_patterns:
         print("   ⏭  %s has no patterns to localize" % episode["id"])
+        return loc_json_path
+
+    if lang == "zh-Hant":
+        # 特殊通道：讲解音频是中文旁白，繁中用户直接复用；文本走 OpenCC 走 walker
+        # （translation_zh→translation 等改名 + 繁化），零 GPT 零 TTS。
+        from localize_content import localize_json
+        localized_episode["patterns"] = localize_json(zh_patterns, "zh-Hant")
+        with open(loc_json_path, "w", encoding="utf-8") as f:
+            json.dump(localized_episode, f, ensure_ascii=False, indent=2)
+        print("   ✅ %s: %d patterns 繁化（复用 zh 音频）" % (episode["id"], len(zh_patterns)))
         return loc_json_path
 
     level = episode.get("level", "medium")

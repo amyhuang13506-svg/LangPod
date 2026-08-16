@@ -15,6 +15,9 @@ struct SavedSentence: Codable, Identifiable, Hashable {
     let audioStart: Double?
     let audioEnd: Double?
     var savedDate: Date
+    /// 快照语言（ContentLanguage.rawValue）。老数据无此字段 → 解码补 "zh"。
+    /// 收藏时的 scene/translation 都是当时内容语言的文本，重翻译判定以此为准。
+    var language: String = ContentLanguage.current.rawValue
     /// 连词成句答对次数（驱动 已掌握/复习中/新句 分类，仿 SavedWord.matchCorrectCount）
     var practiceCorrectCount: Int = 0
     var lastPracticeDate: Date? = nil
@@ -51,6 +54,7 @@ extension SavedSentence {
     enum CodingKeys: String, CodingKey {
         case english, translation, scene, source, sourceLabel
         case audioUrl, audioStart, audioEnd, savedDate
+        case language
         case practiceCorrectCount, lastPracticeDate
     }
 
@@ -70,6 +74,7 @@ extension SavedSentence {
         audioStart = try c.decodeIfPresent(Double.self, forKey: .audioStart)
         audioEnd = try c.decodeIfPresent(Double.self, forKey: .audioEnd)
         savedDate = try c.decode(Date.self, forKey: .savedDate)
+        language = try c.decodeIfPresent(String.self, forKey: .language) ?? ContentLanguage.zh.rawValue
         practiceCorrectCount = try c.decodeIfPresent(Int.self, forKey: .practiceCorrectCount) ?? 0
         lastPracticeDate = try c.decodeIfPresent(Date.self, forKey: .lastPracticeDate)
     }

@@ -26,10 +26,11 @@ SCHEMA_VERSION = 1
 
 
 def _prompt_for(lang):
-    if lang == "ko":
-        from prompts_ko import EPISODE_TRANSLATION_PROMPT
-        return EPISODE_TRANSLATION_PROMPT
-    raise ValueError("no episode translation prompt registered for lang=%s" % lang)
+    from languages import prompt_module
+    try:
+        return prompt_module(lang).EPISODE_TRANSLATION_PROMPT
+    except (ImportError, AttributeError):
+        raise ValueError("no episode translation prompt registered for lang=%s" % lang)
 
 
 def _build_payload(episode):
@@ -56,7 +57,8 @@ def _qc_text(text, lang, max_chars=None):
     """Return a failure reason or None. Cheap layer-0 checks; full qc/ lands in P3."""
     if not text or not text.strip():
         return "empty"
-    if contains_han(text):
+    from languages import rejects_han
+    if rejects_han(lang) and contains_han(text):
         return "contains CJK ideographs (untranslated leak): %r" % text[:40]
     alpha = [c for c in text if c.isalpha()]
     if len(alpha) >= 4 and target_char_ratio(text, lang) < 0.5:
@@ -99,7 +101,13 @@ def _validate(result, episode, lang):
 
 def translate_episode(episode, lang):
     """GPT-translate the episode's translation layer. Returns (script_translations,
-    vocab_translations). Raises RuntimeError after one critique-guided retry."""
+    vocab_translations). Raises RuntimeError after one critique-guided retry.
+
+    zh-Hant is the special channel: OpenCC conversion of the existing zh fields —
+    no GPT, deterministic, free."""
+    if lang == "zh-Hant":
+        from hant import episode_to_hant
+        return episode_to_hant(episode)
     cfg = LANGUAGES[lang]
     prompt = _prompt_for(lang).format(
         episode_payload=_build_payload(episode),
@@ -164,7 +172,12 @@ def build_localized_episode(episode, script_tr, vocab_tr, lang):
         "thumbnail": episode.get("thumbnail", ""),
         "audio": {
             "english": episode.get("audio", {}).get("english", ""),
-            "translation": "",  # filled by upload step after {lang}.mp3 lands on OSS
+            # reuse_audio_from（zh-Hant）：直接指向 zh 翻译音轨；其余语言留空，
+            # 由 upload 步骤在 {lang}.mp3 上传后回填
+            "translation": (
+                episode.get("audio", {}).get("chinese", "")
+                or episode.get("audio", {}).get("translation", "")
+            ) if LANGUAGES[lang].get("reuse_audio_from") else "",
         },
         "script": script,
         "vocabulary": vocabulary,

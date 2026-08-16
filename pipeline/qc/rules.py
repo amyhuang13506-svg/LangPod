@@ -14,7 +14,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from languages import LANGUAGES, contains_han, target_char_ratio
+from languages import LANGUAGES, contains_han, prompt_module, rejects_han, target_char_ratio
 
 
 def check_text(text, lang, field="text", max_chars=None, allow_empty=False):
@@ -25,7 +25,7 @@ def check_text(text, lang, field="text", max_chars=None, allow_empty=False):
         if not allow_empty:
             failures.append("%s: empty" % field)
         return failures
-    if lang not in ("zh", "zh-Hant") and contains_han(text):
+    if rejects_han(lang) and contains_han(text):
         failures.append("%s: contains CJK ideographs (untranslated leak): %r" % (field, text[:40]))
     if "dot dot dot" in text or "..." in text:
         failures.append("%s: contains ellipsis placeholder: %r" % (field, text[:40]))
@@ -41,18 +41,14 @@ def check_pattern_localization(loc, skeleton, lang):
     """L0 checks for a localized pattern explainer (output of the pattern
     localization prompt). `skeleton` is the fixed English skeleton dict."""
     failures = []
-    if lang == "ko":
-        from prompts_ko import (
-            PATTERN_FEELING_ENDING_PREFIX,
-            PATTERN_INTRO_LISTEN,
-            PATTERN_INTRO_PREVIEW_PREFIX,
-        )
+    try:
+        pm = prompt_module(lang)
         fixed = {
-            "preview": PATTERN_INTRO_PREVIEW_PREFIX,
-            "listen": PATTERN_INTRO_LISTEN,
-            "ending": PATTERN_FEELING_ENDING_PREFIX,
+            "preview": pm.PATTERN_INTRO_PREVIEW_PREFIX,
+            "listen": pm.PATTERN_INTRO_LISTEN,
+            "ending": pm.PATTERN_FEELING_ENDING_PREFIX,
         }
-    else:
+    except (ImportError, AttributeError):
         fixed = None
 
     failures += check_text(loc.get("translation"), lang, "translation", max_chars=60)

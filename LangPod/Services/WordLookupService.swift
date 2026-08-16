@@ -61,7 +61,10 @@ actor WordLookupService {
         case .ptBR:
             return ("EN→PT-BR", "1-2 common Brazilian Portuguese glosses, comma-separated, fitting this sentence's context",
                     "set translation to \"(nome próprio) <name>\"")
-        case .zh, .zhHant:
+        case .zhHant:
+            return ("EN→ZH-Hant", "1-2 個繁體中文（台灣用詞）常用釋義，逗號分隔，要符合本句上下文",
+                    "set translation to \"（專有名詞）<音譯或公司名>\"")
+        case .zh:
             return ("EN→ZH", "1-2 个中文常用释义，逗号分隔，要符合本句上下文",
                     "set translation to \"（专有名词）<音译或公司名>\"")
         }
@@ -163,20 +166,14 @@ private struct ChatCompletion: Decodable {
 enum SentenceRelocalizer {
     static func translate(_ sentences: [String], to lang: ContentLanguage) async -> [String: String]? {
         guard !sentences.isEmpty else { return [:] }
-        let langName: String
-        switch lang {
-        case .ko: langName = "Korean"
-        case .ja: langName = "Japanese"
-        case .es: langName = "Spanish"
-        case .ptBR: langName = "Brazilian Portuguese"
-        case .zh, .zhHant: langName = "Chinese"
-        }
+        let langName = lang.englishName
         guard let payloadData = try? JSONSerialization.data(withJSONObject: sentences),
               let payloadStr = String(data: payloadData, encoding: .utf8) else { return nil }
 
+        let noHan = lang.rejectsHanInOutput ? " Never output Chinese characters in \(langName) output." : ""
         let prompt = """
         Translate these English sentences (from an English-learning app) into natural, \
-        conversational \(langName). Never output Chinese characters in \(langName) output.
+        conversational \(langName).\(noHan)
 
         INPUT: \(payloadStr)
 
@@ -208,7 +205,7 @@ enum SentenceRelocalizer {
         var result: [String: String] = [:]
         for s in sentences {
             guard let t = raw[s], !t.isEmpty else { continue }
-            if lang != .zh && lang != .zhHant && t.contains(where: { "一" <= $0 && $0 <= "鿿" }) { continue }
+            if lang.rejectsHanInOutput && t.contains(where: { "一" <= $0 && $0 <= "鿿" }) { continue }
             result[s] = t
         }
         return result
@@ -217,30 +214,24 @@ enum SentenceRelocalizer {
 
 // MARK: - 中文标签跨语言重翻译（句子快照的场景/来源标签显示层用）
 
-/// 老中文快照里的短标签（分类名/场景名，如「厨房」「口头禅与填充词」）批量翻到当前内容语言。
+/// 异语言快照里的短标签（分类名/场景名，如「厨房」「口头禅与填充词」）批量翻到当前内容语言。
 enum LabelRelocalizer {
     static func translate(_ labels: [String], to lang: ContentLanguage) async -> [String: String]? {
         guard !labels.isEmpty else { return [:] }
-        let langName: String
-        switch lang {
-        case .ko: langName = "Korean"
-        case .ja: langName = "Japanese"
-        case .es: langName = "Spanish"
-        case .ptBR: langName = "Brazilian Portuguese"
-        case .zh, .zhHant: langName = "Chinese"
-        }
+        let langName = lang.englishName
         guard let payloadData = try? JSONSerialization.data(withJSONObject: labels),
               let payloadStr = String(data: payloadData, encoding: .utf8) else { return nil }
 
+        let noHan = lang.rejectsHanInOutput ? " Never output Chinese characters in \(langName) output." : ""
         let prompt = """
-        These are short Chinese category/tag labels from an English-learning app \
-        (e.g. lesson scene names, expression category names). Translate each into a \
-        concise, natural \(langName) label. Keep them short (a few words). \
-        Never output Chinese characters in \(langName) output.
+        These are short category/tag labels from an English-learning app \
+        (e.g. lesson scene names, expression category names), possibly in another language. \
+        Translate each into a concise, natural \(langName) label. Keep them short \
+        (a few words).\(noHan)
 
         INPUT: \(payloadStr)
 
-        OUTPUT strict JSON only: {"<chinese label>": "<\(langName) label>", ...} — \
+        OUTPUT strict JSON only: {"<original label>": "<\(langName) label>", ...} — \
         every label exactly once, keys copied verbatim.
         """
 
@@ -268,7 +259,7 @@ enum LabelRelocalizer {
         var result: [String: String] = [:]
         for label in labels {
             guard let t = raw[label], !t.isEmpty else { continue }
-            if lang != .zh && lang != .zhHant && t.contains(where: { "一" <= $0 && $0 <= "鿿" }) { continue }
+            if lang.rejectsHanInOutput && t.contains(where: { "一" <= $0 && $0 <= "鿿" }) { continue }
             result[label] = t
         }
         return result
@@ -285,14 +276,7 @@ enum GlossRelocalizer {
         to lang: ContentLanguage
     ) async -> [String: VocabularyStore.RelocalizedGloss]? {
         guard !words.isEmpty else { return [:] }
-        let langName: String
-        switch lang {
-        case .ko: langName = "Korean"
-        case .ja: langName = "Japanese"
-        case .es: langName = "Spanish"
-        case .ptBR: langName = "Brazilian Portuguese"
-        case .zh, .zhHant: langName = "Chinese"
-        }
+        let langName = lang.englishName
 
         let payload = words.map { w in
             ["word": w.word, "old_gloss": w.translation,
@@ -306,8 +290,8 @@ enum GlossRelocalizer {
         another language. Produce \(langName) glosses instead.
         For each entry output: "t" = concise dictionary-style \(langName) gloss of the word \
         (match the sense shown by old_gloss/example), "et" = natural \(langName) translation \
-        of the example sentence ("" if no example).
-        Never output Chinese characters in \(langName) output.
+        of the example sentence ("" if no example).\(lang.rejectsHanInOutput
+            ? " Never output Chinese characters in \(langName) output." : "")
 
         INPUT: \(payloadStr)
 
@@ -339,8 +323,8 @@ enum GlossRelocalizer {
         for w in words {
             guard let entry = raw[w.word] ?? raw[w.word.lowercased()],
                   let t = entry["t"], !t.isEmpty else { continue }
-            // 目标语言不是中文时，汉字串漏 = 没翻，丢弃（下次重试）
-            if lang != .zh && lang != .zhHant && t.contains(where: { "一" <= $0 && $0 <= "鿿" }) { continue }
+            // 汉字串漏 = 没翻，丢弃（下次重试）；ja/zh 系正常含汉字，不查
+            if lang.rejectsHanInOutput && t.contains(where: { "一" <= $0 && $0 <= "鿿" }) { continue }
             let et = entry["et"] ?? ""
             result[w.word] = VocabularyStore.RelocalizedGloss(
                 translation: t, exampleTranslation: et.isEmpty ? nil : et)
