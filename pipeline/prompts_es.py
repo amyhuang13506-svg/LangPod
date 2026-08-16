@@ -80,7 +80,7 @@ output Chinese characters) ===
 
 === OUTPUT — valid JSON only, no markdown ===
 {{
-  "translation": "significado del patrón en español (con nota breve, e.g. \\"¿Podría...? (petición cortés)\\")",
+  "translation": "significado del patrón en español — mark the blank with ___ , NEVER with ... (e.g. \\"¿Podría ___? (petición cortés)\\")",
   "pronunciation_intro": "3 sentences, see RULE A",
   "meaning": "1-2 short sentences, see RULE B",
   "scene_and_feeling": "the core section, see RULE C",

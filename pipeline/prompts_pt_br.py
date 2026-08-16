@@ -78,7 +78,7 @@ NEVER output Chinese characters) ===
 
 === OUTPUT — valid JSON only, no markdown ===
 {{
-  "translation": "significado do padrão em português (com nota breve, e.g. \\"Será que eu poderia...? (pedido educado)\\")",
+  "translation": "significado do padrão em português — mark the blank with ___ , NEVER with ... (e.g. \\"Será que eu poderia ___? (pedido educado)\\")",
   "pronunciation_intro": "3 sentences, see RULE A",
   "meaning": "1-2 short sentences, see RULE B",
   "scene_and_feeling": "the core section, see RULE C",
