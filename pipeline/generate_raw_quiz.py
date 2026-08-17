@@ -55,11 +55,14 @@ details like exact numbers or years.
 read them quickly).
 - Each question has exactly 3 options, only one correct.
 - Wrong options must be plausible but clearly wrong to someone who understood the talk.
-- For each question add a one-sentence explanation in Simplified Chinese of why the \
-answer is correct.
+- For each question add a one-sentence explanation of why the answer is correct, \
+translated into ALL of these languages: Simplified Chinese (key "zh"), Traditional \
+Chinese (key "zh-Hant"), Japanese (key "ja"), Korean (key "ko"), Latin American \
+Spanish (key "es"), Brazilian Portuguese (key "pt-BR").
 
 Return ONLY valid JSON, no markdown fences:
-{"questions": [{"q": "...", "options": ["...", "...", "..."], "answer": 0, "explain": {"zh": "..."}}]}
+{"questions": [{"q": "...", "options": ["...", "...", "..."], "answer": 0, \
+"explain": {"zh": "...", "zh-Hant": "...", "ja": "...", "ko": "...", "es": "...", "pt-BR": "..."}}]}
 
 Transcript:
 """

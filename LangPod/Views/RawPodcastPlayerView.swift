@@ -181,6 +181,9 @@ struct RawPodcastPlayerView: View {
 
     private func handleCloseTapped() {
         controller?.pause()
+        #if DEBUG
+        print("🎯 结算检查: controller=\(controller == nil ? "nil(iframe?)" : "ok") accum=\(Int(controller?.listenAccumSeconds ?? -1))s unsummarized=\(Int(controller?.unsummarizedSeconds ?? -1))s threshold=\(Self.summaryThresholdSeconds)s lastDay=\(UserDefaults.standard.string(forKey: Self.summaryLastDayKey) ?? "nil")")
+        #endif
         guard let c = controller, Int(c.unsummarizedSeconds) >= Self.summaryThresholdSeconds else {
             dismiss()
             return
