@@ -374,6 +374,14 @@ def process_candidate(c: dict, bucket) -> Optional[dict]:
             except Exception as e:
                 print(f"  ⚠️  pretranslate_words 失败（不影响主流程）：{e}")
 
+        # 5) 理解题：3 道"听懂大意"单选，输出 quiz.json（退出结算卡「测测听懂了多少」）
+        if transcript_oss_url:
+            try:
+                from generate_raw_quiz import generate_quiz_for_podcast
+                generate_quiz_for_podcast(cid, bucket)
+            except Exception as e:
+                print(f"  ⚠️  generate_raw_quiz 失败（不影响主流程）：{e}")
+
     return candidate_to_master_entry(
         c, media_oss_url, thumb_oss_url, has_video, transcript_oss_url,
         audio_only_oss_url=audio_only_oss_url,

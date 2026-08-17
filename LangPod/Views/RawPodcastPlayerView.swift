@@ -28,6 +28,15 @@ struct RawPodcastPlayerView: View {
     @State private var showVideoControls: Bool = false  // 视频区点一下显示控件，3 秒自动隐藏
     @State private var hideControlsTask: Task<Void, Never>?
     @State private var metadataExpanded: Bool = false   // 中间元数据区默认收起
+    @State private var sessionSummary: RawSessionSummary?   // 非 nil = 正在展示退出结算卡
+    @State private var summaryQuiz: RawQuiz?                // 结算卡出现时懒加载的理解题
+
+    /// 结算卡触发阈值：本次会话 ≥3 分钟才弹（低于直接退，不打扰）
+    private static let summaryThresholdSeconds = 180
+    /// 理解题门槛：听满 5 分钟才出「测测听懂了多少」（听太少答不了）
+    private static let quizThresholdSeconds = 300
+    /// 当天首次达标退出弹大卡，其后降级轻量 toast
+    private static let summaryLastDayKey = "rawSummaryLastDay"
 
     struct PendingWord: Identifiable {
         let word: String
@@ -85,8 +94,7 @@ struct RawPodcastPlayerView: View {
             }
 
             Button {
-                controller?.pause()
-                dismiss()
+                handleCloseTapped()
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .bold))
@@ -147,6 +155,79 @@ struct RawPodcastPlayerView: View {
         }
         .overlay {
             wordPreviewOverlay
+        }
+        .overlay {
+            if let summary = sessionSummary {
+                RawSessionSummaryView(
+                    summary: summary,
+                    quiz: summary.seconds >= Self.quizThresholdSeconds ? summaryQuiz : nil,
+                    onContinueListening: {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                            sessionSummary = nil
+                        }
+                        controller?.play()
+                    },
+                    onClose: {
+                        sessionSummary = nil
+                        dismiss()
+                    }
+                )
+                .zIndex(10)
+            }
+        }
+    }
+
+    // MARK: - 退出结算（先结算再 dismiss）
+
+    private func handleCloseTapped() {
+        controller?.pause()
+        guard let c = controller, Int(c.unsummarizedSeconds) >= Self.summaryThresholdSeconds else {
+            dismiss()
+            return
+        }
+        let delta = c.takeSummaryDelta()
+        let todayKey = TaskEngine.todayKey()
+        let isFirstToday = UserDefaults.standard.string(forKey: Self.summaryLastDayKey) != todayKey
+        let todayTotal = Int(TaskEngine.shared.record?.rawListenSeconds ?? 0)
+
+        guard isFirstToday else {
+            // 当天第 2 次起：轻量 toast 停留一瞬，不挡退出
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                addedWordToast = String(localized: "+\(max(1, delta.seconds / 60)) 分钟 · 今日累计 \(max(1, todayTotal / 60)) 分钟")
+            }
+            Task {
+                try? await Task.sleep(nanoseconds: 900_000_000)
+                await MainActor.run { dismiss() }
+            }
+            return
+        }
+
+        UserDefaults.standard.set(todayKey, forKey: Self.summaryLastDayKey)
+        let rawTaskDone = TaskEngine.shared.todayTasks
+            .contains { $0.type == .rawPodcast10Min && $0.done }
+        let summary = RawSessionSummary(
+            podcastId: podcast.id,
+            seconds: delta.seconds,
+            wordsSaved: delta.words,
+            todayTotalSeconds: todayTotal,
+            streakDays: dataStore.streakDays,
+            rawTaskDone: rawTaskDone
+        )
+        Analytics.track(.rawSummaryView, params: [
+            "podcast_id": podcast.id,
+            "listened_seconds": "\(delta.seconds)",
+            "words_saved": "\(delta.words)",
+            "is_first_today": "1"
+        ])
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+            sessionSummary = summary
+        }
+        // 听满 5 分钟才值得出题：此刻才去拉 quiz.json（404 = 老内容没题，CTA 静默不出现）
+        if delta.seconds >= Self.quizThresholdSeconds, summaryQuiz == nil {
+            Task {
+                let quiz = await RawQuizLoader.fetch(transcriptUrl: podcast.transcriptUrl)
+                await MainActor.run { summaryQuiz = quiz }
+            }
         }
     }
 
@@ -524,6 +605,7 @@ struct RawPodcastPlayerView: View {
             audio: ""
         )
         let added = vocabularyStore.addWord(vocab, sourceLabel: "raw_podcast")
+        if added { controller?.sessionWordsSaved += 1 }   // 结算卡「划过 N 个生词」计数
         let toastText = added ? String(localized: "「\(word)」已加入生词本") : String(localized: "「\(word)」已在生词本")
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             addedWordToast = toastText
@@ -938,7 +1020,25 @@ final class RawAudioController {
 
     // 收听会话埋点（raw_listen_30s / raw_listen_end）。
     // 一个 controller = 一次会话；关页不销毁（复用续播），切换 podcast 时 tearDown 结束会话。
-    private var listenAccumSeconds: Double = 0
+    private(set) var listenAccumSeconds: Double = 0
+
+    // 结算卡（退出时的成果卡）会话记账。controller 跨开关复用，所以结算过的部分
+    // 要打水位线，避免"关了再开再关"重复结算同一段收听。
+    /// 本次会话内划词加入生词本的数量（RawPodcastPlayerView.addWord 时 +1）
+    var sessionWordsSaved: Int = 0
+    private var summarizedSeconds: Double = 0
+    private var summarizedWords: Int = 0
+
+    /// 尚未结算的收听秒数（决定这次退出要不要弹结算卡）
+    var unsummarizedSeconds: Double { max(0, listenAccumSeconds - summarizedSeconds) }
+
+    /// 取走一次结算增量（秒数 + 划词数），并推进水位线。
+    func takeSummaryDelta() -> (seconds: Int, words: Int) {
+        let delta = (seconds: Int(unsummarizedSeconds), words: max(0, sessionWordsSaved - summarizedWords))
+        summarizedSeconds = listenAccumSeconds
+        summarizedWords = sessionWordsSaved
+        return delta
+    }
     private var listenSent30s = false
     private var listenLastPersisted: Double = 0
     private var didReportListenEnd = false
