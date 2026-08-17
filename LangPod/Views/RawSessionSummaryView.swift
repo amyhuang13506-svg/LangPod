@@ -354,19 +354,21 @@ struct RawSessionSummaryView: View {
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50, alignment: .topLeading)
 
-            // 按钮恒定占位：未作答时透明禁用
+            // 按钮恒定占位：未作答时灰色禁用（可见但不可点），作答后变蓝
             Button {
                 advance()
             } label: {
                 Text(questionIndex + 1 >= (quiz?.questions.count ?? 0) ? "看结果" : "下一题")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(selectedOption == nil ? Color.textTertiary : .white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 48)
-                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+                    .background(
+                        selectedOption == nil ? Color.border : Color.appPrimary,
+                        in: RoundedRectangle(cornerRadius: 14)
+                    )
             }
             .disabled(selectedOption == nil)
-            .opacity(selectedOption == nil ? 0 : 1)
             .animation(.easeInOut(duration: 0.2), value: selectedOption == nil)
             .padding(.top, 8)
         }
