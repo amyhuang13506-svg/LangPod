@@ -61,7 +61,9 @@ def _qc_text(text, lang, max_chars=None):
     if rejects_han(lang) and contains_han(text):
         return "contains CJK ideographs (untranslated leak): %r" % text[:40]
     alpha = [c for c in text if c.isalpha()]
-    if len(alpha) >= 4 and target_char_ratio(text, lang) < 0.5:
+    # 阈值 0.3：句里合法出现英文专有名词/术语（Deep Blue、AlphaGo…）时拉丁字母
+    # 可能过半，0.5 会误杀；整句没翻的情况 ratio≈0 仍会被抓
+    if len(alpha) >= 4 and target_char_ratio(text, lang) < 0.3:
         return "target-language char ratio too low: %r" % text[:40]
     if max_chars and len(text) > max_chars * 2:
         # hard ceiling only at 2× the soft limit — soft violations pass with a warning
@@ -99,6 +101,24 @@ def _validate(result, episode, lang):
     return failures
 
 
+def _normalize_result(result):
+    """GPT 偶尔把 translation 字段输出成 list（分句数组）——拼回字符串，
+    防止下游 .strip() 崩掉。缺失/None 归空串，交给 QC 判空。"""
+    def _text(v):
+        if isinstance(v, list):
+            return " ".join(str(x) for x in v)
+        return v if isinstance(v, str) else ("" if v is None else str(v))
+
+    for item in result.get("script") or []:
+        if isinstance(item, dict):
+            item["translation"] = _text(item.get("translation"))
+    for item in result.get("vocabulary") or []:
+        if isinstance(item, dict):
+            item["translation"] = _text(item.get("translation"))
+            item["example_translation"] = _text(item.get("example_translation"))
+    return result
+
+
 def translate_episode(episode, lang):
     """GPT-translate the episode's translation layer. Returns (script_translations,
     vocab_translations). Raises RuntimeError after one critique-guided retry.
@@ -115,7 +135,7 @@ def translate_episode(episode, lang):
     )
     messages = [{"role": "user", "content": prompt}]
 
-    result = _call_gpt(messages)
+    result = _normalize_result(_call_gpt(messages))
     failures = _validate(result, episode, lang)
     if failures:
         print("   ⟳ QC failed (%d issues), retrying with critique..." % len(failures))
@@ -126,7 +146,7 @@ def translate_episode(episode, lang):
         )
         messages.append({"role": "assistant", "content": json.dumps(result, ensure_ascii=False)})
         messages.append({"role": "user", "content": critique})
-        result = _call_gpt(messages)
+        result = _normalize_result(_call_gpt(messages))
         failures = _validate(result, episode, lang)
         if failures:
             raise RuntimeError("translation QC failed after retry: %s" % failures[:10])
