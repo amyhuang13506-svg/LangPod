@@ -208,7 +208,7 @@ struct RawPodcastPlayerView: View {
         let summary = RawSessionSummary(
             podcastId: podcast.id,
             seconds: delta.seconds,
-            wordsSaved: delta.words,
+            words: delta.words,
             todayTotalSeconds: todayTotal,
             streakDays: dataStore.streakDays,
             rawTaskDone: rawTaskDone
@@ -216,7 +216,7 @@ struct RawPodcastPlayerView: View {
         Analytics.track(.rawSummaryView, params: [
             "podcast_id": podcast.id,
             "listened_seconds": "\(delta.seconds)",
-            "words_saved": "\(delta.words)",
+            "words_saved": "\(delta.words.count)",
             "is_first_today": "1"
         ])
         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
@@ -605,7 +605,9 @@ struct RawPodcastPlayerView: View {
             audio: ""
         )
         let added = vocabularyStore.addWord(vocab, sourceLabel: "raw_podcast")
-        if added { controller?.sessionWordsSaved += 1 }   // 结算卡「划过 N 个生词」计数
+        if added {   // 结算卡「本次学到」逐条列出：记具体词 + 释义
+            controller?.recordSavedWord(word, translation: vocab.translation)
+        }
         let toastText = added ? String(localized: "「\(word)」已加入生词本") : String(localized: "「\(word)」已在生词本")
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             addedWordToast = toastText
@@ -1024,19 +1026,25 @@ final class RawAudioController {
 
     // 结算卡（退出时的成果卡）会话记账。controller 跨开关复用，所以结算过的部分
     // 要打水位线，避免"关了再开再关"重复结算同一段收听。
-    /// 本次会话内划词加入生词本的数量（RawPodcastPlayerView.addWord 时 +1）
-    var sessionWordsSaved: Int = 0
+    /// 本次会话内划词存下的生词（结算卡逐条列出，RawPodcastPlayerView.addWord 时追加）
+    private(set) var sessionSavedWords: [RawSessionWordBrief] = []
     private var summarizedSeconds: Double = 0
-    private var summarizedWords: Int = 0
+    private var summarizedWordCount: Int = 0
+
+    func recordSavedWord(_ word: String, translation: String) {
+        guard !sessionSavedWords.contains(where: { $0.word == word }) else { return }
+        sessionSavedWords.append(RawSessionWordBrief(word: word, translation: translation))
+    }
 
     /// 尚未结算的收听秒数（决定这次退出要不要弹结算卡）
     var unsummarizedSeconds: Double { max(0, listenAccumSeconds - summarizedSeconds) }
 
-    /// 取走一次结算增量（秒数 + 划词数），并推进水位线。
-    func takeSummaryDelta() -> (seconds: Int, words: Int) {
-        let delta = (seconds: Int(unsummarizedSeconds), words: max(0, sessionWordsSaved - summarizedWords))
+    /// 取走一次结算增量（秒数 + 本次新划的词），并推进水位线。
+    func takeSummaryDelta() -> (seconds: Int, words: [RawSessionWordBrief]) {
+        let words = Array(sessionSavedWords.dropFirst(summarizedWordCount))
+        let delta = (seconds: Int(unsummarizedSeconds), words: words)
         summarizedSeconds = listenAccumSeconds
-        summarizedWords = sessionWordsSaved
+        summarizedWordCount = sessionSavedWords.count
         return delta
     }
     private var listenSent30s = false

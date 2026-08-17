@@ -54,19 +54,27 @@ enum RawQuizLoader {
 
 // MARK: - Summary data
 
+/// 本次会话划词存下的一个生词（结算卡具体列出，不只报数字）。
+struct RawSessionWordBrief: Identifiable, Equatable {
+    let word: String
+    let translation: String
+    var id: String { word }
+}
+
 /// 一次退出结算的快照（在关闭手势那一刻从 controller / TaskEngine / DataStore 取好）。
 struct RawSessionSummary {
     let podcastId: String
-    let seconds: Int            // 本次未结算的收听秒数
-    let wordsSaved: Int         // 本次会话划词数
-    let todayTotalSeconds: Int  // 今日累计原声收听
+    let seconds: Int                    // 本次未结算的收听秒数
+    let words: [RawSessionWordBrief]    // 本次会话划词存下的生词（具体词条）
+    let todayTotalSeconds: Int          // 今日累计原声收听
     let streakDays: Int
-    let rawTaskDone: Bool       // 「听 5 分钟真实播客」任务今日是否已达成
+    let rawTaskDone: Bool               // 「听 5 分钟真实播客」任务今日是否已达成
 }
 
 // MARK: - Summary overlay
 
 /// 原声播放页退出时的「结算时刻」：成果卡 + 可选理解题流。
+/// 视觉延续 DailyTaskPopupView（浅色 appBackground 卡 + 白色行 + 蓝/绿胶囊）。
 /// 叠在播放页最上层展示（先结算再 dismiss），点空白处直接关闭，绝不强制停留。
 struct RawSessionSummaryView: View {
     let summary: RawSessionSummary
@@ -74,7 +82,8 @@ struct RawSessionSummaryView: View {
     let onContinueListening: () -> Void
     let onClose: () -> Void
 
-    @State private var appeared = false
+    @State private var cardScale: CGFloat = 0.92
+    @State private var cardOpacity: Double = 0
     @State private var quizMode = false
 
     // Quiz flow state
@@ -83,9 +92,12 @@ struct RawSessionSummaryView: View {
     @State private var correctCount = 0
     @State private var showResult = false
 
+    /// 结算卡最多列几个生词，多出的折叠成"还有 N 个"
+    private static let maxWordRows = 4
+
     var body: some View {
         ZStack {
-            Color.black.opacity(0.78)
+            Color.black.opacity(0.45)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -94,136 +106,201 @@ struct RawSessionSummaryView: View {
                     onClose()
                 }
 
-            if quizMode {
-                quizCard
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
-            } else {
-                summaryCard
-                    .transition(.scale(scale: 0.9).combined(with: .opacity))
+            Group {
+                if quizMode {
+                    quizCard
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                } else {
+                    summaryCard
+                        .transition(.scale(scale: 0.92).combined(with: .opacity))
+                }
             }
+            .scaleEffect(cardScale)
+            .opacity(cardOpacity)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.72)) {
-                appeared = true
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                cardScale = 1.0
+                cardOpacity = 1.0
             }
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.success)
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
     }
 
-    // MARK: - 成果卡
+    // MARK: - 成果卡（任务弹框同款浅色）
 
     private var summaryCard: some View {
         VStack(spacing: 0) {
+            header
+                .padding(.top, 22)
+                .padding(.horizontal, 22)
+
+            if !summary.words.isEmpty {
+                wordsSection
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+            }
+
+            if summary.rawTaskDone {
+                taskDoneRow
+                    .padding(.horizontal, 16)
+                    .padding(.top, summary.words.isEmpty ? 16 : 8)
+            }
+
+            ctaButtons
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 18)
+        }
+        .background(Color.appBackground, in: RoundedRectangle(cornerRadius: 24))
+        .overlay(alignment: .topTrailing) {
+            Button {
+                Analytics.track(.rawSummaryCta, params: ["action": "close"])
+                onClose()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.textSecondary)
+                    .frame(width: 30, height: 30)
+                    .background(Circle().fill(Color.white))
+            }
+            .padding(12)
+        }
+        .padding(.horizontal, 28)
+    }
+
+    private var header: some View {
+        HStack(spacing: 12) {
             Text("🎉")
-                .font(.system(size: 44))
-                .scaleEffect(appeared ? 1 : 0.3)
-                .padding(.top, 28)
+                .font(.system(size: 34))
 
-            // 大数字：本次分钟数
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("+\(max(1, summary.seconds / 60))")
-                    .font(.system(size: 56, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.white)
-                    .contentTransition(.numericText())
-                Text("分钟")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.8))
-            }
-            .padding(.top, 6)
-            .scaleEffect(appeared ? 1 : 0.6)
-
-            Text("真实语料听力")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.white.opacity(0.55))
-                .padding(.top, 2)
-
-            VStack(spacing: 12) {
-                if summary.wordsSaved > 0 {
-                    statRow(icon: "character.book.closed.fill",
-                            text: String(localized: "划过 \(summary.wordsSaved) 个生词"))
-                }
-                statRow(icon: "clock.fill",
-                        text: String(localized: "今日累计 \(max(1, summary.todayTotalSeconds / 60)) 分钟"))
-                if summary.streakDays > 0 {
-                    statRow(icon: "flame.fill",
-                            text: String(localized: "连续第 \(summary.streakDays) 天"),
-                            iconColor: .orange)
-                }
-                if summary.rawTaskDone {
-                    statRow(icon: "checkmark.circle.fill",
-                            text: String(localized: "今日任务「听 5 分钟真实播客」已完成"),
-                            iconColor: .green)
-                }
-            }
-            .padding(.top, 22)
-            .padding(.horizontal, 28)
-
-            VStack(spacing: 10) {
-                if quiz != nil {
-                    Button {
-                        Analytics.track(.rawSummaryCta, params: ["action": "quiz"])
-                        Analytics.track(.rawQuizStart, params: ["podcast_id": summary.podcastId])
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                            quizMode = true
-                        }
-                    } label: {
-                        Text("测测听懂了多少")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+            VStack(alignment: .leading, spacing: 3) {
+                Text("真实听力 +\(max(1, summary.seconds / 60)) 分钟")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(Color.textPrimary)
+                HStack(spacing: 4) {
+                    Text("今日累计 \(max(1, summary.todayTotalSeconds / 60)) 分钟")
+                    if summary.streakDays > 0 {
+                        Text("· 🔥 连续 \(summary.streakDays) 天")
                     }
                 }
-                Button {
-                    Analytics.track(.rawSummaryCta, params: ["action": "continue"])
-                    onContinueListening()
-                } label: {
-                    Text("继续听")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 46)
-                        .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+                .font(.system(size: 12.5))
+                .foregroundStyle(Color.textSecondary)
+            }
+            Spacer()
+        }
+    }
+
+    /// 本次学到的具体生词（词 + 释义逐条列出，不只报数字）
+    private var wordsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("本次学到 \(summary.words.count) 个生词")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color.textTertiary)
+                .padding(.leading, 6)
+
+            VStack(spacing: 6) {
+                ForEach(summary.words.prefix(Self.maxWordRows)) { item in
+                    HStack(spacing: 12) {
+                        Image(systemName: "character.book.closed.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.appPrimary)
+                            .frame(width: 32, height: 32)
+                            .background(Circle().fill(Color.primaryLight))
+
+                        Text(item.word)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Color.textPrimary)
+
+                        Spacer(minLength: 8)
+
+                        Text(item.translation)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.textSecondary)
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 9)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 14))
                 }
-                Button {
-                    Analytics.track(.rawSummaryCta, params: ["action": "close"])
-                    onClose()
-                } label: {
-                    Text("关闭")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
-                        .frame(height: 36)
+
+                if summary.words.count > Self.maxWordRows {
+                    Text("还有 \(summary.words.count - Self.maxWordRows) 个已入生词本")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.textTertiary)
+                        .padding(.top, 2)
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-            .padding(.bottom, 16)
-        }
-        .frame(maxWidth: 340)
-        .background(Color(hex: "1C1C22"), in: RoundedRectangle(cornerRadius: 26))
-        .overlay(
-            RoundedRectangle(cornerRadius: 26)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
-        .padding(.horizontal, 24)
-    }
-
-    private func statRow(icon: String, text: String, iconColor: Color = .appPrimary) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(iconColor)
-                .frame(width: 22)
-            Text(text)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.white.opacity(0.85))
-            Spacer(minLength: 0)
         }
     }
 
-    // MARK: - 理解题卡
+    /// 任务达成行（任务弹框已完成行同款）
+    private var taskDoneRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "waveform")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.success)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(Color.successLight))
+
+            Text("听 5 分钟真实播客")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.textPrimary)
+
+            Spacer()
+
+            HStack(spacing: 3) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 10, weight: .bold))
+                Text("已完成")
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .foregroundStyle(Color.success)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.successLight, in: Capsule())
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(.white, in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var ctaButtons: some View {
+        VStack(spacing: 8) {
+            if quiz != nil {
+                Button {
+                    Analytics.track(.rawSummaryCta, params: ["action": "quiz"])
+                    Analytics.track(.rawQuizStart, params: ["podcast_id": summary.podcastId])
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                        quizMode = true
+                    }
+                } label: {
+                    Text("测测听懂了多少")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
+                }
+            }
+            Button {
+                Analytics.track(.rawSummaryCta, params: ["action": "continue"])
+                onContinueListening()
+            } label: {
+                Text("继续听")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(quiz != nil ? Color.textSecondary : .white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: quiz != nil ? 44 : 48)
+                    .background(
+                        quiz != nil ? Color.white : Color.appPrimary,
+                        in: RoundedRectangle(cornerRadius: 14)
+                    )
+            }
+        }
+    }
+
+    // MARK: - 理解题卡（同套浅色）
 
     private var quizCard: some View {
         VStack(spacing: 0) {
@@ -233,13 +310,8 @@ struct RawSessionSummaryView: View {
                 quizQuestion(question)
             }
         }
-        .frame(maxWidth: 340)
-        .background(Color(hex: "1C1C22"), in: RoundedRectangle(cornerRadius: 26))
-        .overlay(
-            RoundedRectangle(cornerRadius: 26)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
-        .padding(.horizontal, 24)
+        .background(Color.appBackground, in: RoundedRectangle(cornerRadius: 24))
+        .padding(.horizontal, 28)
     }
 
     private var currentQuestion: RawQuizQuestion? {
@@ -249,32 +321,32 @@ struct RawSessionSummaryView: View {
 
     private func quizQuestion(_ question: RawQuizQuestion) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(String(localized: "第 \(questionIndex + 1)/\(quiz?.questions.count ?? 0) 题"))
+            Text("第 \(questionIndex + 1)/\(quiz?.questions.count ?? 0) 题")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.45))
-                .padding(.top, 24)
+                .foregroundStyle(Color.textTertiary)
+                .padding(.top, 22)
 
             Text(question.q)
                 .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 10)
+                .padding(.top, 8)
 
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 ForEach(question.options.indices, id: \.self) { idx in
                     optionButton(question: question, idx: idx)
                 }
             }
-            .padding(.top, 18)
+            .padding(.top, 16)
 
             // 答完显示解析 + 下一题
             if selectedOption != nil {
                 if let explain = question.explainText {
                     Text(explain)
                         .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.65))
+                        .foregroundStyle(Color.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 14)
+                        .padding(.top, 12)
                 }
                 Button {
                     advance()
@@ -286,11 +358,11 @@ struct RawSessionSummaryView: View {
                         .frame(height: 48)
                         .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
                 }
-                .padding(.top, 18)
+                .padding(.top, 16)
             }
         }
-        .padding(.horizontal, 22)
-        .padding(.bottom, 22)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 20)
     }
 
     private func optionButton(question: RawQuizQuestion, idx: Int) -> some View {
@@ -298,17 +370,17 @@ struct RawSessionSummaryView: View {
         let isCorrect = idx == question.answer
         let isSelected = selectedOption == idx
 
-        // 答后配色：正确项恒绿；选错的红；其余淡出
+        // 答后配色：正确项恒绿；选错的红；其余淡出（浅色系）
         let background: Color = {
-            guard answered else { return Color.white.opacity(0.08) }
-            if isCorrect { return Color.green.opacity(0.28) }
-            if isSelected { return Color.red.opacity(0.28) }
-            return Color.white.opacity(0.04)
+            guard answered else { return .white }
+            if isCorrect { return Color.successLight }
+            if isSelected { return Color.dangerLight }
+            return Color.white.opacity(0.5)
         }()
         let border: Color = {
-            guard answered else { return Color.white.opacity(0.12) }
-            if isCorrect { return Color.green.opacity(0.8) }
-            if isSelected { return Color.red.opacity(0.8) }
+            guard answered else { return Color.border }
+            if isCorrect { return Color.success }
+            if isSelected { return Color.danger }
             return Color.clear
         }()
 
@@ -326,21 +398,22 @@ struct RawSessionSummaryView: View {
         } label: {
             HStack(spacing: 10) {
                 Text(question.options[idx])
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.white.opacity(answered && !isCorrect && !isSelected ? 0.4 : 0.95))
+                    .font(.system(size: 14.5, weight: .medium))
+                    .foregroundStyle(answered && !isCorrect && !isSelected
+                                     ? Color.textTertiary : Color.textPrimary)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 if answered, isCorrect {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color.success)
                 } else if answered, isSelected {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.danger)
                 }
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 13)
+            .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(background, in: RoundedRectangle(cornerRadius: 13))
             .overlay(RoundedRectangle(cornerRadius: 13).stroke(border, lineWidth: 1.5))
@@ -376,18 +449,16 @@ struct RawSessionSummaryView: View {
         return VStack(spacing: 0) {
             Text(allCorrect ? "🏆" : "💪")
                 .font(.system(size: 44))
-                .padding(.top, 28)
+                .padding(.top, 26)
 
             Text("\(correctCount)/\(total)")
-                .font(.system(size: 48, weight: .heavy, design: .rounded))
-                .foregroundStyle(.white)
-                .padding(.top, 6)
+                .font(.system(size: 46, weight: .heavy, design: .rounded))
+                .foregroundStyle(Color.textPrimary)
+                .padding(.top, 4)
 
-            Text(allCorrect
-                 ? String(localized: "全对！你真的听懂了")
-                 : String(localized: "不错，明天再来一段"))
+            Text(allCorrect ? "全对！你真的听懂了" : "不错，明天再来一段")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.75))
+                .foregroundStyle(Color.textSecondary)
                 .padding(.top, 4)
 
             Button {
@@ -397,12 +468,12 @@ struct RawSessionSummaryView: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                    .frame(height: 48)
                     .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-            .padding(.bottom, 20)
+            .padding(.horizontal, 20)
+            .padding(.top, 22)
+            .padding(.bottom, 18)
         }
     }
 }
