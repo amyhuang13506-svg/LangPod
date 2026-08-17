@@ -20,6 +20,8 @@ from languages import LANGUAGES, contains_han, prompt_module, rejects_han, targe
 def check_text(text, lang, field="text", max_chars=None, allow_empty=False):
     """Generic per-field checks: emptiness, CJK leak, target-char ratio, length."""
     failures = []
+    if isinstance(text, list):  # GPT 偶发把 "3 sentences" 字段输出成数组
+        text = " ".join(str(x) for x in text)
     text = (text or "").strip()
     if not text:
         if not allow_empty:
@@ -30,7 +32,8 @@ def check_text(text, lang, field="text", max_chars=None, allow_empty=False):
     if "dot dot dot" in text or "..." in text:
         failures.append("%s: contains ellipsis placeholder: %r" % (field, text[:40]))
     alpha = [c for c in text if c.isalpha()]
-    if len(alpha) >= 4 and target_char_ratio(text, lang) < 0.5:
+    # 0.3 而非 0.5：合法英文术语可能占半行（讲解本来就夹读英文），见 translate_episode._qc_text
+    if len(alpha) >= 4 and target_char_ratio(text, lang) < 0.3:
         failures.append("%s: target-language char ratio too low: %r" % (field, text[:40]))
     if max_chars and len(text) > max_chars * 2:
         failures.append("%s: far over length limit (%d > 2x%d)" % (field, len(text), max_chars))

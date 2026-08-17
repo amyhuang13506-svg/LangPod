@@ -203,11 +203,32 @@ def localize_pattern_text(zh_pattern, lang, level):
         LANGUAGES[lang].get("prompt_lang", lang),
         getattr(pm, "PATTERN_SCENE_HINT", "식당 / 물건 빌리기"))
 
+    def _flatten(v):
+        # GPT 偶发把 "3 sentences" 类字段输出成数组 —— 拼回字符串
+        return " ".join(str(x) for x in v) if isinstance(v, list) else v
+
+    def _normalize_loc(loc):
+        if not isinstance(loc, dict):
+            return loc
+        for key in ("translation", "pronunciation_intro", "meaning",
+                    "scene_and_feeling", "scene"):
+            if key in loc:
+                loc[key] = _flatten(loc[key])
+        for ex in loc.get("examples") or []:
+            if isinstance(ex, dict) and "scene_prefix" in ex:
+                ex["scene_prefix"] = _flatten(ex["scene_prefix"])
+        for ex in loc.get("example_sentences") or []:
+            if isinstance(ex, dict):
+                for k in ("english", "translation"):
+                    if k in ex:
+                        ex[k] = _flatten(ex[k])
+        return loc
+
     messages = [{"role": "user", "content": prompt}]
     loc = None
     max_attempts = 3  # initial + 2 critique-guided retries
     for attempt in range(max_attempts):
-        loc = _call_gpt(messages)
+        loc = _normalize_loc(_call_gpt(messages))
         failures = check_pattern_localization(loc, skeleton, lang)
         if not failures:
             passed, issues = judge_pattern_localization(loc, skeleton["template"], lang)
