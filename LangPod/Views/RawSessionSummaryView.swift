@@ -302,6 +302,10 @@ struct RawSessionSummaryView: View {
 
     // MARK: - 理解题卡（同套浅色）
 
+    /// 答题全程卡片高度固定：题目/选项/解析/按钮各占恒定槽位，
+    /// 内容变化（作答、换题、看结果）时卡片不再变大变小。
+    private static let quizCardHeight: CGFloat = 460
+
     private var quizCard: some View {
         VStack(spacing: 0) {
             if showResult {
@@ -310,6 +314,7 @@ struct RawSessionSummaryView: View {
                 quizQuestion(question)
             }
         }
+        .frame(height: Self.quizCardHeight)
         .background(Color.appBackground, in: RoundedRectangle(cornerRadius: 24))
         .padding(.horizontal, 28)
     }
@@ -326,10 +331,12 @@ struct RawSessionSummaryView: View {
                 .foregroundStyle(Color.textTertiary)
                 .padding(.top, 22)
 
+            // 题干固定槽位：不同长度的题不推挤下方选项
             Text(question.q)
-                .font(.system(size: 17, weight: .bold))
+                .font(.system(size: 16, weight: .bold))
                 .foregroundStyle(Color.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(3)
+                .frame(maxWidth: .infinity, minHeight: 62, alignment: .topLeading)
                 .padding(.top, 8)
 
             VStack(spacing: 8) {
@@ -337,32 +344,34 @@ struct RawSessionSummaryView: View {
                     optionButton(question: question, idx: idx)
                 }
             }
-            .padding(.top, 16)
 
-            // 答完显示解析 + 下一题
-            if selectedOption != nil {
-                if let explain = question.explainText {
-                    Text(explain)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 12)
-                }
-                Button {
-                    advance()
-                } label: {
-                    Text(questionIndex + 1 >= (quiz?.questions.count ?? 0) ? "看结果" : "下一题")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
-                }
-                .padding(.top, 16)
+            Spacer(minLength: 6)
+
+            // 解析槽位恒定占位：未作答时透明，不改变布局
+            Text(selectedOption != nil ? (question.explainText ?? "") : " ")
+                .font(.system(size: 12.5))
+                .foregroundStyle(Color.textSecondary)
+                .lineLimit(3)
+                .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50, alignment: .topLeading)
+
+            // 按钮恒定占位：未作答时透明禁用
+            Button {
+                advance()
+            } label: {
+                Text(questionIndex + 1 >= (quiz?.questions.count ?? 0) ? "看结果" : "下一题")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
             }
+            .disabled(selectedOption == nil)
+            .opacity(selectedOption == nil ? 0 : 1)
+            .animation(.easeInOut(duration: 0.2), value: selectedOption == nil)
+            .padding(.top, 8)
         }
         .padding(.horizontal, 20)
-        .padding(.bottom, 20)
+        .padding(.bottom, 18)
     }
 
     private func optionButton(question: RawQuizQuestion, idx: Int) -> some View {
@@ -447,9 +456,10 @@ struct RawSessionSummaryView: View {
         let total = quiz?.questions.count ?? 0
         let allCorrect = correctCount == total
         return VStack(spacing: 0) {
+            Spacer()
+
             Text(allCorrect ? "🏆" : "💪")
                 .font(.system(size: 44))
-                .padding(.top, 26)
 
             Text("\(correctCount)/\(total)")
                 .font(.system(size: 46, weight: .heavy, design: .rounded))
@@ -460,6 +470,8 @@ struct RawSessionSummaryView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Color.textSecondary)
                 .padding(.top, 4)
+
+            Spacer()
 
             Button {
                 onClose()
@@ -472,7 +484,6 @@ struct RawSessionSummaryView: View {
                     .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
             }
             .padding(.horizontal, 20)
-            .padding(.top, 22)
             .padding(.bottom, 18)
         }
     }
