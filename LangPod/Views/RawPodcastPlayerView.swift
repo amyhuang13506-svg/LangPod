@@ -974,7 +974,8 @@ final class RawPlaybackSession {
            existing.isVideoMode == (wantsVideo && podcast.hasVideo == true) || !preferVideo {
             return existing
         }
-        controller?.tearDown()
+        let old = controller
+        old?.tearDown()
         controller = nil
         let urlStr = wantsVideo ? podcast.audioUrl : podcast.audioOnlyUrl
         guard let urlStr, let url = URL(string: urlStr) else { return nil }
@@ -983,6 +984,10 @@ final class RawPlaybackSession {
             podcast: podcast,
             isVideoMode: wantsVideo && podcast.hasVideo == true
         )
+        // 同一集换模式（听→看视频）：会话记账跨 controller 延续，结算卡计时不清零
+        if let old, old.podcast.id == podcast.id {
+            c.adoptSessionAccounting(from: old)
+        }
         controller = c
         return c
     }
@@ -1051,6 +1056,17 @@ final class RawAudioController {
         summarizedSeconds = listenAccumSeconds
         summarizedWordCount = sessionSavedWords.count
         return delta
+    }
+
+    /// 同一集「看视频」切模式会换 controller —— 新实例继承旧实例的会话记账，
+    /// 否则用户听了 3 分钟一点「看视频」，结算计时就被清零（2026-08-18 真机实测踩坑）。
+    func adoptSessionAccounting(from old: RawAudioController) {
+        guard old.podcast.id == podcast.id else { return }
+        listenAccumSeconds += old.listenAccumSeconds
+        sessionSavedWords = old.sessionSavedWords + sessionSavedWords
+        summarizedSeconds += old.summarizedSeconds
+        summarizedWordCount += old.summarizedWordCount
+        listenSent30s = listenSent30s || old.listenSent30s
     }
     private var listenSent30s = false
     private var listenLastPersisted: Double = 0
