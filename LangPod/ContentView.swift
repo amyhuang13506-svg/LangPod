@@ -17,6 +17,8 @@ struct ContentView: View {
     }
     @State private var taskPractice: TaskPracticeTarget?
     @State private var taskLesson: LessonOpenTarget?
+    /// 续看推送深链拉起的原声（raw:{id}），直接从 ContentView 全屏 present
+    @State private var pushRawPodcast: RawPodcast?
 
     var body: some View {
         if dataStore.hasCompletedOnboarding {
@@ -73,6 +75,17 @@ struct ContentView: View {
                 guard let raw = note.userInfo?["type"] as? String,
                       let type = DailyTaskType(rawValue: raw) else { return }
                 handleTaskDeepLink(type)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openRawPodcastFromPush)) { note in
+                guard let pid = note.userInfo?["podcast_id"] as? String, !pid.isEmpty else { return }
+                if let podcast = dataStore.rawPodcasts.first(where: { $0.id == pid }) {
+                    pushRawPodcast = podcast   // 播放器自带 raw_pos_ 续播，打开即接上次位置
+                } else {
+                    selectedTab = 0            // 内容已下架 → 退化为回首页，不白屏
+                }
+            }
+            .fullScreenCover(item: $pushRawPodcast) { podcast in
+                RawPodcastPlayerView(podcast: podcast)
             }
             .fullScreenCover(item: $taskPractice) { target in
                 switch target {

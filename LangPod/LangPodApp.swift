@@ -485,6 +485,22 @@ struct LangPodApp: App {
             .first
         let todayCard = lessonStore.todayCard   // (item, country)，仅当 today.json 日期是今天
 
+        // 续看候选：最近 3 天看过、进度 5%-85%、剩余 ≥3 分钟的最近一条
+        // （rawPodcastHistory 新的在前，命中即停）。进度从 raw_pos_ 持久化里读。
+        var resume: (id: String, title: String, remainMinutes: Int)?
+        let threeDaysAgo = Date().addingTimeInterval(-3 * 86400)
+        for rec in dataStore.rawPodcastHistory where rec.listenedAt > threeDaysAgo {
+            let pos = RawAudioController.savedPosition(for: rec.podcastId)
+            let dur = Double(rec.durationSeconds)
+            guard dur > 0, pos > 0 else { continue }
+            let progress = pos / dur
+            let remaining = dur - pos
+            if progress >= 0.05, progress <= 0.85, remaining >= 180 {
+                resume = (rec.podcastId, rec.title, Int((remaining / 60).rounded(.up)))
+                break
+            }
+        }
+
         return NotificationContext(
             streakDays: dataStore.streakDays,
             lastListenDate: dataStore.lastListenDate,
@@ -503,7 +519,10 @@ struct LangPodApp: App {
             todayLessonTitle: todayCard?.item.titleTranslation,
             todayLessonCountryTranslation: todayCard?.country.nameTranslation,
             todayLessonFlag: todayCard?.country.flag,
-            todayLessonWordCount: todayCard?.item.wordCount
+            todayLessonWordCount: todayCard?.item.wordCount,
+            resumePodcastId: resume?.id,
+            resumePodcastTitle: resume?.title,
+            resumeRemainingMinutes: resume?.remainMinutes
         )
     }
 }

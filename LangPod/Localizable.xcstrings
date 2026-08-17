@@ -19453,6 +19453,86 @@
           }
         }
       }
+    },
+    "看了一半的视频还在等你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your half-watched video is waiting"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu video a medio ver te espera"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "途中まで見た動画が待っています"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "보다 만 영상이 기다리고 있어요"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seu vídeo pela metade está esperando"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看了一半的影片還在等你"
+          }
+        }
+      }
+    },
+    "《%@》还剩 %lld 分钟，今天把它看完？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” has %lld min left — finish it today?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» tiene %lld min restantes, ¿lo terminas hoy?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」残り%lld分、今日見終えませんか？"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'%@' %lld분 남았어요. 오늘 마저 볼까요?"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” tem %lld min restantes — termina hoje?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "《%@》還剩 %lld 分鐘，今天把它看完？"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
