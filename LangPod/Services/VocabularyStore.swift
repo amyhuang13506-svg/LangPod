@@ -80,15 +80,23 @@ class VocabularyStore {
             defer { relocalizeInFlight = false }
             // 注意不能用递归续批 —— inFlight 要到 Task 结束才复位，递归调用会被 guard 挡掉
             var remaining = pending
+            var failures = 0
             while !remaining.isEmpty {
                 let batch = Array(remaining.prefix(80))
-                remaining.removeFirst(batch.count)
-                guard let result = await GlossRelocalizer.translate(batch, to: lang) else { break }
-                for (word, gloss) in result {
-                    relocalized[word.lowercased()] = gloss
+                if let result = await GlossRelocalizer.translate(batch, to: lang) {
+                    remaining.removeFirst(batch.count)
+                    failures = 0
+                    for (word, gloss) in result {
+                        relocalized[word.lowercased()] = gloss
+                    }
+                    persistRelocalized()
+                    relocalizationRevision += 1
+                } else {
+                    // 代理偶发抖动：退避重试，连败 3 次放弃（进词汇页/游戏会再触发）
+                    failures += 1
+                    if failures >= 3 { break }
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
                 }
-                persistRelocalized()
-                relocalizationRevision += 1
             }
         }
     }

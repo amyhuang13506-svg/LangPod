@@ -33,6 +33,7 @@ struct MySentencesView: View {
                 bottomCTAs
             }
         }
+        .onAppear { sentenceStore.relocalizeIfNeeded() }   // 换语言后补触发译文重翻译
         .fullScreenCover(isPresented: $showPractice) {
             SentencePracticeView()
                 .environment(sentenceStore)

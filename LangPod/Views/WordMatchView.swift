@@ -42,6 +42,7 @@ struct WordMatchView: View {
             }
         }
         .onAppear {
+            store.relocalizeIfNeeded()   // 换语言后若批量翻译曾失败，进游戏补一枪
             if store.words.count >= wordsPerRound {
                 startGame()
             }

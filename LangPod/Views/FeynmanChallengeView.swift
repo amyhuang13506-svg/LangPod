@@ -45,7 +45,10 @@ struct FeynmanChallengeView: View {
                 challengeContent
             }
         }
-        .onAppear { startGame() }
+        .onAppear {
+            store.relocalizeIfNeeded()   // 换语言后若批量翻译曾失败，进游戏补一枪
+            startGame()
+        }
         // 重翻译批量到账 → 刷题卡释义/例句翻译为当前语言(判定走英文原句,词面可安全热替)
         .onChange(of: store.relocalizationRevision) {
             challengeWords = challengeWords.map { store.displayWord($0) }

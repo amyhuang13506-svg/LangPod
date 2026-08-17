@@ -89,25 +89,38 @@ class SentenceStore {
             defer { relocalizeInFlight = false }
             // 注意不能用递归续批 —— inFlight 要到 Task 结束才复位，递归调用会被 guard 挡掉
             var remaining = pending
+            var failures = 0
             while !remaining.isEmpty {
                 let batch = Array(remaining.prefix(60))
-                remaining.removeFirst(batch.count)
-                guard let result = await SentenceRelocalizer.translate(
-                    batch.map(\.english), to: lang) else { break }
-                for (en, tr) in result {
-                    relocalized[en.lowercased()] = tr
+                if let result = await SentenceRelocalizer.translate(batch.map(\.english), to: lang) {
+                    remaining.removeFirst(batch.count)
+                    failures = 0
+                    for (en, tr) in result {
+                        relocalized[en.lowercased()] = tr
+                    }
+                    persistRelocalized()
+                } else {
+                    failures += 1
+                    if failures >= 3 { break }
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
                 }
-                persistRelocalized()
             }
             var remainingLabels = pendingLabels
+            failures = 0
             while !remainingLabels.isEmpty {
                 let batch = Array(remainingLabels.prefix(40))
-                remainingLabels.removeFirst(batch.count)
-                guard let result = await LabelRelocalizer.translate(batch, to: lang) else { break }
-                for (zh, tr) in result {
-                    relocalizedLabels[zh] = tr
+                if let result = await LabelRelocalizer.translate(batch, to: lang) {
+                    remainingLabels.removeFirst(batch.count)
+                    failures = 0
+                    for (zh, tr) in result {
+                        relocalizedLabels[zh] = tr
+                    }
+                    persistRelocalized()
+                } else {
+                    failures += 1
+                    if failures >= 3 { break }
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
                 }
-                persistRelocalized()
             }
         }
     }

@@ -45,6 +45,7 @@ struct MyVocabularyView: View {
                     .background(Color.appBackground)
             }
         }
+        .onAppear { store.relocalizeIfNeeded() }   // 换语言后补触发释义重翻译
         .sheet(isPresented: $showPaywall) {
             PaywallView()
                 .environment(subscriptionManager)
