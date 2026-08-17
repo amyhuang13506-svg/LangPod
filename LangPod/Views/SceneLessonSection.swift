@@ -134,7 +134,7 @@ struct LessonCoverCard: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Color.textPrimary)
                         .lineLimit(1)
-                    Text("\(item.wordCount) 词\(free ? " · 免费" : "")")
+                    Text(free ? "\(item.wordCount) 词 · 免费" : "\(item.wordCount) 词")
                         .font(.system(size: 11))
                         .foregroundColor(free ? Color.success : Color.textTertiary)
                 }
