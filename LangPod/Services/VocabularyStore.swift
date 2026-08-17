@@ -29,6 +29,8 @@ class VocabularyStore {
     }
 
     private var relocalized: [String: RelocalizedGloss] = [:]
+    /// 每落一批重翻译 +1 —— 游戏视图据此把已快照的词面刷成当前语言
+    private(set) var relocalizationRevision = 0
     private var relocalizeInFlight = false
     private var relocalizedKey: String { "relocalized_\(ContentLanguage.current.rawValue)" }
 
@@ -86,6 +88,7 @@ class VocabularyStore {
                     relocalized[word.lowercased()] = gloss
                 }
                 persistRelocalized()
+                relocalizationRevision += 1
             }
         }
     }

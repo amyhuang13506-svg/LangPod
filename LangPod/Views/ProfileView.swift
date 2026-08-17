@@ -122,8 +122,10 @@ struct ProfileView: View {
                         .foregroundStyle(Color.textQuaternary)
                 }
 
-                HStack(spacing: 8) {
-                    ForEach(plan.chips, id: \.self) { PlanChip($0) }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(plan.chips, id: \.self) { PlanChip($0) }
+                    }
                 }
 
                 PlanProgressBar(activeDays: dataStore.activeDays)
@@ -473,13 +475,13 @@ struct ProfileView: View {
                 })
             }
             divider
-            if let privacyURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/privacy.html") {
+            if let privacyURL = ContentLanguage.legalURL("privacy") {
                 Link(destination: privacyURL) {
                     menuRow(icon: "shield", iconColor: "94A3B8", title: String(localized: "隐私政策"))
                 }
             }
             divider
-            if let termsURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/terms.html") {
+            if let termsURL = ContentLanguage.legalURL("terms") {
                 Link(destination: termsURL) {
                     menuRow(icon: "doc.text", iconColor: "94A3B8", title: String(localized: "用户协议"))
                 }

@@ -587,7 +587,7 @@ struct LegacyPaywallView: View {
 
                 Spacer()
 
-                if let termsURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/terms.html") {
+                if let termsURL = ContentLanguage.legalURL("terms") {
                     Link("使用条款", destination: termsURL)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textTertiary)
@@ -595,7 +595,7 @@ struct LegacyPaywallView: View {
                 Text("·")
                     .font(.system(size: 11))
                     .foregroundStyle(Color.textQuaternary)
-                if let privacyURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/privacy.html") {
+                if let privacyURL = ContentLanguage.legalURL("privacy") {
                     Link("隐私政策", destination: privacyURL)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textTertiary)

@@ -25,6 +25,8 @@ struct PlanChip: View {
         Text(text)
             .font(.system(size: 13, weight: .medium))
             .foregroundStyle(Color.appPrimary)
+            .lineLimit(1)
+            .fixedSize()   // es/pt 文案较长，禁止胶囊内折行（容器需可横滑）
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Color.primaryLight, in: Capsule())

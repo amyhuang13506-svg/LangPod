@@ -46,6 +46,13 @@ struct WordMatchView: View {
                 startGame()
             }
         }
+        // 换语言后的重翻译批量到账 → 本轮还没配对过就把词面刷成当前语言
+        // (配对判定按 translation 字符串比对，中途改词面会破坏已配对状态，故仅空局刷)
+        .onChange(of: store.relocalizationRevision) {
+            guard matchedPairs.isEmpty else { return }
+            currentWords = currentWords.map { store.displayWord($0) }
+            shuffledTranslations = currentWords.map(\.translation).shuffled()
+        }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
                 .environment(subscriptionManager)

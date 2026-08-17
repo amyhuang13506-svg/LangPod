@@ -16,9 +16,9 @@ enum ContentLanguage: String, CaseIterable, Codable, Sendable {
 
     /// 已上线内容的语言。未上线语言即使命中系统语言也回落 zh，
     /// 避免 App 去请求 OSS 上还不存在的 `_xx` 文件。
-    /// 每上线一门语言，把它加进来即可。
-    /// ko: 2026-08-14 起 OSS 有 index_ko/episode_ko（存量回填进行中）。
-    static let enabled: Set<ContentLanguage> = [.zh, .ko]
+    /// 2026-08-17 五语齐发：表达库/情景课/原声已全语言回填，
+    /// episodes 各语言 index 由服务器批量回填产出（上架前确认非空）。
+    static let enabled: Set<ContentLanguage> = Set(ContentLanguage.allCases)
 
     /// 启动时解析一次即可。
     static let current: ContentLanguage = resolve(from: Locale.preferredLanguages)
@@ -65,6 +65,12 @@ enum ContentLanguage: String, CaseIterable, Codable, Sendable {
         case .es: "Spanish (Latin American)"
         case .ptBR: "Brazilian Portuguese"
         }
+    }
+
+    /// 法律页(GitHub Pages)按语言分发:zh 用原始文件,其余加 _{lang} 后缀。
+    static func legalURL(_ name: String) -> URL? {
+        let suffix = current == .zh ? "" : "_\(current.rawValue)"
+        return URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/\(name)\(suffix).html")
     }
 
     /// GPT 输出里出现汉字是否视为「中文串漏」直接拒收。
