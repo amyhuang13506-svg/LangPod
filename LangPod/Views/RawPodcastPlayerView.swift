@@ -33,8 +33,6 @@ struct RawPodcastPlayerView: View {
 
     /// 结算卡触发阈值：本次会话 ≥3 分钟才弹（低于直接退，不打扰）
     private static let summaryThresholdSeconds = 180
-    /// 理解题门槛：听满 5 分钟才出「测测听懂了多少」（听太少答不了）
-    private static let quizThresholdSeconds = 300
     /// 当天首次达标退出弹大卡，其后降级轻量 toast
     private static let summaryLastDayKey = "rawSummaryLastDay"
 
@@ -160,7 +158,7 @@ struct RawPodcastPlayerView: View {
             if let summary = sessionSummary {
                 RawSessionSummaryView(
                     summary: summary,
-                    quiz: summary.seconds >= Self.quizThresholdSeconds ? summaryQuiz : nil,
+                    quiz: summaryQuiz,
                     onContinueListening: {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                             sessionSummary = nil
@@ -225,8 +223,8 @@ struct RawPodcastPlayerView: View {
         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
             sessionSummary = summary
         }
-        // 听满 5 分钟才值得出题：此刻才去拉 quiz.json（404 = 老内容没题，CTA 静默不出现）
-        if delta.seconds >= Self.quizThresholdSeconds, summaryQuiz == nil {
+        // 兜底再拉一次（正常在 loadTranscriptIfNeeded 已预取；404 = 没题，CTA 静默不出现）
+        if summaryQuiz == nil {
             Task {
                 let quiz = await RawQuizLoader.fetch(transcriptUrl: podcast.transcriptUrl)
                 await MainActor.run { summaryQuiz = quiz }
@@ -352,6 +350,10 @@ struct RawPodcastPlayerView: View {
         // 并行拉预翻译词典：用户点词查询走本地查表，0 GPT 延迟
         if preloadedWords == nil {
             preloadedWords = await APIService.shared.fetchPodcastWords(transcriptUrl: url, podcastId: podcast.id)
+        }
+        // 预取理解题（几 KB），结算卡出现时 CTA 直接就位，不用等网络
+        if summaryQuiz == nil {
+            summaryQuiz = await RawQuizLoader.fetch(transcriptUrl: url)
         }
     }
 
