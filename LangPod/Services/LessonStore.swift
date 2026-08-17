@@ -84,7 +84,7 @@ class LessonStore {
     /// 伪国家 daily 的元数据：详情页发音口音固定美音。
     /// ⚠️ 不进 countries.json（老版本会把它当国家渲染），App 端直接引用这个常量。
     static let themeCountry = LessonCountry(
-        id: "daily", nameZh: "日常词汇", flag: "📖", accent: "en-US", lessonCount: 0
+        id: "daily", nameTranslation: String(localized: "日常词汇"), flag: "📖", accent: "en-US", lessonCount: 0
     )
 
     /// 全局今日每日课（跨国家，独立于所选国家），来自 lessons/today.json
@@ -239,12 +239,12 @@ class LessonStore {
 
     /// 主题大类 chips（id + 中文名）：从 index 内容派生，按固定产品顺序；
     /// 目录之外的新大类兜底追加，pipeline 加类不用发版。
-    var themeCategories: [(id: String, zh: String)] {
+    var themeCategories: [(id: String, translation: String)] {
         var zhById: [String: String] = [:]
         for lesson in themeLessons where zhById[lesson.category] == nil {
-            zhById[lesson.category] = lesson.categoryZh
+            zhById[lesson.category] = lesson.categoryTranslation
         }
-        var result: [(id: String, zh: String)] = []
+        var result: [(id: String, translation: String)] = []
         for id in Self.themeCategoryOrder {
             if let zh = zhById[id] { result.append((id, zh)) }
         }
@@ -284,11 +284,13 @@ class LessonStore {
         let seed = Self.dailyShuffleSeed()
         let order = Self.categoryOrder
 
-        var groups: [String: [SceneLessonIndexItem]] = [:]   // key = categoryZh
-        var enKey: [String: String] = [:]                    // categoryZh -> category(en)
+        // Group by language-neutral en slug (display names may collide across
+        // languages / duplicate within one), then map to localized name at the end.
+        var groups: [String: [SceneLessonIndexItem]] = [:]   // key = category (en slug)
+        var displayName: [String: String] = [:]              // category(en) -> localized name
         for lesson in lessons {
-            groups[lesson.categoryZh, default: []].append(lesson)
-            enKey[lesson.categoryZh] = lesson.category
+            groups[lesson.category, default: []].append(lesson)
+            displayName[lesson.category] = lesson.categoryTranslation
         }
         // 分类内排序优先级：今日每日课 0 → 免费样本 1 → 其它 2
         func rank(_ i: SceneLessonIndexItem) -> Int {
@@ -297,17 +299,17 @@ class LessonStore {
             return 2
         }
         return groups.keys.sorted { a, b in
-            let ia = order.firstIndex(of: enKey[a] ?? "") ?? order.count
-            let ib = order.firstIndex(of: enKey[b] ?? "") ?? order.count
+            let ia = order.firstIndex(of: a) ?? order.count
+            let ib = order.firstIndex(of: b) ?? order.count
             if ia != ib { return ia < ib }
-            return a < b
+            return (displayName[a] ?? a) < (displayName[b] ?? b)
         }.map { cat in
             let items = (groups[cat] ?? []).sorted { a, b in
                 let ra = rank(a), rb = rank(b)
                 if ra != rb { return ra < rb }
                 return Self.stableHash("\(a.id)|\(seed)") < Self.stableHash("\(b.id)|\(seed)")
             }
-            return (cat, items)
+            return (displayName[cat] ?? cat, items)
         }
     }
 

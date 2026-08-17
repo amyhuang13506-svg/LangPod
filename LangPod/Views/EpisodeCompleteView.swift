@@ -250,7 +250,7 @@ struct EpisodeCompleteView: View {
                 .foregroundStyle(Color.textPrimary)
                 .lineLimit(1)
 
-            Text(pattern.translationZh)
+            Text(pattern.translation)
                 .font(.system(size: 13))
                 .foregroundStyle(Color(hex: "14B8A6"))
 
@@ -369,11 +369,11 @@ struct EpisodeCompleteView: View {
 
     private var statsRow: some View {
         HStack(spacing: 0) {
-            statItem(value: "+\(episode.vocabulary.count)", label: "新词", color: Color.appPrimary)
+            statItem(value: "+\(episode.vocabulary.count)", label: String(localized: "新词"), color: Color.appPrimary)
             divider
-            statItem(value: "\(vocabularyStore.totalCount)", label: "累计", color: Color.textPrimary)
+            statItem(value: "\(vocabularyStore.totalCount)", label: String(localized: "累计"), color: Color.textPrimary)
             divider
-            statItem(value: "🔥\(dataStore.streakDays)天", label: "连续", color: Color.warning)
+            statItem(value: String(localized: "🔥\(dataStore.streakDays)天"), label: String(localized: "连续"), color: Color.warning)
             divider
             statItem(value: levelProgressText, label: levelProgressLabel, color: Color.appPrimary)
         }
@@ -406,14 +406,14 @@ struct EpisodeCompleteView: View {
     private var levelProgressText: String {
         if dataStore.listeningLevel.next != nil,
            let remaining = dataStore.listeningLevel.episodesUntilNext(current: dataStore.episodesCompleted) {
-            return "差\(remaining)集"
+            return String(localized: "差\(remaining)集")
         }
-        return "已满级"
+        return String(localized: "已满级")
     }
 
     private var levelProgressLabel: String {
         if let next = dataStore.listeningLevel.next {
-            return "升Lv.\(next.rawValue)"
+            return String(localized: "升Lv.\(next.rawValue)")
         }
         return "Lv.5"
     }
@@ -432,7 +432,7 @@ struct EpisodeCompleteView: View {
                     .foregroundStyle(Color.textTertiary)
             }
 
-            Text(word.translationZh)
+            Text(word.translation)
                 .font(.system(size: 13))
                 .foregroundStyle(Color.appPrimary)
 

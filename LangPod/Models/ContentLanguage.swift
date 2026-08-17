@@ -1,0 +1,84 @@
+import Foundation
+
+/// App 的「内容语言」：决定 OSS 取哪套衍生文件（`index.json` vs `index_ko.json`）、
+/// 词汇快照的语言标记、GPT 点词词典的目标语言。
+///
+/// UI 语言与内容语言同源，都由系统语言推导（iOS 切系统语言会重启 App，
+/// 因此启动时解析一次、进程内不变是安全的）。UI 侧无需引用本类型——
+/// String Catalog 自带 per-locale fallback。
+enum ContentLanguage: String, CaseIterable, Codable, Sendable {
+    case zh        // legacy schema（中文，文件无后缀，字段 *_zh）
+    case zhHant = "zh-Hant"  // 繁中：文本繁化，翻译音频复用 zh
+    case ko
+    case ja
+    case es
+    case ptBR = "pt-BR"
+
+    /// 已上线内容的语言。未上线语言即使命中系统语言也回落 zh，
+    /// 避免 App 去请求 OSS 上还不存在的 `_xx` 文件。
+    /// 2026-08-17 五语齐发：表达库/情景课/原声已全语言回填，
+    /// episodes 各语言 index 由服务器批量回填产出（上架前确认非空）。
+    static let enabled: Set<ContentLanguage> = Set(ContentLanguage.allCases)
+
+    /// 启动时解析一次即可。
+    static let current: ContentLanguage = resolve(from: Locale.preferredLanguages)
+
+    /// 扫全量 preferredLanguages（不是只看第一个）：
+    /// 手机用英文 UI 的韩国用户，ko 通常也在偏好列表里，能被正确命中。
+    /// 其他系统语言 fallback zh（翻译音轨是 5 遍流程的第 4 遍，没有"无翻译模式"，
+    /// 且 zh 内容目录最全）。
+    static func resolve(from preferred: [String]) -> ContentLanguage {
+        for id in preferred {
+            let locale = Locale(identifier: id)
+            guard let code = locale.language.languageCode?.identifier else { continue }
+            let candidate: ContentLanguage?
+            switch code {
+            case "zh":
+                // 繁体判定：script Hant（zh-TW / zh-HK / zh-Hant-*）
+                candidate = locale.language.script?.identifier == "Hant" ? .zhHant : .zh
+            case "ko": candidate = .ko
+            case "ja": candidate = .ja
+            case "es": candidate = .es
+            case "pt": candidate = .ptBR
+            default: candidate = nil
+            }
+            if let c = candidate, Self.enabled.contains(c) { return c }
+        }
+        return .zh
+    }
+
+    /// OSS 衍生文件名后缀："" / "_ko" / "_ja"…（zh 保持老文件名，兼容线上老版本）
+    var fileSuffix: String {
+        self == .zh ? "" : "_\(rawValue)"
+    }
+
+    /// 本地缓存文件名后缀，规则同上（zh 老缓存文件名不变，升级无感）。
+    var cacheSuffix: String { fileSuffix }
+
+    /// GPT prompt 里的语言名（重翻译/词典共用一处，防各处 switch 漂移）。
+    var englishName: String {
+        switch self {
+        case .zh: "Chinese (Simplified)"
+        case .zhHant: "Traditional Chinese (Taiwan)"
+        case .ko: "Korean"
+        case .ja: "Japanese"
+        case .es: "Spanish (Latin American)"
+        case .ptBR: "Brazilian Portuguese"
+        }
+    }
+
+    /// 法律页(GitHub Pages)按语言分发:zh 用原始文件,其余加 _{lang} 后缀。
+    static func legalURL(_ name: String) -> URL? {
+        let suffix = current == .zh ? "" : "_\(current.rawValue)"
+        return URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/\(name)\(suffix).html")
+    }
+
+    /// GPT 输出里出现汉字是否视为「中文串漏」直接拒收。
+    /// ja/zh/zh-Hant 的正常文本本身含汉字，不能用这个检查。
+    var rejectsHanInOutput: Bool {
+        switch self {
+        case .ko, .es, .ptBR: true
+        case .zh, .zhHant, .ja: false
+        }
+    }
+}

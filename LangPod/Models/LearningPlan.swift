@@ -31,12 +31,12 @@ enum LearningGoal: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .travel: return "出国旅行"
-        case .study: return "留学生活"
-        case .living: return "在国外生活"
-        case .work: return "工作需要"
-        case .video: return "刷懂英文原声视频"
-        case .selfGrowth: return "提升自己"
+        case .travel: return String(localized: "出国旅行")
+        case .study: return String(localized: "留学生活")
+        case .living: return String(localized: "在国外生活")
+        case .work: return String(localized: "工作需要")
+        case .video: return String(localized: "刷懂英文原声视频")
+        case .selfGrowth: return String(localized: "提升自己")
         }
     }
 
@@ -65,12 +65,12 @@ enum LearningGoal: String, CaseIterable {
     /// 计划页里 90 天效果预期的文案
     var outcome90d: String {
         switch self {
-        case .travel: return "旅行常用场景对话不慌不忙，点单问路都能自己来"
-        case .study: return "课堂内外的日常交流跟得上，社交场合敢开口"
-        case .living: return "办事、就医、社交都能自己搞定，不用再靠翻译软件"
-        case .work: return "职场高频表达张口就来，开会邮件不再卡壳"
-        case .video: return "不开字幕也能跟上英文原声播客和视频"
-        case .selfGrowth: return "英语听力形成条件反射，把'学过'变成'用得上'"
+        case .travel: return String(localized: "旅行常用场景对话不慌不忙，点单问路都能自己来")
+        case .study: return String(localized: "课堂内外的日常交流跟得上，社交场合敢开口")
+        case .living: return String(localized: "办事、就医、社交都能自己搞定，不用再靠翻译软件")
+        case .work: return String(localized: "职场高频表达张口就来，开会邮件不再卡壳")
+        case .video: return String(localized: "不开字幕也能跟上英文原声播客和视频")
+        case .selfGrowth: return String(localized: "英语听力形成条件反射，把'学过'变成'用得上'")
         }
     }
 }
@@ -109,7 +109,7 @@ struct LearningPlan {
 
     /// 计划摘要 chips：级别 · 每天 N 分钟 · 目标（老用户无目标时只有前两个）
     var chips: [String] {
-        var result = [level.tabName, "每天 \(dailyMinutes) 分钟"]
+        var result = [level.tabName, String(localized: "每天 \(dailyMinutes) 分钟")]
         if let goal { result.append(goal.label) }
         return result
     }
@@ -127,17 +127,17 @@ struct LearningPlan {
         let title: String
         let desc: String
         var id: Int { day }
-        var dayLabel: String { "第 \(day) 天" }
+        var dayLabel: String { String(localized: "第 \(day) 天") }
     }
 
     /// 场景课堂一行的说明，跟随用户目标侧重
     private var lessonDetailText: String {
         switch goal {
-        case .travel: return "机场、酒店、餐厅，旅行场景课优先安排"
-        case .study: return "校园、社交、日常琐事，留学场景课优先安排"
-        case .living: return "租房、看病、办事，海外生活场景课优先安排"
-        case .work: return "职场沟通高频场景课优先安排"
-        default: return "点单、租房、看病，按真实场景分类的实用课"
+        case .travel: return String(localized: "机场、酒店、餐厅，旅行场景课优先安排")
+        case .study: return String(localized: "校园、社交、日常琐事，留学场景课优先安排")
+        case .living: return String(localized: "租房、看病、办事，海外生活场景课优先安排")
+        case .work: return String(localized: "职场沟通高频场景课优先安排")
+        default: return String(localized: "点单、租房、看病，按真实场景分类的实用课")
         }
     }
 
@@ -145,18 +145,18 @@ struct LearningPlan {
     var items: [Item] {
         var items: [Item] = [
             Item(icon: "headphones", colorHex: "3B82F6",
-                 title: "每天 1 集\(level.tabName)播客",
-                 detail: "英语 ×3 → 中文 ×1 → 英语 ×1，重复成本能"),
+                 title: String(localized: "每天 1 集\(level.tabName)播客"),
+                 detail: String(localized: "英语 ×3 → 中文 ×1 → 英语 ×1，重复成本能")),
             Item(icon: "text.bubble.fill", colorHex: "F59E0B",
-                 title: "高频句型讲解",
-                 detail: "从当天播客拆出来，讲透场景和语感"),
+                 title: String(localized: "高频句型讲解"),
+                 detail: String(localized: "从当天播客拆出来，讲透场景和语感")),
         ]
 
         let youtubeItem = Item(icon: "play.rectangle.fill", colorHex: "FF0000",
-                               title: "YouTube 原声播客",
-                               detail: "中英双语字幕，检验真实语速听力")
+                               title: String(localized: "YouTube 原声播客"),
+                               detail: String(localized: "中英双语字幕，检验真实语速听力"))
         let lessonItem = Item(icon: "graduationcap.fill", colorHex: "10B981",
-                              title: "出国场景课堂",
+                              title: String(localized: "出国场景课堂"),
                               detail: lessonDetailText)
 
         // 目标决定第三块的侧重；时间充裕（≥20 分钟）则两块都排进来
@@ -169,21 +169,21 @@ struct LearningPlan {
         }
 
         items.append(Item(icon: "flame.fill", colorHex: "F97316",
-                          title: "每日任务打卡",
-                          detail: "词汇 + 句型练习，连续打卡不断档"))
+                          title: String(localized: "每日任务打卡"),
+                          detail: String(localized: "词汇 + 句型练习，连续打卡不断档")))
         return items
     }
 
     /// 效果预期时间线。前三条固定，第 90 天跟随目标。
     var milestones: [Milestone] {
         [
-            Milestone(day: 7, title: "耳朵热起来",
-                      desc: "适应 5 遍精听的节奏，能从整句里抓到关键词，英语不再是一片模糊的背景音"),
-            Milestone(day: 21, title: "句型上口",
-                      desc: "高频句型开始形成条件反射，听到熟悉的场景，能直接反应出该说的那句话"),
-            Milestone(day: 30, title: "跟上对话",
-                      desc: "日常对话不用暂停回放也能跟上大意，敢在真实场景里开口回应"),
-            Milestone(day: 90, title: "真的用得上",
+            Milestone(day: 7, title: String(localized: "耳朵热起来"),
+                      desc: String(localized: "适应 5 遍精听的节奏，能从整句里抓到关键词，英语不再是一片模糊的背景音")),
+            Milestone(day: 21, title: String(localized: "句型上口"),
+                      desc: String(localized: "高频句型开始形成条件反射，听到熟悉的场景，能直接反应出该说的那句话")),
+            Milestone(day: 30, title: String(localized: "跟上对话"),
+                      desc: String(localized: "日常对话不用暂停回放也能跟上大意，敢在真实场景里开口回应")),
+            Milestone(day: 90, title: String(localized: "真的用得上"),
                       desc: goal?.outcome90d ?? "英语听力形成条件反射，把'学过'变成'用得上'"),
         ]
     }

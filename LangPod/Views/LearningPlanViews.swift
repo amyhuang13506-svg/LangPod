@@ -25,6 +25,8 @@ struct PlanChip: View {
         Text(text)
             .font(.system(size: 13, weight: .medium))
             .foregroundStyle(Color.appPrimary)
+            .lineLimit(1)
+            .fixedSize()   // es/pt 文案较长，禁止胶囊内折行（容器需可横滑）
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Color.primaryLight, in: Capsule())
@@ -122,9 +124,9 @@ struct LearningPlanPage: View {
     private var progressCaption: String {
         if let next = plan.nextMilestone(activeDays: activeDays) {
             let remain = next.day - activeDays
-            return "累计活跃 \(activeDays) 天 · 还有 \(remain) 天到「\(next.title)」"
+            return String(localized: "累计活跃 \(activeDays) 天 · 还有 \(remain) 天到「\(next.title)」")
         }
-        return "累计活跃 \(activeDays) 天 · 90 天里程碑全部达成 🎉"
+        return String(localized: "累计活跃 \(activeDays) 天 · 90 天里程碑全部达成 🎉")
     }
 
     var body: some View {

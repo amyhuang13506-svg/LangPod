@@ -72,7 +72,7 @@ struct LessonDetailView: View {
             LessonWordCard(
                 word: word,
                 accent: country.accent,
-                lessonTitle: lesson?.titleZh ?? item.titleZh,
+                lessonTitle: lesson?.titleTranslation ?? item.titleTranslation,
                 locked: isLockedLesson,
                 onGated: {
                     // 关掉单词卡再弹付费墙，避免 sheet 叠 sheet 的模态冲突
@@ -118,7 +118,7 @@ struct LessonDetailView: View {
                 if !lesson.sentences.isEmpty {
                     sentencesSection(lesson.sentences)
                 }
-                if let tips = lesson.cultureTipsZh, !tips.isEmpty {
+                if let tips = lesson.cultureTips, !tips.isEmpty {
                     cultureTipsSection(tips)
                 }
                 // 滚到最后 = 学完
@@ -142,14 +142,14 @@ struct LessonDetailView: View {
                         .background(Circle().fill(Color.white))
                 }
                 Spacer()
-                Text("\(country.flag) \(country.nameZh)")
+                Text("\(country.flag) \(country.nameTranslation)")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(Color.textSecondary)
                     .padding(.horizontal, 10).padding(.vertical, 5)
                     .background(Capsule().fill(Color.white))
             }
             HStack(alignment: .center, spacing: 8) {
-                Text(lesson.titleZh)
+                Text(lesson.titleTranslation)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(Color.textPrimary)
                 if isLockedLesson {
@@ -175,7 +175,7 @@ struct LessonDetailView: View {
                     .foregroundColor(.white)
                     .frame(width: 22, height: 22)
                     .background(Circle().fill(Color.appPrimary))
-                Text(zone.nameZh)
+                Text(zone.nameTranslation)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(Color.textPrimary)
                 Text(zone.nameEn)
@@ -214,7 +214,7 @@ struct LessonDetailView: View {
                                     Text(word.word)
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(Color.textPrimary)
-                                    Text(word.translationZh)
+                                    Text(word.translation)
                                         .font(.system(size: 12))
                                         .foregroundColor(Color.textSecondary)
                                 }
@@ -276,7 +276,7 @@ struct LessonDetailView: View {
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(Color.textPrimary)
                             .multilineTextAlignment(.leading)
-                        Text(sentence.chinese)
+                        Text(sentence.translation)
                             .font(.system(size: 13))
                             .foregroundColor(Color.textSecondary)
                             .multilineTextAlignment(.leading)
@@ -296,10 +296,10 @@ struct LessonDetailView: View {
                 guard !saved, let lesson else { return }
                 let added = sentenceStore.add(SavedSentence(
                     english: sentence.english,
-                    chinese: sentence.chinese,
-                    scene: lesson.titleZh,
+                    translation: sentence.translation,
+                    scene: lesson.titleTranslation,
                     source: "lesson",
-                    sourceLabel: lesson.titleZh,
+                    sourceLabel: lesson.titleTranslation,
                     audioUrl: sentence.audio,
                     audioStart: nil,
                     audioEnd: nil,
@@ -437,7 +437,7 @@ struct LessonDetailView: View {
         Analytics.track(.lessonAddAll, params: [
             "lesson_id": lesson.id, "country": country.id, "added": "\(added)",
         ])
-        showToast(added > 0 ? "已加入 \(added) 个新词" : "这些词都已在单词本里")
+        showToast(added > 0 ? String(localized: "已加入 \(added) 个新词") : String(localized: "这些词都已在单词本里"))
         UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 
@@ -447,7 +447,7 @@ struct LessonDetailView: View {
         guard !isAdded(word) else { return }
         let added = vocabularyStore.addWord(word.asVocabularyItem, sourceLabel: "scene_lesson")
         UINotificationFeedbackGenerator().notificationOccurred(.success)
-        showToast(added ? "「\(word.word)」已加入单词本" : "「\(word.word)」已在单词本")
+        showToast(added ? String(localized: "「\(word.word)」已加入单词本") : String(localized: "「\(word.word)」已在单词本"))
     }
 
     private func showToast(_ text: String) {
@@ -607,7 +607,7 @@ struct LessonWordCard: View {
                 Text(word.phonetic)
                     .font(.system(size: 14))
                     .foregroundColor(Color.textTertiary)
-                Text(word.translationZh)
+                Text(word.translation)
                     .font(.system(size: 17, weight: .medium))
                     .foregroundColor(Color.textPrimary)
                 if !word.difficultyLabel.isEmpty {
@@ -639,7 +639,7 @@ struct LessonWordCard: View {
                                     .font(.system(size: 12))
                                     .foregroundColor(Color.appPrimary)
                             }
-                            if let zh = word.exampleZh {
+                            if let zh = word.exampleTranslation {
                                 Text(zh)
                                     .font(.system(size: 13))
                                     .foregroundColor(Color.textSecondary)
@@ -654,7 +654,7 @@ struct LessonWordCard: View {
                         guard !exampleSaved else { return }
                         let added = sentenceStore.add(SavedSentence(
                             english: word.example,
-                            chinese: word.exampleZh ?? "",
+                            translation: word.exampleTranslation ?? "",
                             scene: lessonTitle,
                             source: "lesson",
                             sourceLabel: lessonTitle,
@@ -791,7 +791,7 @@ struct LessonRolePlayView: View {
                 Text("模拟现场对话")
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(Color.textPrimary)
-                Text(lesson.titleZh)
+                Text(lesson.titleTranslation)
                     .font(.system(size: 11))
                     .foregroundStyle(Color.textTertiary)
             }
@@ -815,14 +815,14 @@ struct LessonRolePlayView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 5) {
                 Text("🎬")
-                Text(roleplay.setupZh)
+                Text(roleplay.setup)
                     .font(.system(size: 13))
                     .foregroundStyle(Color.bodyText)
                     .fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: 10) {
-                roleTag("你", roleplay.yourRoleZh, color: Color.appPrimary)
-                roleTag("对方", roleplay.otherRoleZh, color: Color.hardOrange)
+                roleTag("你", roleplay.yourRole, color: Color.appPrimary)
+                roleTag("对方", roleplay.otherRole, color: Color.hardOrange)
             }
         }
         .padding(12)
@@ -864,7 +864,7 @@ struct LessonRolePlayView: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(line.isYou ? .white : Color.textPrimary)
                         .multilineTextAlignment(.leading)
-                    Text(line.zh)
+                    Text(line.translation)
                         .font(.system(size: 12))
                         .foregroundStyle(line.isYou ? .white.opacity(0.85) : Color.textSecondary)
                         .multilineTextAlignment(.leading)

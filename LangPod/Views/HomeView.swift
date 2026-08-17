@@ -72,7 +72,7 @@ struct HomeView: View {
             .searchable(
                 text: $searchText,
                 placement: .navigationBarDrawer(displayMode: .always),
-                prompt: topTab == .home ? "搜索演讲 / 访谈" : "搜索每日播客 / 句型"
+                prompt: topTab == .home ? String(localized: "搜索演讲 / 访谈") : String(localized: "搜索每日播客 / 句型")
             )
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
@@ -160,7 +160,7 @@ struct HomeView: View {
         }()
         let subtitleText: String = {
             if case .pattern(_, _) = audioPlayer.currentPlayItem {
-                return "今日句型讲解"
+                return String(localized: "今日句型讲解")
             }
             return audioPlayer.phase.roundDisplay(isPro: subscriptionManager.isProUser)
         }()
@@ -308,11 +308,14 @@ struct HomeView: View {
     // MARK: - Level Tabs
 
     private var levelTabs: some View {
-        HStack(spacing: 8) {
-            ForEach(PodcastLevel.allCases, id: \.self) { level in
-                levelTab(level)
+        // 横滑防挤压：es/pt 的级别词较长（Principiante/Intermedio），
+        // 固定 HStack 会把文字压折行
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(PodcastLevel.allCases, id: \.self) { level in
+                    levelTab(level)
+                }
             }
-            Spacer()
         }
     }
 
@@ -336,6 +339,8 @@ struct HomeView: View {
                 Text(level.tabName)
                     .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
                     .foregroundStyle(isSelected ? .white : Color.textSecondary)
+                    .lineLimit(1)
+                    .fixedSize()
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
@@ -361,12 +366,12 @@ struct HomeView: View {
     private func nowPlayingBadge(for episode: Episode) -> String {
         // When a pattern is playing, show a different badge instead of "第 X/5 遍"
         if case .pattern = audioPlayer.currentPlayItem {
-            return "句型讲解"
+            return String(localized: "句型讲解")
         }
         if audioPlayer.currentEpisode?.id == episode.id {
             return audioPlayer.phase.roundDisplay(isPro: subscriptionManager.isProUser)
         }
-        return "第 1/\(subscriptionManager.isProUser ? 5 : 4) 遍"
+        return String(localized: "第 1/\(subscriptionManager.isProUser ? 5 : 4) 遍")
     }
 
     private var nowPlayingCard: some View {
@@ -548,7 +553,7 @@ struct HomeView: View {
 
         if !podcasts.isEmpty {
             RawPodcastSection(
-                title: "今日推荐",
+                title: String(localized: "今日推荐"),
                 podcasts: podcasts,
                 showSeeMore: false
             )
@@ -1073,7 +1078,7 @@ struct HomeView: View {
 
                     Spacer(minLength: 0)
 
-                    Text(pattern.translationZh)
+                    Text(pattern.translation)
                         .font(.system(size: 11))
                         .foregroundStyle(Color(white: 0.32))
                         .lineLimit(1)
@@ -1137,7 +1142,7 @@ extension HomeView {
         } else {
             VStack(alignment: .leading, spacing: 24) {
                 if !podcastMatches.isEmpty {
-                    searchGroup(title: "原声 · 演讲", count: podcastMatches.count) {
+                    searchGroup(title: String(localized: "原声 · 演讲"), count: podcastMatches.count) {
                         VStack(spacing: 8) {
                             ForEach(podcastMatches) { p in
                                 searchRawPodcastRow(p)
@@ -1146,7 +1151,7 @@ extension HomeView {
                     }
                 }
                 if !episodeMatches.isEmpty {
-                    searchGroup(title: "每日学习", count: episodeMatches.count) {
+                    searchGroup(title: String(localized: "每日学习"), count: episodeMatches.count) {
                         VStack(spacing: 8) {
                             ForEach(episodeMatches) { ep in
                                 episodeRow(ep)
@@ -1155,7 +1160,7 @@ extension HomeView {
                     }
                 }
                 if !patternMatches.isEmpty {
-                    searchGroup(title: "句型讲解", count: patternMatches.count) {
+                    searchGroup(title: String(localized: "句型讲解"), count: patternMatches.count) {
                         VStack(spacing: 8) {
                             ForEach(patternMatches, id: \.pattern.id) { item in
                                 searchPatternRow(pattern: item.pattern, parent: item.parent)
@@ -1208,7 +1213,7 @@ extension HomeView {
 
     fileprivate func matchingAllRawPodcasts() -> [RawPodcast] {
         return dataStore.rawPodcasts.filter { p in
-            let combined = [p.title, p.speaker, p.event, p.topic, p.summaryZh ?? ""]
+            let combined = [p.title, p.speaker, p.event, p.topic, p.summary ?? ""]
                 .joined(separator: " ")
             return BilingualSearch.matches(query: searchText, in: combined)
         }
@@ -1225,20 +1230,20 @@ extension HomeView {
         var parts: [String] = [e.title, e.level, e.podcastLevel?.tabName ?? ""]
         for v in e.vocabulary {
             parts.append(v.word)
-            parts.append(v.translationZh)
-            if let zh = v.exampleZh { parts.append(zh) }
+            parts.append(v.translation)
+            if let zh = v.exampleTranslation { parts.append(zh) }
             parts.append(v.example)
         }
         if let recycled = e.recycledWords { parts.append(contentsOf: recycled) }
         // Lightweight episodes have empty script — that's fine, just skip.
         for line in e.script {
             parts.append(line.text)
-            parts.append(line.translationZh)
+            parts.append(line.translation)
         }
         if let patterns = e.patterns {
             for p in patterns {
                 parts.append(p.template)
-                parts.append(p.translationZh)
+                parts.append(p.translation)
                 parts.append(p.scene)
             }
         }
@@ -1253,10 +1258,10 @@ extension HomeView {
             }
         }
         return pool.filter { (p, _) in
-            var parts = [p.template, p.translationZh, p.scene]
+            var parts = [p.template, p.translation, p.scene]
             for ex in p.exampleSentences {
                 parts.append(ex.english)
-                parts.append(ex.chinese)
+                parts.append(ex.translation)
             }
             return BilingualSearch.matches(query: searchText, in: parts.joined(separator: " "))
         }

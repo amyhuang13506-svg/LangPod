@@ -28,6 +28,13 @@ struct RawPodcastPlayerView: View {
     @State private var showVideoControls: Bool = false  // 视频区点一下显示控件，3 秒自动隐藏
     @State private var hideControlsTask: Task<Void, Never>?
     @State private var metadataExpanded: Bool = false   // 中间元数据区默认收起
+    @State private var sessionSummary: RawSessionSummary?   // 非 nil = 正在展示退出结算卡
+    @State private var summaryQuiz: RawQuiz?                // 结算卡出现时懒加载的理解题
+
+    /// 结算卡触发阈值：本次会话 ≥3 分钟才弹（低于直接退，不打扰）
+    private static let summaryThresholdSeconds = 180
+    /// 当天首次达标退出弹大卡，其后降级轻量 toast
+    private static let summaryLastDayKey = "rawSummaryLastDay"
 
     struct PendingWord: Identifiable {
         let word: String
@@ -85,8 +92,7 @@ struct RawPodcastPlayerView: View {
             }
 
             Button {
-                controller?.pause()
-                dismiss()
+                handleCloseTapped()
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .bold))
@@ -99,6 +105,7 @@ struct RawPodcastPlayerView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            RawPlaybackSession.shared.viewAppeared()
             // 进入油管播客播放页时，主播客（每日 AI 节目）若在播则中断
             if audioPlayer.isPlaying {
                 audioPlayer.togglePlayPause()
@@ -118,6 +125,7 @@ struct RawPodcastPlayerView: View {
             // 只暂停，不销毁 —— controller 仍由 RawPlaybackSession 持有。
             // 下次再开同一条直接续播，画面无 reload。
             controller?.pause()
+            RawPlaybackSession.shared.viewDisappeared()
         }
         .task {
             await loadTranscriptIfNeeded()
@@ -145,6 +153,82 @@ struct RawPodcastPlayerView: View {
         }
         .overlay {
             wordPreviewOverlay
+        }
+        .overlay {
+            if let summary = sessionSummary {
+                RawSessionSummaryView(
+                    summary: summary,
+                    quiz: summaryQuiz,
+                    onContinueListening: {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                            sessionSummary = nil
+                        }
+                        controller?.play()
+                    },
+                    onClose: {
+                        sessionSummary = nil
+                        dismiss()
+                    }
+                )
+                .zIndex(10)
+            }
+        }
+    }
+
+    // MARK: - 退出结算（先结算再 dismiss）
+
+    private func handleCloseTapped() {
+        controller?.pause()
+        #if DEBUG
+        print("🎯 结算检查: controller=\(controller == nil ? "nil(iframe?)" : "ok") accum=\(Int(controller?.listenAccumSeconds ?? -1))s unsummarized=\(Int(controller?.unsummarizedSeconds ?? -1))s threshold=\(Self.summaryThresholdSeconds)s lastDay=\(UserDefaults.standard.string(forKey: Self.summaryLastDayKey) ?? "nil")")
+        #endif
+        guard let c = controller, Int(c.unsummarizedSeconds) >= Self.summaryThresholdSeconds else {
+            dismiss()
+            return
+        }
+        let delta = c.takeSummaryDelta()
+        let todayKey = TaskEngine.todayKey()
+        let isFirstToday = UserDefaults.standard.string(forKey: Self.summaryLastDayKey) != todayKey
+        let todayTotal = Int(TaskEngine.shared.record?.rawListenSeconds ?? 0)
+
+        guard isFirstToday else {
+            // 当天第 2 次起：轻量 toast 停留一瞬，不挡退出
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                addedWordToast = String(localized: "+\(max(1, delta.seconds / 60)) 分钟 · 今日累计 \(max(1, todayTotal / 60)) 分钟")
+            }
+            Task {
+                try? await Task.sleep(nanoseconds: 900_000_000)
+                await MainActor.run { dismiss() }
+            }
+            return
+        }
+
+        UserDefaults.standard.set(todayKey, forKey: Self.summaryLastDayKey)
+        let rawTaskDone = TaskEngine.shared.todayTasks
+            .contains { $0.type == .rawPodcast10Min && $0.done }
+        let summary = RawSessionSummary(
+            podcastId: podcast.id,
+            seconds: delta.seconds,
+            words: delta.words,
+            todayTotalSeconds: todayTotal,
+            streakDays: dataStore.streakDays,
+            rawTaskDone: rawTaskDone
+        )
+        Analytics.track(.rawSummaryView, params: [
+            "podcast_id": podcast.id,
+            "listened_seconds": "\(delta.seconds)",
+            "words_saved": "\(delta.words.count)",
+            "is_first_today": "1"
+        ])
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+            sessionSummary = summary
+        }
+        // 兜底再拉一次（正常在 loadTranscriptIfNeeded 已预取；404 = 没题，CTA 静默不出现）
+        if summaryQuiz == nil {
+            Task {
+                let quiz = await RawQuizLoader.fetch(transcriptUrl: podcast.transcriptUrl)
+                await MainActor.run { summaryQuiz = quiz }
+            }
         }
     }
 
@@ -266,6 +350,10 @@ struct RawPodcastPlayerView: View {
         // 并行拉预翻译词典：用户点词查询走本地查表，0 GPT 延迟
         if preloadedWords == nil {
             preloadedWords = await APIService.shared.fetchPodcastWords(transcriptUrl: url, podcastId: podcast.id)
+        }
+        // 预取理解题（几 KB），结算卡出现时 CTA 直接就位，不用等网络
+        if summaryQuiz == nil {
+            summaryQuiz = await RawQuizLoader.fetch(transcriptUrl: url)
         }
     }
 
@@ -477,7 +565,7 @@ struct RawPodcastPlayerView: View {
             pendingLookup = WordLookup(
                 phonetic: entry.phonetic,
                 partOfSpeech: entry.pos,
-                translation: entry.zh,
+                translation: entry.translation,
                 example: entry.example
             )
             isLookingUp = false
@@ -516,13 +604,16 @@ struct RawPodcastPlayerView: View {
         let vocab = VocabularyItem(
             word: word,
             phonetic: lookup?.phonetic ?? "",
-            translationZh: lookup?.translation ?? (segment.zh ?? ""),
+            translation: lookup?.translation ?? (segment.translation ?? ""),
             example: segment.en,
-            exampleZh: segment.zh,
+            exampleTranslation: segment.translation,
             audio: ""
         )
         let added = vocabularyStore.addWord(vocab, sourceLabel: "raw_podcast")
-        let toastText = added ? "「\(word)」已加入生词本" : "「\(word)」已在生词本"
+        if added {   // 结算卡「本次学到」逐条列出：记具体词 + 释义
+            controller?.recordSavedWord(word, translation: vocab.translation)
+        }
+        let toastText = added ? String(localized: "「\(word)」已加入生词本") : String(localized: "「\(word)」已在生词本")
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             addedWordToast = toastText
         }
@@ -845,6 +936,32 @@ final class RawPlaybackSession {
 
     var controller: RawAudioController?
 
+    /// 当前可见的 RawPodcastPlayerView 数量。设计意图是"退出即暂停"，但 iOS 18
+    /// fullScreenCover + preferredColorScheme(.dark) 偶发丢 onDisappear / 乱序，
+    /// 导致音频漏暂停还没有任何可见入口。用计数 + 延迟复查兜底：
+    /// 只要没有任何播放页可见，controller 必须处于暂停态。
+    private var visibleViews = 0
+
+    func viewAppeared() {
+        visibleViews += 1
+    }
+
+    func viewDisappeared() {
+        visibleViews = max(0, visibleViews - 1)
+        pauseIfNoneVisible()
+        // SwiftUI 偶发 appear/disappear 乱序 —— 稍后再确认一次
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+            self?.pauseIfNoneVisible()
+        }
+    }
+
+    private func pauseIfNoneVisible() {
+        guard visibleViews == 0 else { return }
+        if let c = controller, c.player.timeControlStatus == .playing {
+            c.pause()
+        }
+    }
+
     /// 返回当前 podcast 的 controller —— 同一条则复用（断点续播），不同条则换。
     /// 没有 audioUrl 的返回 nil。
     ///
@@ -857,7 +974,8 @@ final class RawPlaybackSession {
            existing.isVideoMode == (wantsVideo && podcast.hasVideo == true) || !preferVideo {
             return existing
         }
-        controller?.tearDown()
+        let old = controller
+        old?.tearDown()
         controller = nil
         let urlStr = wantsVideo ? podcast.audioUrl : podcast.audioOnlyUrl
         guard let urlStr, let url = URL(string: urlStr) else { return nil }
@@ -866,6 +984,10 @@ final class RawPlaybackSession {
             podcast: podcast,
             isVideoMode: wantsVideo && podcast.hasVideo == true
         )
+        // 同一集换模式（听→看视频）：会话记账跨 controller 延续，结算卡计时不清零
+        if let old, old.podcast.id == podcast.id {
+            c.adoptSessionAccounting(from: old)
+        }
         controller = c
         return c
     }
@@ -910,7 +1032,42 @@ final class RawAudioController {
 
     // 收听会话埋点（raw_listen_30s / raw_listen_end）。
     // 一个 controller = 一次会话；关页不销毁（复用续播），切换 podcast 时 tearDown 结束会话。
-    private var listenAccumSeconds: Double = 0
+    private(set) var listenAccumSeconds: Double = 0
+
+    // 结算卡（退出时的成果卡）会话记账。controller 跨开关复用，所以结算过的部分
+    // 要打水位线，避免"关了再开再关"重复结算同一段收听。
+    /// 本次会话内划词存下的生词（结算卡逐条列出，RawPodcastPlayerView.addWord 时追加）
+    private(set) var sessionSavedWords: [RawSessionWordBrief] = []
+    private var summarizedSeconds: Double = 0
+    private var summarizedWordCount: Int = 0
+
+    func recordSavedWord(_ word: String, translation: String) {
+        guard !sessionSavedWords.contains(where: { $0.word == word }) else { return }
+        sessionSavedWords.append(RawSessionWordBrief(word: word, translation: translation))
+    }
+
+    /// 尚未结算的收听秒数（决定这次退出要不要弹结算卡）
+    var unsummarizedSeconds: Double { max(0, listenAccumSeconds - summarizedSeconds) }
+
+    /// 取走一次结算增量（秒数 + 本次新划的词），并推进水位线。
+    func takeSummaryDelta() -> (seconds: Int, words: [RawSessionWordBrief]) {
+        let words = Array(sessionSavedWords.dropFirst(summarizedWordCount))
+        let delta = (seconds: Int(unsummarizedSeconds), words: words)
+        summarizedSeconds = listenAccumSeconds
+        summarizedWordCount = sessionSavedWords.count
+        return delta
+    }
+
+    /// 同一集「看视频」切模式会换 controller —— 新实例继承旧实例的会话记账，
+    /// 否则用户听了 3 分钟一点「看视频」，结算计时就被清零（2026-08-18 真机实测踩坑）。
+    func adoptSessionAccounting(from old: RawAudioController) {
+        guard old.podcast.id == podcast.id else { return }
+        listenAccumSeconds += old.listenAccumSeconds
+        sessionSavedWords = old.sessionSavedWords + sessionSavedWords
+        summarizedSeconds += old.summarizedSeconds
+        summarizedWordCount += old.summarizedWordCount
+        listenSent30s = listenSent30s || old.listenSent30s
+    }
     private var listenSent30s = false
     private var listenLastPersisted: Double = 0
     private var didReportListenEnd = false

@@ -8,9 +8,9 @@ enum MemoryState: String, Codable, CaseIterable {
 
     var label: String {
         switch self {
-        case .strong: "已掌握"
-        case .fading: "复习中"
-        case .forgetting: "新词"
+        case .strong: String(localized: "已掌握")
+        case .fading: String(localized: "复习中")
+        case .forgetting: String(localized: "新词")
         }
     }
 
@@ -40,10 +40,10 @@ enum MasteryLevel: Int, Codable, CaseIterable, Comparable {
 
     var label: String {
         switch self {
-        case .heard: "听懂"
-        case .recognized: "认出"
-        case .canUse: "会用"
-        case .canTeach: "能教"
+        case .heard: String(localized: "听懂")
+        case .recognized: String(localized: "认出")
+        case .canUse: String(localized: "会用")
+        case .canTeach: String(localized: "能教")
         }
     }
 
@@ -64,9 +64,12 @@ enum MasteryLevel: Int, Codable, CaseIterable, Comparable {
 struct SavedWord: Codable, Identifiable {
     let word: String
     let phonetic: String
-    let translationZh: String
+    let translation: String
     let example: String
-    var exampleZh: String?
+    var exampleTranslation: String?
+    /// 快照语言（ContentLanguage.rawValue）。老数据无此字段 → 解码补 "zh"。
+    /// 换系统语言后老快照按原语言显示（V1 不迁移不隐藏）。
+    var language: String
     var masteryLevel: MasteryLevel
     var lastPracticeDate: Date
     var matchCorrectCount: Int      // 配对答对次数
@@ -101,14 +104,24 @@ struct SavedWord: Codable, Identifiable {
         return .forgetting
     }
 
-    // Custom decoder for backward compatibility (old data without encounterCount)
+    /// 老 UserDefaults 数据的字段名（rename 前的属性名，JSONEncoder 直接用属性名做 key）。
+    private enum LegacyKeys: String, CodingKey {
+        case translationZh, exampleZh
+    }
+
+    // Custom decoder for backward compatibility
+    // (old data without encounterCount / language, and pre-rename zh key names)
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        let legacy = try decoder.container(keyedBy: LegacyKeys.self)
         word = try container.decode(String.self, forKey: .word)
         phonetic = try container.decode(String.self, forKey: .phonetic)
-        translationZh = try container.decode(String.self, forKey: .translationZh)
+        translation = try container.decodeIfPresent(String.self, forKey: .translation)
+            ?? legacy.decode(String.self, forKey: .translationZh)
         example = try container.decode(String.self, forKey: .example)
-        exampleZh = try container.decodeIfPresent(String.self, forKey: .exampleZh)
+        exampleTranslation = try container.decodeIfPresent(String.self, forKey: .exampleTranslation)
+            ?? legacy.decodeIfPresent(String.self, forKey: .exampleZh)
+        language = try container.decodeIfPresent(String.self, forKey: .language) ?? ContentLanguage.zh.rawValue
         masteryLevel = try container.decode(MasteryLevel.self, forKey: .masteryLevel)
         lastPracticeDate = try container.decode(Date.self, forKey: .lastPracticeDate)
         matchCorrectCount = try container.decode(Int.self, forKey: .matchCorrectCount)
@@ -118,12 +131,31 @@ struct SavedWord: Codable, Identifiable {
         lastEncounterDate = try container.decodeIfPresent(Date.self, forKey: .lastEncounterDate)
     }
 
+    /// 显示层副本：仅替换释义字段（跨语言重翻译用），学习状态原样。
+    /// 只用于展示/游戏，绝不写回存储 —— 快照本体保持存词时的原语言。
+    init(copying w: SavedWord, translation: String, exampleTranslation: String?) {
+        self.word = w.word
+        self.phonetic = w.phonetic
+        self.translation = translation
+        self.example = w.example
+        self.exampleTranslation = exampleTranslation
+        self.language = w.language
+        self.masteryLevel = w.masteryLevel
+        self.lastPracticeDate = w.lastPracticeDate
+        self.matchCorrectCount = w.matchCorrectCount
+        self.sentenceCorrectCount = w.sentenceCorrectCount
+        self.savedDate = w.savedDate
+        self.encounterCount = w.encounterCount
+        self.lastEncounterDate = w.lastEncounterDate
+    }
+
     init(from vocab: VocabularyItem) {
         self.word = vocab.word
         self.phonetic = vocab.phonetic
-        self.translationZh = vocab.translationZh
+        self.translation = vocab.translation
         self.example = vocab.example
-        self.exampleZh = vocab.exampleZh
+        self.exampleTranslation = vocab.exampleTranslation
+        self.language = ContentLanguage.current.rawValue
         self.masteryLevel = .heard
         self.lastPracticeDate = Date()
         self.matchCorrectCount = 0

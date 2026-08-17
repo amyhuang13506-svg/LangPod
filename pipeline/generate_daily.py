@@ -215,6 +215,13 @@ def run_pipeline(target_level=None):
                 except Exception as e:
                     log.warning(f"   ⚠️ Push enqueue failed (non-fatal): {e}")
 
+                # 入本地化队列：4:30 的 localize_daily 派生各语言层（ko 起）。失败非致命。
+                try:
+                    from localize_queue import enqueue_episode as enqueue_localize
+                    enqueue_localize(episode_id=episode["id"], level=level)
+                except Exception as e:
+                    log.warning(f"   ⚠️ Localize enqueue failed (non-fatal): {e}")
+
                 generated += 1
                 log.info(f"   ✅ Episode complete!")
 

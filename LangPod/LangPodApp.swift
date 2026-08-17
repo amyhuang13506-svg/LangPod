@@ -33,6 +33,14 @@ struct LangPodApp: App {
     @State private var subscriptionManager = SubscriptionManager()
 
     init() {
+        #if DEBUG
+        // 真机调试：`devicectl ... launch <bundle> -- -resetRawSummary` 启动一次即
+        // 永久删掉「当天已弹过结算大卡」记录（下一次达标退出重新弹大卡）。
+        if ProcessInfo.processInfo.arguments.contains("-resetRawSummary") {
+            UserDefaults.standard.removeObject(forKey: "rawSummaryLastDay")
+            print("🧹 rawSummaryLastDay 已清除（结算大卡可重新触发）")
+        }
+        #endif
         #if canImport(RevenueCat)
         // Configure RevenueCat synchronously at launch, before anything touches
         // Purchases.shared. SubscriptionManager only accesses Purchases inside
@@ -477,6 +485,22 @@ struct LangPodApp: App {
             .first
         let todayCard = lessonStore.todayCard   // (item, country)，仅当 today.json 日期是今天
 
+        // 续看候选：最近 3 天看过、进度 5%-85%、剩余 ≥3 分钟的最近一条
+        // （rawPodcastHistory 新的在前，命中即停）。进度从 raw_pos_ 持久化里读。
+        var resume: (id: String, title: String, remainMinutes: Int)?
+        let threeDaysAgo = Date().addingTimeInterval(-3 * 86400)
+        for rec in dataStore.rawPodcastHistory where rec.listenedAt > threeDaysAgo {
+            let pos = RawAudioController.savedPosition(for: rec.podcastId)
+            let dur = Double(rec.durationSeconds)
+            guard dur > 0, pos > 0 else { continue }
+            let progress = pos / dur
+            let remaining = dur - pos
+            if progress >= 0.05, progress <= 0.85, remaining >= 180 {
+                resume = (rec.podcastId, rec.title, Int((remaining / 60).rounded(.up)))
+                break
+            }
+        }
+
         return NotificationContext(
             streakDays: dataStore.streakDays,
             lastListenDate: dataStore.lastListenDate,
@@ -490,12 +514,15 @@ struct LangPodApp: App {
             reminderHour: reminderHour,
             reminderMinute: reminderMinute,
             todayPatternTemplate: todayPattern?.template,
-            todayPatternTranslationZh: todayPattern?.translationZh,
+            todayPatternTranslation: todayPattern?.translation,
             todayPatternScene: todayPattern?.scene,
-            todayLessonTitle: todayCard?.item.titleZh,
-            todayLessonCountryZh: todayCard?.country.nameZh,
+            todayLessonTitle: todayCard?.item.titleTranslation,
+            todayLessonCountryTranslation: todayCard?.country.nameTranslation,
             todayLessonFlag: todayCard?.country.flag,
-            todayLessonWordCount: todayCard?.item.wordCount
+            todayLessonWordCount: todayCard?.item.wordCount,
+            resumePodcastId: resume?.id,
+            resumePodcastTitle: resume?.title,
+            resumeRemainingMinutes: resume?.remainMinutes
         )
     }
 }

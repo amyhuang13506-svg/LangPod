@@ -17,12 +17,98 @@ class VocabularyStore {
 
     private let storageKey = "savedWords"
 
+    // MARK: - 跨语言快照的显示层重翻译（非破坏性）
+    //
+    // 快照（SavedWord.translation）永远保留存词时的原文 —— 切回原语言零损失。
+    // 当快照语言 ≠ 当前内容语言时，后台批量补一份当前语言的释义，只盖在显示层。
+    // 按语言分桶持久化：relocalized_{lang} = [word_lower: RelocalizedGloss]。
+
+    struct RelocalizedGloss: Codable {
+        let translation: String
+        let exampleTranslation: String?
+    }
+
+    private var relocalized: [String: RelocalizedGloss] = [:]
+    /// 每落一批重翻译 +1 —— 游戏视图据此把已快照的词面刷成当前语言
+    private(set) var relocalizationRevision = 0
+    private var relocalizeInFlight = false
+    private var relocalizedKey: String { "relocalized_\(ContentLanguage.current.rawValue)" }
+
+    /// 显示用释义：快照语言匹配 → 快照原文；不匹配 → 重翻译缓存，没有则暂显原文。
+    func displayTranslation(_ w: SavedWord) -> String {
+        guard w.language != ContentLanguage.current.rawValue else { return w.translation }
+        return relocalized[w.word.lowercased()]?.translation ?? w.translation
+    }
+
+    func displayExampleTranslation(_ w: SavedWord) -> String? {
+        guard w.language != ContentLanguage.current.rawValue else { return w.exampleTranslation }
+        return relocalized[w.word.lowercased()]?.exampleTranslation ?? w.exampleTranslation
+    }
+
+    /// 游戏/卡片用：返回显示字段已本地化的副本（不写回存储）。
+    func displayWord(_ w: SavedWord) -> SavedWord {
+        guard w.language != ContentLanguage.current.rawValue,
+              let gloss = relocalized[w.word.lowercased()] else { return w }
+        var copy = w
+        copy = SavedWord(copying: w, translation: gloss.translation,
+                         exampleTranslation: gloss.exampleTranslation ?? w.exampleTranslation)
+        return copy
+    }
+
+    private func loadRelocalized() {
+        guard let data = UserDefaults.standard.data(forKey: relocalizedKey),
+              let cached = try? JSONDecoder().decode([String: RelocalizedGloss].self, from: data) else { return }
+        relocalized = cached
+    }
+
+    private func persistRelocalized() {
+        if let data = try? JSONEncoder().encode(relocalized) {
+            UserDefaults.standard.set(data, forKey: relocalizedKey)
+        }
+    }
+
+    /// 批量补齐缺失的当前语言释义（每次 GPT 调用 ≤80 词，循环到翻完）。失败静默，下次启动重试。
+    func relocalizeIfNeeded() {
+        let lang = ContentLanguage.current
+        guard lang != .zh else { return }  // zh 快照即原生，且 zh 用户不受影响
+        let pending = words.filter {
+            $0.language != lang.rawValue && relocalized[$0.word.lowercased()] == nil
+        }
+        guard !pending.isEmpty, !relocalizeInFlight else { return }
+        relocalizeInFlight = true
+        Task {
+            defer { relocalizeInFlight = false }
+            // 注意不能用递归续批 —— inFlight 要到 Task 结束才复位，递归调用会被 guard 挡掉
+            var remaining = pending
+            var failures = 0
+            while !remaining.isEmpty {
+                let batch = Array(remaining.prefix(80))
+                if let result = await GlossRelocalizer.translate(batch, to: lang) {
+                    remaining.removeFirst(batch.count)
+                    failures = 0
+                    for (word, gloss) in result {
+                        relocalized[word.lowercased()] = gloss
+                    }
+                    persistRelocalized()
+                    relocalizationRevision += 1
+                } else {
+                    // 代理偶发抖动：退避重试，连败 3 次放弃（进词汇页/游戏会再触发）
+                    failures += 1
+                    if failures >= 3 { break }
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                }
+            }
+        }
+    }
+
     init() {
         self.dailyMatchPlayed = UserDefaults.standard.bool(forKey: "dailyMatchPlayed")
         self.dailySentencePlayed = UserDefaults.standard.bool(forKey: "dailySentencePlayed")
         self.dailyPracticeDate = UserDefaults.standard.string(forKey: "dailyPracticeDate") ?? ""
         load()
         refreshDailyPracticeIfNeeded()
+        loadRelocalized()
+        relocalizeIfNeeded()
     }
 
     func refreshDailyPracticeIfNeeded() {
@@ -168,15 +254,17 @@ class VocabularyStore {
         migrateExampleTranslations()
     }
 
-    /// Fill in missing exampleZh from latest episode data
+    /// Fill in missing exampleTranslation from latest episode data.
+    /// zh only：bundle 里的例句翻译是中文，绝不能回填进其他语言的快照。
     private func migrateExampleTranslations() {
+        guard ContentLanguage.current == .zh else { return }
         let allVocab = MockDataLoader.loadAllEpisodes().flatMap(\.vocabulary)
         var updated = false
         for i in words.indices {
-            if words[i].exampleZh == nil || words[i].exampleZh?.isEmpty == true {
+            if words[i].exampleTranslation == nil || words[i].exampleTranslation?.isEmpty == true {
                 if let match = allVocab.first(where: { $0.word == words[i].word }) {
-                    if let zh = match.exampleZh, !zh.isEmpty {
-                        words[i].exampleZh = zh
+                    if let zh = match.exampleTranslation, !zh.isEmpty {
+                        words[i].exampleTranslation = zh
                         updated = true
                     }
                 }

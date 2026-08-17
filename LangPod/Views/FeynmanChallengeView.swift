@@ -45,7 +45,14 @@ struct FeynmanChallengeView: View {
                 challengeContent
             }
         }
-        .onAppear { startGame() }
+        .onAppear {
+            store.relocalizeIfNeeded()   // 换语言后若批量翻译曾失败，进游戏补一枪
+            startGame()
+        }
+        // 重翻译批量到账 → 刷题卡释义/例句翻译为当前语言(判定走英文原句,词面可安全热替)
+        .onChange(of: store.relocalizationRevision) {
+            challengeWords = challengeWords.map { store.displayWord($0) }
+        }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
                 .environment(subscriptionManager)
@@ -110,7 +117,7 @@ struct FeynmanChallengeView: View {
                 Text(word.phonetic)
                     .font(.system(size: 14))
                     .foregroundStyle(Color.textTertiary)
-                Text(word.translationZh)
+                Text(word.translation)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Color.appPrimary)
             }
@@ -267,13 +274,13 @@ struct FeynmanChallengeView: View {
                     .buttonStyle(.plain)
 
                     // Sentence translation
-                    if let exampleZh = challengeWords[currentIndex].exampleZh, !exampleZh.isEmpty {
-                        Text(exampleZh)
+                    if let exampleTranslation = challengeWords[currentIndex].exampleTranslation, !exampleTranslation.isEmpty {
+                        Text(exampleTranslation)
                             .font(.system(size: 14))
                             .foregroundStyle(Color.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
-                        Text("\(challengeWords[currentIndex].word) = \(challengeWords[currentIndex].translationZh)")
+                        Text("\(challengeWords[currentIndex].word) = \(challengeWords[currentIndex].translation)")
                             .font(.system(size: 13))
                             .foregroundStyle(Color.textTertiary)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -577,7 +584,7 @@ struct FeynmanChallengeView: View {
             }
         }
 
-        challengeWords = Array(pool.prefix(maxWordsPerSet))
+        challengeWords = Array(pool.prefix(maxWordsPerSet)).map { store.displayWord($0) }
         currentIndex = 0
         completed = false
         if !challengeWords.isEmpty {

@@ -4,7 +4,7 @@ import Foundation
 /// 支撑场景模拟练习（给场景选句子）。
 struct SavedSentence: Codable, Identifiable, Hashable {
     let english: String
-    let chinese: String
+    let translation: String
     /// 使用场景：小课堂句子 = 课堂标题（"在 CVS 买非处方药"）；
     /// 句型例句 = pattern.scene（"日常请求 / 寻求许可"）
     let scene: String
@@ -15,6 +15,9 @@ struct SavedSentence: Codable, Identifiable, Hashable {
     let audioStart: Double?
     let audioEnd: Double?
     var savedDate: Date
+    /// 快照语言（ContentLanguage.rawValue）。老数据无此字段 → 解码补 "zh"。
+    /// 收藏时的 scene/translation 都是当时内容语言的文本，重翻译判定以此为准。
+    var language: String = ContentLanguage.current.rawValue
     /// 连词成句答对次数（驱动 已掌握/复习中/新句 分类，仿 SavedWord.matchCorrectCount）
     var practiceCorrectCount: Int = 0
     var lastPracticeDate: Date? = nil
@@ -49,15 +52,21 @@ struct SavedSentence: Codable, Identifiable, Hashable {
 // decodeIfPresent 兼容旧数据（没有 practiceCorrectCount / lastPracticeDate 字段）。
 extension SavedSentence {
     enum CodingKeys: String, CodingKey {
-        case english, chinese, scene, source, sourceLabel
+        case english, translation, scene, source, sourceLabel
         case audioUrl, audioStart, audioEnd, savedDate
+        case language
         case practiceCorrectCount, lastPracticeDate
     }
 
+    /// 兼容 rename 前老数据（key 为 "chinese"）。
+    private enum LegacyKeys: String, CodingKey { case chinese }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
+        let legacy = try decoder.container(keyedBy: LegacyKeys.self)
         english = try c.decode(String.self, forKey: .english)
-        chinese = try c.decode(String.self, forKey: .chinese)
+        translation = try c.decodeIfPresent(String.self, forKey: .translation)
+            ?? legacy.decode(String.self, forKey: .chinese)
         scene = try c.decode(String.self, forKey: .scene)
         source = try c.decode(String.self, forKey: .source)
         sourceLabel = try c.decode(String.self, forKey: .sourceLabel)
@@ -65,6 +74,7 @@ extension SavedSentence {
         audioStart = try c.decodeIfPresent(Double.self, forKey: .audioStart)
         audioEnd = try c.decodeIfPresent(Double.self, forKey: .audioEnd)
         savedDate = try c.decode(Date.self, forKey: .savedDate)
+        language = try c.decodeIfPresent(String.self, forKey: .language) ?? ContentLanguage.zh.rawValue
         practiceCorrectCount = try c.decodeIfPresent(Int.self, forKey: .practiceCorrectCount) ?? 0
         lastPracticeDate = try c.decodeIfPresent(Date.self, forKey: .lastPracticeDate)
     }

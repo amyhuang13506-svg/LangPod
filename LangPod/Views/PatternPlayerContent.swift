@@ -15,7 +15,7 @@ struct PatternPlayerContent: View {
 
             // Translation + scene
             VStack(spacing: 8) {
-                Text(pattern.translationZh)
+                Text(pattern.translation)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Color.textPrimary)
                     .multilineTextAlignment(.center)
@@ -113,7 +113,7 @@ struct PatternSubtitleFloat: View {
     }
 
     private func combinedText(for line: PatternScriptLine) -> Text {
-        let zh = line.textZh
+        let zh = line.textTranslation
         let en = line.textEn
         let primary: (String) -> Text = { s in
             Text(s)

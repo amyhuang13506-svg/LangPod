@@ -14,14 +14,14 @@ enum PlaybackPhase: Equatable {
         let total = isPro ? 5 : 4
         switch self {
         case .englishRound(let n):
-            if n <= 3 { return "第 \(n)/\(total) 遍 · 英语原音" }
-            return "第 \(total)/\(total) 遍 · 英语原音"
+            if n <= 3 { return String(localized: "第 \(n)/\(total) 遍 · 英语原音") }
+            return String(localized: "第 \(total)/\(total) 遍 · 英语原音")
         case .translationRound:
-            return "第 4/\(total) 遍 · 中文翻译"
+            return String(localized: "第 4/\(total) 遍 · 中文翻译")
         case .proUpsell:
-            return "第 4/4 遍 · 播放完成"
+            return String(localized: "第 4/4 遍 · 播放完成")
         case .finished:
-            return "播放完成"
+            return String(localized: "播放完成")
         }
     }
 
@@ -32,10 +32,10 @@ enum PlaybackPhase: Equatable {
         let total = isPro ? 5 : 4
         switch self {
         case .englishRound(let n):
-            if n <= 3 { return "第 \(n)/\(total) 遍" }
-            return "第 \(total)/\(total) 遍"
+            if n <= 3 { return String(localized: "第 \(n)/\(total) 遍") }
+            return String(localized: "第 \(total)/\(total) 遍")
         case .translationRound:
-            return "第 4/\(total) 遍"
+            return String(localized: "第 4/\(total) 遍")
         case .proUpsell:
             return "已完成"
         case .finished:
@@ -72,9 +72,9 @@ enum PlayOrder: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .sequential: return "列表循环"
-        case .shuffle: return "随机播放"
-        case .repeatOne: return "单集循环"
+        case .sequential: return String(localized: "列表循环")
+        case .shuffle: return String(localized: "随机播放")
+        case .repeatOne: return String(localized: "单集循环")
         }
     }
 
@@ -336,7 +336,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
         case .englishRound:
             urlString = episode.audio.english
         case .translationRound:
-            urlString = episode.audio.translationZh
+            urlString = episode.audio.translation
         case .proUpsell, .finished:
             return
         }
@@ -884,7 +884,7 @@ class AudioPlayer: NSObject, AVAudioPlayerDelegate {
             }
         case .pattern(let pattern, _):
             info[MPMediaItemPropertyTitle] = pattern.template
-            info[MPMediaItemPropertyArtist] = "Castlingo · 今日句型讲解"
+            info[MPMediaItemPropertyArtist] = String(localized: "Castlingo · 今日句型讲解")
             info[MPMediaItemPropertyAlbumTitle] = pattern.scene
             if let artwork = patternArtwork(for: pattern) {
                 info[MPMediaItemPropertyArtwork] = artwork

@@ -104,7 +104,7 @@ struct ExploreView: View {
                             selectedTopic = (topic == "全部") ? nil : topic
                         }
                     } label: {
-                        Text(topic)
+                        Text(topic == "全部" ? String(localized: "全部") : topic)
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(isSelected ? .white : Color.textSecondary)
                             .padding(.horizontal, 14)

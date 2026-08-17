@@ -104,8 +104,8 @@ struct VocabularyView: View {
 
     private var sectionSwitcher: some View {
         HStack(spacing: 10) {
-            sectionButton(.daily, title: "日常词汇")
-            sectionButton(.scene, title: "生活场景")
+            sectionButton(.daily, title: String(localized: "日常词汇"))
+            sectionButton(.scene, title: String(localized: "生活场景"))
         }
     }
 
@@ -227,7 +227,7 @@ struct VocabularyView: View {
                         lessonStore.selectedThemeCategory = cat.id
                         Analytics.track(.themeCategoryFilter, params: ["category": cat.id])
                     } label: {
-                        Text(cat.zh)
+                        Text(cat.translation)
                             .font(.system(size: 13, weight: selected ? .semibold : .medium))
                             .foregroundColor(selected ? .white : Color.textSecondary)
                             .padding(.horizontal, 14)

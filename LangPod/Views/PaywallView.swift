@@ -39,7 +39,7 @@ struct LegacyPaywallView: View {
                                 // Yearly row + trial timeline (always above-fold)
                                 VStack(spacing: 12) {
                                     subscriptionRow(
-                                        title: "年付",
+                                        title: String(localized: "年付"),
                                         price: subscriptionManager.yearlyPriceDisplay,
                                         isSelected: selectedPlan == .yearly,
                                         onTap: { selectedPlan = .yearly }
@@ -58,7 +58,7 @@ struct LegacyPaywallView: View {
 
                             // Below-fold: monthly row — off-screen by default, scroll down to reach
                             subscriptionRow(
-                                title: "月付",
+                                title: String(localized: "月付"),
                                 price: subscriptionManager.monthlyPriceDisplay,
                                 isSelected: selectedPlan == .monthly,
                                 onTap: { selectedPlan = .monthly }
@@ -266,11 +266,11 @@ struct LegacyPaywallView: View {
     }
 
     private let comparisons: [ComparisonRow] = [
-        ComparisonRow(name: "每日新播客",              freeIncluded: true),
-        ComparisonRow(name: "播客集数不限 · 完整5遍",  freeIncluded: false),
-        ComparisonRow(name: "60+情景课 · 227条表达",   freeIncluded: false),
-        ComparisonRow(name: "双语字幕 · 点词查询",     freeIncluded: false),
-        ComparisonRow(name: "生词无限保存 · 无限练习", freeIncluded: false),
+        ComparisonRow(name: String(localized: "每日新播客"),              freeIncluded: true),
+        ComparisonRow(name: String(localized: "播客集数不限 · 完整5遍"),  freeIncluded: false),
+        ComparisonRow(name: String(localized: "60+情景课 · 227条表达"),   freeIncluded: false),
+        ComparisonRow(name: String(localized: "双语字幕 · 点词查询"),     freeIncluded: false),
+        ComparisonRow(name: String(localized: "生词无限保存 · 无限练习"), freeIncluded: false),
     ]
 
     private let iconColumnWidth: CGFloat = 52
@@ -587,7 +587,7 @@ struct LegacyPaywallView: View {
 
                 Spacer()
 
-                if let termsURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/terms.html") {
+                if let termsURL = ContentLanguage.legalURL("terms") {
                     Link("使用条款", destination: termsURL)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textTertiary)
@@ -595,7 +595,7 @@ struct LegacyPaywallView: View {
                 Text("·")
                     .font(.system(size: 11))
                     .foregroundStyle(Color.textQuaternary)
-                if let privacyURL = URL(string: "https://amyhuang13506-svg.github.io/LangPod/docs/privacy.html") {
+                if let privacyURL = ContentLanguage.legalURL("privacy") {
                     Link("隐私政策", destination: privacyURL)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textTertiary)

@@ -31,8 +31,10 @@ struct RawPodcast: Codable, Identifiable, Hashable {
     let durationSeconds: Int
     let topic: String
     let thumbnailColor: String?
-    let summaryZh: String?
+    let summary: String?
     let relatedEpisodeIds: [String]?
+    /// 语言无关的探索分类 slug（多语言 master 带此字段；zh 老 master 无 → 回落中文关键词匹配）
+    let exploreCategorySlug: String?
 
     enum CodingKeys: String, CodingKey {
         case id, title, speaker, event, topic, thumbnail, category
@@ -46,8 +48,9 @@ struct RawPodcast: Codable, Identifiable, Hashable {
         case crawledAt = "crawled_at"
         case durationSeconds = "duration_seconds"
         case thumbnailColor = "thumbnail_color"
-        case summaryZh = "summary_zh"
+        case summary = "summary"
         case relatedEpisodeIds = "related_episode_ids"
+        case exploreCategorySlug = "explore_category"
     }
 
     enum MediaType: String, Codable {
@@ -57,9 +60,7 @@ struct RawPodcast: Codable, Identifiable, Hashable {
 
     var dateDisplay: String {
         if let d = DateFormatter.episodeDate.date(from: publishedAt) {
-            let f = DateFormatter()
-            f.dateFormat = "M月d日"
-            return f.string(from: d)
+            return d.formatted(.dateTime.month().day())
         }
         return publishedAt
     }
@@ -118,6 +119,10 @@ struct RawPodcast: Codable, Identifiable, Hashable {
     /// 探索区分类：根据 topic 关键词归到 6 大类之一。
     /// 用于首页「探索」分类横滑展示。
     var exploreCategory: ExploreCategory? {
+        // 多语言 master 直接带 slug；zh 老数据回落中文 topic 关键词匹配
+        if let slug = exploreCategorySlug, let c = ExploreCategory(rawValue: slug) {
+            return c
+        }
         let t = topic
         if t.contains("娱乐") || t.contains("时尚") || t.contains("文化") { return .entertainment }
         if t.contains("两性") || t.contains("心理") || t.contains("关系") { return .relationship }
@@ -142,12 +147,12 @@ enum ExploreCategory: String, CaseIterable, Identifiable, Hashable {
 
     var displayName: String {
         switch self {
-        case .entertainment: return "娱乐 · 文化"
-        case .relationship:  return "两性 · 心理"
-        case .mind:          return "思想 · 访谈"
-        case .science:       return "科普 · 科学"
-        case .business:      return "创业 · 商业"
-        case .tech:          return "科技 · 评测"
+        case .entertainment: return String(localized: "娱乐 · 文化")
+        case .relationship:  return String(localized: "两性 · 心理")
+        case .mind:          return String(localized: "思想 · 访谈")
+        case .science:       return String(localized: "科普 · 科学")
+        case .business:      return String(localized: "创业 · 商业")
+        case .tech:          return String(localized: "科技 · 评测")
         }
     }
 

@@ -42,9 +42,17 @@ struct WordMatchView: View {
             }
         }
         .onAppear {
+            store.relocalizeIfNeeded()   // 换语言后若批量翻译曾失败，进游戏补一枪
             if store.words.count >= wordsPerRound {
                 startGame()
             }
+        }
+        // 换语言后的重翻译批量到账 → 本轮还没配对过就把词面刷成当前语言
+        // (配对判定按 translation 字符串比对，中途改词面会破坏已配对状态，故仅空局刷)
+        .onChange(of: store.relocalizationRevision) {
+            guard matchedPairs.isEmpty else { return }
+            currentWords = currentWords.map { store.displayWord($0) }
+            shuffledTranslations = currentWords.map(\.translation).shuffled()
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
@@ -177,7 +185,7 @@ struct WordMatchView: View {
                 // Right column - Chinese
                 VStack(spacing: 12) {
                     ForEach(shuffledTranslations, id: \.self) { translation in
-                        let matchedWord = currentWords.first { $0.translationZh == translation && matchedPairs.contains($0.word) }
+                        let matchedWord = currentWords.first { $0.translation == translation && matchedPairs.contains($0.word) }
                         matchCard(
                             text: matchedWord != nil ? "\(translation) ✓" : translation,
                             isSelected: selectedRight == translation,
@@ -413,8 +421,9 @@ struct WordMatchView: View {
         for i in 0..<min(wordsPerRound, gameWords.count) {
             roundWords.append(gameWords[(startIdx + i) % gameWords.count])
         }
-        currentWords = roundWords
-        shuffledTranslations = roundWords.map(\.translationZh).shuffled()
+        // 跨语言快照 → 显示层重翻译副本（配对值与展示一致）
+        currentWords = roundWords.map { store.displayWord($0) }
+        shuffledTranslations = currentWords.map(\.translation).shuffled()
     }
 
     private func selectLeft(_ word: String) {
@@ -437,7 +446,7 @@ struct WordMatchView: View {
     }
 
     private func checkMatch(left: String, right: String) {
-        if let word = currentWords.first(where: { $0.word == left }), word.translationZh == right {
+        if let word = currentWords.first(where: { $0.word == left }), word.translation == right {
             // Correct match
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             _ = withAnimation(.easeInOut(duration: 0.3)) {

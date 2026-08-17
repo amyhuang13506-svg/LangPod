@@ -27,13 +27,19 @@ from apns_push import send_push, make_client  # noqa: E402
 
 TOKENS_FILE = "/opt/langpod/secrets/tokens.json"
 
-# Push copy per level. Body is overridden with the episode title at runtime;
-# the title field is the static channel banner.
-COPY_BY_LEVEL = {
-    "easy": "今天的新一集（初级）",
-    "medium": "今天的新一集（中级）",
-    "hard": "今天的新一集（高级）",
-}
+# Push copy per level × language lives in languages.py (LANGUAGES[lang]
+# ["push_copy_episode"]). Body is the (English) episode title at runtime.
+from languages import LANGUAGES  # noqa: E402
+
+COPY_BY_LEVEL = LANGUAGES["zh"]["push_copy_episode"]  # legacy alias (validation)
+
+
+def _copy_for(row: dict, level: str) -> tuple[str, str]:
+    """(title, fallback_body) in the device's registered language (default zh)."""
+    lang = (row.get("language") or "zh").split("-")[0]
+    cfg = LANGUAGES.get(lang) or LANGUAGES["zh"]
+    copy = cfg.get("push_copy_episode") or LANGUAGES["zh"]["push_copy_episode"]
+    return copy[level], cfg.get("push_copy_episode_body", "打开听一听")
 
 
 def load_tokens() -> list[dict]:
@@ -81,8 +87,6 @@ def push_episode(
 
     sent = failed = 0
     prune_set: set[str] = set()
-    push_title = COPY_BY_LEVEL[level]
-    push_body = title or "打开听一听"
 
     extras: dict[str, Any] = {
         "episode_id": episode_id,
@@ -104,11 +108,12 @@ def push_episode(
             # prune a perfectly valid dev token. The CLI --sandbox flag still
             # acts as a global override for testing.
             row_sandbox = sandbox or bool(row.get("is_sandbox", False))
+            push_title, fallback_body = _copy_for(row, level)
             try:
                 code, resp = send_push(
                     device_token=token,
                     title=push_title,
-                    body=push_body,
+                    body=title or fallback_body,
                     payload_extras=extras,
                     sandbox=row_sandbox,
                     client=client,

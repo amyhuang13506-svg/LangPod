@@ -58,7 +58,9 @@ struct TaskWeekProgressView: View {
         let mondayOffset = (weekday + 5) % 7
         guard let monday = calendar.date(byAdding: .day, value: -mondayOffset, to: today) else { return [] }
 
-        let labels = ["一", "二", "三", "四", "五", "六", "日"]
+        // 极简星期符号跟随系统语言（一/二… · 월/화… · M/T…），周一起头
+        let symbols = calendar.veryShortStandaloneWeekdaySymbols
+        let labels = (1...7).map { symbols[$0 % 7] }
 
         return (0..<7).compactMap { i in
             guard let date = calendar.date(byAdding: .day, value: i, to: monday) else { return nil }
@@ -270,7 +272,7 @@ struct TaskCelebrationView: View {
     private var nextMilestoneText: String? {
         let milestones = [7, 30, 100]
         guard let next = milestones.first(where: { $0 > dataStore.streakDays }) else { return nil }
-        return "再坚持 \(next - dataStore.streakDays) 天点亮 \(next) 天徽章"
+        return String(localized: "再坚持 \(next - dataStore.streakDays) 天点亮 \(next) 天徽章")
     }
 
     var body: some View {

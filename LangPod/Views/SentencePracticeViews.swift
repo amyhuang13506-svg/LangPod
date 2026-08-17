@@ -92,13 +92,13 @@ struct SentencePracticeView: View {
 
             // 题卡：场景 tag + 中文翻译（对应词汇版的 单词+音标+释义）
             VStack(spacing: 8) {
-                Text(sentence.scene)
+                Text(sentenceStore.displayScene(sentence))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(Color.gold)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 3)
                     .background(Capsule().fill(Color.warningLight))
-                Text(sentence.chinese)
+                Text(sentenceStore.displayTranslation(sentence))
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(Color.textPrimary)
                     .multilineTextAlignment(.center)
@@ -255,7 +255,7 @@ struct SentencePracticeView: View {
                     }
                     .buttonStyle(.plain)
 
-                    Text(challengeSentences[currentIndex].chinese)
+                    Text(sentenceStore.displayTranslation(challengeSentences[currentIndex]))
                         .font(.system(size: 14))
                         .foregroundStyle(Color.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -587,8 +587,8 @@ struct SceneQuizView: View {
 
             if completed {
                 PracticeCompleteView(
-                    title: "场景通关！",
-                    subtitle: "答对 \(correctCount)/\(questions.count) 题",
+                    title: String(localized: "场景通关！"),
+                    subtitle: String(localized: "答对 \(correctCount)/\(questions.count) 题"),
                     onRestart: { Task { await startGame() } },
                     onClose: { dismiss() }
                 )
@@ -660,7 +660,7 @@ struct SceneQuizView: View {
             let options = ([QuizOption(line: answer, sourceTitle: title)] + distractors.prefix(3)).shuffled()
             built.append(Question(
                 lessonTitle: title,
-                otherRole: rp.otherRoleZh,
+                otherRole: rp.otherRole,
                 turns: turns,
                 blankIndex: blank,
                 options: options
@@ -682,7 +682,7 @@ struct SceneQuizView: View {
             for item in candidates {
                 group.addTask {
                     let lesson = await APIService.shared.fetchLessonDetail(country: country, id: item.id)
-                    return (item.titleZh, lesson?.roleplay)
+                    return (item.titleTranslation, lesson?.roleplay)
                 }
             }
             for await (title, rp) in group {
@@ -701,12 +701,12 @@ struct SceneQuizView: View {
         if let sel = selectedOption, sel != current.answer.en,
            let picked = current.options.first(where: { $0.line.en == sel }) {
             if picked.sourceTitle != current.lessonTitle {
-                out.append("「\(sel)」是〈\(picked.sourceTitle)〉场景里的说法（\(picked.line.zh)），放到这段对话里接不上。")
+                out.append(String(localized: "「\(sel)」是〈\(picked.sourceTitle)〉场景里的说法（\(picked.line.translation)），放到这段对话里接不上。"))
             } else {
-                out.append("「\(sel)」（\(picked.line.zh)）虽然也是这个场景的话，但对不上空格处的上下文。")
+                out.append(String(localized: "「\(sel)」（\(picked.line.translation)）虽然也是这个场景的话，但对不上空格处的上下文。"))
             }
         }
-        if let note = current.answer.noteZh, !note.isEmpty {
+        if let note = current.answer.note, !note.isEmpty {
             out.append(note)
         }
         return out
@@ -747,7 +747,7 @@ struct SceneQuizView: View {
 
     private var quizContent: some View {
         VStack(spacing: 16) {
-            practiceHeader(title: "场景模拟", progress: "\(currentIndex + 1)/\(questions.count)") { dismiss() }
+            practiceHeader(title: String(localized: "场景模拟"), progress: "\(currentIndex + 1)/\(questions.count)") { dismiss() }
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
@@ -907,7 +907,7 @@ struct SceneQuizView: View {
 
     private var emptyContent: some View {
         VStack(spacing: 12) {
-            practiceHeader(title: "场景模拟", progress: "") { dismiss() }
+            practiceHeader(title: String(localized: "场景模拟"), progress: "") { dismiss() }
             Spacer()
             Image(systemName: "theatermasks")
                 .font(.system(size: 40))

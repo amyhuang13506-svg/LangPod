@@ -27,6 +27,16 @@ from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from apns_push import send_push, make_client  # noqa: E402
+from languages import LANGUAGES  # noqa: E402
+
+
+def _copy_for(row: dict, speaker: str) -> tuple[str, str]:
+    """(title, fallback_body) in the device's registered language (default zh)."""
+    lang = (row.get("language") or "zh").split("-")[0]
+    cfg = LANGUAGES.get(lang) or LANGUAGES["zh"]
+    base = cfg.get("push_copy_raw", "今日视频")
+    title = f"{base} · {speaker}" if speaker.strip() else base
+    return title, cfg.get("push_copy_raw_body", "打开看一看")
 
 TOKENS_FILE = "/opt/langpod/secrets/tokens.json"
 
@@ -68,13 +78,8 @@ def push_raw_podcast(
         print("[raw-push] no tokens registered")
         return {"sent": 0, "failed": 0, "pruned": 0, "total": 0}
 
-    # Title hugs the speaker (better recognition than a generic "新一集"); body
-    # is the talk title verbatim. If there's no speaker, drop in a default.
-    # No "硅谷原声" prefix — the morning YouTube push isn't always Silicon
-    # Valley content (could be TED, Huberman, MKBHD, etc.).
-    push_title = f"今日视频 · {speaker}" if speaker.strip() else "今日视频"
-    push_body = title or "打开看一看"
-
+    # Title hugs the speaker (better recognition than a generic "新一集");
+    # per-device language via _copy_for. Body is the talk title verbatim.
     extras: dict[str, Any] = {
         "episode_id": podcast_id,  # iOS deep-link uses the prefix to dispatch
         "intent": intent,
@@ -94,11 +99,12 @@ def push_raw_podcast(
         for row in tokens:
             token = row["token"]
             row_sandbox = sandbox or bool(row.get("is_sandbox", False))
+            push_title, fallback_body = _copy_for(row, speaker)
             try:
                 code, resp = send_push(
                     device_token=token,
                     title=push_title,
-                    body=push_body,
+                    body=title or fallback_body,
                     payload_extras=extras,
                     sandbox=row_sandbox,
                     client=client,

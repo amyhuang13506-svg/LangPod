@@ -13,13 +13,13 @@ enum PatternSection: String, Codable, CaseIterable {
 
     var label: String {
         switch self {
-        case .pronunciation: "读音"
-        case .pronunciationDrill: "跟读练习"
-        case .meaning: "字面意思"
-        case .sceneAndFeeling: "场景与感觉"
-        case .example1: "例句 1"
-        case .example2: "例句 2"
-        case .example3: "例句 3"
+        case .pronunciation: String(localized: "读音")
+        case .pronunciationDrill: String(localized: "跟读练习")
+        case .meaning: String(localized: "字面意思")
+        case .sceneAndFeeling: String(localized: "场景与感觉")
+        case .example1: String(localized: "例句 1")
+        case .example2: String(localized: "例句 2")
+        case .example3: String(localized: "例句 3")
         }
     }
 
@@ -38,16 +38,16 @@ enum PatternSection: String, Codable, CaseIterable {
 /// `start` / `end` are seconds; nullable for fallback when timestamps are missing.
 struct PatternScriptLine: Codable, Identifiable {
     let section: PatternSection
-    let textZh: String              // 中文讲解
+    let textTranslation: String              // 中文讲解
     let textEn: String              // 英文示范 (跟读段或例句段才有内容)
     var start: Double?
     var end: Double?
 
-    var id: String { "\(section.rawValue)-\(textZh.prefix(20))" }
+    var id: String { "\(section.rawValue)-\(textTranslation.prefix(20))" }
 
     enum CodingKeys: String, CodingKey {
         case section
-        case textZh = "text_zh"
+        case textTranslation = "text_translation"
         case textEn = "text_en"
         case start, end
     }
@@ -57,7 +57,7 @@ struct PatternScriptLine: Codable, Identifiable {
 /// Phase 2: feed these into the connect-words practice pool.
 struct PatternExample: Codable, Identifiable {
     let english: String
-    let chinese: String
+    let translation: String
 
     var id: String { english }
 }
@@ -69,7 +69,7 @@ struct Pattern: Codable, Identifiable {
     let id: String                  // "pattern_easy_20260420_1"
     let episodeId: String           // 关联回所属 episode
     let template: String            // "Could I ___ ___, please?"
-    let translationZh: String       // "我可以...吗？（礼貌请求）"
+    let translation: String       // "我可以...吗？（礼貌请求）"
     let scene: String               // "餐厅 / 借东西 / 公共请求"
     let audioUrl: String            // OSS 讲解音频 URL
     let durationSeconds: Int
@@ -81,15 +81,15 @@ struct Pattern: Codable, Identifiable {
         if durationSeconds >= 60 {
             let min = durationSeconds / 60
             let sec = durationSeconds % 60
-            return sec > 0 ? "\(min)分\(sec)秒" : "\(min)分钟"
+            return sec > 0 ? String(localized: "\(min)分\(sec)秒") : String(localized: "\(min)分钟")
         }
-        return "\(durationSeconds)秒"
+        return String(localized: "\(durationSeconds)秒")
     }
 
     enum CodingKeys: String, CodingKey {
         case id, template, scene
         case episodeId = "episode_id"
-        case translationZh = "translation_zh"
+        case translation = "translation"
         case audioUrl = "audio_url"
         case durationSeconds = "duration_seconds"
         case explainerScript = "explainer_script"

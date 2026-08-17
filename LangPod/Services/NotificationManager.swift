@@ -5,6 +5,8 @@ extension Notification.Name {
     /// Posted when the user saves a new reminder time in ProfileView.
     /// LangPodApp listens and triggers `refreshDailyNotification()`.
     static let reminderTimeChanged = Notification.Name("castlingo.reminderTimeChanged")
+    /// 续看推送点击：userInfo["podcast_id"]。ContentView 接收后全屏拉起原声播放器续播。
+    static let openRawPodcastFromPush = Notification.Name("castlingo.openRawPodcastFromPush")
 }
 
 /// Snapshot of the data the arbiter needs to pick the right push. Built fresh
@@ -24,12 +26,18 @@ struct NotificationContext {
 
     // 晚间 20:00 内容推送（句型 / 单词按天交替）的数据源。缺内容时该类不发、回退另一类。
     let todayPatternTemplate: String?   // 今日第一个句型的模板文字
-    let todayPatternTranslationZh: String?
+    let todayPatternTranslation: String?
     let todayPatternScene: String?
-    let todayLessonTitle: String?       // 今日新场景课标题（titleZh）
-    let todayLessonCountryZh: String?
+    let todayLessonTitle: String?       // 今日新场景课标题（titleTranslation）
+    let todayLessonCountryTranslation: String?
     let todayLessonFlag: String?
     let todayLessonWordCount: Int?
+
+    // 续看未完视频（个性化召回，2026-08-18 方案）：最近 3 天看过、进度 5%-85%、
+    // 剩余 ≥3 分钟的最近一条。没有候选时三者皆 nil，仲裁静默跳过该层。
+    let resumePodcastId: String?
+    let resumePodcastTitle: String?
+    let resumeRemainingMinutes: Int?
 }
 
 @Observable
@@ -78,13 +86,22 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
         // 晚间内容推送（今日句型 / 今日单词）：deeplink 携带 DailyTaskType.rawValue，
         // 复用 ContentView 已有的任务深链管道（listen_pattern 播今日句型 / learn_lesson 开今日场景课）。
+        // 续看推送的 deeplink 为 "raw:{podcastId}"，走独立管道直达原声播放器。
         if let deeplink = userInfo["deeplink"] as? String, !deeplink.isEmpty {
             DispatchQueue.main.async {
-                NotificationCenter.default.post(
-                    name: .dailyTaskDeepLink,
-                    object: nil,
-                    userInfo: ["type": deeplink]
-                )
+                if deeplink.hasPrefix("raw:") {
+                    NotificationCenter.default.post(
+                        name: .openRawPodcastFromPush,
+                        object: nil,
+                        userInfo: ["podcast_id": String(deeplink.dropFirst(4))]
+                    )
+                } else {
+                    NotificationCenter.default.post(
+                        name: .dailyTaskDeepLink,
+                        object: nil,
+                        userInfo: ["type": deeplink]
+                    )
+                }
             }
         }
         completionHandler()
@@ -197,8 +214,9 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     /// 晚间 20:00 单条推送的仲裁：
     ///   1. streak 快断 → 救火（最高优先，保留原逻辑）
-    ///   2. 否则按日期奇偶交替：单数日今日句型 / 双数日今日单词场景课（缺内容回退另一类）
-    ///   3. 都没有 → 朴素提醒
+    ///   2. 续看未完视频（个性化召回：《X》还剩 N 分钟，频控同条不连推两天）
+    ///   3. 按日期奇偶交替：单数日今日句型 / 双数日今日单词场景课（缺内容回退另一类）
+    ///   4. 都没有 → 朴素提醒
     /// 内容新鲜度：排「今天」嵌真实标题；排「明天」（当天 reminder 时间已过）用常青文案，
     /// 因为设备还不知道明天凌晨 cron 产的新内容。点击深链在点击那一刻实时解析最新内容。
     private func pickIntent(context c: NotificationContext) -> Intent? {
@@ -226,7 +244,13 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             }
         }
 
-        // 2. 内容推送：句型 / 单词按天自动交替（无需用户选择，默认常驻）。
+        // 2. 续看未完视频 —— 个性化 > 泛化内容（2026-08-18 方案）。
+        //    频控：同一条视频不连续两天推（昨天刚推过 → 本层跳过，落到内容层）。
+        if let resumeIntent = resumeIntent(c, targetDate: targetDate, fireTomorrow: firesTomorrow) {
+            return resumeIntent
+        }
+
+        // 3. 内容推送：句型 / 单词按天自动交替（无需用户选择，默认常驻）。
         //    奇偶交替：用 era 内的绝对天序号，跨月/跨年边界也严格交替。
         let dayNumber = Calendar.current.ordinality(of: .day, in: .era, for: targetDate) ?? 0
         let preferPattern = dayNumber % 2 == 1
@@ -241,12 +265,12 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             }
         }
 
-        // 3. 兜底：还没听 → 朴素提醒。
+        // 4. 兜底：还没听 → 朴素提醒。
         if !c.listenedToday {
             return Intent(
                 type: "daily_reminder",
-                title: "今日的 3 分钟",
-                body: "打开 Castlingo，继续你的听力训练",
+                title: String(localized: "今日的 3 分钟"),
+                body: String(localized: "打开 Castlingo，继续你的听力训练"),
                 fireTomorrow: firesTomorrow
             )
         }
@@ -254,11 +278,47 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         return nil
     }
 
+    // MARK: - 续看未完视频 intent
+
+    private static let resumePushIdKey = "lastResumePushId"
+    private static let resumePushDayKey = "lastResumePushDay"
+
+    /// 「《X》还剩 N 分钟」。候选由 buildNotificationContext 挑好（最近 3 天、
+    /// 进度 5%-85%、剩余 ≥3 分钟）；这里只做频控 + 组文案。
+    private func resumeIntent(_ c: NotificationContext, targetDate: Date, fireTomorrow: Bool) -> Intent? {
+        guard let id = c.resumePodcastId,
+              let title = c.resumePodcastTitle,
+              let mins = c.resumeRemainingMinutes else { return nil }
+
+        let targetDay = DateFormatter.episodeDate.string(from: targetDate)
+        let lastId = UserDefaults.standard.string(forKey: Self.resumePushIdKey)
+        let lastDay = UserDefaults.standard.string(forKey: Self.resumePushDayKey)
+        if lastId == id, let lastDay, lastDay != targetDay {
+            // 同一条视频、且不是今天（重排）而是之前某天推过 → 判断是否"昨天刚推过"
+            if let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: targetDate),
+               lastDay == DateFormatter.episodeDate.string(from: yesterday) {
+                return nil   // 连续两天同一条 → 让位给内容层，明天再说
+            }
+        }
+
+        UserDefaults.standard.set(id, forKey: Self.resumePushIdKey)
+        UserDefaults.standard.set(targetDay, forKey: Self.resumePushDayKey)
+
+        let shortTitle = title.count > 24 ? String(title.prefix(24)) + "…" : title
+        return Intent(
+            type: "resume_video",
+            title: String(localized: "看了一半的视频还在等你"),
+            body: String(localized: "《\(shortTitle)》还剩 \(mins) 分钟，今天把它看完？"),
+            deeplink: "raw:\(id)",
+            fireTomorrow: fireTomorrow
+        )
+    }
+
     private func streakIntent(streakDays: Int, fireTomorrow: Bool) -> Intent {
         Intent(
             type: "streak_risk",
-            title: "再不听就要清零了",
-            body: "\(streakDays) 天的连续记录就快断了，3 分钟就能续上",
+            title: String(localized: "再不听就要清零了"),
+            body: String(localized: "\(streakDays) 天的连续记录就快断了，3 分钟就能续上"),
             fireTomorrow: fireTomorrow
         )
     }
@@ -268,22 +328,22 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         if evergreen {
             return Intent(
                 type: "daily_pattern",
-                title: "今日句型讲解已更新",
-                body: "跟读三遍，把一个地道句型变成条件反射",
+                title: String(localized: "今日句型讲解已更新"),
+                body: String(localized: "跟读三遍，把一个地道句型变成条件反射"),
                 deeplink: DailyTaskType.listenPattern.rawValue
             )
         }
         guard let template = c.todayPatternTemplate else { return nil }
         let scene = c.todayPatternScene ?? ""
         let body: String = {
-            guard let zh = c.todayPatternTranslationZh, !zh.isEmpty else {
-                return "点开学一个地道句型"
+            guard let zh = c.todayPatternTranslation, !zh.isEmpty else {
+                return String(localized: "点开学一个地道句型")
             }
             return scene.isEmpty ? zh : "\(zh)｜\(scene)"
         }()
         return Intent(
             type: "daily_pattern",
-            title: "今日句型 · \(template)",
+            title: String(localized: "今日句型 · \(template)"),
             body: body,
             deeplink: DailyTaskType.listenPattern.rawValue
         )
@@ -294,23 +354,23 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         if evergreen {
             return Intent(
                 type: "daily_word",
-                title: "今日新场景已上线",
-                body: "几个地道说法 + 真实场景，3 分钟学会",
+                title: String(localized: "今日新场景已上线"),
+                body: String(localized: "几个地道说法 + 真实场景，3 分钟学会"),
                 deeplink: DailyTaskType.learnLesson.rawValue
             )
         }
         guard let title = c.todayLessonTitle else { return nil }
         let flag = c.todayLessonFlag ?? ""
-        let country = c.todayLessonCountryZh ?? ""
+        let country = c.todayLessonCountryTranslation ?? ""
         let body: String = {
             if let wc = c.todayLessonWordCount {
-                return "\(flag)\(country)｜\(wc) 个地道说法，3 分钟学会"
+                return String(localized: "\(flag)\(country)｜\(wc) 个地道说法，3 分钟学会")
             }
-            return "\(flag)\(country) 场景对话，学几个地道说法"
+            return String(localized: "\(flag)\(country) 场景对话，学几个地道说法")
         }()
         return Intent(
             type: "daily_word",
-            title: "今日新场景 · \(title)",
+            title: String(localized: "今日新场景 · \(title)"),
             body: body,
             deeplink: DailyTaskType.learnLesson.rawValue
         )

@@ -45,6 +45,7 @@ struct MyVocabularyView: View {
                     .background(Color.appBackground)
             }
         }
+        .onAppear { store.relocalizeIfNeeded() }   // 换语言后补触发释义重翻译
         .sheet(isPresented: $showPaywall) {
             PaywallView()
                 .environment(subscriptionManager)
@@ -105,7 +106,7 @@ struct MyVocabularyView: View {
             filterCard(
                 filter: .strong,
                 count: store.strongWords.count,
-                label: "已掌握",
+                label: String(localized: "已掌握"),
                 textColor: Color(hex: "16A34A"),
                 bgColor: Color.successLight,
                 activeBorder: Color.success
@@ -113,7 +114,7 @@ struct MyVocabularyView: View {
             filterCard(
                 filter: .fading,
                 count: store.fadingWords.count,
-                label: "复习中",
+                label: String(localized: "复习中"),
                 textColor: Color(hex: "D97706"),
                 bgColor: Color.warningLight,
                 activeBorder: Color.warning
@@ -121,7 +122,7 @@ struct MyVocabularyView: View {
             filterCard(
                 filter: .new,
                 count: newWords.count,
-                label: "新词",
+                label: String(localized: "新词"),
                 textColor: Color.appPrimary,
                 bgColor: Color.primaryLight,
                 activeBorder: Color.appPrimary
@@ -174,10 +175,10 @@ struct MyVocabularyView: View {
 
     private var sectionTitle: String {
         switch filter {
-        case .all: "全部词汇"
-        case .strong: "已掌握"
-        case .fading: "复习中"
-        case .new: "新词"
+        case .all: String(localized: "全部词汇")
+        case .strong: String(localized: "已掌握")
+        case .fading: String(localized: "复习中")
+        case .new: String(localized: "新词")
         }
     }
 
@@ -255,7 +256,7 @@ struct MyVocabularyView: View {
 
             Spacer()
 
-            Text(word.translationZh)
+            Text(store.displayTranslation(word))
                 .font(.system(size: 14))
                 .foregroundStyle(Color.textSecondary)
         }

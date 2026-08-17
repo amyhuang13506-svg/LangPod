@@ -131,7 +131,7 @@ struct PatternHistoryView: View {
         }
         let sorted = byDate.keys.sorted(by: >)  // newest first
         let formatter = DateFormatter()
-        formatter.dateFormat = "M月d日"
+        formatter.setLocalizedDateFormatFromTemplate("Md")
         return sorted.map { date in
             let items = byDate[date] ?? []
             let display: String = {

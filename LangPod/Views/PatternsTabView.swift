@@ -126,7 +126,7 @@ struct PatternsTabView: View {
             expressionStore.section = section
             Analytics.track(.patternSectionSwitch, params: ["section": section.rawValue])
         } label: {
-            Text(section.zh)
+            Text(section.translation)
                 .font(.system(size: 15, weight: selected ? .bold : .semibold))
                 .foregroundColor(selected ? .white : Color.textSecondary)
                 .frame(maxWidth: .infinity)
@@ -155,7 +155,7 @@ struct PatternsTabView: View {
                         expressionStore.selectedGroupId = group.id
                         expressionStore.loadGroupDetails(group.id)
                     } label: {
-                        Text(group.zh)
+                        Text(group.translation)
                             .font(.system(size: 13, weight: selected ? .semibold : .medium))
                             .foregroundColor(selected ? .white : Color.textSecondary)
                             .padding(.horizontal, 14)
@@ -178,7 +178,7 @@ struct PatternsTabView: View {
     private func categorySection(_ item: ExpressionCategoryIndexItem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(item.zh)
+                Text(item.translation)
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(Color.textPrimary)
                 Spacer()
@@ -320,7 +320,7 @@ struct ExpressionSceneCard: View {
                         .font(.system(size: 14, weight: .semibold, design: .serif))
                         .foregroundColor(Color.textPrimary)
                         .lineLimit(1)
-                    Text(expression.meaningZh)
+                    Text(expression.meaning)
                         .font(.system(size: 11))
                         .foregroundColor(Color.textTertiary)
                         .lineLimit(1)
@@ -396,7 +396,7 @@ struct ExpressionCategoryAllView: View {
     private var header: some View {
         ZStack {
             VStack(spacing: 2) {
-                Text(item.zh)
+                Text(item.translation)
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(Color.textPrimary)
                 Text("\(item.count) 句")
@@ -453,7 +453,7 @@ struct ExpressionPagerView: View {
                         ForEach(Array(detail.expressions.enumerated()), id: \.element.id) { index, expression in
                             ExpressionPageView(
                                 expression: expression,
-                                categoryZh: detail.zh,
+                                categoryTranslation: detail.translation,
                                 locked: locked(index),
                                 onGated: {
                                     Analytics.track(.patternPaywallView, params: [
@@ -493,7 +493,7 @@ struct ExpressionPagerView: View {
 
     private var header: some View {
         ZStack {
-            Text(item.zh)
+            Text(item.translation)
                 .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(Color.textPrimary)
             HStack {
@@ -517,7 +517,7 @@ struct ExpressionPagerView: View {
 
 struct ExpressionPageView: View {
     let expression: Expression
-    let categoryZh: String
+    let categoryTranslation: String
     /// 锁定条：内容照常显示，发音/收藏/对话/例句按钮触发 onGated（弹付费墙）
     var locked: Bool = false
     var onGated: () -> Void = {}
@@ -534,7 +534,7 @@ struct ExpressionPageView: View {
             VStack(alignment: .leading, spacing: 14) {
                 if let scene = expression.scene {
                     sceneCard(scene)
-                    Text(scene.setupZh)
+                    Text(scene.setup)
                         .font(.system(size: 12))
                         .foregroundStyle(Color.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -553,7 +553,7 @@ struct ExpressionPageView: View {
                                     .foregroundStyle(Color.warning)
                             }
                         }
-                        Text(expression.meaningZh)
+                        Text(expression.meaning)
                             .font(.system(size: 14))
                             .foregroundStyle(Color.textSecondary)
                     }
@@ -562,12 +562,12 @@ struct ExpressionPageView: View {
                     saveButton
                 }
 
-                Text(expression.usageZh)
+                Text(expression.usage)
                     .font(.system(size: 14))
                     .foregroundStyle(Color.bodyText)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if expression.hasCountryNote, let note = expression.countryNoteZh {
+                if expression.hasCountryNote, let note = expression.countryNote {
                     HStack(alignment: .top, spacing: 5) {
                         Text("🌍").font(.system(size: 12))
                         Text(note)
@@ -658,7 +658,7 @@ struct ExpressionPageView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.textPrimary)
                         .multilineTextAlignment(.leading)
-                    Text(line.zh)
+                    Text(line.translation)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.textSecondary)
                         .multilineTextAlignment(.leading)
@@ -713,10 +713,10 @@ struct ExpressionPageView: View {
             guard !saved else { return }
             let added = sentenceStore.add(SavedSentence(
                 english: expression.english,
-                chinese: expression.meaningZh,
-                scene: categoryZh,
+                translation: expression.meaning,
+                scene: categoryTranslation,
                 source: "pattern",
-                sourceLabel: categoryZh,
+                sourceLabel: categoryTranslation,
                 audioUrl: expression.audio,
                 audioStart: nil,
                 audioEnd: nil,
@@ -725,7 +725,7 @@ struct ExpressionPageView: View {
             if added {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    toast = "已加入句型库"
+                    toast = String(localized: "已加入句型库")
                 }
                 Task {
                     try? await Task.sleep(nanoseconds: 1_500_000_000)
@@ -754,7 +754,7 @@ struct ExpressionPageView: View {
                         .font(.system(size: 14))
                         .foregroundStyle(Color.textPrimary)
                         .multilineTextAlignment(.leading)
-                    Text(example.zh)
+                    Text(example.translation)
                         .font(.system(size: 12))
                         .foregroundStyle(Color.textSecondary)
                         .multilineTextAlignment(.leading)

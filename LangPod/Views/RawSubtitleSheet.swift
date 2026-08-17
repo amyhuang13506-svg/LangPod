@@ -196,7 +196,7 @@ struct RawSubtitleSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if isPro, showChinese, let zh = seg.zh, !zh.isEmpty {
+            if isPro, showChinese, let zh = seg.translation, !zh.isEmpty {
                 Text(zh)
                     .font(.system(size: 16))
                     .foregroundStyle(isFocused ? .white : Color(white: 0.35))

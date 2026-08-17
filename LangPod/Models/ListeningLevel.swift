@@ -9,11 +9,11 @@ enum ListeningLevel: Int, Codable, CaseIterable {
 
     var name: String {
         switch self {
-        case .lv1: "新手听众"
-        case .lv2: "入门听众"
-        case .lv3: "进阶听众"
-        case .lv4: "流利听众"
-        case .lv5: "母语级"
+        case .lv1: String(localized: "新手听众")
+        case .lv2: String(localized: "入门听众")
+        case .lv3: String(localized: "进阶听众")
+        case .lv4: String(localized: "流利听众")
+        case .lv5: String(localized: "母语级")
         }
     }
 
@@ -48,10 +48,10 @@ enum ListeningLevel: Int, Codable, CaseIterable {
     var unlockDescription: String? {
         switch self {
         case .lv1: nil
-        case .lv2: "Medium 频道 · 生活和文化话题"
-        case .lv3: "Hard 频道 · 新闻和深度话题"
-        case .lv4: "双人深度对话系列"
-        case .lv5: "\"纯英语解释\"模式"
+        case .lv2: String(localized: "Medium 频道 · 生活和文化话题")
+        case .lv3: String(localized: "Hard 频道 · 新闻和深度话题")
+        case .lv4: String(localized: "双人深度对话系列")
+        case .lv5: String(localized: "\"纯英语解释\"模式")
         }
     }
 

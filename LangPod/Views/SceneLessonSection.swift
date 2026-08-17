@@ -19,7 +19,7 @@ struct CountryChipsRow: View {
                         lessonStore.selectedCountry = country.id
                         Analytics.track(.lessonCountrySwitch, params: ["country": country.id])
                     } label: {
-                        Text(country.nameZh)
+                        Text(country.nameTranslation)
                             .font(.system(size: 13, weight: selected ? .semibold : .medium))
                             .foregroundColor(selected ? .white : Color.textSecondary)
                             .padding(.horizontal, 14)
@@ -64,7 +64,7 @@ struct TodayLessonCard: View {
                         Text(country.flag)
                             .font(.system(size: 12))
                     }
-                    Text(item.titleZh)
+                    Text(item.titleTranslation)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(Color.textPrimary)
                         .lineLimit(1)
@@ -130,11 +130,11 @@ struct LessonCoverCard: View {
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(item.titleZh)
+                    Text(item.titleTranslation)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Color.textPrimary)
                         .lineLimit(1)
-                    Text("\(item.wordCount) 词\(free ? " · 免费" : "")")
+                    Text(free ? "\(item.wordCount) 词 · 免费" : "\(item.wordCount) 词")
                         .font(.system(size: 11))
                         .foregroundColor(free ? Color.success : Color.textTertiary)
                 }

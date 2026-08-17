@@ -130,7 +130,7 @@ class DataStore {
             rawPodcasts = cached
         } else if let url = Bundle.main.url(forResource: "raw_podcasts", withExtension: "json"),
                   let data = try? Data(contentsOf: url),
-                  let items = try? JSONDecoder().decode([RawPodcast].self, from: data) {
+                  let items = try? JSONDecoder.castlingo().decode([RawPodcast].self, from: data) {
             rawPodcasts = items
         } else {
             rawPodcasts = []
@@ -254,7 +254,7 @@ class DataStore {
             patternId: pattern.id,
             episodeId: pattern.episodeId,
             template: pattern.template,
-            translationZh: pattern.translationZh,
+            translation: pattern.translation,
             scene: pattern.scene,
             level: episode.level,
             durationSeconds: pattern.durationSeconds,

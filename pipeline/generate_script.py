@@ -470,15 +470,35 @@ def _call_gpt(messages):
             _time.sleep(wait)
             continue
         response.raise_for_status()
-        break
+        # 代理在负载下偶发 HTTP 200 + 空 content（~3% 抖动）——同样按瞬时错误重试
+        _content = (response.json().get("choices") or [{}])[0].get("message", {}).get("content")
+        if _content and _content.strip():
+            break
+        wait = 15 * (2 ** attempt)
+        print("   ⟳ GPT empty content, retrying in %ds (attempt %d/%d)..." % (wait, attempt + 1, max_retries))
+        _time.sleep(wait)
     else:
-        response.raise_for_status()  # final failure
+        response.raise_for_status()  # final failure（或空响应耗尽重试）
+        raise RuntimeError("GPT returned empty content after %d attempts" % max_retries)
     content = response.json()["choices"][0]["message"]["content"].strip()
     if content.startswith("```"):
         content = content.split("\n", 1)[1]
     if content.endswith("```"):
         content = content.rsplit("```", 1)[0]
-    return json.loads(content.strip())
+    content = content.strip()
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        # 兜底：模型偶尔在 JSON 前后加自然语言前言/结语（es/pt 尤其爱 "¡Claro!..."）。
+        # 截取首个 { 到最后一个 } / 首个 [ 到最后一个 ] 再试；仍失败按原样抛。
+        for lo, hi in (("{", "}"), ("[", "]")):
+            start, end = content.find(lo), content.rfind(hi)
+            if start != -1 and end > start:
+                try:
+                    return json.loads(content[start:end + 1])
+                except json.JSONDecodeError:
+                    pass
+        raise
 
 
 def save_episode(episode, level):
