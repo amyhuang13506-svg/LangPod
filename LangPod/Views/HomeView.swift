@@ -308,11 +308,14 @@ struct HomeView: View {
     // MARK: - Level Tabs
 
     private var levelTabs: some View {
-        HStack(spacing: 8) {
-            ForEach(PodcastLevel.allCases, id: \.self) { level in
-                levelTab(level)
+        // 横滑防挤压：es/pt 的级别词较长（Principiante/Intermedio），
+        // 固定 HStack 会把文字压折行
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(PodcastLevel.allCases, id: \.self) { level in
+                    levelTab(level)
+                }
             }
-            Spacer()
         }
     }
 
@@ -336,6 +339,8 @@ struct HomeView: View {
                 Text(level.tabName)
                     .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
                     .foregroundStyle(isSelected ? .white : Color.textSecondary)
+                    .lineLimit(1)
+                    .fixedSize()
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
