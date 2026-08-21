@@ -181,12 +181,29 @@ final class ListeningTestStore {
         levelEpisodes[level.rawValue] = eps.sorted { $0.date > $1.date }
     }
 
-    /// 某级别「今日测验」的集：今天的第 1 集；没有今天的就用最新一集。
+    /// 蓝卡当前推荐集的缓存（level → episodeId）：一发随机在测完前保持稳定，
+    /// 避免 SwiftUI 每次重算 body 都换一集。
+    private var cardPick: [String: String] = [:]
+
+    /// 某级别「今日测验」的集：未测集优先（今天的未测集 → 未测集里随机），
+    /// 该级全部测过才回落到今日/最新一集（卡片显示「再测一次」）。
     /// 与任务深链「听一集」取 last(where:) 相反端，保证两格不同集（8/21 拍板）。
     func todayTestEpisode(for level: PodcastLevel) -> Episode? {
         guard let eps = levelEpisodes[level.rawValue], !eps.isEmpty else { return nil }
+        // 上次随机到的集还没测 → 保持不变
+        if let pid = cardPick[level.rawValue],
+           records[pid] == nil,
+           let ep = eps.first(where: { $0.id == pid }) {
+            return ep
+        }
         let today = DateFormatter.episodeDate.string(from: Date())
-        return eps.first { $0.date == today } ?? eps.first
+        let untested = eps.filter { records[$0.id] == nil }
+        let pick = untested.first { $0.date == today }
+            ?? untested.randomElement()
+            ?? eps.first { $0.date == today }
+            ?? eps.first
+        if let pick { cardPick[level.rawValue] = pick.id }
+        return pick
     }
 
     /// 沉浸式连续测的下一集：当前爬坡等级，未测集优先（日期新→旧），

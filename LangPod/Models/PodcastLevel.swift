@@ -16,8 +16,8 @@ enum PodcastLevel: String, CaseIterable, Codable {
     var icon: String {
         switch self {
         case .easy: "🟢"
-        case .medium: "🟡"
-        case .hard: "🔴"
+        case .medium: "🔵"
+        case .hard: "🟣"
         }
     }
 
