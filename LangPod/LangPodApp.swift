@@ -139,10 +139,12 @@ struct LangPodApp: App {
                         onStart: {
                             withAnimation(.easeOut(duration: 0.2)) { appState.showOnboardingTest = false }
                             Task {
-                                if ListeningTestStore.shared.todayTestEpisode(for: .easy) == nil {
-                                    await ListeningTestStore.shared.loadEpisodes(for: .easy)
+                                // 分级测试从 onboarding 自选级别起测（自评 → 首测校准，可上可下）
+                                let level = dataStore.selectedLevel
+                                if ListeningTestStore.shared.todayTestEpisode(for: level) == nil {
+                                    await ListeningTestStore.shared.loadEpisodes(for: level)
                                 }
-                                if let ep = ListeningTestStore.shared.todayTestEpisode(for: .easy) {
+                                if let ep = ListeningTestStore.shared.todayTestEpisode(for: level) {
                                     onboardingTestEpisode = ep
                                 }
                             }

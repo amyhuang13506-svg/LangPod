@@ -1109,10 +1109,10 @@ struct ListeningTestSessionView: View {
                     .multilineTextAlignment(.center)
             }
             Button {
-                if let target = levelSuggestion?.level {
-                    dataStore.selectedLevel = target
-                    ListeningTestStore.shared.setTestLevel(target)   // 爬坡起点同步
-                }
+                // 爬坡起点 = 建议级别，无建议（中间成绩）则锚定在本次测的级别
+                let target = levelSuggestion?.level ?? level
+                dataStore.selectedLevel = target
+                ListeningTestStore.shared.setTestLevel(target)
                 dismiss()
                 onGoToTestTab?()
             } label: {
@@ -1138,13 +1138,13 @@ struct ListeningTestSessionView: View {
 
     /// 新用户分级建议（仅 onboarding 首弹 + Easy 集）：3/3 → 中级；≤1 → 初级。
     private var levelSuggestion: (text: String, level: PodcastLevel?)? {
-        guard source == "onboarding_popup", level == .easy else { return nil }
+        guard source == "onboarding_popup" else { return nil }
         let total = quiz?.questions.count ?? 3
-        if score >= total {
-            return (String(localized: "你的听力不错！建议从「中级」开始"), .medium)
+        if score >= total, let up = level.nextUp {
+            return (String(localized: "你的听力不错！建议从「\(up.tabName)」开始"), up)
         }
-        if score <= 1 {
-            return (String(localized: "建议从「初级」开始，稳步提升"), .easy)
+        if score <= 1, let down = level.nextDown {
+            return (String(localized: "建议从「\(down.tabName)」开始，稳步提升"), down)
         }
         return (String(localized: "当前级别正适合你，继续保持"), nil)
     }
