@@ -1347,27 +1347,16 @@ struct ListeningTestSegmentView: View {
                 .background(Color.white.opacity(0.075), in: RoundedRectangle(cornerRadius: 18))
                 .overlay(
                     RoundedRectangle(cornerRadius: 18)
-                        .stroke(Self.panelInnerStroke.opacity(0.45), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.25), lineWidth: 1)
                 )
             }
         }
         .padding(18)
         .background(
-            LinearGradient(
-                stops: [
-                    .init(color: Self.panelDeep, location: 0),
-                    .init(color: Self.panelMid, location: 0.58),
-                    .init(color: Self.panelViolet, location: 1)
-                ],
-                startPoint: .topLeading, endPoint: .bottomTrailing
-            ),
-            in: RoundedRectangle(cornerRadius: 24)
+            LinearGradient(colors: [Color.appPrimary, Color(hex: "2563EB")],
+                           startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 20)
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(Self.panelStroke.opacity(0.6), lineWidth: 1)
-        )
-        .shadow(color: Self.panelMid.opacity(0.28), radius: 14, y: 8)
     }
 
     /// 等级宝珠：外圈紫环 + 内层渐变珠（绿/黄/红对应初/中/高）+ 高光 + 星芒
@@ -1379,20 +1368,20 @@ struct ListeningTestSegmentView: View {
         }
         return ZStack {
             Circle()
-                .fill(Color(hex: "2947A6").opacity(0.45))
-                .overlay(Circle().stroke(Color(hex: "8077FF"), lineWidth: 1.5))
-                .frame(width: 56, height: 56)
+                .fill(Color.white.opacity(0.16))
+                .overlay(Circle().stroke(Color.white.opacity(0.35), lineWidth: 1.2))
+                .frame(width: 42, height: 42)
             Circle()
                 .fill(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
-                .frame(width: 40, height: 40)
+                .frame(width: 29, height: 29)
             Circle()
                 .fill(Color.white.opacity(0.5))
-                .frame(width: 12, height: 12)
-                .offset(x: -7, y: -8)
+                .frame(width: 8, height: 8)
+                .offset(x: -5, y: -6)
             Image(systemName: "sparkle")
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: 8, weight: .bold))
                 .foregroundStyle(.white)
-                .offset(x: 17, y: -19)
+                .offset(x: 13, y: -14)
         }
     }
 
@@ -1430,7 +1419,7 @@ struct ListeningTestSegmentView: View {
                     HStack(spacing: 5) {
                         Image(systemName: "headphones")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Self.panelInnerStroke)
+                            .foregroundStyle(Color.white.opacity(0.75))
                         Text(highlightDigits(String(localized: "盲听整集 · 答 3 题"), size: 12))
                             .foregroundStyle(Self.panelSecondaryText)
                     }
@@ -1443,14 +1432,14 @@ struct ListeningTestSegmentView: View {
                     Circle().fill(.white).frame(width: 42, height: 42)
                     Image(systemName: "arrow.right")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(Self.panelCTABlue)
+                        .foregroundStyle(Color.appPrimary)
                 }
             }
             .padding(12)
             .background(Color.white.opacity(0.075), in: RoundedRectangle(cornerRadius: 18))
             .overlay(
                 RoundedRectangle(cornerRadius: 18)
-                    .stroke(Self.panelInnerStroke.opacity(0.45), lineWidth: 1)
+                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
