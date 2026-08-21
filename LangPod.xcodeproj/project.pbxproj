@@ -129,6 +129,7 @@
 		RP0051 /* RawTranscript.swift in Sources */ = {isa = PBXBuildFile; fileRef = RP0052 /* RawTranscript.swift */; };
 		RP0061 /* RawSubtitleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = RP0062 /* RawSubtitleSheet.swift */; };
 		RSS001 /* RawSessionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = RSS002 /* RawSessionSummaryView.swift */; };
+		LT0001 /* ListeningTestViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = LT0002 /* ListeningTestViews.swift */; };
 		RP0071 /* WordLookupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = RP0072 /* WordLookupService.swift */; };
 		RP0081 /* RawPodcastFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = RP0082 /* RawPodcastFeedView.swift */; };
 		RP0091 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = RP0092 /* ExploreView.swift */; };
@@ -260,6 +261,7 @@
 		RP0052 /* RawTranscript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawTranscript.swift; sourceTree = "<group>"; };
 		RP0062 /* RawSubtitleSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawSubtitleSheet.swift; sourceTree = "<group>"; };
 		RSS002 /* RawSessionSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawSessionSummaryView.swift; sourceTree = "<group>"; };
+		LT0002 /* ListeningTestViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningTestViews.swift; sourceTree = "<group>"; };
 		RP0072 /* WordLookupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordLookupService.swift; sourceTree = "<group>"; };
 		RP0082 /* RawPodcastFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawPodcastFeedView.swift; sourceTree = "<group>"; };
 		RP0092 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
@@ -415,6 +417,7 @@
 				RP0042 /* RawPodcastSection.swift */,
 				RP0062 /* RawSubtitleSheet.swift */,
 				RSS002 /* RawSessionSummaryView.swift */,
+				LT0002 /* ListeningTestViews.swift */,
 				RP0082 /* RawPodcastFeedView.swift */,
 				RP0092 /* ExploreView.swift */,
 			);
@@ -689,6 +692,7 @@
 				RP0051 /* RawTranscript.swift in Sources */,
 				RP0061 /* RawSubtitleSheet.swift in Sources */,
 				RSS001 /* RawSessionSummaryView.swift in Sources */,
+				LT0001 /* ListeningTestViews.swift in Sources */,
 				RP0071 /* WordLookupService.swift in Sources */,
 				RP0081 /* RawPodcastFeedView.swift in Sources */,
 				RP0091 /* ExploreView.swift in Sources */,

@@ -86,12 +86,6 @@ struct RawSessionSummaryView: View {
     @State private var cardOpacity: Double = 0
     @State private var quizMode = false
 
-    // Quiz flow state
-    @State private var questionIndex = 0
-    @State private var selectedOption: Int?
-    @State private var correctCount = 0
-    @State private var showResult = false
-
     /// 结算卡最多列几个生词，多出的折叠成"还有 N 个"
     private static let maxWordRows = 4
 
@@ -108,8 +102,20 @@ struct RawSessionSummaryView: View {
 
             Group {
                 if quizMode {
-                    quizCard
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                    // 公用固定尺寸答题卡（与听力测验同一组件）
+                    QuizFlowCard(
+                        questions: quiz?.questions ?? [],
+                        onFinished: { correct in
+                            Analytics.track(.rawQuizComplete, params: [
+                                "podcast_id": summary.podcastId,
+                                "correct_count": "\(correct)",
+                                "total": "\(quiz?.questions.count ?? 0)"
+                            ])
+                        },
+                        onDone: onClose
+                    )
+                    .padding(.horizontal, 28)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
                 } else {
                     summaryCard
                         .transition(.scale(scale: 0.92).combined(with: .opacity))
@@ -300,193 +306,4 @@ struct RawSessionSummaryView: View {
         }
     }
 
-    // MARK: - 理解题卡（同套浅色）
-
-    /// 答题全程卡片尺寸稳定：三道题透明叠放，卡片高度自动取本套题里最高的
-    /// 一道 —— 切题/作答/看结果都不跳，短题也不会留一大截空白。
-    private var quizCard: some View {
-        ZStack {
-            ForEach(Array((quiz?.questions ?? []).enumerated()), id: \.offset) { idx, q in
-                quizQuestion(q, index: idx)
-                    .opacity(!showResult && idx == questionIndex ? 1 : 0)
-                    .allowsHitTesting(!showResult && idx == questionIndex)
-            }
-            if showResult {
-                quizResult
-            }
-        }
-        .background(Color.appBackground, in: RoundedRectangle(cornerRadius: 24))
-        .padding(.horizontal, 28)
-    }
-
-    private var currentQuestion: RawQuizQuestion? {
-        guard let quiz, questionIndex < quiz.questions.count else { return nil }
-        return quiz.questions[questionIndex]
-    }
-
-    private func quizQuestion(_ question: RawQuizQuestion, index: Int) -> some View {
-        // 只有当前题读作答状态；叠放的隐藏题一律按未作答渲染
-        let selected = (index == questionIndex && !showResult) ? selectedOption : nil
-
-        return VStack(alignment: .leading, spacing: 0) {
-            Text("第 \(index + 1)/\(quiz?.questions.count ?? 0) 题")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Color.textTertiary)
-                .padding(.top, 22)
-
-            Text(question.q)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(Color.textPrimary)
-                .lineLimit(3)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .topLeading)
-                .padding(.top, 8)
-
-            VStack(spacing: 8) {
-                ForEach(question.options.indices, id: \.self) { idx in
-                    optionButton(question: question, idx: idx, selected: selected)
-                }
-            }
-            .padding(.top, 14)
-
-            // 解析槽位恒定占位：未作答时透明，不改变布局
-            Text(selected != nil ? (question.explainText ?? "") : " ")
-                .font(.system(size: 12.5))
-                .foregroundStyle(Color.textSecondary)
-                .lineLimit(3)
-                .frame(maxWidth: .infinity, minHeight: 50, maxHeight: 50, alignment: .topLeading)
-                .padding(.top, 6)
-
-            // 按钮恒定占位：未作答时灰色禁用（可见但不可点），作答后变蓝
-            Button {
-                advance()
-            } label: {
-                Text(index + 1 >= (quiz?.questions.count ?? 0) ? "看结果" : "下一题")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(selected == nil ? Color.textTertiary : .white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(
-                        selected == nil ? Color.border : Color.appPrimary,
-                        in: RoundedRectangle(cornerRadius: 14)
-                    )
-            }
-            .disabled(selected == nil)
-            .animation(.easeInOut(duration: 0.2), value: selected == nil)
-            .padding(.top, 8)
-        }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 18)
-    }
-
-    private func optionButton(question: RawQuizQuestion, idx: Int, selected: Int?) -> some View {
-        let answered = selected != nil
-        let isCorrect = idx == question.answer
-        let isSelected = selected == idx
-
-        // 答后配色：正确项恒绿；选错的红；其余淡出（浅色系）
-        let background: Color = {
-            guard answered else { return .white }
-            if isCorrect { return Color.successLight }
-            if isSelected { return Color.dangerLight }
-            return Color.white.opacity(0.5)
-        }()
-        let border: Color = {
-            guard answered else { return Color.border }
-            if isCorrect { return Color.success }
-            if isSelected { return Color.danger }
-            return Color.clear
-        }()
-
-        return Button {
-            guard selectedOption == nil else { return }
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                selectedOption = idx
-            }
-            if isCorrect {
-                correctCount += 1
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
-            } else {
-                UINotificationFeedbackGenerator().notificationOccurred(.error)
-            }
-        } label: {
-            HStack(spacing: 10) {
-                Text(question.options[idx])
-                    .font(.system(size: 14.5, weight: .medium))
-                    .foregroundStyle(answered && !isCorrect && !isSelected
-                                     ? Color.textTertiary : Color.textPrimary)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-                if answered, isCorrect {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color.success)
-                } else if answered, isSelected {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Color.danger)
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(background, in: RoundedRectangle(cornerRadius: 13))
-            .overlay(RoundedRectangle(cornerRadius: 13).stroke(border, lineWidth: 1.5))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func advance() {
-        let total = quiz?.questions.count ?? 0
-        if questionIndex + 1 >= total {
-            Analytics.track(.rawQuizComplete, params: [
-                "podcast_id": summary.podcastId,
-                "correct_count": "\(correctCount)",
-                "total": "\(total)"
-            ])
-            if correctCount == total {
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
-            }
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                showResult = true
-            }
-        } else {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                questionIndex += 1
-                selectedOption = nil
-            }
-        }
-    }
-
-    private var quizResult: some View {
-        let total = quiz?.questions.count ?? 0
-        let allCorrect = correctCount == total
-        return VStack(spacing: 0) {
-            Text(allCorrect ? "🏆" : "💪")
-                .font(.system(size: 44))
-
-            Text("\(correctCount)/\(total)")
-                .font(.system(size: 46, weight: .heavy, design: .rounded))
-                .foregroundStyle(Color.textPrimary)
-                .padding(.top, 4)
-
-            Text(allCorrect ? "全对！你真的听懂了" : "不错，明天再来一段")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Color.textSecondary)
-                .padding(.top, 4)
-
-            Button {
-                onClose()
-            } label: {
-                Text("完成")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            .padding(.bottom, 18)
-        }
-    }
 }

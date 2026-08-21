@@ -75,6 +75,8 @@ YOUTUBE_CHANNELS = [
     {"handle": "@TheSchoolofLife",   "label": "School of Life", "topic": "两性 · 心理动画", "tier": 1, "kind": "speaker",  "category": "explore"},
     {"handle": "@IAmMarkManson",     "label": "Mark Manson",    "topic": "两性 · 心理",     "tier": 2, "kind": "speaker",  "category": "explore"},
     {"handle": "@medcircle",         "label": "MedCircle",      "topic": "心理 · 专家访谈", "tier": 2, "kind": "analysis", "category": "explore"},
+    # Rena Malik, M.D. — 泌尿科 / 性健康专家，每周更新，专业又通俗
+    {"handle": "@RenaMalikMD",       "label": "Rena Malik MD",  "topic": "两性 · 医生科普", "tier": 1, "kind": "analysis", "category": "explore"},
 
     # === 探索：娱乐 · 名人访谈（华人喜爱方向重点扩充）===
     {"handle": "@callherdaddy",          "label": "Call Her Daddy",   "topic": "两性 · 访谈",     "tier": 1, "kind": "analysis", "category": "explore"},

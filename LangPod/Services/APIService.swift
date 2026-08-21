@@ -130,6 +130,37 @@ actor APIService {
         }
     }
 
+    /// 全局远程配置（OSS 根目录 app_config.json）。当前字段：
+    /// - default_home_segment: home / learn / listening_test —— 首页默认落点，
+    ///   听测数据验证后翻转「听测优先」只需改服务器文件，零发版（听力测试体系方案 · 后手）。
+    /// 拉到后写 UserDefaults，下次启动生效（HomeView 初始化时读）。
+    func refreshAppConfig() async {
+        guard let url = URL(string: "\(baseURL)/app_config.json") else { return }
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.timeoutInterval = 8
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+        if let seg = obj["default_home_segment"] as? String {
+            UserDefaults.standard.set(seg, forKey: "homeDefaultSegment")
+        }
+    }
+
+    /// 听力测验（episodes/{level}/{id}/quiz.json，语言无关文件、解析按语言内嵌）。
+    /// 404 = 老集未生成 → nil，调用方静默降级。
+    func fetchEpisodeQuiz(level: String, episodeId: String) async -> ListeningQuiz? {
+        guard let url = URL(string: "\(baseURL)/episodes/\(level)/\(episodeId)/quiz.json") else { return nil }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 8
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let quiz = try? JSONDecoder().decode(ListeningQuiz.self, from: data),
+              !quiz.questions.isEmpty
+        else { return nil }
+        return quiz
+    }
+
     // MARK: - Raw Podcast (硅谷原声)
 
     /// 拉「硅谷原声」master 列表（pipeline A 写到 OSS 的）。

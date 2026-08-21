@@ -25,6 +25,8 @@ extension Notification.Name {
     /// 真实播客（audio 类型）收听心跳，每 0.5s 一次（RawAudioController periodic observer，
     /// 已按 timeControlStatus == .playing 过滤）。userInfo: seconds (Double)
     static let taskEventRawListenTick = Notification.Name("castlingo.task.rawListenTick")
+    /// 听力测验做完一套（ListeningTestSessionView.finish）
+    static let taskEventListeningTestDone = Notification.Name("castlingo.task.listeningTestDone")
 
     /// 任务状态变化（完成/重抽）。LangPodApp 监听 → 重排每日推送。
     static let dailyTasksChanged = Notification.Name("castlingo.task.stateChanged")
@@ -47,9 +49,11 @@ enum DailyTaskType: String, Codable, CaseIterable {
     case learnLesson = "learn_lesson"
     case roleplayLesson = "roleplay_lesson"
     case rawPodcast10Min = "raw_podcast_10min"   // 达标 5 分钟；case 名 / rawValue 保留，避免破坏已持久化的 record
+    case listeningTest = "listening_test"        // 今日听力测验（90 秒 + 3 题，约 2 分钟）
 
     var title: String {
         switch self {
+        case .listeningTest: return String(localized: "今日听力测试")
         case .listenEpisode: return String(localized: "听一集学习播客")
         case .listenPattern: return String(localized: "听一个句型讲解")
         case .learnExpression: return String(localized: "学一个句型")
@@ -73,11 +77,13 @@ enum DailyTaskType: String, Codable, CaseIterable {
         case .learnLesson: return "book"
         case .roleplayLesson: return "bubble.left.and.bubble.right"
         case .rawPodcast10Min: return "waveform"
+        case .listeningTest: return "ear.fill"
         }
     }
 
     var estimatedMinutes: Int {
         switch self {
+        case .listeningTest: return 2
         case .listenEpisode: return 5
         case .listenPattern: return 2
         case .learnExpression: return 1
@@ -93,6 +99,7 @@ enum DailyTaskType: String, Codable, CaseIterable {
     /// 避免用户一打开就面对最重的任务（一集播客 12-20 分钟）。
     var displayOrder: Int {
         switch self {
+        case .listeningTest: return -1   // 第一格：听测优先（2026-08-21 听力测试体系）
         case .learnLesson: return 0
         case .learnExpression: return 1
         case .listenPattern: return 2
@@ -209,7 +216,7 @@ final class TaskEngine {
 
     /// 抽取逻辑版本：改 drawTasks 结构时 +1。当天无任何进度的旧版记录会按新逻辑重抽，
     /// 已有进度的保留（不清用户当天成果）。
-    private static let drawLogicVersion = 3
+    private static let drawLogicVersion = 4   // v4: 格① 换为今日听力测试（2026-08-21）
     private static let drawVersionKey = "taskDrawLogicVersion"
 
     /// 保证 record 是今天的：没有或过期 → 立即抽取并整体持久化。
@@ -255,13 +262,9 @@ final class TaskEngine {
         var usedPractices: Set<DailyTaskType> = []
         let practices = eligiblePractices()             // 场景模拟保底，永不为空
 
-        // 格①（用户第一眼的任务）：图文内容轻任务 —— 词汇小课堂 / 句型图文卡 二选一。
-        // 免费用户可完成：深链开今日每日课（当天免费）/ 句型免费分类首条（永久免费）。
-        var lightPool: [DailyTaskType] = [.learnExpression]   // 句型表达库全局内容，恒可用
-        if lessonStore?.lessons.isEmpty == false { lightPool.append(.learnLesson) }
-        if let light = pickStable(from: lightPool, seed: seed + "|slot1") {
-            slots.append(light)
-        }
+        // 格①（用户第一眼的任务）：今日听力测试（90 秒 + 3 题，约 2 分钟，免费）。
+        // 2026-08-21 听力测试体系：原图文轻任务移入格④机动池。
+        slots.append(.listeningTest)
 
         // 格②：播客固定在列（核心产品；displayOrder 让它展示时压轴）
         slots.append(.listenEpisode)
@@ -272,11 +275,13 @@ final class TaskEngine {
             usedPractices.insert(p)
         }
 
-        // 格④：机动池（Pro 才含课堂类；免费池剔除格①已占的类型）
-        var pool: [DailyTaskType] = []
+        // 格④：机动池（图文轻任务从格①移入；Pro 才含课堂类）
+        var pool: [DailyTaskType] = [.learnExpression]
         let isPro = subscriptionManager?.isProUser == true
-        if isPro, lessonStore?.lessons.isEmpty == false {
-            if !slots.contains(.learnLesson) { pool.append(.learnLesson) }
+        if lessonStore?.lessons.isEmpty == false {
+            pool.append(.learnLesson)
+        }
+        if isPro {
             pool.append(.roleplayLesson)
         }
         if hasPatternToday(), !slots.contains(.listenPattern) {
@@ -345,6 +350,7 @@ final class TaskEngine {
         on(.taskEventLessonCompleted) { [weak self] _ in self?.complete(.learnLesson) }
         on(.taskEventExpressionViewed) { [weak self] _ in self?.complete(.learnExpression) }
         on(.taskEventRoleplayFinished) { [weak self] _ in self?.complete(.roleplayLesson) }
+        on(.taskEventListeningTestDone) { [weak self] _ in self?.complete(.listeningTest) }
         on(.taskEventRawListenTick) { [weak self] note in
             let sec = note.userInfo?["seconds"] as? Double ?? 0.5
             self?.accumulateRawListen(seconds: sec)

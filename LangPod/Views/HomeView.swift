@@ -8,12 +8,22 @@ struct HomeView: View {
     @State private var showAllEpisodes = false
     @State private var showPaywall = false
     @State private var showPatternHistory = false
-    @State private var topTab: TopTab = .home
+    @State private var topTab: TopTab = HomeView.defaultTopTab()
     @State private var selectedExplorePodcast: RawPodcast?
     @State private var searchText: String = ""
     @FocusState private var searchFocused: Bool
 
-    enum TopTab: Hashable { case home, learn }
+    enum TopTab: Hashable { case home, learn, test }
+
+    /// 首页默认落点：服务器配置（app_config.json → UserDefaults）驱动，
+    /// 听测数据跑通后可零发版翻转为「听测优先」（听力测试体系方案 · 后手）。
+    static func defaultTopTab() -> TopTab {
+        switch UserDefaults.standard.string(forKey: "homeDefaultSegment") {
+        case "listening_test": return .test
+        case "learn": return .learn
+        default: return .home
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -38,6 +48,8 @@ struct HomeView: View {
                             .tag(TopTab.home)
                         learnSegmentScroll
                             .tag(TopTab.learn)
+                        ListeningTestSegmentView()
+                            .tag(TopTab.test)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .animation(.easeInOut(duration: 0.25), value: topTab)
@@ -64,9 +76,10 @@ struct HomeView: View {
                     Picker("", selection: $topTab) {
                         Text("首页").tag(TopTab.home)
                         Text("学习").tag(TopTab.learn)
+                        Text("听力测试").tag(TopTab.test)
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 200)
+                    .frame(width: 264)
                 }
             }
             .searchable(
@@ -94,6 +107,17 @@ struct HomeView: View {
             }
             .task {
                 await preloadVisibleThumbnails()
+            }
+            .onChange(of: topTab) { _, newValue in
+                let name = switch newValue {
+                case .home: "home"
+                case .learn: "learn"
+                case .test: "listening_test"
+                }
+                Analytics.track(.homeSegmentSwitch, params: ["segment": name])
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .switchToListeningTest)) { _ in
+                topTab = .test
             }
             .onChange(of: dataStore.pendingRawPodcastId) { _, newValue in
                 consumePendingRawPodcast(id: newValue)

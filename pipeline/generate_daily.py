@@ -203,6 +203,13 @@ def run_pipeline(target_level=None):
                     bucket = get_bucket()
                 upload_episode(bucket, json_path, level)
 
+                # 听力测验：前 90 秒对白出 3 道大意题，输出 quiz.json（听力测试体系供给）。失败非致命。
+                try:
+                    from generate_episode_quiz import generate_quiz_for_episode
+                    generate_quiz_for_episode(level, episode["id"], bucket, episode=episode)
+                except Exception as e:
+                    log.warning(f"   ⚠️ Episode quiz failed (non-fatal): {e}")
+
                 # 入推送队列：17:00 的 flush --type episode 按级别去重后发出
                 # （每级只发最早入队的一集）。失败非致命。
                 try:

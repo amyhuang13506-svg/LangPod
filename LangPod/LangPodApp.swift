@@ -13,6 +13,7 @@ class AppState {
 
     // 每日任务系统
     var showDailyTasks = false            // 任务清单弹窗（根部 overlay，非 fullScreenCover，避免多 cover 冲突）
+    var showOnboardingTest = false        // 新用户首弹：听力水平测试引导卡
     var showTaskCelebration = false       // 4/4 点火大庆祝
     var pendingTaskCelebration = false    // 完成页/LevelUp 占用时排队，等 dismiss 再弹
     var taskToast: TaskToastData?         // 中途横条（完成的任务 + 下一个任务）
@@ -29,6 +30,7 @@ struct LangPodApp: App {
     @State private var sentenceStore = SentenceStore()
     @State private var lessonStore = LessonStore()
     @State private var appState = AppState()
+    @State private var onboardingTestEpisode: Episode?   // 新用户首弹拉起的测验
     @State private var notificationManager = NotificationManager()
     @State private var subscriptionManager = SubscriptionManager()
 
@@ -131,6 +133,29 @@ struct LangPodApp: App {
                     .zIndex(3)
                 }
 
+                // 新用户首弹：听力水平测试引导卡（替代新用户首次的任务清单弹窗）
+                if appState.showOnboardingTest {
+                    OnboardingTestIntroCard(
+                        onStart: {
+                            withAnimation(.easeOut(duration: 0.2)) { appState.showOnboardingTest = false }
+                            Task {
+                                if ListeningTestStore.shared.todayTestEpisode(for: .easy) == nil {
+                                    await ListeningTestStore.shared.loadEpisodes(for: .easy)
+                                }
+                                if let ep = ListeningTestStore.shared.todayTestEpisode(for: .easy) {
+                                    onboardingTestEpisode = ep
+                                }
+                            }
+                        },
+                        onSkip: {
+                            Analytics.track(.onboardingTestSkip, params: ["at": "intro"])
+                            withAnimation(.easeOut(duration: 0.2)) { appState.showOnboardingTest = false }
+                        }
+                    )
+                    .transition(.opacity)
+                    .zIndex(3)
+                }
+
                 // 4/4 点火大庆祝（完成页/LevelUp 优先，占用时排队）
                 if appState.showTaskCelebration {
                     TaskCelebrationView(
@@ -149,6 +174,17 @@ struct LangPodApp: App {
                     .transition(.opacity)
                     .zIndex(4)
                 }
+            }
+            .fullScreenCover(item: $onboardingTestEpisode) { ep in
+                ListeningTestSessionView(
+                    episode: ep,
+                    source: "onboarding_popup",
+                    onGoToTestTab: {
+                        NotificationCenter.default.post(name: .switchToListeningTest, object: nil)
+                    }
+                )
+                .environment(dataStore)
+                .environment(vocabularyStore)
             }
             .fullScreenCover(isPresented: $appState.showCompletePage) {
                 if let episode = appState.completedEpisode {
@@ -193,6 +229,8 @@ struct LangPodApp: App {
             }
             .task {
                 setupPlayGate()
+                // 远程配置：首页默认落点等（写 UserDefaults，下次启动生效）
+                Task { await APIService.shared.refreshAppConfig() }
                 // 每日任务引擎：注入依赖 + 抽取今日任务（等 episodes 加载稳定后）
                 TaskEngine.shared.configure(
                     dataStore: dataStore,
@@ -358,6 +396,17 @@ struct LangPodApp: App {
               !appState.showCompletePage,
               !appState.showTaskCelebration,
               !appState.showDailyTasks else { return }
+
+        // 新用户首弹：onboarding 当天的首次落地 → 听力水平测试（替代任务清单，不叠加弹窗）。
+        // 老用户（onboardingCompletedDay 非今天）不受影响。
+        if UserDefaults.standard.string(forKey: "onboardingCompletedDay") == TaskEngine.todayKey(),
+           !UserDefaults.standard.bool(forKey: "onboardingTestPromptShown") {
+            UserDefaults.standard.set(true, forKey: "onboardingTestPromptShown")
+            withAnimation(.easeOut(duration: 0.25)) {
+                appState.showOnboardingTest = true
+            }
+            return
+        }
 
         engine.markPopupShown()
         Analytics.track(.dailyTaskPopupView)

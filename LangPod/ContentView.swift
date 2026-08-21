@@ -19,6 +19,8 @@ struct ContentView: View {
     @State private var taskLesson: LessonOpenTarget?
     /// 续看推送深链拉起的原声（raw:{id}），直接从 ContentView 全屏 present
     @State private var pushRawPodcast: RawPodcast?
+    /// 任务深链拉起的听力测验
+    @State private var testSessionEpisode: Episode?
 
     var body: some View {
         if dataStore.hasCompletedOnboarding {
@@ -86,6 +88,9 @@ struct ContentView: View {
             }
             .fullScreenCover(item: $pushRawPodcast) { podcast in
                 RawPodcastPlayerView(podcast: podcast)
+            }
+            .fullScreenCover(item: $testSessionEpisode) { ep in
+                ListeningTestSessionView(episode: ep, source: "daily_task")
             }
             .fullScreenCover(item: $taskPractice) { target in
                 switch target {
@@ -170,6 +175,16 @@ struct ContentView: View {
             lessonStore.loadThemeIfNeeded()
             if let target = lessonStore.dailyTaskLesson {
                 taskLesson = LessonOpenTarget(item: target.item, country: target.country)
+            }
+
+        case .listeningTest:
+            selectedTab = 0
+            if let ep = ListeningTestStore.shared.todayTestEpisode(for: dataStore.selectedLevel) {
+                testSessionEpisode = ep
+            } else {
+                // 集列表还没加载：切到听测 segment（页面自己会加载），并预热数据
+                NotificationCenter.default.post(name: .switchToListeningTest, object: nil)
+                Task { await ListeningTestStore.shared.loadEpisodes(for: dataStore.selectedLevel) }
             }
 
         case .rawPodcast10Min:

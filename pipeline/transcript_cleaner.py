@@ -25,6 +25,16 @@ SUBSCRIBE_RE = re.compile(
     re.IGNORECASE
 )
 
+# Whisper prompt 词汇泄露：连续 ≥3 个 prompt 词，中间只用空格/逗号/句号分隔。
+# 真实科技内容会用 and/with/like 等连接词，不会触发。
+# 例：'I'm Dr. NVIDIA, Anthropic, Claude, GPT, AGI.' → 命中（幻觉）
+# 例：'OpenAI and Anthropic compete with NVIDIA on AGI' → 不命中（有 and/with/on）
+_PROMPT_WORDS = r'(?:OpenAI|NVIDIA|Anthropic|Claude|GPT|AGI)'
+PROMPT_LEAK_RE = re.compile(
+    rf'\b{_PROMPT_WORDS}\b[\s,\.]+\b{_PROMPT_WORDS}\b[\s,\.]+\b{_PROMPT_WORDS}\b',
+    re.IGNORECASE
+)
+
 
 def _strip_trailing_garbage(text: str) -> str:
     """剥掉末尾连续的非 ASCII / 模板套话。
@@ -107,6 +117,7 @@ def clean_segments(segments: list[dict]) -> tuple[list[dict], int, int]:
     """清洗整批 segments。返回 (新 segments, 修改数, 删除数)。
     - 改了内容 → 标记 _dirty=True 让调用方知道需要重新翻译
     - 段长 < 3 字符 → 整段删除
+    - 命中 prompt 词汇泄露（裸列表幻觉）→ 整段删除
     - words 数组保留不动（时间戳还有用）
     """
     out = []
@@ -114,6 +125,10 @@ def clean_segments(segments: list[dict]) -> tuple[list[dict], int, int]:
     dropped = 0
     for s in segments:
         en = s.get("en", "") or ""
+        # prompt 泄露兜底：命中即整段丢弃（无法重建原文）
+        if PROMPT_LEAK_RE.search(en):
+            dropped += 1
+            continue
         new_en, dirty = clean_segment_text(en)
         if len(new_en.strip()) < 3:
             dropped += 1
@@ -148,3 +163,26 @@ if __name__ == "__main__":
         print(f"     got=\"{got}\" dirty={dirty}")
         if got.strip() != expected.strip():
             print(f"     EXPECTED=\"{expected}\"")
+
+    # Prompt 泄露检测（命中 = 整段应被 clean_segments 删除）
+    leak_cases = [
+        # (text, should_match)
+        ("I'm Dr. NVIDIA, Anthropic, Claude, GPT, AGI.", True),
+        ("OpenAI, NVIDIA, Anthropic, Claude, GPT, AGI.", True),
+        ("NVIDIA. Anthropic. Claude.", True),
+        ("openai, nvidia, anthropic", True),  # 大小写不敏感
+        # 真实科技内容（必须保留）
+        ("OpenAI and Anthropic are competing with NVIDIA on AGI", False),
+        ("Companies like OpenAI, Anthropic, and Google use Claude", False),
+        ("Claude 4.5 is better than GPT-4 at coding", False),
+        ("NVIDIA's new chip helps train Claude and GPT models", False),
+        ("Hello world.", False),
+    ]
+    print("\nPrompt 泄露检测 case 测试：")
+    for src, expected in leak_cases:
+        matched = bool(PROMPT_LEAK_RE.search(src))
+        ok = "✓" if matched == expected else "✗"
+        verdict = "命中→删" if matched else "保留"
+        print(f"  {ok} {verdict:<6} \"{src}\"")
+        if matched != expected:
+            print(f"     EXPECTED={'命中' if expected else '保留'}")
