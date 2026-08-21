@@ -29,6 +29,15 @@ private extension PodcastLevel {
     var nextDown: PodcastLevel? {
         switch self { case .easy: nil; case .medium: .easy; case .hard: .medium }
     }
+
+    /// 听测等级圆点色：灰银 → 浅绿 → 绿（进阶感，8/22 拍板）
+    var dotColor: Color {
+        switch self {
+        case .easy: Color(hex: "B9C2CE")
+        case .medium: Color(hex: "7FDD9B")
+        case .hard: Color(hex: "1FA750")
+        }
+    }
 }
 
 // MARK: - 成绩 + 等级爬坡存储
@@ -1312,8 +1321,10 @@ struct ListeningTestSegmentView: View {
         VStack(alignment: .leading, spacing: 0) {
             // 头部：等级宝珠 + 等级/规则 + 升级进度点
             HStack(alignment: .center, spacing: 12) {
-                Text(level.icon)
-                    .font(.system(size: 26))
+                Circle()
+                    .fill(level.dotColor)
+                    .frame(width: 22, height: 22)
+                    .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(alignment: .firstTextBaseline, spacing: 7) {
@@ -1569,9 +1580,14 @@ struct ListeningTestSegmentView: View {
                         .lineLimit(1)
                     HStack(spacing: 5) {
                         if let level {
-                            Text("\(level.icon) \(level.tabName)")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(Color.textSecondary)
+                            HStack(spacing: 4) {
+                                Circle()
+                                    .fill(level.dotColor)
+                                    .frame(width: 7, height: 7)
+                                Text(level.tabName)
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundStyle(Color.textSecondary)
+                            }
                         }
                         Text("\(ep.dateDisplay) · \(ep.durationDisplay)")
                             .font(.system(size: 11))
