@@ -544,10 +544,14 @@ struct ListeningTestSessionView: View {
 
             VStack(spacing: 0) {
                 header
-                Spacer(minLength: 0)
+                stepIndicator
+                    .padding(.top, 14)
+                    .padding(.horizontal, 24)
                 switch phase {
-                case .listening: listeningCard
+                case .listening:
+                    blindListeningPage
                 case .quiz:
+                    Spacer(minLength: 0)
                     QuizFlowCard(
                         questions: quiz?.questions ?? [],
                         showsResult: false,
@@ -555,9 +559,10 @@ struct ListeningTestSessionView: View {
                     )
                     .padding(.horizontal, 24)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
-                case .score: scoreCard
+                    Spacer(minLength: 0)
+                case .score:
+                    scorePage
                 }
-                Spacer(minLength: 0)
             }
         }
         .task {
@@ -656,22 +661,66 @@ struct ListeningTestSessionView: View {
         .padding(.top, 16)
     }
 
-    // MARK: 试听
+    // MARK: 步骤指示（盲听 → 答题 → 看原文）
 
-    private var listeningCard: some View {
+    private var stepIndicator: some View {
+        let steps: [(String, Phase)] = [
+            (String(localized: "盲听"), .listening),
+            (String(localized: "答题"), .quiz),
+            (String(localized: "看原文"), .score)
+        ]
+        let currentIndex = steps.firstIndex { $0.1 == phase } ?? 0
+
+        return HStack(spacing: 6) {
+            ForEach(steps.indices, id: \.self) { i in
+                let active = i == currentIndex
+                let done = i < currentIndex
+                HStack(spacing: 5) {
+                    Group {
+                        if done {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(Color.success)
+                        } else {
+                            Text("\(i + 1)")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(active ? .white : Color.textTertiary)
+                                .frame(width: 16, height: 16)
+                                .background(Circle().fill(active ? Color.appPrimary : Color.border))
+                        }
+                    }
+                    Text(steps[i].0)
+                        .font(.system(size: 12, weight: active ? .bold : .medium))
+                        .foregroundStyle(active ? Color.textPrimary : Color.textTertiary)
+                }
+                if i < steps.count - 1 {
+                    Rectangle()
+                        .fill(i < currentIndex ? Color.success : Color.border)
+                        .frame(height: 1.5)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+
+    // MARK: ① 盲听（整页）
+
+    private var blindListeningPage: some View {
         VStack(spacing: 0) {
-            Text("🎧")
-                .font(.system(size: 40))
-                .padding(.top, 26)
+            Spacer()
 
-            Text("先听 \(Int(clipSeconds)) 秒")
-                .font(.system(size: 20, weight: .bold))
+            WaveformBars(isActive: clipPlayer?.isPlaying == true)
+
+            Text("盲听 \(Int(clipSeconds)) 秒")
+                .font(.system(size: 24, weight: .heavy))
                 .foregroundStyle(Color.textPrimary)
-                .padding(.top, 8)
-            Text("听完回答 \(quiz?.questions.count ?? 3) 个问题，看看你听懂了多少")
-                .font(.system(size: 13))
+                .padding(.top, 26)
+            Text("不看字幕，抓大意就好\n听完回答 \(quiz?.questions.count ?? 3) 个问题")
+                .font(.system(size: 13.5))
                 .foregroundStyle(Color.textSecondary)
-                .padding(.top, 3)
+                .multilineTextAlignment(.center)
+                .lineSpacing(3)
+                .padding(.top, 6)
 
             Button {
                 if clipPlayer == nil {
@@ -680,21 +729,34 @@ struct ListeningTestSessionView: View {
                 clipPlayer?.toggle()
             } label: {
                 Image(systemName: clipPlayer?.isPlaying == true ? "pause.fill" : "play.fill")
-                    .font(.system(size: 26, weight: .bold))
+                    .font(.system(size: 30, weight: .bold))
                     .foregroundStyle(.white)
-                    .frame(width: 72, height: 72)
+                    .frame(width: 84, height: 84)
                     .background(Circle().fill(Color.appPrimary))
+                    .shadow(color: Color.appPrimary.opacity(0.35), radius: 16, y: 6)
             }
-            .padding(.top, 22)
+            .padding(.top, 32)
 
             // total 用 player 的 clipEnd（单一事实源），避免 quiz 晚到时 90/150 对不上
-            ProgressView(
-                value: min(clipPlayer?.currentTime ?? 0, clipPlayer?.clipEnd ?? clipSeconds),
-                total: clipPlayer?.clipEnd ?? clipSeconds
-            )
+            VStack(spacing: 6) {
+                ProgressView(
+                    value: min(clipPlayer?.currentTime ?? 0, clipPlayer?.clipEnd ?? clipSeconds),
+                    total: clipPlayer?.clipEnd ?? clipSeconds
+                )
                 .tint(Color.appPrimary)
-                .padding(.horizontal, 40)
-                .padding(.top, 18)
+                HStack {
+                    Text(timeString(clipPlayer?.currentTime ?? 0))
+                    Spacer()
+                    Text(timeString(clipPlayer?.clipEnd ?? clipSeconds))
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(Color.textTertiary)
+                .monospacedDigit()
+            }
+            .padding(.horizontal, 44)
+            .padding(.top, 26)
+
+            Spacer()
 
             Button {
                 clipPlayer?.player.pause()
@@ -706,19 +768,21 @@ struct ListeningTestSessionView: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(startEnabled ? .white : Color.textTertiary)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 48)
+                    .frame(height: 50)
                     .background(
                         startEnabled ? Color.appPrimary : Color.border,
                         in: RoundedRectangle(cornerRadius: 14)
                     )
             }
             .disabled(!startEnabled)
-            .padding(.horizontal, 20)
-            .padding(.top, 22)
-            .padding(.bottom, 20)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
         }
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 24))
-        .padding(.horizontal, 24)
+    }
+
+    private func timeString(_ seconds: Double) -> String {
+        let s = max(0, Int(seconds))
+        return String(format: "%d:%02d", s / 60, s % 60)
     }
 
     /// 开始答题的门槛：题目已加载 且（听满片段 或 已听 ≥15 秒主动跳）
@@ -762,10 +826,30 @@ struct ListeningTestSessionView: View {
         episode.date != DateFormatter.episodeDate.string(from: Date()) && !subscriptionManager.isProUser
     }
 
-    private var scoreCard: some View {
+    /// ③ 得分 + 原文（整页滚动）：分数 → 盲听内容的原文对照（可重听）→ 生词 → 下一集
+    private var scorePage: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 12) {
+                scoreHeaderCard
+                transcriptCard
+                vocabCard
+                if source == "onboarding_popup" {
+                    onboardingScoreFooter
+                        .background(Color.white, in: RoundedRectangle(cornerRadius: 20))
+                } else {
+                    immersiveScoreFooter
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 14)
+            .padding(.bottom, 24)
+        }
+        .transition(.opacity)
+    }
+
+    private var scoreHeaderCard: some View {
         let total = quiz?.questions.count ?? 3
         let allCorrect = score == total
-        let vocab = (detailEpisode?.vocabulary ?? []).prefix(6)
 
         return VStack(spacing: 0) {
             // 升/降级提示（在分数上方，最强信息优先）
@@ -807,8 +891,128 @@ struct ListeningTestSessionView: View {
                 .padding(.top, 2)
                 .padding(.horizontal, 20)
                 .multilineTextAlignment(.center)
+                .padding(.bottom, 18)
+        }
+        .frame(maxWidth: .infinity)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 20))
+    }
 
-            if !vocab.isEmpty {
+    // MARK: 原文对照（答完题才揭晓，可对照重听）
+
+    /// 盲听片段覆盖到的 script 行（时间戳缺失时按行数上限兜底）
+    private var clipScriptLines: [ScriptLine] {
+        guard let script = detailEpisode?.script, !script.isEmpty else { return [] }
+        let clipEnd = clipPlayer?.clipEnd ?? clipSeconds
+        var out: [ScriptLine] = []
+        for (i, line) in script.enumerated() {
+            if i >= 25 { break }
+            if let s = line.start, s > clipEnd { break }
+            out.append(line)
+        }
+        return out
+    }
+
+    @ViewBuilder
+    private var transcriptCard: some View {
+        let lines = clipScriptLines
+        if !lines.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 6) {
+                    Text("原文")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Text("刚才你听到的")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.textTertiary)
+                    Spacer()
+                    Button {
+                        if clipPlayer == nil {
+                            clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: clipSeconds)
+                        }
+                        clipPlayer?.toggle()
+                    } label: {
+                        Label(clipPlayer?.isPlaying == true ? String(localized: "暂停") : String(localized: "重听一遍"),
+                              systemImage: clipPlayer?.isPlaying == true ? "pause.fill" : "play.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color.appPrimary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.primaryLight, in: Capsule())
+                    }
+                }
+                .padding(.bottom, 12)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(lines) { line in
+                        transcriptRow(line)
+                    }
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 20))
+        }
+    }
+
+    private func transcriptRow(_ line: ScriptLine) -> some View {
+        // 重听时高亮当前句
+        let isActive: Bool = {
+            guard clipPlayer?.isPlaying == true,
+                  let s = line.start, let e = line.end,
+                  let t = clipPlayer?.currentTime else { return false }
+            return t >= s && t <= e
+        }()
+
+        return VStack(alignment: .leading, spacing: 2) {
+            Text(line.speaker)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(Color.appPrimary.opacity(0.8))
+            Text(line.text)
+                .font(.system(size: 14.5, weight: .medium))
+                .foregroundStyle(Color.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(line.translation)
+                .font(.system(size: 12))
+                .foregroundStyle(Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            isActive ? Color.primaryLight : Color.clear,
+            in: RoundedRectangle(cornerRadius: 10)
+        )
+    }
+
+    // MARK: 生词卡
+
+    @ViewBuilder
+    private var vocabCard: some View {
+        let vocab = (detailEpisode?.vocabulary ?? []).prefix(6)
+        if !vocab.isEmpty {
+            VStack(spacing: 0) {
+                HStack {
+                    Text("本集生词")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color.textPrimary)
+                    Spacer()
+                    Button {
+                        guard !wordsSaved else { return }
+                        for item in vocab { _ = vocabularyStore.addWord(item, sourceLabel: "listening_test") }
+                        wordsSaved = true
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    } label: {
+                        Text(wordsSaved ? "已加入生词本 ✓" : "全部加入生词本")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(wordsSaved ? Color.success : Color.appPrimary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(wordsSaved ? Color.successLight : Color.primaryLight, in: Capsule())
+                    }
+                }
+                .padding(.bottom, 10)
+
                 VStack(spacing: 6) {
                     ForEach(Array(vocab), id: \.word) { item in
                         HStack(spacing: 10) {
@@ -831,31 +1035,10 @@ struct ListeningTestSessionView: View {
                         .background(Color.appBackground, in: RoundedRectangle(cornerRadius: 12))
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 14)
-
-                Button {
-                    guard !wordsSaved else { return }
-                    for item in vocab { _ = vocabularyStore.addWord(item, sourceLabel: "listening_test") }
-                    wordsSaved = true
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
-                } label: {
-                    Text(wordsSaved ? "已加入生词本 ✓" : "全部加入生词本")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(wordsSaved ? Color.success : Color.appPrimary)
-                }
-                .padding(.top, 10)
             }
-
-            if source == "onboarding_popup" {
-                onboardingScoreFooter
-            } else {
-                immersiveScoreFooter
-            }
+            .padding(16)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 20))
         }
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 24))
-        .padding(.horizontal, 24)
-        .transition(.scale(scale: 0.94).combined(with: .opacity))
     }
 
     /// 沉浸流底部：下一集（倒计时自动）/ 解锁 / 关闭
@@ -980,6 +1163,34 @@ struct ListeningTestSessionView: View {
             return (String(localized: "建议从「初级」开始，稳步提升"), .easy)
         }
         return (String(localized: "当前级别正适合你，继续保持"), nil)
+    }
+}
+
+// MARK: - 盲听波形动画（播放时跳动，暂停时静止）
+
+private struct WaveformBars: View {
+    let isActive: Bool
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 24.0, paused: !isActive)) { ctx in
+            let t = ctx.date.timeIntervalSinceReferenceDate
+            HStack(spacing: 5) {
+                ForEach(0..<9, id: \.self) { i in
+                    Capsule()
+                        .fill(Color.appPrimary.opacity(isActive ? 0.9 : 0.35))
+                        .frame(width: 5, height: barHeight(i: i, t: t))
+                }
+            }
+        }
+        .frame(height: 56)
+        .animation(.easeInOut(duration: 0.25), value: isActive)
+    }
+
+    private func barHeight(i: Int, t: TimeInterval) -> CGFloat {
+        guard isActive else { return 16 }
+        let phase = t * 3.2 + Double(i) * 0.85
+        let wobble = sin(phase) * sin(phase * 0.63 + Double(i))
+        return 16 + CGFloat(abs(wobble)) * 38
     }
 }
 
