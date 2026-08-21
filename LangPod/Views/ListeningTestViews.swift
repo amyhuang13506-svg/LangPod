@@ -1275,7 +1275,16 @@ struct ListeningTestSegmentView: View {
         }
     }
 
-    // MARK: ③ 等级爬坡卡
+    // MARK: ③ 等级爬坡卡（panel_layered_assets 设计稿实现）
+
+    private static let panelDeep = Color(hex: "102A72")
+    private static let panelMid = Color(hex: "1749C7")
+    private static let panelViolet = Color(hex: "6355F6")
+    private static let panelStroke = Color(hex: "7E8CFF")
+    private static let panelInnerStroke = Color(hex: "8EA1FF")
+    private static let panelSecondaryText = Color(hex: "C4CBEE")
+    private static let panelYellow = Color(hex: "FFE65C")
+    private static let panelCTABlue = Color(hex: "4652E8")
 
     @ViewBuilder
     private var ladderCard: some View {
@@ -1284,90 +1293,193 @@ struct ListeningTestSegmentView: View {
         let record = todayEp.flatMap { store.record(for: $0.id) }
 
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 8) {
-                Text("当前等级")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.75))
-                Text("\(level.icon) \(level.tabName)")
-                    .font(.system(size: 15, weight: .heavy))
-                    .foregroundStyle(.white)
-                Spacer()
-                // 升级进度点 ●●○
-                if store.testLevel.nextUp != nil {
-                    HStack(spacing: 4) {
+            // 头部：等级宝珠 + 等级/规则 + 升级进度点
+            HStack(alignment: .center, spacing: 14) {
+                levelOrb(level)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("当前等级")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Self.panelSecondaryText)
+                    Text(level.tabName)
+                        .font(.system(size: 25, weight: .heavy))
+                        .foregroundStyle(.white)
+                    Text(highlightDigits(ladderRuleText, size: 12))
+                        .foregroundStyle(Self.panelSecondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 8)
+
+                if level.nextUp != nil {
+                    HStack(spacing: 6) {
                         ForEach(0..<ListeningTestStore.ladderThreshold, id: \.self) { i in
                             Circle()
-                                .fill(i < store.consecutivePerfect ? Color.white : Color.white.opacity(0.25))
-                                .frame(width: 8, height: 8)
+                                .fill(i < store.consecutivePerfect ? Color.white : Color.white.opacity(0.28))
+                                .frame(width: 9, height: 9)
                         }
                     }
                 }
             }
-
-            Text(ladderRuleText)
-                .font(.system(size: 11.5))
-                .foregroundStyle(.white.opacity(0.85))
-                .padding(.top, 6)
-                .fixedSize(horizontal: false, vertical: true)
 
             if store.consecutivePoor > 0 {
                 Text("⚠️ 已连续 \(store.consecutivePoor)/\(ListeningTestStore.ladderThreshold) 套 ≤1 题")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color(hex: "FDE68A"))
-                    .padding(.top, 3)
+                    .foregroundStyle(Self.panelYellow)
+                    .padding(.top, 6)
             }
 
             Divider()
-                .overlay(Color.white.opacity(0.25))
-                .padding(.vertical, 12)
+                .overlay(Color.white.opacity(0.22))
+                .padding(.vertical, 14)
 
             if let ep = todayEp {
-                Button {
-                    sessionSource = "home_tab"
-                    sessionEpisode = ep
-                } label: {
-                    HStack(spacing: 10) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("今日测验")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(.white.opacity(0.7))
-                            Text(ep.title)
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundStyle(.white)
-                                .lineLimit(2)
-                                .multilineTextAlignment(.leading)
-                            if let record {
-                                Label("\(record.correct)/\(record.total) · 再测一次", systemImage: "checkmark.seal.fill")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundStyle(.white.opacity(0.9))
-                            } else {
-                                Label(String(localized: "盲听整集 · 答 3 题"), systemImage: "headphones")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundStyle(.white.opacity(0.9))
-                            }
-                        }
-                        Spacer()
-                        Image(systemName: "arrow.right.circle.fill")
-                            .font(.system(size: 30))
-                            .foregroundStyle(.white)
-                    }
-                }
-                .buttonStyle(.plain)
+                quizPanel(ep, record: record)
             } else {
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small).tint(.white)
                     Text("今日测验加载中…")
                         .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(Self.panelSecondaryText)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 26)
+                .background(Color.white.opacity(0.075), in: RoundedRectangle(cornerRadius: 18))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(Self.panelInnerStroke.opacity(0.45), lineWidth: 1)
+                )
             }
         }
         .padding(18)
         .background(
-            LinearGradient(colors: [Color.appPrimary, Color(hex: "2563EB")],
-                           startPoint: .topLeading, endPoint: .bottomTrailing),
-            in: RoundedRectangle(cornerRadius: 20)
+            LinearGradient(
+                stops: [
+                    .init(color: Self.panelDeep, location: 0),
+                    .init(color: Self.panelMid, location: 0.58),
+                    .init(color: Self.panelViolet, location: 1)
+                ],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 24)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Self.panelStroke.opacity(0.6), lineWidth: 1)
+        )
+        .shadow(color: Self.panelMid.opacity(0.28), radius: 14, y: 8)
+    }
+
+    /// 等级宝珠：外圈紫环 + 内层渐变珠（绿/黄/红对应初/中/高）+ 高光 + 星芒
+    private func levelOrb(_ level: PodcastLevel) -> some View {
+        let colors: [Color] = switch level {
+        case .easy: [Color(hex: "B6FF8C"), Color(hex: "34E553"), Color(hex: "0CAD2E")]
+        case .medium: [Color(hex: "FFF3A0"), Color(hex: "FFD93B"), Color(hex: "E0A800")]
+        case .hard: [Color(hex: "FF9C8C"), Color(hex: "F5544D"), Color(hex: "C21F1F")]
+        }
+        return ZStack {
+            Circle()
+                .fill(Color(hex: "2947A6").opacity(0.45))
+                .overlay(Circle().stroke(Color(hex: "8077FF"), lineWidth: 1.5))
+                .frame(width: 56, height: 56)
+            Circle()
+                .fill(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
+                .frame(width: 40, height: 40)
+            Circle()
+                .fill(Color.white.opacity(0.5))
+                .frame(width: 12, height: 12)
+                .offset(x: -7, y: -8)
+            Image(systemName: "sparkle")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.white)
+                .offset(x: 17, y: -19)
+        }
+    }
+
+    /// 今日测验内嵌面板：封面 + chip + 标题 + 副标题 + 白圆箭头 CTA
+    private func quizPanel(_ ep: Episode, record: ListeningTestStore.TestRecord?) -> some View {
+        Button {
+            sessionSource = "home_tab"
+            sessionEpisode = ep
+        } label: {
+            HStack(spacing: 12) {
+                Group {
+                    if let thumb = ep.thumbnail, !thumb.isEmpty {
+                        CachedAsyncImage(url: thumb) { thumbFallback }
+                            .scaledToFill()
+                    } else {
+                        thumbFallback
+                    }
+                }
+                .frame(width: 62, height: 62)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(record != nil
+                         ? "\(record!.correct)/\(record!.total) · 再测一次"
+                         : String(localized: "今日测验"))
+                        .font(.system(size: 10.5, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3.5)
+                        .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 7))
+                    Text(ep.title)
+                        .font(.system(size: 18, weight: .heavy))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    HStack(spacing: 5) {
+                        Image(systemName: "headphones")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Self.panelInnerStroke)
+                        Text(highlightDigits(String(localized: "盲听整集 · 答 3 题"), size: 12))
+                            .foregroundStyle(Self.panelSecondaryText)
+                    }
+                }
+
+                Spacer(minLength: 8)
+
+                ZStack {
+                    Circle().fill(Color.white.opacity(0.14)).frame(width: 52, height: 52)
+                    Circle().fill(.white).frame(width: 42, height: 42)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(Self.panelCTABlue)
+                }
+            }
+            .padding(12)
+            .background(Color.white.opacity(0.075), in: RoundedRectangle(cornerRadius: 18))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(Self.panelInnerStroke.opacity(0.45), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var thumbFallback: some View {
+        LinearGradient(colors: [Color(hex: "6355F6"), Color(hex: "2947A6")],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+            .overlay(
+                Image(systemName: "waveform")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.7))
+            )
+    }
+
+    /// 文案里的数字用设计稿黄色 #FFE65C 加粗高亮（六语言通用，不依赖词序）
+    private func highlightDigits(_ text: String, size: CGFloat) -> AttributedString {
+        var attr = AttributedString(text)
+        attr.font = .system(size: size)
+        var idx = attr.startIndex
+        while idx < attr.endIndex {
+            let next = attr.index(afterCharacter: idx)
+            if attr.characters[idx].isNumber {
+                attr[idx..<next].foregroundColor = Self.panelYellow
+                attr[idx..<next].font = .system(size: size, weight: .heavy)
+            }
+            idx = next
+        }
+        return attr
     }
 
     /// 爬坡规则文案（明示升降双向；边界级别只显示适用的一半）
