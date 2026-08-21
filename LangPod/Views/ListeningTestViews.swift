@@ -1312,17 +1312,7 @@ struct ListeningTestSegmentView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Spacer(minLength: 8)
-
-                if level.nextUp != nil {
-                    HStack(spacing: 6) {
-                        ForEach(0..<ListeningTestStore.ladderThreshold, id: \.self) { i in
-                            Circle()
-                                .fill(i < store.consecutivePerfect ? Color.white : Color.white.opacity(0.28))
-                                .frame(width: 9, height: 9)
-                        }
-                    }
-                }
+                Spacer(minLength: 0)
             }
 
             Divider()
