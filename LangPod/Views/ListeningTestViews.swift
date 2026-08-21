@@ -1125,16 +1125,7 @@ struct ListeningTestSessionView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 14)
-
-            Button {
-                dismiss()
-            } label: {
-                Text("完成")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color.textSecondary)
-                    .frame(height: 40)
-            }
-            .padding(.bottom, 12)
+            .padding(.bottom, 16)
         }
     }
 

@@ -150,6 +150,12 @@ struct LangPodApp: App {
                         onSkip: {
                             Analytics.track(.onboardingTestSkip, params: ["at": "intro"])
                             withAnimation(.easeOut(duration: 0.2)) { appState.showOnboardingTest = false }
+                            // 承接：跳过测试 → 顺势弹今日计划清单（第一格就是听力测试，路径不断链）
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                TaskEngine.shared.markPopupShown()
+                                Analytics.track(.dailyTaskPopupView)
+                                withAnimation(.easeOut(duration: 0.25)) { appState.showDailyTasks = true }
+                            }
                         }
                     )
                     .transition(.opacity)
