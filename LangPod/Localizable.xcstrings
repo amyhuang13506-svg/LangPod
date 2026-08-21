@@ -21613,6 +21613,126 @@
           }
         }
       }
+    },
+    "盲听整集 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blind listen · %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escucha a ciegas · %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通しでブラインドリスニング · %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "전체 블라인드 듣기 · %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escuta às cegas · %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "盲聽整集 · %@"
+          }
+        }
+      }
+    },
+    "盲听整集 · 答 3 题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blind listen the episode · 3 questions"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escucha el episodio a ciegas · 3 preguntas"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1話をブラインドリスニング · 3問"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한 에피소드 블라인드 듣기 · 3문제"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escute o episódio às cegas · 3 perguntas"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "盲聽整集 · 答 3 題"
+          }
+        }
+      }
+    },
+    "盲听一段真实语速的英语对话\n回答 3 个问题，马上知道你该从哪一级开始": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blind-listen to real-speed English,\nanswer 3 questions, and find your level right away"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escucha inglés a velocidad real sin subtítulos,\nresponde 3 preguntas y descubre tu nivel"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ネイティブ速度の英語をそのまま聴いて\n3問に答えるだけで、あなたのレベルがすぐ分かる"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실제 속도의 영어를 자막 없이 듣고\n3문제만 풀면 바로 내 레벨을 알 수 있어요"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouça inglês em velocidade real sem legendas,\nresponda 3 perguntas e descubra seu nível"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "盲聽一段真實語速的英語對話\n回答 3 個問題，馬上知道你該從哪一級開始"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

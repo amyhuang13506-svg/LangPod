@@ -561,10 +561,11 @@ struct ListeningTestSessionView: View {
     private var clipSeconds: Double { Double(quiz?.clipSeconds ?? 90) }
     private var level: PodcastLevel { currentEpisode.podcastLevel ?? .easy }
 
-    /// 盲听窗口初值：不超过集音频本身的时长（Easy 集常见 20-80 秒 < 90 秒窗口）
-    private var initialClipEnd: Double {
+    /// 盲听 = 听整集（8/22 用户拍板：不设 90 秒窗口，进度条就是真实全长）。
+    /// index 时长缺失时先给个上限，播放器拿到真实时长后自动收敛。
+    private var fullDuration: Double {
         let d = Double(currentEpisode.durationSeconds)
-        return d > 5 ? min(clipSeconds, d) : clipSeconds
+        return d > 5 ? d : 600
     }
 
     var body: some View {
@@ -625,11 +626,7 @@ struct ListeningTestSessionView: View {
     private func loadContent() async {
         Analytics.track(.listeningTestStart, params: ["source": source, "episode_id": currentEpisode.id])
         quiz = await APIService.shared.fetchEpisodeQuiz(level: level.rawValue, episodeId: currentEpisode.id)
-        if let quiz {
-            clipPlayer?.updateClipEnd(Double(quiz.clipSeconds ?? 90))
-        } else {
-            quizMissing = true
-        }
+        if quiz == nil { quizMissing = true }
         detailEpisode = await APIService.shared.fetchEpisodeDetail(id: currentEpisode.id, level: level)
     }
 
@@ -740,7 +737,7 @@ struct ListeningTestSessionView: View {
 
             WaveformBars(isActive: clipPlayer?.isPlaying == true)
 
-            Text("盲听 \(Int(clipPlayer?.clipEnd ?? initialClipEnd)) 秒")
+            Text("盲听整集 · \(currentEpisode.durationDisplay)")
                 .font(.system(size: 24, weight: .heavy))
                 .foregroundStyle(Color.textPrimary)
                 .padding(.top, 26)
@@ -753,7 +750,7 @@ struct ListeningTestSessionView: View {
 
             Button {
                 if clipPlayer == nil {
-                    clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: initialClipEnd, durationCap: currentEpisode.durationSeconds > 5 ? Double(currentEpisode.durationSeconds) : nil)
+                    clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: fullDuration)
                 }
                 clipPlayer?.toggle()
             } label: {
@@ -769,14 +766,14 @@ struct ListeningTestSessionView: View {
             // total 用 player 的 clipEnd（单一事实源），避免 quiz 晚到时 90/150 对不上
             VStack(spacing: 6) {
                 ProgressView(
-                    value: min(clipPlayer?.currentTime ?? 0, clipPlayer?.clipEnd ?? clipSeconds),
-                    total: clipPlayer?.clipEnd ?? clipSeconds
+                    value: min(clipPlayer?.currentTime ?? 0, clipPlayer?.clipEnd ?? fullDuration),
+                    total: clipPlayer?.clipEnd ?? fullDuration
                 )
                 .tint(Color.appPrimary)
                 HStack {
                     Text(timeString(clipPlayer?.currentTime ?? 0))
                     Spacer()
-                    Text(timeString(clipPlayer?.clipEnd ?? clipSeconds))
+                    Text(timeString(clipPlayer?.clipEnd ?? fullDuration))
                 }
                 .font(.system(size: 11))
                 .foregroundStyle(Color.textTertiary)
@@ -928,17 +925,10 @@ struct ListeningTestSessionView: View {
 
     // MARK: 原文对照（答完题才揭晓，可对照重听）
 
-    /// 盲听片段覆盖到的 script 行（时间戳缺失时按行数上限兜底）
+    /// 整集原文（盲听听的就是整集，原文对照也给全量；上限兜底防极端长脚本）
     private var clipScriptLines: [ScriptLine] {
         guard let script = detailEpisode?.script, !script.isEmpty else { return [] }
-        let clipEnd = clipPlayer?.clipEnd ?? clipSeconds
-        var out: [ScriptLine] = []
-        for (i, line) in script.enumerated() {
-            if i >= 25 { break }
-            if let s = line.start, s > clipEnd { break }
-            out.append(line)
-        }
-        return out
+        return Array(script.prefix(80))
     }
 
     @ViewBuilder
@@ -956,7 +946,7 @@ struct ListeningTestSessionView: View {
                     Spacer()
                     Button {
                         if clipPlayer == nil {
-                            clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: initialClipEnd, durationCap: currentEpisode.durationSeconds > 5 ? Double(currentEpisode.durationSeconds) : nil)
+                            clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: fullDuration)
                         }
                         clipPlayer?.toggle()
                     } label: {
@@ -1386,7 +1376,7 @@ struct ListeningTestSegmentView: View {
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundStyle(.white.opacity(0.9))
                             } else {
-                                Label(String(localized: "约 2 分钟 · 听 90 秒答 3 题"), systemImage: "headphones")
+                                Label(String(localized: "盲听整集 · 答 3 题"), systemImage: "headphones")
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundStyle(.white.opacity(0.9))
                             }
@@ -1573,7 +1563,7 @@ struct OnboardingTestIntroCard: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(Color.textPrimary)
                     .padding(.top, 10)
-                Text("听 90 秒真实语速的英语对话\n回答 3 个问题，马上知道你该从哪一级开始")
+                Text("盲听一段真实语速的英语对话\n回答 3 个问题，马上知道你该从哪一级开始")
                     .font(.system(size: 13))
                     .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
