@@ -767,6 +767,28 @@ iOS App
 - 付费墙压力过早问题未动（8/3 数据：124 曝光 vs 31 完播）
 - 30s 跳出按视频拆分诊断（一直顺延）
 
+### 2026-08-22 — 流量成本诊断 + 图片压缩止血（三期）
+
+**诊断（账单 API 对 RAM 子账号无权限，用 OSS 访问日志 + CDN API 反推）：**
+- 8/21 总流出 ~38GB/天 ≈ 1.1TB/月：CDN 25-31GB + OSS 直连 10.9GB（老版本用户）+ accelerate 0.27GB
+- 全部真实 iPhone 用户（595 分散 IP，UA=AppleCoreMedia），无盗链
+- **CDN 最大头竟是 jpg：7.7GB/天**（超过 m4a 3.8GB + mp4 2.9GB）。两个根因：
+  1. lessons 封面/场景图是 DALL-E 原图直传（均 1.8MB），episodes 封面均 581KB
+  2. App ImageCache 磁盘上限 100 张 < 全目录 ~600 张封面 → 天天挤爆重拉（单张 lesson 封面每天被拉 200-300 次）
+
+**修复（三管齐下）：**
+- [x] 存量压图：compress_images.py 在服务器跑（内网零流量费），1416 张 2334MB → 105MB（-96%），原图备份 `oss://castlingo/backup/img_orig_20260822/`；规则：lessons cover 640px / 场景图 1024px / episodes cover 900px，q80
+- [x] CDN 刷新 lessons/ + episodes/ 目录，边缘验证：lessons 封面 1.8MB → 22KB
+- [x] App ImageCache：100 张文件上限 → 300MB 字节 LRU（commit c31516b，随下版发布）
+- [x] 防回归：generate_cover.py（已 scp 服务器）+ generate_lesson_images.py（仅本地，服务器版本落后未动）生成时即压缩
+- 预期：CDN 流量 -7GB/天左右，老版本直连流量随升级自然衰减
+
+**遗留（按优先级）：**
+- [ ] CDN 海外流量资源包（按量贵，1TB/月的量值得预购）
+- [ ] mp4 存量转码 720p（可再省一半视频字节，量大工程多）
+- [ ] index.json 无条件请求缓存（~0.7GB/天）
+- ⚠️ 服务器 generate_lesson_images.py 落后本地（本地有开发中改动），下次部署 lessons 批量时记得同步
+
 ### 待办（2026-08-24 前后）
 
 - [ ] 拉数据：8/20-22 cohort D1（听测用户 vs 视频用户）、听测采用率、分级测试完成率、push_opened 分 intent
