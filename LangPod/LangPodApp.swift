@@ -33,14 +33,6 @@ struct LangPodApp: App {
     @State private var subscriptionManager = SubscriptionManager()
 
     init() {
-        #if DEBUG
-        // 真机调试：`devicectl ... launch <bundle> -- -resetRawSummary` 启动一次即
-        // 永久删掉「当天已弹过结算大卡」记录（下一次达标退出重新弹大卡）。
-        if ProcessInfo.processInfo.arguments.contains("-resetRawSummary") {
-            UserDefaults.standard.removeObject(forKey: "rawSummaryLastDay")
-            print("🧹 rawSummaryLastDay 已清除（结算大卡可重新触发）")
-        }
-        #endif
         #if canImport(RevenueCat)
         // Configure RevenueCat synchronously at launch, before anything touches
         // Purchases.shared. SubscriptionManager only accesses Purchases inside

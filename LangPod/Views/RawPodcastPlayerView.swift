@@ -32,9 +32,9 @@ struct RawPodcastPlayerView: View {
     @State private var summaryQuiz: RawQuiz?                // 结算卡出现时懒加载的理解题
 
     /// 结算卡触发阈值：本次会话 ≥3 分钟才弹（低于直接退，不打扰）
+    /// 2026-08-21 起每次达标退出都弹完整卡（去掉"每天首次大卡、其后 toast"的降级）。
+    /// 水位线机制保证同一段收听不会被重复结算。
     private static let summaryThresholdSeconds = 180
-    /// 当天首次达标退出弹大卡，其后降级轻量 toast
-    private static let summaryLastDayKey = "rawSummaryLastDay"
 
     struct PendingWord: Identifiable {
         let word: String
@@ -180,30 +180,14 @@ struct RawPodcastPlayerView: View {
     private func handleCloseTapped() {
         controller?.pause()
         #if DEBUG
-        print("🎯 结算检查: controller=\(controller == nil ? "nil(iframe?)" : "ok") accum=\(Int(controller?.listenAccumSeconds ?? -1))s unsummarized=\(Int(controller?.unsummarizedSeconds ?? -1))s threshold=\(Self.summaryThresholdSeconds)s lastDay=\(UserDefaults.standard.string(forKey: Self.summaryLastDayKey) ?? "nil")")
+        print("🎯 结算检查: controller=\(controller == nil ? "nil(iframe?)" : "ok") accum=\(Int(controller?.listenAccumSeconds ?? -1))s unsummarized=\(Int(controller?.unsummarizedSeconds ?? -1))s threshold=\(Self.summaryThresholdSeconds)s")
         #endif
         guard let c = controller, Int(c.unsummarizedSeconds) >= Self.summaryThresholdSeconds else {
             dismiss()
             return
         }
         let delta = c.takeSummaryDelta()
-        let todayKey = TaskEngine.todayKey()
-        let isFirstToday = UserDefaults.standard.string(forKey: Self.summaryLastDayKey) != todayKey
         let todayTotal = Int(TaskEngine.shared.record?.rawListenSeconds ?? 0)
-
-        guard isFirstToday else {
-            // 当天第 2 次起：轻量 toast 停留一瞬，不挡退出
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                addedWordToast = String(localized: "+\(max(1, delta.seconds / 60)) 分钟 · 今日累计 \(max(1, todayTotal / 60)) 分钟")
-            }
-            Task {
-                try? await Task.sleep(nanoseconds: 900_000_000)
-                await MainActor.run { dismiss() }
-            }
-            return
-        }
-
-        UserDefaults.standard.set(todayKey, forKey: Self.summaryLastDayKey)
         let rawTaskDone = TaskEngine.shared.todayTasks
             .contains { $0.type == .rawPodcast10Min && $0.done }
         let summary = RawSessionSummary(
@@ -217,8 +201,7 @@ struct RawPodcastPlayerView: View {
         Analytics.track(.rawSummaryView, params: [
             "podcast_id": podcast.id,
             "listened_seconds": "\(delta.seconds)",
-            "words_saved": "\(delta.words.count)",
-            "is_first_today": "1"
+            "words_saved": "\(delta.words.count)"
         ])
         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
             sessionSummary = summary
