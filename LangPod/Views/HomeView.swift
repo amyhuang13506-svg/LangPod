@@ -76,10 +76,10 @@ struct HomeView: View {
                     Picker("", selection: $topTab) {
                         Text("首页").tag(TopTab.home)
                         Text("学习").tag(TopTab.learn)
-                        Text("听力测试").tag(TopTab.test)
+                        Text("听测").tag(TopTab.test)
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 264)
+                    .frame(width: 220)
                 }
             }
             .searchable(
