@@ -1498,16 +1498,9 @@ struct ListeningTestSegmentView: View {
                     }
                 }
                 Spacer()
-                if record != nil {
-                    // 测过的可反复听（听力库=语料）
-                    Image(systemName: "arrow.counterclockwise.circle")
-                        .font(.system(size: 16))
-                        .foregroundStyle(Color.appPrimary)
-                } else {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.textQuaternary)
-                }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.textQuaternary)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)

@@ -82,11 +82,11 @@ struct HomeView: View {
                     .frame(width: 220)
                 }
             }
-            .searchable(
+            .modifier(SearchableIf(
+                enabled: topTab != .test,   // 听测页无可搜内容，不显示搜索框
                 text: $searchText,
-                placement: .navigationBarDrawer(displayMode: .always),
                 prompt: topTab == .home ? String(localized: "搜索演讲 / 访谈") : String(localized: "搜索每日播客 / 句型")
-            )
+            ))
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
             .fullScreenCover(item: $selectedExplorePodcast) { podcast in
@@ -109,6 +109,7 @@ struct HomeView: View {
                 await preloadVisibleThumbnails()
             }
             .onChange(of: topTab) { _, newValue in
+                if newValue == .test { searchText = "" }
                 let name = switch newValue {
                 case .home: "home"
                 case .learn: "learn"
@@ -1455,4 +1456,23 @@ struct NowPlayingBars: View {
         .environment(DataStore())
         .environment(AudioPlayer())
         .environment(SubscriptionManager())
+}
+
+/// 按条件挂 .searchable（听测 segment 不需要搜索框）
+private struct SearchableIf: ViewModifier {
+    let enabled: Bool
+    @Binding var text: String
+    let prompt: String
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content.searchable(
+                text: $text,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: prompt
+            )
+        } else {
+            content
+        }
+    }
 }
