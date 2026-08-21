@@ -453,9 +453,12 @@ final class ClipPlayer {
     var reachedEnd = false
     private var timeObserver: Any?
     private var endObserver: NSObjectProtocol?
+    /// 集音频真实时长（index 提供）：盲听窗口的硬上限，任何来源的设置都不能超过它
+    private let durationCap: Double?
 
-    init(urlString: String, clipEnd: Double) {
-        self.clipEnd = clipEnd
+    init(urlString: String, clipEnd: Double, durationCap: Double? = nil) {
+        self.durationCap = durationCap
+        self.clipEnd = durationCap.map { min(clipEnd, $0) } ?? clipEnd
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
         try? AVAudioSession.sharedInstance().setActive(true)
         self.player = AVPlayer(url: URL(string: urlString) ?? URL(fileURLWithPath: "/dev/null"))
@@ -495,9 +498,10 @@ final class ClipPlayer {
     /// quiz.json 晚于首次点播到达时校正片段长度（90 → 150 等）。
     /// 已提前停在旧终点的允许继续播到新终点。
     func updateClipEnd(_ end: Double) {
-        guard end > 0, end != clipEnd else { return }
-        clipEnd = end
-        if currentTime < end { reachedEnd = false }
+        let capped = durationCap.map { min(end, $0) } ?? end
+        guard capped > 0, capped != clipEnd else { return }
+        clipEnd = capped
+        if currentTime < capped { reachedEnd = false }
     }
 
     func toggle() {
@@ -749,7 +753,7 @@ struct ListeningTestSessionView: View {
 
             Button {
                 if clipPlayer == nil {
-                    clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: initialClipEnd)
+                    clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: initialClipEnd, durationCap: currentEpisode.durationSeconds > 5 ? Double(currentEpisode.durationSeconds) : nil)
                 }
                 clipPlayer?.toggle()
             } label: {
@@ -952,7 +956,7 @@ struct ListeningTestSessionView: View {
                     Spacer()
                     Button {
                         if clipPlayer == nil {
-                            clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: initialClipEnd)
+                            clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: initialClipEnd, durationCap: currentEpisode.durationSeconds > 5 ? Double(currentEpisode.durationSeconds) : nil)
                         }
                         clipPlayer?.toggle()
                     } label: {
