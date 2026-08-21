@@ -857,7 +857,6 @@ struct ListeningTestSessionView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 12) {
                 scoreHeaderCard
-                transcriptCard
                 vocabCard
                 if source == "onboarding_popup" {
                     onboardingScoreFooter
@@ -865,6 +864,7 @@ struct ListeningTestSessionView: View {
                 } else {
                     immersiveScoreFooter
                 }
+                transcriptCard
             }
             .padding(.horizontal, 24)
             .padding(.top, 14)
@@ -1112,15 +1112,6 @@ struct ListeningTestSessionView: View {
                         .background(Color.appPrimary, in: RoundedRectangle(cornerRadius: 14))
                     }
                 }
-            }
-            Button {
-                countdown = 0
-                dismiss()
-            } label: {
-                Text("结束连测")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color.textSecondary)
-                    .frame(height: 38)
             }
         }
         .padding(.horizontal, 20)
