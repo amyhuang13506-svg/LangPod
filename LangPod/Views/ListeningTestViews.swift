@@ -119,6 +119,12 @@ final class ListeningTestStore {
     func record(for episodeId: String) -> TestRecord? { records[episodeId] }
 
     func save(episode: Episode, correct: Int, total: Int) {
+        // 24 小时内重测同一集不计爬坡（防"刷同一集升级"；隔天重测正常计入）。
+        // 必须在覆盖 records 之前取旧的 completedAt。
+        let isRecentRetest = records[episode.id].map {
+            Date().timeIntervalSince($0.completedAt) < 24 * 3600
+        } ?? false
+
         // 成绩取最好，completedAt 总是更新
         if var old = records[episode.id], old.correct >= correct {
             old.completedAt = Date()
@@ -137,8 +143,9 @@ final class ListeningTestStore {
             UserDefaults.standard.set(data, forKey: storageKey)
         }
 
-        // 爬坡记账：只统计当前爬坡等级的测验（本次实际成绩，不是历史最好）
-        guard episode.level == testLevel.rawValue else { return }
+        // 爬坡记账：只统计当前爬坡等级的测验（本次实际成绩，不是历史最好）；
+        // 24 小时内重测不计（见上）
+        guard !isRecentRetest, episode.level == testLevel.rawValue else { return }
         if correct == total {
             consecutivePerfect += 1
             consecutivePoor = 0
