@@ -179,12 +179,14 @@ struct ContentView: View {
 
         case .listeningTest:
             selectedTab = 0
-            if let ep = ListeningTestStore.shared.todayTestEpisode(for: dataStore.selectedLevel) {
+            let store = ListeningTestStore.shared
+            store.initializeLevelIfNeeded(from: dataStore.selectedLevel)
+            if let ep = store.todayTestEpisode(for: store.testLevel) {
                 testSessionEpisode = ep
             } else {
                 // 集列表还没加载：切到听测 segment（页面自己会加载），并预热数据
                 NotificationCenter.default.post(name: .switchToListeningTest, object: nil)
-                Task { await ListeningTestStore.shared.loadEpisodes(for: dataStore.selectedLevel) }
+                Task { await store.loadEpisodes(for: store.testLevel) }
             }
 
         case .rawPodcast10Min:
