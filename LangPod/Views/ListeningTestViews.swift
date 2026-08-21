@@ -452,6 +452,7 @@ final class ClipPlayer {
     var currentTime: Double = 0
     var reachedEnd = false
     private var timeObserver: Any?
+    private var endObserver: NSObjectProtocol?
 
     init(urlString: String, clipEnd: Double) {
         self.clipEnd = clipEnd
@@ -466,11 +467,28 @@ final class ClipPlayer {
             let t = time.seconds.isFinite ? time.seconds : 0
             self.currentTime = t
             self.isPlaying = self.player.timeControlStatus == .playing
+            // 音频本身比盲听窗口短（Easy 集常见 20-80 秒 < 90 秒）：
+            // 片段终点收敛到真实时长，进度条 total 跟着变准
+            if let d = self.player.currentItem?.duration.seconds,
+               d.isFinite, d > 1, d < self.clipEnd {
+                self.clipEnd = d
+            }
             if t >= self.clipEnd, !self.reachedEnd {
                 self.reachedEnd = true
                 self.player.pause()
                 self.isPlaying = false   // 周期回调暂停后不再触发，这里手动收尾
             }
+        }
+        // 播到文件尾（时长信息未就绪时的兜底）：视为片段结束 → 自动进答题
+        endObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            if self.currentTime > 1 { self.clipEnd = min(self.clipEnd, self.currentTime) }
+            self.reachedEnd = true
+            self.isPlaying = false
         }
     }
 
@@ -499,6 +517,7 @@ final class ClipPlayer {
     func tearDown() {
         player.pause()
         if let obs = timeObserver { player.removeTimeObserver(obs); timeObserver = nil }
+        if let end = endObserver { NotificationCenter.default.removeObserver(end); endObserver = nil }
     }
 }
 
@@ -537,6 +556,12 @@ struct ListeningTestSessionView: View {
 
     private var clipSeconds: Double { Double(quiz?.clipSeconds ?? 90) }
     private var level: PodcastLevel { currentEpisode.podcastLevel ?? .easy }
+
+    /// 盲听窗口初值：不超过集音频本身的时长（Easy 集常见 20-80 秒 < 90 秒窗口）
+    private var initialClipEnd: Double {
+        let d = Double(currentEpisode.durationSeconds)
+        return d > 5 ? min(clipSeconds, d) : clipSeconds
+    }
 
     var body: some View {
         ZStack {
@@ -711,7 +736,7 @@ struct ListeningTestSessionView: View {
 
             WaveformBars(isActive: clipPlayer?.isPlaying == true)
 
-            Text("盲听 \(Int(clipSeconds)) 秒")
+            Text("盲听 \(Int(clipPlayer?.clipEnd ?? initialClipEnd)) 秒")
                 .font(.system(size: 24, weight: .heavy))
                 .foregroundStyle(Color.textPrimary)
                 .padding(.top, 26)
@@ -724,7 +749,7 @@ struct ListeningTestSessionView: View {
 
             Button {
                 if clipPlayer == nil {
-                    clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: clipSeconds)
+                    clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: initialClipEnd)
                 }
                 clipPlayer?.toggle()
             } label: {
@@ -927,7 +952,7 @@ struct ListeningTestSessionView: View {
                     Spacer()
                     Button {
                         if clipPlayer == nil {
-                            clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: clipSeconds)
+                            clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: initialClipEnd)
                         }
                         clipPlayer?.toggle()
                     } label: {
