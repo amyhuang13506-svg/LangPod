@@ -20,6 +20,7 @@
 import argparse
 import base64
 import glob
+import io
 import json
 import os
 import shutil
@@ -27,6 +28,7 @@ import sys
 import time
 
 import requests
+from PIL import Image
 
 from config import GPT_API_ENDPOINT, GPT_API_KEY, OUTPUT_DIR
 from lesson_catalog import COUNTRIES
@@ -256,9 +258,16 @@ def generate_scene_image(zone, lesson, hotspot_words, output_path, variation=0, 
     if not raw:
         print("      ❌ image API returned no image")
         return False
-    with open(output_path, "wb") as f:
-        f.write(raw)
-    print("      🎨 image saved (%d KB)" % (len(raw) // 1024))
+    # 原图 ~2MB，App 全屏展示 1024px 足够：压缩后保存（约 60-100KB），
+    # 与 compress_images.py 的存量规则一致，避免新课图把流量费涨回去。
+    # 注意：locate_words 的热点定位跑在这张压缩图上，坐标是归一化的不受影响
+    pil_img = Image.open(io.BytesIO(raw)).convert("RGB")
+    if max(pil_img.size) > 1024:
+        scale = 1024 / max(pil_img.size)
+        pil_img = pil_img.resize(
+            (round(pil_img.size[0] * scale), round(pil_img.size[1] * scale)), Image.LANCZOS)
+    pil_img.save(output_path, "JPEG", quality=80, optimize=True, progressive=True)
+    print("      🎨 image saved (%d KB)" % (os.path.getsize(output_path) // 1024))
     return True
 
 

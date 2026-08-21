@@ -6,6 +6,7 @@ If DALL-E refuses (content_policy_violation on sensitive topics like
 so every episode always has a cover.
 """
 
+import io
 import json
 import os
 import sys
@@ -149,9 +150,14 @@ def generate_cover(title, level, output_path):
         print("   ❌ Failed to download image: %d" % img_resp.status_code)
         return False
 
-    with open(output_path, "wb") as f:
-        f.write(img_resp.content)
-    print("   🎨 Cover: %s (%d KB)" % (output_path, len(img_resp.content) // 1024))
+    # DALL-E 原图 ~1MB+，App 展示最大 ~300pt@3x：压到 900px/q80（约 150KB），
+    # 与 compress_images.py 的存量规则保持一致，避免新集封面把流量费涨回去
+    img = Image.open(io.BytesIO(img_resp.content)).convert("RGB")
+    if max(img.size) > 900:
+        scale = 900 / max(img.size)
+        img = img.resize((round(img.size[0] * scale), round(img.size[1] * scale)), Image.LANCZOS)
+    img.save(output_path, "JPEG", quality=80, optimize=True, progressive=True)
+    print("   🎨 Cover: %s (%d KB)" % (output_path, os.path.getsize(output_path) // 1024))
     return True
 
 
