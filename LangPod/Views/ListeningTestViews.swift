@@ -1296,16 +1296,18 @@ struct ListeningTestSegmentView: View {
             // 头部：等级宝珠 + 等级/规则 + 升级进度点
             HStack(alignment: .center, spacing: 12) {
                 Text(level.icon)
-                    .font(.system(size: 30))
+                    .font(.system(size: 26))
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("当前等级")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Self.panelSecondaryText)
-                    Text(level.tabName)
-                        .font(.system(size: 25, weight: .heavy))
-                        .foregroundStyle(.white)
-                    Text(highlightDigits(ladderRuleText, size: 12))
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(alignment: .firstTextBaseline, spacing: 7) {
+                        Text(level.tabName)
+                            .font(.system(size: 20, weight: .heavy))
+                            .foregroundStyle(.white)
+                        Text("当前等级")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Self.panelSecondaryText)
+                    }
+                    Text(ladderRuleLine)
                         .foregroundStyle(Self.panelSecondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1323,16 +1325,9 @@ struct ListeningTestSegmentView: View {
                 }
             }
 
-            if store.consecutivePoor > 0 {
-                Text("⚠️ 已连续 \(store.consecutivePoor)/\(ListeningTestStore.ladderThreshold) 套 ≤1 题")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Self.panelYellow)
-                    .padding(.top, 6)
-            }
-
             Divider()
                 .overlay(Color.white.opacity(0.22))
-                .padding(.vertical, 14)
+                .padding(.vertical, 10)
 
             if let ep = todayEp {
                 quizPanel(ep, record: record)
@@ -1442,6 +1437,18 @@ struct ListeningTestSegmentView: View {
                 attr[idx..<next].font = .system(size: size, weight: .heavy)
             }
             idx = next
+        }
+        return attr
+    }
+
+    /// 第二行小字：规则文案 +（有降级风险时）黄色警告接在同一行末尾
+    private var ladderRuleLine: AttributedString {
+        var attr = highlightDigits(ladderRuleText, size: 12)
+        if store.consecutivePoor > 0 {
+            var warn = AttributedString("  ⚠️ 已连续 \(store.consecutivePoor)/\(ListeningTestStore.ladderThreshold) 套 ≤1 题")
+            warn.font = .system(size: 12, weight: .semibold)
+            warn.foregroundColor = Self.panelYellow
+            attr.append(warn)
         }
         return attr
     }
