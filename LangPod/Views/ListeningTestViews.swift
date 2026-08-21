@@ -1391,9 +1391,14 @@ struct ListeningTestSegmentView: View {
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Self.panelSecondaryText)
                     }
-                    Text(ladderRuleLine)
+                    Text(highlightDigits(ladderRuleText, size: 12))
                         .foregroundStyle(Self.panelSecondaryText)
                         .fixedSize(horizontal: false, vertical: true)
+                    if store.consecutivePoor > 0 {
+                        Text("⚠️ 已连续 \(store.consecutivePoor)/\(ListeningTestStore.ladderThreshold) 套 ≤1 题")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Self.panelYellow)
+                    }
                 }
 
                 Spacer(minLength: 0)
@@ -1523,18 +1528,6 @@ struct ListeningTestSegmentView: View {
                 attr[idx..<next].font = .system(size: size, weight: .heavy)
             }
             idx = next
-        }
-        return attr
-    }
-
-    /// 第二行小字：规则文案 +（有降级风险时）黄色警告接在同一行末尾
-    private var ladderRuleLine: AttributedString {
-        var attr = highlightDigits(ladderRuleText, size: 12)
-        if store.consecutivePoor > 0 {
-            var warn = AttributedString("  " + String(localized: "⚠️ 已连续 \(store.consecutivePoor)/\(ListeningTestStore.ladderThreshold) 套 ≤1 题"))
-            warn.font = .system(size: 12, weight: .semibold)
-            warn.foregroundColor = Self.panelYellow
-            attr.append(warn)
         }
         return attr
     }
