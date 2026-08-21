@@ -91,6 +91,7 @@ struct ContentView: View {
             }
             .fullScreenCover(item: $testSessionEpisode) { ep in
                 ListeningTestSessionView(episode: ep, source: "daily_task")
+                    .onAppear { if audioPlayer.isPlaying { audioPlayer.togglePlayPause() } }
             }
             .fullScreenCover(item: $taskPractice) { target in
                 switch target {
@@ -182,7 +183,13 @@ struct ContentView: View {
             let store = ListeningTestStore.shared
             store.initializeLevelIfNeeded(from: dataStore.selectedLevel)
             if let ep = store.todayTestEpisode(for: store.testLevel) {
-                testSessionEpisode = ep
+                // 轮换到的往期集对免费用户是锁的 → 落到听测页（那里有统一的付费墙口径）
+                let today = DateFormatter.episodeDate.string(from: Date())
+                if ep.date == today || subscriptionManager.isProUser {
+                    testSessionEpisode = ep
+                } else {
+                    NotificationCenter.default.post(name: .switchToListeningTest, object: nil)
+                }
             } else {
                 // 集列表还没加载：切到听测 segment（页面自己会加载），并预热数据
                 NotificationCenter.default.post(name: .switchToListeningTest, object: nil)

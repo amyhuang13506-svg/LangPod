@@ -146,6 +146,12 @@ struct LangPodApp: App {
                                 }
                                 if let ep = ListeningTestStore.shared.todayTestEpisode(for: level) {
                                     onboardingTestEpisode = ep
+                                } else {
+                                    // 拉不到集（离线/CDN 异常）→ 承接回今日计划弹窗，
+                                    // 别让新用户首弹流断在一次网络失败上
+                                    TaskEngine.shared.markPopupShown()
+                                    Analytics.track(.dailyTaskPopupView)
+                                    withAnimation(.easeOut(duration: 0.25)) { appState.showDailyTasks = true }
                                 }
                             }
                         },
@@ -194,6 +200,7 @@ struct LangPodApp: App {
                 .environment(dataStore)
                 .environment(vocabularyStore)
                 .environment(subscriptionManager)
+                .onAppear { if audioPlayer.isPlaying { audioPlayer.togglePlayPause() } }
             }
             .fullScreenCover(isPresented: $appState.showCompletePage) {
                 if let episode = appState.completedEpisode {
@@ -404,7 +411,10 @@ struct LangPodApp: App {
               !audioPlayer.isPlaying,
               !appState.showCompletePage,
               !appState.showTaskCelebration,
-              !appState.showDailyTasks else { return }
+              !appState.showDailyTasks,
+              // 听力测试引导卡还挂着 / 首测会话进行中 → 不叠任务弹窗
+              !appState.showOnboardingTest,
+              onboardingTestEpisode == nil else { return }
 
         // 新用户首弹：onboarding 当天的首次落地 → 听力水平测试（替代任务清单，不叠加弹窗）。
         // 老用户（onboardingCompletedDay 非今天）不受影响。

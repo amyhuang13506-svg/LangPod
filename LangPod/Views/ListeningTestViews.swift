@@ -65,6 +65,9 @@ final class ListeningTestStore {
     }
 
     private(set) var records: [String: TestRecord] = [:]
+    /// 测验日活动日志（day → 当日是否出过全对）。独立于 records 持久化，
+    /// 这样重测旧集刷新 completedAt 时不会改写历史日期的圆点/连续天数。
+    private(set) var testDays: [String: Bool] = [:]
     /// 各级别集列表缓存（index 轻量集，带 audio URL + 日期，日期新→旧）
     private(set) var levelEpisodes: [String: [Episode]] = [:]
 
@@ -76,6 +79,7 @@ final class ListeningTestStore {
     private(set) var pendingLevelChange: LevelChange?
 
     private let storageKey = "listeningTestRecords"
+    private let daysKey = "listeningTestDays"
     private let levelKey = "listeningTestLevel"
     private let perfectKey = "listeningTestPerfectStreak"
     private let poorKey = "listeningTestPoorStreak"
@@ -85,6 +89,16 @@ final class ListeningTestStore {
         if let data = UserDefaults.standard.data(forKey: storageKey),
            let saved = try? JSONDecoder().decode([String: TestRecord].self, from: data) {
             records = saved
+        }
+        if let data = UserDefaults.standard.data(forKey: daysKey),
+           let saved = try? JSONDecoder().decode([String: Bool].self, from: data) {
+            testDays = saved
+        } else if !records.isEmpty {
+            // 老数据迁移：从成绩单单时间戳尽力推导（此后由 save 持续记账）
+            for r in records.values {
+                let key = DateFormatter.episodeDate.string(from: r.completedAt)
+                testDays[key] = (testDays[key] ?? false) || (r.correct == r.total)
+            }
         }
         if let raw = UserDefaults.standard.string(forKey: levelKey),
            let level = PodcastLevel(rawValue: raw) {
@@ -151,6 +165,12 @@ final class ListeningTestStore {
         if let data = try? JSONEncoder().encode(records) {
             UserDefaults.standard.set(data, forKey: storageKey)
         }
+        // 日活动记账（append-only：只影响今天，不重写历史）
+        let dayKey = DateFormatter.episodeDate.string(from: Date())
+        testDays[dayKey] = (testDays[dayKey] ?? false) || (correct == total)
+        if let data = try? JSONEncoder().encode(testDays) {
+            UserDefaults.standard.set(data, forKey: daysKey)
+        }
 
         // 爬坡记账：只统计当前爬坡等级的测验（本次实际成绩，不是历史最好）；
         // 24 小时内重测不计（见上）
@@ -170,13 +190,11 @@ final class ListeningTestStore {
             consecutivePerfect = 0
             consecutivePoor = 0
             pendingLevelChange = LevelChange(to: up, isUp: true)
-            Analytics.track(.listeningTestComplete, params: ["ladder": "up", "to": up.rawValue])
         } else if consecutivePoor >= Self.ladderThreshold, let down = testLevel.nextDown {
             testLevel = down
             consecutivePerfect = 0
             consecutivePoor = 0
             pendingLevelChange = LevelChange(to: down, isUp: false)
-            Analytics.track(.listeningTestComplete, params: ["ladder": "down", "to": down.rawValue])
         }
         persistLadder()
     }
@@ -242,17 +260,17 @@ final class ListeningTestStore {
 
     /// 连续测验天数（今天没测则从昨天起算）
     var consecutiveTestDays: Int {
+        guard !testDays.isEmpty else { return 0 }
         let cal = Calendar.current
-        let days = Set(records.values.map { cal.startOfDay(for: $0.completedAt) })
-        guard !days.isEmpty else { return 0 }
+        let fmt = DateFormatter.episodeDate
         var day = cal.startOfDay(for: Date())
-        if !days.contains(day) {
+        if testDays[fmt.string(from: day)] == nil {
             guard let yesterday = cal.date(byAdding: .day, value: -1, to: day),
-                  days.contains(yesterday) else { return 0 }
+                  testDays[fmt.string(from: yesterday)] != nil else { return 0 }
             day = yesterday
         }
         var count = 0
-        while days.contains(day) {
+        while testDays[fmt.string(from: day)] != nil {
             count += 1
             guard let prev = cal.date(byAdding: .day, value: -1, to: day) else { break }
             day = prev
@@ -274,12 +292,15 @@ final class ListeningTestStore {
         let today = cal.startOfDay(for: Date())
         let fmt = DateFormatter()
         fmt.dateFormat = "E"
+        let dayFmt = DateFormatter.episodeDate
         return (0..<7).reversed().map { offset in
             let day = cal.date(byAdding: .day, value: -offset, to: today) ?? today
-            let recs = records.values.filter { cal.isDate($0.completedAt, inSameDayAs: day) }
-            let state: DayDotState = recs.isEmpty
-                ? .none
-                : (recs.contains { $0.correct == $0.total } ? .perfect : .partial)
+            let state: DayDotState
+            switch testDays[dayFmt.string(from: day)] {
+            case .some(true): state = .perfect
+            case .some(false): state = .partial
+            case .none: state = .none
+            }
             return DayDot(id: offset, label: fmt.string(from: day), state: state, isToday: offset == 0)
         }
     }
@@ -645,12 +666,27 @@ struct ListeningTestSessionView: View {
         }
     }
 
-    /// 每一集的内容加载（初始 + 连续测切集都走这里）
+    /// 每一集的内容加载（初始 + 连续测切集都走这里）。
+    /// 迟到的响应用 episodeId 对账：连续测切集后，上一集慢返回的 quiz/原文直接丢弃。
     private func loadContent() async {
-        Analytics.track(.listeningTestStart, params: ["source": source, "episode_id": currentEpisode.id])
-        quiz = await APIService.shared.fetchEpisodeQuiz(level: level.rawValue, episodeId: currentEpisode.id)
-        if quiz == nil { quizMissing = true }
-        detailEpisode = await APIService.shared.fetchEpisodeDetail(id: currentEpisode.id, level: level)
+        let epId = currentEpisode.id
+        let lv = level
+        Analytics.track(.listeningTestStart, params: ["source": source, "episode_id": epId])
+        let fetchedQuiz = await APIService.shared.fetchEpisodeQuiz(level: lv.rawValue, episodeId: epId)
+        await MainActor.run {
+            guard currentEpisode.id == epId else { return }
+            quiz = fetchedQuiz
+            if fetchedQuiz == nil { quizMissing = true }
+            // 短集：音频先于题目到位播完 → 题目就绪后补触发自动进答题
+            if fetchedQuiz != nil, clipPlayer?.reachedEnd == true, phase == .listening {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { phase = .quiz }
+            }
+        }
+        let detail = await APIService.shared.fetchEpisodeDetail(id: epId, level: lv)
+        await MainActor.run {
+            guard currentEpisode.id == epId else { return }
+            detailEpisode = detail
+        }
     }
 
     /// 沉浸流：切到下一集，重置全部会话状态
@@ -848,18 +884,33 @@ struct ListeningTestSessionView: View {
         let store = ListeningTestStore.shared
         store.save(episode: currentEpisode, correct: correct, total: total)
         levelChange = store.consumeLevelChange()
-        Analytics.track(.listeningTestComplete, params: [
+        var params = [
             "source": source,
             "episode_id": currentEpisode.id,
             "level": level.rawValue,
             "correct_count": "\(correct)",
             "total": "\(total)"
-        ])
+        ]
+        if let change = levelChange {
+            params["ladder"] = change.isUp ? "up" : "down"
+            params["ladder_to"] = change.to.rawValue
+        }
+        Analytics.track(.listeningTestComplete, params: params)
         NotificationCenter.default.post(name: .taskEventListeningTestDone, object: nil)
 
         // 沉浸流：备好下一集（升/降级后用新等级的队列；手动点击进入，不自动跳）
         if source != "onboarding_popup" {
             nextInQueue = store.nextEpisode(after: currentEpisode.id, level: store.testLevel)
+            if nextInQueue == nil {
+                // 升/降级后新等级的集列表可能还没加载过 → 补拉再排队
+                let epId = currentEpisode.id
+                Task { @MainActor in
+                    await store.loadEpisodes(for: store.testLevel)
+                    if phase == .score, nextInQueue == nil {
+                        nextInQueue = store.nextEpisode(after: epId, level: store.testLevel)
+                    }
+                }
+            }
         }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
             phase = .score
@@ -1209,6 +1260,7 @@ private struct WaveformBars: View {
 struct ListeningTestSegmentView: View {
     @Environment(DataStore.self) private var dataStore
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(AudioPlayer.self) private var audioPlayer
 
     @State private var sessionEpisode: Episode?
     @State private var sessionSource = "home_tab"
@@ -1237,6 +1289,10 @@ struct ListeningTestSegmentView: View {
         }
         .fullScreenCover(item: $sessionEpisode) { ep in
             ListeningTestSessionView(episode: ep, source: sessionSource)
+                .onAppear {
+                    // 盲听测验期间不能有播客在底下继续放
+                    if audioPlayer.isPlaying { audioPlayer.togglePlayPause() }
+                }
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
@@ -1363,6 +1419,11 @@ struct ListeningTestSegmentView: View {
                     RoundedRectangle(cornerRadius: 18)
                         .stroke(Color.white.opacity(0.25), lineWidth: 1)
                 )
+                .contentShape(RoundedRectangle(cornerRadius: 18))
+                .onTapGesture {
+                    // 冷启动离线导致的加载失败没有自动重试 → 点按补拉
+                    Task { await store.loadEpisodes(for: level) }
+                }
             }
         }
         .padding(18)
@@ -1373,11 +1434,18 @@ struct ListeningTestSegmentView: View {
         )
     }
 
-    /// 今日测验内嵌面板：封面 + chip + 标题 + 副标题 + 白圆箭头 CTA
+    /// 今日测验内嵌面板：封面 + chip + 标题 + 副标题 + 白圆箭头 CTA。
+    /// 今日测完轮换到的往期未测集对免费用户是锁的（与听力库口径一致）。
     private func quizPanel(_ ep: Episode, record: ListeningTestStore.TestRecord?) -> some View {
-        Button {
-            sessionSource = "home_tab"
-            sessionEpisode = ep
+        let locked = ep.date != DateFormatter.episodeDate.string(from: Date()) && !subscriptionManager.isProUser
+        return Button {
+            if locked {
+                Analytics.track(.paywallView, params: ["source": "listening_test_card"])
+                showPaywall = true
+            } else {
+                sessionSource = "home_tab"
+                sessionEpisode = ep
+            }
         } label: {
             HStack(spacing: 12) {
                 Group {
@@ -1418,7 +1486,7 @@ struct ListeningTestSegmentView: View {
                 ZStack {
                     Circle().fill(Color.white.opacity(0.14)).frame(width: 52, height: 52)
                     Circle().fill(.white).frame(width: 42, height: 42)
-                    Image(systemName: "arrow.right")
+                    Image(systemName: locked ? "lock.fill" : "arrow.right")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(Color.appPrimary)
                 }
