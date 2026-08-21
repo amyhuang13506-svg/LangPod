@@ -191,6 +191,7 @@ struct LangPodApp: App {
                 )
                 .environment(dataStore)
                 .environment(vocabularyStore)
+                .environment(subscriptionManager)
             }
             .fullScreenCover(isPresented: $appState.showCompletePage) {
                 if let episode = appState.completedEpisode {
