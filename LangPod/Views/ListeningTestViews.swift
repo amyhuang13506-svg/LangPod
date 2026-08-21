@@ -870,6 +870,10 @@ struct ListeningTestSessionView: View {
             .padding(.top, 14)
             .padding(.bottom, 24)
         }
+        .simultaneousGesture(
+            // 用户开始滚动看原文 → 取消 5 秒自动下一集，读完自己点
+            DragGesture().onChanged { _ in countdown = 0 }
+        )
         .transition(.opacity)
     }
 
@@ -945,6 +949,7 @@ struct ListeningTestSessionView: View {
                         .foregroundStyle(Color.textTertiary)
                     Spacer()
                     Button {
+                        countdown = 0   // 用户在对照原文重听 → 取消 5 秒自动下一集
                         if clipPlayer == nil {
                             clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: fullDuration)
                         }
@@ -1017,6 +1022,7 @@ struct ListeningTestSessionView: View {
                         .foregroundStyle(Color.textPrimary)
                     Spacer()
                     Button {
+                        countdown = 0   // 用户在看生词 → 取消自动下一集
                         guard !wordsSaved else { return }
                         for item in vocab { _ = vocabularyStore.addWord(item, sourceLabel: "listening_test") }
                         wordsSaved = true
