@@ -2,12 +2,13 @@ import UIKit
 import CryptoKit
 
 /// Two-tier image cache: in-memory NSCache + on-disk Caches directory.
-/// LRU eviction at 100 images (~20MB).
+/// Disk LRU eviction kicks in above 300MB total — enough to hold every cover
+/// in the catalog (~600 images), so a cover is downloaded once per install.
 actor ImageCache {
     static let shared = ImageCache()
 
     private let memory = NSCache<NSString, UIImage>()
-    private let maxDiskFiles = 100
+    private let maxDiskBytes = 300 * 1024 * 1024
 
     private var cacheDirectory: URL {
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
@@ -80,22 +81,26 @@ actor ImageCache {
         return img
     }
 
-    /// LRU eviction by file modification date.
+    /// LRU eviction by file modification date, bounded by total byte size.
     private func evictOldFilesIfNeeded() {
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(
             at: cacheDirectory,
-            includingPropertiesForKeys: [.contentModificationDateKey]
-        ), files.count > maxDiskFiles else { return }
+            includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey]
+        ) else { return }
 
-        let sorted = files.sorted { lhs, rhs in
-            let l = (try? lhs.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-            let r = (try? rhs.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-            return l < r // oldest first
+        var entries: [(url: URL, date: Date, size: Int)] = files.map { url in
+            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
+            return (url, values?.contentModificationDate ?? .distantPast, values?.fileSize ?? 0)
         }
-        let toRemove = sorted.prefix(sorted.count - maxDiskFiles)
-        for url in toRemove {
-            try? fm.removeItem(at: url)
+        var totalBytes = entries.reduce(0) { $0 + $1.size }
+        guard totalBytes > maxDiskBytes else { return }
+
+        entries.sort { $0.date < $1.date } // oldest first
+        for entry in entries {
+            guard totalBytes > maxDiskBytes else { break }
+            try? fm.removeItem(at: entry.url)
+            totalBytes -= entry.size
         }
     }
 }
