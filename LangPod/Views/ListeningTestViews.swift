@@ -1382,7 +1382,7 @@ struct ListeningTestSegmentView: View {
                     .frame(width: 22, height: 22)
                     .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 1))
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 5) {
                     HStack(alignment: .firstTextBaseline, spacing: 7) {
                         Text(level.tabName)
                             .font(.system(size: 20, weight: .heavy))
