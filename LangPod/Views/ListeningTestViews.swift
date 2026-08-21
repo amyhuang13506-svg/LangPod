@@ -1435,7 +1435,7 @@ struct ListeningTestSegmentView: View {
     private var ladderRuleLine: AttributedString {
         var attr = highlightDigits(ladderRuleText, size: 12)
         if store.consecutivePoor > 0 {
-            var warn = AttributedString("  ⚠️ 已连续 \(store.consecutivePoor)/\(ListeningTestStore.ladderThreshold) 套 ≤1 题")
+            var warn = AttributedString("  " + String(localized: "⚠️ 已连续 \(store.consecutivePoor)/\(ListeningTestStore.ladderThreshold) 套 ≤1 题"))
             warn.font = .system(size: 12, weight: .semibold)
             warn.foregroundColor = Self.panelYellow
             attr.append(warn)
