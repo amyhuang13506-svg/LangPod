@@ -286,7 +286,7 @@ struct QuizFlowCard: View {
 @Observable
 final class ClipPlayer {
     let player: AVPlayer
-    let clipEnd: Double
+    private(set) var clipEnd: Double
     var isPlaying = false
     var currentTime: Double = 0
     var reachedEnd = false
@@ -297,6 +297,8 @@ final class ClipPlayer {
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
         try? AVAudioSession.sharedInstance().setActive(true)
         self.player = AVPlayer(url: URL(string: urlString) ?? URL(fileURLWithPath: "/dev/null"))
+        // 纯音频快速起播（不等长缓冲）
+        self.player.automaticallyWaitsToMinimizeStalling = false
         let interval = CMTime(seconds: 0.25, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
         timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
             guard let self else { return }
@@ -306,19 +308,30 @@ final class ClipPlayer {
             if t >= self.clipEnd, !self.reachedEnd {
                 self.reachedEnd = true
                 self.player.pause()
+                self.isPlaying = false   // 周期回调暂停后不再触发，这里手动收尾
             }
         }
+    }
+
+    /// quiz.json 晚于首次点播到达时校正片段长度（90 → 150 等）。
+    /// 已提前停在旧终点的允许继续播到新终点。
+    func updateClipEnd(_ end: Double) {
+        guard end > 0, end != clipEnd else { return }
+        clipEnd = end
+        if currentTime < end { reachedEnd = false }
     }
 
     func toggle() {
         if player.timeControlStatus == .playing {
             player.pause()
+            isPlaying = false
         } else {
             if reachedEnd {   // 重听：回到开头
                 player.seek(to: .zero)
                 reachedEnd = false
             }
             player.play()
+            isPlaying = true
         }
     }
 
@@ -375,8 +388,20 @@ struct ListeningTestSessionView: View {
         .task {
             Analytics.track(.listeningTestStart, params: ["source": source, "episode_id": episode.id])
             quiz = await APIService.shared.fetchEpisodeQuiz(level: level.rawValue, episodeId: episode.id)
-            if quiz == nil { quizMissing = true }
+            if let quiz {
+                // 首次点播早于 quiz 到达时，校正片段长度（进度条 total 同步跟上）
+                clipPlayer?.updateClipEnd(Double(quiz.clipSeconds ?? 90))
+            } else {
+                quizMissing = true
+            }
             detailEpisode = await APIService.shared.fetchEpisodeDetail(id: episode.id, level: level)
+        }
+        .onChange(of: clipPlayer?.reachedEnd) { _, reached in
+            // 听完片段自动进入答题——不用再点按钮（有题时）
+            guard reached == true, quiz != nil, phase == .listening else { return }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                phase = .quiz
+            }
         }
         .onDisappear {
             clipPlayer?.tearDown()
@@ -444,7 +469,11 @@ struct ListeningTestSessionView: View {
             }
             .padding(.top, 22)
 
-            ProgressView(value: min(clipPlayer?.currentTime ?? 0, clipSeconds), total: clipSeconds)
+            // total 用 player 的 clipEnd（单一事实源），避免 quiz 晚到时 90/150 对不上
+            ProgressView(
+                value: min(clipPlayer?.currentTime ?? 0, clipPlayer?.clipEnd ?? clipSeconds),
+                total: clipPlayer?.clipEnd ?? clipSeconds
+            )
                 .tint(Color.appPrimary)
                 .padding(.horizontal, 40)
                 .padding(.top, 18)
