@@ -1294,8 +1294,9 @@ struct ListeningTestSegmentView: View {
 
         VStack(alignment: .leading, spacing: 0) {
             // 头部：等级宝珠 + 等级/规则 + 升级进度点
-            HStack(alignment: .center, spacing: 14) {
-                levelOrb(level)
+            HStack(alignment: .center, spacing: 12) {
+                Text(level.icon)
+                    .font(.system(size: 30))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("当前等级")
@@ -1357,32 +1358,6 @@ struct ListeningTestSegmentView: View {
                            startPoint: .topLeading, endPoint: .bottomTrailing),
             in: RoundedRectangle(cornerRadius: 20)
         )
-    }
-
-    /// 等级宝珠：外圈紫环 + 内层渐变珠（绿/黄/红对应初/中/高）+ 高光 + 星芒
-    private func levelOrb(_ level: PodcastLevel) -> some View {
-        let colors: [Color] = switch level {
-        case .easy: [Color(hex: "B6FF8C"), Color(hex: "34E553"), Color(hex: "0CAD2E")]
-        case .medium: [Color(hex: "FFF3A0"), Color(hex: "FFD93B"), Color(hex: "E0A800")]
-        case .hard: [Color(hex: "FF9C8C"), Color(hex: "F5544D"), Color(hex: "C21F1F")]
-        }
-        return ZStack {
-            Circle()
-                .fill(Color.white.opacity(0.16))
-                .overlay(Circle().stroke(Color.white.opacity(0.35), lineWidth: 1.2))
-                .frame(width: 42, height: 42)
-            Circle()
-                .fill(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
-                .frame(width: 29, height: 29)
-            Circle()
-                .fill(Color.white.opacity(0.5))
-                .frame(width: 8, height: 8)
-                .offset(x: -5, y: -6)
-            Image(systemName: "sparkle")
-                .font(.system(size: 8, weight: .bold))
-                .foregroundStyle(.white)
-                .offset(x: 13, y: -14)
-        }
     }
 
     /// 今日测验内嵌面板：封面 + chip + 标题 + 副标题 + 白圆箭头 CTA
