@@ -546,11 +546,8 @@ struct ListeningTestSessionView: View {
     @State private var wordsSaved = false
     @State private var levelChange: ListeningTestStore.LevelChange?
     @State private var nextInQueue: Episode?
-    @State private var countdown: Int = 0            // >0 = 自动下一集倒计时进行中
     @State private var showPaywall = false
     @State private var loadTask: Task<Void, Never>?
-
-    private let autoAdvanceSeconds = 5
 
     init(episode: Episode, source: String, onGoToTestTab: (() -> Void)? = nil) {
         self.source = source
@@ -605,13 +602,6 @@ struct ListeningTestSessionView: View {
                 phase = .quiz
             }
         }
-        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
-            guard countdown > 0, phase == .score else { return }
-            countdown -= 1
-            if countdown == 0, let next = nextInQueue {
-                advance(to: next)
-            }
-        }
         .onDisappear {
             loadTask?.cancel()
             clipPlayer?.tearDown()
@@ -641,7 +631,6 @@ struct ListeningTestSessionView: View {
         wordsSaved = false
         levelChange = nil
         nextInQueue = nil
-        countdown = 0
         currentEpisode = next
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
             phase = .listening
@@ -835,13 +824,9 @@ struct ListeningTestSessionView: View {
         ])
         NotificationCenter.default.post(name: .taskEventListeningTestDone, object: nil)
 
-        // 沉浸流：备好下一集（升/降级后用新等级的队列）
+        // 沉浸流：备好下一集（升/降级后用新等级的队列；手动点击进入，不自动跳）
         if source != "onboarding_popup" {
             nextInQueue = store.nextEpisode(after: currentEpisode.id, level: store.testLevel)
-            // 升降级瞬间不自动跳（先让用户看到提示卡）；下一集可免费/已 Pro 才倒计时
-            if levelChange == nil, let next = nextInQueue, !isLocked(next) {
-                countdown = autoAdvanceSeconds
-            }
         }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
             phase = .score
@@ -870,10 +855,6 @@ struct ListeningTestSessionView: View {
             .padding(.top, 14)
             .padding(.bottom, 24)
         }
-        .simultaneousGesture(
-            // 用户开始滚动看原文 → 取消 5 秒自动下一集，读完自己点
-            DragGesture().onChanged { _ in countdown = 0 }
-        )
         .transition(.opacity)
     }
 
@@ -949,7 +930,6 @@ struct ListeningTestSessionView: View {
                         .foregroundStyle(Color.textTertiary)
                     Spacer()
                     Button {
-                        countdown = 0   // 用户在对照原文重听 → 取消 5 秒自动下一集
                         if clipPlayer == nil {
                             clipPlayer = ClipPlayer(urlString: currentEpisode.audio.english, clipEnd: fullDuration)
                         }
@@ -1022,7 +1002,6 @@ struct ListeningTestSessionView: View {
                         .foregroundStyle(Color.textPrimary)
                     Spacer()
                     Button {
-                        countdown = 0   // 用户在看生词 → 取消自动下一集
                         guard !wordsSaved else { return }
                         for item in vocab { _ = vocabularyStore.addWord(item, sourceLabel: "listening_test") }
                         wordsSaved = true
@@ -1073,7 +1052,6 @@ struct ListeningTestSessionView: View {
             if let next = nextInQueue {
                 if isLocked(next) {
                     Button {
-                        countdown = 0
                         Analytics.track(.paywallView, params: ["source": "listening_test_flow"])
                         showPaywall = true
                     } label: {
@@ -1096,14 +1074,6 @@ struct ListeningTestSessionView: View {
                             Text("下一集：\(next.title)")
                                 .font(.system(size: 15, weight: .bold))
                                 .lineLimit(1)
-                            if countdown > 0 {
-                                Text("\(countdown)s")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .monospacedDigit()
-                                    .padding(.horizontal, 7)
-                                    .padding(.vertical, 3)
-                                    .background(Color.white.opacity(0.25), in: Capsule())
-                            }
                         }
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14)
