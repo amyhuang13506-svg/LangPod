@@ -416,16 +416,9 @@ struct LangPodApp: App {
               !appState.showOnboardingTest,
               onboardingTestEpisode == nil else { return }
 
-        // 新用户首弹：onboarding 当天的首次落地 → 听力水平测试（替代任务清单，不叠加弹窗）。
-        // 老用户（onboardingCompletedDay 非今天）不受影响。
-        if UserDefaults.standard.string(forKey: "onboardingCompletedDay") == TaskEngine.todayKey(),
-           !UserDefaults.standard.bool(forKey: "onboardingTestPromptShown") {
-            UserDefaults.standard.set(true, forKey: "onboardingTestPromptShown")
-            withAnimation(.easeOut(duration: 0.25)) {
-                appState.showOnboardingTest = true
-            }
-            return
-        }
+        // 8/22 回滚：新用户首弹分级测试下线（1.6.0 上线后留存没抬、付费更差）。
+        // 听测入口保留（首页「听测」段 / 听力库 / 每日任务格），只是不再主动弹。
+        // OnboardingTestIntroCard 及 showOnboardingTest 链路保留备用，此处不再触发。
 
         engine.markPopupShown()
         Analytics.track(.dailyTaskPopupView)
