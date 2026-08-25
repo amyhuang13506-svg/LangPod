@@ -794,3 +794,11 @@ iOS App
 - [ ] 拉数据：8/20-22 cohort D1（听测用户 vs 视频用户）、听测采用率、分级测试完成率、push_opened 分 intent
 - [ ] 数据关卡（2 周）：听测用户 D1 高 ≥5pp 且分级完成率 >50% → app_config.json 切 default_home_segment=listening_test（零发版）
 - [ ] 真机验证升降级：连续 3 套触发（可用 launch 参数 -listeningTestPoorStreak N 预览警告行）
+
+### 2026-08-22 补 — 1.6.0 上线当天回滚新用户首弹 + 发 1.6.1
+
+- 1.6.0 上线后数据：留存没抬升、付费率变差 → 用户拍板回滚
+- **回滚内容**：新用户首弹分级测试弹窗下线（LangPodApp autoShowDailyTasksIfNeeded 分支移除），新用户恢复今日计划弹窗
+- **保留**：首页「听测」段、听力库、每日任务听测格、OnboardingTestIntroCard 代码链路（备用，不触发）
+- 1.6.1 (build 17) 同车带上图片缓存 300MB 修复（c31516b），已提审
+- 首页默认段远程开关（app_config.json）继续留着，数据关卡逻辑不变
