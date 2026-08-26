@@ -21,6 +21,8 @@ struct ContentView: View {
     @State private var pushRawPodcast: RawPodcast?
     /// 任务深链拉起的听力测验
     @State private var testSessionEpisode: Episode?
+    /// 截图/调试用：-debugShowPaywall YES 启动即弹付费墙
+    @State private var debugPaywall = false
 
     var body: some View {
         if dataStore.hasCompletedOnboarding {
@@ -52,6 +54,11 @@ struct ContentView: View {
                 // （argument domain 只在该次启动生效，真机正常启动不受影响）
                 let debugTab = UserDefaults.standard.integer(forKey: "debug_start_tab")
                 if (1...3).contains(debugTab) { selectedTab = debugTab }
+                // 截图/调试用：-debugShowPaywall YES 启动即弹付费墙
+                if UserDefaults.standard.bool(forKey: "debugShowPaywall") { debugPaywall = true }
+            }
+            .fullScreenCover(isPresented: $debugPaywall) {
+                PaywallView()
             }
             .onChange(of: subscriptionManager.isProUser, initial: true) {
                 audioPlayer.isProUser = subscriptionManager.isProUser
