@@ -59,15 +59,23 @@ class SubscriptionManager {
     var yearlyTrialInfo: TrialInfo?
     var monthlyTrialInfo: TrialInfo?
 
-    /// 月付介绍性优惠价展示串（如 "¥9.90"）。nil = 无优惠或商店未加载。
-    var monthlyIntroPriceDisplay: String?
+    /// 周付介绍性优惠价展示串（如 "¥0.99"）。nil = 无优惠或商店未加载。
+    var weeklyIntroPriceDisplay: String?
 
-    /// DEBUG 预览：launch 参数 -mockMonthlyIntro YES 可在商店未配置优惠时看完整版式
-    var effectiveMonthlyIntro: String? {
+    /// DEBUG 预览：launch 参数 -mockWeeklyIntro YES 可在商店未配置优惠时看完整版式
+    var effectiveWeeklyIntro: String? {
         #if DEBUG
-        if UserDefaults.standard.bool(forKey: "mockMonthlyIntro") { return "¥9.9" }
+        if UserDefaults.standard.bool(forKey: "mockWeeklyIntro") { return "¥0.99" }
         #endif
-        return monthlyIntroPriceDisplay
+        return weeklyIntroPriceDisplay
+    }
+
+    /// 周付商品是否可购买（SKU 未创建/未过审时付费墙隐藏周付行）
+    var weeklyAvailable: Bool {
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "mockWeeklyIntro") { return true }
+        #endif
+        return weeklyProduct != nil
     }
 
     /// Raw debug snapshot for the DEBUG overlay on PaywallView. Diagnostic only.
@@ -110,6 +118,17 @@ class SubscriptionManager {
 
     private var yearlyPackage: Package?
     private var monthlyPackage: Package?
+    /// 周付：offering 里有 package 就用 package（正常路径），
+    /// 后台 offering 没配时退化为直接拉 StoreProduct（购买走 purchase(product:)）。
+    private var weeklyPackage: Package?
+    private var weeklyProduct: StoreProduct?
+
+    var weeklyPriceDisplay: String {
+        if let product = weeklyProduct {
+            return Self.formatPriceWithPeriod(product)
+        }
+        return String(localized: "¥16.8/周")
+    }
 
     var yearlyPriceDisplay: String {
         if let pkg = yearlyPackage {
@@ -122,16 +141,24 @@ class SubscriptionManager {
         if let pkg = monthlyPackage {
             return Self.formatPriceWithPeriod(pkg.storeProduct)
         }
-        return String(localized: "¥38/月")
+        return String(localized: "¥48/月")
     }
 
     /// 订阅成功后给 Adjust 回传收入用（ROAS 出价）。商店未加载时回退写死 CNY 定价。
     func priceInfo(for productID: String) -> (value: Double, currency: String) {
-        let pkg = productID == Self.yearlyID ? yearlyPackage : monthlyPackage
-        if let product = pkg?.storeProduct {
+        let product: StoreProduct? = switch productID {
+        case Self.yearlyID:  yearlyPackage?.storeProduct
+        case Self.weeklyID:  weeklyProduct
+        default:             monthlyPackage?.storeProduct
+        }
+        if let product {
             return ((product.price as NSDecimalNumber).doubleValue, product.currencyCode ?? "CNY")
         }
-        return (productID == Self.yearlyID ? 298 : 38, "CNY")
+        switch productID {
+        case Self.yearlyID: return (298, "CNY")
+        case Self.weeklyID: return (16.8, "CNY")
+        default:            return (48, "CNY")
+        }
     }
 
     private static func formatPriceWithPeriod(_ product: StoreProduct) -> String {
@@ -154,6 +181,7 @@ class SubscriptionManager {
 
     static let yearlyID = "com.amyhuang.castlingo.pro.yearly.v2"
     static let monthlyID = "com.amyhuang.castlingo.pro.monthly.v2"
+    static let weeklyID = "com.amyhuang.castlingo.pro.weekly.v1"
 
     private var customerInfoListener: Task<Void, Never>?
 
@@ -198,6 +226,14 @@ class SubscriptionManager {
                 ?? offering?.availablePackages.first { $0.storeProduct.productIdentifier == Self.yearlyID }
             monthlyPackage = offering?.monthly
                 ?? offering?.availablePackages.first { $0.storeProduct.productIdentifier == Self.monthlyID }
+            weeklyPackage = offering?.weekly
+                ?? offering?.availablePackages.first { $0.storeProduct.productIdentifier == Self.weeklyID }
+            if let pkg = weeklyPackage {
+                weeklyProduct = pkg.storeProduct
+            } else {
+                // Offering 里没配周付 → 直接按 product id 拉（购买走 purchase(product:)）
+                weeklyProduct = await Purchases.shared.products([Self.weeklyID]).first
+            }
             await refreshTrialInfo()
         } catch {
             // Offerings not available yet (dashboard not configured / offline)
@@ -238,19 +274,19 @@ class SubscriptionManager {
             lines.append("× no yearly package")
         }
 
-        // 月付介绍性优惠（付费型，如首月 ¥9.9；免费试用型不算）
-        var monthlyIntro: String? = nil
-        if let product = monthlyPackage?.storeProduct,
+        // 周付介绍性优惠（付费型，如首周 ¥0.99；免费试用型不算）
+        var weeklyIntro: String? = nil
+        if let product = weeklyProduct,
            let intro = product.introductoryDiscount,
            intro.paymentMode != .freeTrial {
-            monthlyIntro = intro.localizedPriceString
-            lines.append("  ✅ monthly intro \(intro.localizedPriceString)")
+            weeklyIntro = intro.localizedPriceString
+            lines.append("  ✅ weekly intro \(intro.localizedPriceString)")
         }
 
-        lines.append("final: yearly=\(yearly != nil ? "Y" : "nil") intro=\(monthlyIntro ?? "nil")")
+        lines.append("final: yearly=\(yearly != nil ? "Y" : "nil") weeklyIntro=\(weeklyIntro ?? "nil")")
         yearlyTrialInfo = yearly
         monthlyTrialInfo = nil
-        monthlyIntroPriceDisplay = monthlyIntro
+        weeklyIntroPriceDisplay = weeklyIntro
         trialDebugLines = lines
         for line in lines { print("🔍 [TrialDebug/RC] \(line)") }
     }
@@ -288,10 +324,14 @@ class SubscriptionManager {
         switch productID {
         case Self.yearlyID:  package = yearlyPackage
         case Self.monthlyID: package = monthlyPackage
+        case Self.weeklyID:  package = weeklyPackage
         default:             package = nil
         }
 
-        guard let pkg = package else {
+        // 周付允许无 package（offering 未配）时直接按 StoreProduct 购买
+        let directProduct: StoreProduct? = (package == nil && productID == Self.weeklyID) ? weeklyProduct : nil
+
+        guard package != nil || directProduct != nil else {
             lastPurchaseError = String(localized: "商品未加载，请稍后重试。")
             return false
         }
@@ -300,7 +340,12 @@ class SubscriptionManager {
         defer { isPurchasing = false }
 
         do {
-            let result = try await Purchases.shared.purchase(package: pkg)
+            let result: PurchaseResultData
+            if let pkg = package {
+                result = try await Purchases.shared.purchase(package: pkg)
+            } else {
+                result = try await Purchases.shared.purchase(product: directProduct!)
+            }
             if result.userCancelled { return false }  // user closed the sheet
             let active = result.customerInfo.entitlements[RevenueCatConfig.entitlementID]?.isActive == true
             isPro = active
@@ -375,14 +420,28 @@ class SubscriptionManager {
     var yearlyTrialInfo: TrialInfo?
     var monthlyTrialInfo: TrialInfo?
 
-    /// 月付介绍性优惠价展示串（SK2 后备实现暂不解析，保持 nil；接口与 RC 分支对齐）
-    var monthlyIntroPriceDisplay: String?
+    /// 周付介绍性优惠价展示串（SK2 后备实现暂不解析，保持 nil；接口与 RC 分支对齐）
+    var weeklyIntroPriceDisplay: String?
 
-    var effectiveMonthlyIntro: String? {
+    var effectiveWeeklyIntro: String? {
         #if DEBUG
-        if UserDefaults.standard.bool(forKey: "mockMonthlyIntro") { return "¥9.9" }
+        if UserDefaults.standard.bool(forKey: "mockWeeklyIntro") { return "¥0.99" }
         #endif
-        return monthlyIntroPriceDisplay
+        return weeklyIntroPriceDisplay
+    }
+
+    var weeklyAvailable: Bool {
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "mockWeeklyIntro") { return true }
+        #endif
+        return products.contains { $0.id == Self.weeklyID }
+    }
+
+    var weeklyPriceDisplay: String {
+        if let product = products.first(where: { $0.id == Self.weeklyID }) {
+            return Self.formatPriceWithPeriod(product)
+        }
+        return String(localized: "¥16.8/周")
     }
 
     /// Raw debug snapshot of what refreshTrialInfo() saw — for DEBUG overlay on PaywallView.
@@ -447,7 +506,7 @@ class SubscriptionManager {
         if let product = products.first(where: { $0.id == Self.monthlyID }) {
             return Self.formatPriceWithPeriod(product)
         }
-        return String(localized: "¥38/月")
+        return String(localized: "¥48/月")
     }
 
     /// 订阅成功后给 Adjust 回传收入用（ROAS 出价）。商店未加载时回退写死 CNY 定价。
@@ -456,7 +515,7 @@ class SubscriptionManager {
             let currency = product.priceFormatStyle.currencyCode
             return ((product.price as NSDecimalNumber).doubleValue, currency)
         }
-        return (productID == Self.yearlyID ? 298 : 38, "CNY")
+        return (productID == Self.yearlyID ? 298 : 48, "CNY")
     }
 
     private static func formatPriceWithPeriod(_ product: Product) -> String {
@@ -480,6 +539,7 @@ class SubscriptionManager {
 
     static let yearlyID = "com.amyhuang.castlingo.pro.yearly.v2"
     static let monthlyID = "com.amyhuang.castlingo.pro.monthly.v2"
+    static let weeklyID = "com.amyhuang.castlingo.pro.weekly.v1"
 
     private var transactionListener: Task<Void, Error>?
 

@@ -4,7 +4,7 @@ struct LegacyPaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SubscriptionManager.self) private var subscriptionManager
 
-    @State private var selectedPlan: PricePlan = .monthly
+    @State private var selectedPlan: PricePlan = .weekly
     @State private var breathePhase = false
     @State private var headerAppeared = false
     @State private var iconFloat = false
@@ -13,7 +13,7 @@ struct LegacyPaywallView: View {
     @State private var trialRowsAppeared: [Bool] = [false, false, false]
     @State private var fixedBottomHeight: CGFloat = 160
 
-    enum PricePlan { case monthly, yearly }
+    enum PricePlan { case weekly, monthly, yearly }
 
     // MARK: - Body
 
@@ -36,17 +36,19 @@ struct LegacyPaywallView: View {
                                 featureCard
                                     .padding(.horizontal, 24)
 
-                                // Monthly row（主推）+ 优惠/续费明细（always above-fold）
+                                // Weekly row（主推）+ 优惠/续费明细（always above-fold）
                                 VStack(spacing: 12) {
-                                    subscriptionRow(
-                                        title: String(localized: "月付"),
-                                        price: subscriptionManager.monthlyPriceDisplay,
-                                        badge: subscriptionManager.effectiveMonthlyIntro.map { String(localized: "首月 \($0)") },
-                                        isSelected: selectedPlan == .monthly,
-                                        onTap: { selectedPlan = .monthly }
-                                    )
-                                    .opacity(planRowsAppeared[0] ? 1 : 0)
-                                    .offset(x: planRowsAppeared[0] ? 0 : -20)
+                                    if subscriptionManager.weeklyAvailable {
+                                        subscriptionRow(
+                                            title: String(localized: "周付"),
+                                            price: subscriptionManager.weeklyPriceDisplay,
+                                            badge: subscriptionManager.effectiveWeeklyIntro.map { String(localized: "首周 \($0)") },
+                                            isSelected: selectedPlan == .weekly,
+                                            onTap: { selectedPlan = .weekly }
+                                        )
+                                        .opacity(planRowsAppeared[0] ? 1 : 0)
+                                        .offset(x: planRowsAppeared[0] ? 0 : -20)
+                                    }
 
                                     trialDetails()
                                 }
@@ -57,13 +59,21 @@ struct LegacyPaywallView: View {
                                 alignment: .top
                             )
 
-                            // Below-fold: yearly row — off-screen by default, scroll down to reach
-                            subscriptionRow(
-                                title: String(localized: "年付"),
-                                price: subscriptionManager.yearlyPriceDisplay,
-                                isSelected: selectedPlan == .yearly,
-                                onTap: { selectedPlan = .yearly }
-                            )
+                            // Below-fold: monthly + yearly rows — scroll down to reach
+                            VStack(spacing: 12) {
+                                subscriptionRow(
+                                    title: String(localized: "月付"),
+                                    price: subscriptionManager.monthlyPriceDisplay,
+                                    isSelected: selectedPlan == .monthly,
+                                    onTap: { selectedPlan = .monthly }
+                                )
+                                subscriptionRow(
+                                    title: String(localized: "年付"),
+                                    price: subscriptionManager.yearlyPriceDisplay,
+                                    isSelected: selectedPlan == .yearly,
+                                    onTap: { selectedPlan = .yearly }
+                                )
+                            }
                             .opacity(planRowsAppeared[1] ? 1 : 0)
                             .offset(x: planRowsAppeared[1] ? 0 : -20)
                             .padding(.horizontal, 24)
@@ -381,20 +391,24 @@ struct LegacyPaywallView: View {
     // MARK: - Trial Details (shared)
 
     private var renewalPriceText: String {
-        selectedPlan == .yearly ? subscriptionManager.yearlyPriceDisplay : subscriptionManager.monthlyPriceDisplay
+        switch selectedPlan {
+        case .weekly:  subscriptionManager.weeklyPriceDisplay
+        case .monthly: subscriptionManager.monthlyPriceDisplay
+        case .yearly:  subscriptionManager.yearlyPriceDisplay
+        }
     }
 
     /// Inline-styled renewal summary above the CTA. Only the price is orange-bolded
     /// so App Review sees an unambiguous, conspicuous disclosure.
-    /// 月付选中且有介绍性优惠时的优惠价（nil = 无优惠或选了年付）
+    /// 周付选中且有介绍性优惠时的优惠价（nil = 无优惠或选了其他档）
     private var currentIntroPrice: String? {
-        selectedPlan == .monthly ? subscriptionManager.effectiveMonthlyIntro : nil
+        selectedPlan == .weekly ? subscriptionManager.effectiveWeeklyIntro : nil
     }
 
     @ViewBuilder
     private var renewalSummaryText: some View {
         if let intro = currentIntroPrice {
-            Text("首月 ")
+            Text("首周 ")
                 .foregroundStyle(Color.textTertiary)
             + Text(intro)
                 .foregroundStyle(Color.warning)
@@ -427,7 +441,11 @@ struct LegacyPaywallView: View {
 
     /// Active trial info for the currently selected plan — nil means no trial available.
     private var currentTrial: TrialInfo? {
-        selectedPlan == .yearly ? subscriptionManager.effectiveYearlyTrial : subscriptionManager.effectiveMonthlyTrial
+        switch selectedPlan {
+        case .weekly:  nil
+        case .monthly: subscriptionManager.effectiveMonthlyTrial
+        case .yearly:  subscriptionManager.effectiveYearlyTrial
+        }
     }
 
     private var hasActiveTrial: Bool {
@@ -437,7 +455,7 @@ struct LegacyPaywallView: View {
     /// CTA 文案：介绍价 > 免费试用 > 普通订阅
     private var ctaLabel: String {
         if let intro = currentIntroPrice {
-            return String(localized: "以 \(intro) 开启首月")
+            return String(localized: "以 \(intro) 开启首周")
         }
         return hasActiveTrial ? String(localized: "开始免费试用") : String(localized: "立即订阅")
     }
@@ -481,7 +499,7 @@ struct LegacyPaywallView: View {
                 Circle()
                     .fill(Color.textTertiary)
                     .frame(width: 9, height: 9)
-                Text("下月起 · 按 \(renewalPriceText) 自动续费")
+                Text("下周起 · 按 \(renewalPriceText) 自动续费")
                     .font(.system(size: 14))
                     .foregroundStyle(Color.bodyText)
                 Spacer()
@@ -612,9 +630,11 @@ struct LegacyPaywallView: View {
 
             // CTA button
             Button {
-                let productID = selectedPlan == .yearly
-                    ? SubscriptionManager.yearlyID
-                    : SubscriptionManager.monthlyID
+                let productID: String = switch selectedPlan {
+                case .weekly:  SubscriptionManager.weeklyID
+                case .monthly: SubscriptionManager.monthlyID
+                case .yearly:  SubscriptionManager.yearlyID
+                }
                 Analytics.track(.purchaseAttempt, params: ["product": productID])
                 let startsTrial = hasActiveTrial
                 Task {
