@@ -46,21 +46,21 @@ struct LegacyPaywallView: View {
                                                 isSelected: selectedPlan == .weekly,
                                                 onTap: { selectedPlan = .weekly }
                                             )
-                                            .padding(.top, 9)
+                                            .padding(.top, 7)
 
-                                            // 「最多人选择」角标：贴纸造型——三角大圆、右下角收小贴住框角
-                                            Text("最多人选择")
-                                                .font(.system(size: 12, weight: .medium))
+                                            // Popular 角标：小号贴纸——三角圆、右下角收小贴住框角
+                                            Text("Popular")
+                                                .font(.system(size: 9, weight: .medium))
                                                 .foregroundStyle(.white)
-                                                .padding(.horizontal, 13)
-                                                .padding(.vertical, 5.5)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 2.5)
                                                 .background(
                                                     Color.warning,
                                                     in: UnevenRoundedRectangle(
-                                                        topLeadingRadius: 14,
-                                                        bottomLeadingRadius: 14,
-                                                        bottomTrailingRadius: 3,
-                                                        topTrailingRadius: 14,
+                                                        topLeadingRadius: 9,
+                                                        bottomLeadingRadius: 9,
+                                                        bottomTrailingRadius: 2,
+                                                        topTrailingRadius: 9,
                                                         style: .continuous
                                                     )
                                                 )
