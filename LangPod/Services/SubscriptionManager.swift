@@ -59,6 +59,17 @@ class SubscriptionManager {
     var yearlyTrialInfo: TrialInfo?
     var monthlyTrialInfo: TrialInfo?
 
+    /// 月付介绍性优惠价展示串（如 "¥9.90"）。nil = 无优惠或商店未加载。
+    var monthlyIntroPriceDisplay: String?
+
+    /// DEBUG 预览：launch 参数 -mockMonthlyIntro YES 可在商店未配置优惠时看完整版式
+    var effectiveMonthlyIntro: String? {
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "mockMonthlyIntro") { return "¥9.9" }
+        #endif
+        return monthlyIntroPriceDisplay
+    }
+
     /// Raw debug snapshot for the DEBUG overlay on PaywallView. Diagnostic only.
     var trialDebugLines: [String] = []
 
@@ -111,7 +122,7 @@ class SubscriptionManager {
         if let pkg = monthlyPackage {
             return Self.formatPriceWithPeriod(pkg.storeProduct)
         }
-        return String(localized: "¥48/月")
+        return String(localized: "¥38/月")
     }
 
     /// 订阅成功后给 Adjust 回传收入用（ROAS 出价）。商店未加载时回退写死 CNY 定价。
@@ -120,7 +131,7 @@ class SubscriptionManager {
         if let product = pkg?.storeProduct {
             return ((product.price as NSDecimalNumber).doubleValue, product.currencyCode ?? "CNY")
         }
-        return (productID == Self.yearlyID ? 298 : 48, "CNY")
+        return (productID == Self.yearlyID ? 298 : 38, "CNY")
     }
 
     private static func formatPriceWithPeriod(_ product: StoreProduct) -> String {
@@ -227,9 +238,19 @@ class SubscriptionManager {
             lines.append("× no yearly package")
         }
 
-        lines.append("final: yearly=\(yearly != nil ? "Y" : "nil")")
+        // 月付介绍性优惠（付费型，如首月 ¥9.9；免费试用型不算）
+        var monthlyIntro: String? = nil
+        if let product = monthlyPackage?.storeProduct,
+           let intro = product.introductoryDiscount,
+           intro.paymentMode != .freeTrial {
+            monthlyIntro = intro.localizedPriceString
+            lines.append("  ✅ monthly intro \(intro.localizedPriceString)")
+        }
+
+        lines.append("final: yearly=\(yearly != nil ? "Y" : "nil") intro=\(monthlyIntro ?? "nil")")
         yearlyTrialInfo = yearly
         monthlyTrialInfo = nil
+        monthlyIntroPriceDisplay = monthlyIntro
         trialDebugLines = lines
         for line in lines { print("🔍 [TrialDebug/RC] \(line)") }
     }
@@ -354,6 +375,16 @@ class SubscriptionManager {
     var yearlyTrialInfo: TrialInfo?
     var monthlyTrialInfo: TrialInfo?
 
+    /// 月付介绍性优惠价展示串（SK2 后备实现暂不解析，保持 nil；接口与 RC 分支对齐）
+    var monthlyIntroPriceDisplay: String?
+
+    var effectiveMonthlyIntro: String? {
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "mockMonthlyIntro") { return "¥9.9" }
+        #endif
+        return monthlyIntroPriceDisplay
+    }
+
     /// Raw debug snapshot of what refreshTrialInfo() saw — for DEBUG overlay on PaywallView.
     /// Not used in release logic, purely diagnostic.
     var trialDebugLines: [String] = []
@@ -416,7 +447,7 @@ class SubscriptionManager {
         if let product = products.first(where: { $0.id == Self.monthlyID }) {
             return Self.formatPriceWithPeriod(product)
         }
-        return String(localized: "¥48/月")
+        return String(localized: "¥38/月")
     }
 
     /// 订阅成功后给 Adjust 回传收入用（ROAS 出价）。商店未加载时回退写死 CNY 定价。
@@ -425,7 +456,7 @@ class SubscriptionManager {
             let currency = product.priceFormatStyle.currencyCode
             return ((product.price as NSDecimalNumber).doubleValue, currency)
         }
-        return (productID == Self.yearlyID ? 298 : 48, "CNY")
+        return (productID == Self.yearlyID ? 298 : 38, "CNY")
     }
 
     private static func formatPriceWithPeriod(_ product: Product) -> String {

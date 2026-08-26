@@ -4,7 +4,7 @@ struct LegacyPaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SubscriptionManager.self) private var subscriptionManager
 
-    @State private var selectedPlan: PricePlan = .yearly
+    @State private var selectedPlan: PricePlan = .monthly
     @State private var breathePhase = false
     @State private var headerAppeared = false
     @State private var iconFloat = false
@@ -36,13 +36,14 @@ struct LegacyPaywallView: View {
                                 featureCard
                                     .padding(.horizontal, 24)
 
-                                // Yearly row + trial timeline (always above-fold)
+                                // Monthly row（主推）+ 优惠/续费明细（always above-fold）
                                 VStack(spacing: 12) {
                                     subscriptionRow(
-                                        title: String(localized: "年付"),
-                                        price: subscriptionManager.yearlyPriceDisplay,
-                                        isSelected: selectedPlan == .yearly,
-                                        onTap: { selectedPlan = .yearly }
+                                        title: String(localized: "月付"),
+                                        price: subscriptionManager.monthlyPriceDisplay,
+                                        badge: subscriptionManager.effectiveMonthlyIntro.map { String(localized: "首月 \($0)") },
+                                        isSelected: selectedPlan == .monthly,
+                                        onTap: { selectedPlan = .monthly }
                                     )
                                     .opacity(planRowsAppeared[0] ? 1 : 0)
                                     .offset(x: planRowsAppeared[0] ? 0 : -20)
@@ -56,12 +57,12 @@ struct LegacyPaywallView: View {
                                 alignment: .top
                             )
 
-                            // Below-fold: monthly row — off-screen by default, scroll down to reach
+                            // Below-fold: yearly row — off-screen by default, scroll down to reach
                             subscriptionRow(
-                                title: String(localized: "月付"),
-                                price: subscriptionManager.monthlyPriceDisplay,
-                                isSelected: selectedPlan == .monthly,
-                                onTap: { selectedPlan = .monthly }
+                                title: String(localized: "年付"),
+                                price: subscriptionManager.yearlyPriceDisplay,
+                                isSelected: selectedPlan == .yearly,
+                                onTap: { selectedPlan = .yearly }
                             )
                             .opacity(planRowsAppeared[1] ? 1 : 0)
                             .offset(x: planRowsAppeared[1] ? 0 : -20)
@@ -333,7 +334,7 @@ struct LegacyPaywallView: View {
 
     // MARK: - Plan Selection
 
-    private func subscriptionRow(title: String, price: String, isSelected: Bool, onTap: @escaping () -> Void) -> some View {
+    private func subscriptionRow(title: String, price: String, badge: String? = nil, isSelected: Bool, onTap: @escaping () -> Void) -> some View {
         Button {
             withAnimation(.easeInOut(duration: 0.25)) { onTap() }
         } label: {
@@ -341,6 +342,14 @@ struct LegacyPaywallView: View {
                 Text(title)
                     .font(.system(size: isSelected ? 16 : 15, weight: isSelected ? .semibold : .medium))
                     .foregroundStyle(Color(hex: isSelected ? "1E293B" : "94A3B8"))
+                if let badge {
+                    Text(badge)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.warning, in: Capsule())
+                }
                 Spacer()
                 if isSelected {
                     ZStack {
@@ -377,9 +386,27 @@ struct LegacyPaywallView: View {
 
     /// Inline-styled renewal summary above the CTA. Only the price is orange-bolded
     /// so App Review sees an unambiguous, conspicuous disclosure.
+    /// 月付选中且有介绍性优惠时的优惠价（nil = 无优惠或选了年付）
+    private var currentIntroPrice: String? {
+        selectedPlan == .monthly ? subscriptionManager.effectiveMonthlyIntro : nil
+    }
+
     @ViewBuilder
     private var renewalSummaryText: some View {
-        if let trial = currentTrial {
+        if let intro = currentIntroPrice {
+            Text("首月 ")
+                .foregroundStyle(Color.textTertiary)
+            + Text(intro)
+                .foregroundStyle(Color.warning)
+                .fontWeight(.semibold)
+            + Text("，之后按 ")
+                .foregroundStyle(Color.textTertiary)
+            + Text(renewalPriceText)
+                .foregroundStyle(Color.warning)
+                .fontWeight(.semibold)
+            + Text(" 自动续费，可随时取消")
+                .foregroundStyle(Color.textTertiary)
+        } else if let trial = currentTrial {
             Text("\(trial.durationDisplay)免费试用，之后按 ")
                 .foregroundStyle(Color.textTertiary)
             + Text(renewalPriceText)
@@ -407,6 +434,14 @@ struct LegacyPaywallView: View {
         currentTrial != nil
     }
 
+    /// CTA 文案：介绍价 > 免费试用 > 普通订阅
+    private var ctaLabel: String {
+        if let intro = currentIntroPrice {
+            return String(localized: "以 \(intro) 开启首月")
+        }
+        return hasActiveTrial ? String(localized: "开始免费试用") : String(localized: "立即订阅")
+    }
+
     /// Reminder row is shown when the trial is long enough (≥ 3 days).
     private var reminderDay: Int? {
         guard let days = currentTrial?.durationDays, days >= 3 else { return nil }
@@ -415,11 +450,59 @@ struct LegacyPaywallView: View {
 
     @ViewBuilder
     private func trialDetails() -> some View {
-        if let trial = currentTrial {
+        if let intro = currentIntroPrice {
+            introTimeline(introPrice: intro)
+        } else if let trial = currentTrial {
             trialTimeline(trial: trial)
         } else {
             noTrialDetails()
         }
+    }
+
+    /// 月付介绍性优惠的 3 行明细：今天优惠价 / 下月起原价续费 / 随时取消
+    private func introTimeline(introPrice: String) -> some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(Color.success)
+                    .frame(width: 9, height: 9)
+                Text("今天 · 解锁全部 Pro 功能")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.bodyText)
+                Spacer()
+                Text(introPrice)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Color.warning)
+            }
+            .opacity(trialRowsAppeared[0] ? 1 : 0)
+            .offset(x: trialRowsAppeared[0] ? 0 : -20)
+
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(Color.textTertiary)
+                    .frame(width: 9, height: 9)
+                Text("下月起 · 按 \(renewalPriceText) 自动续费")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.bodyText)
+                Spacer()
+            }
+            .opacity(trialRowsAppeared[1] ? 1 : 0)
+            .offset(x: trialRowsAppeared[1] ? 0 : -20)
+
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.shield.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.success)
+                    .frame(width: 9, height: 9)
+                Text("可在 App Store 设置中随时取消")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.bodyText)
+                Spacer()
+            }
+            .opacity(trialRowsAppeared[2] ? 1 : 0)
+            .offset(x: trialRowsAppeared[2] ? 0 : -20)
+        }
+        .padding(.horizontal, 4)
     }
 
     /// Full 3-row timeline for an active trial: today / reminder / last day.
@@ -556,7 +639,7 @@ struct LegacyPaywallView: View {
                         ProgressView()
                             .tint(.white)
                     } else {
-                        Text(hasActiveTrial ? "开始免费试用" : "立即订阅")
+                        Text(ctaLabel)
                             .font(.system(size: 17, weight: .bold))
                     }
                 }
