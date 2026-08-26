@@ -42,10 +42,19 @@ struct LegacyPaywallView: View {
                                         subscriptionRow(
                                             title: String(localized: "周付"),
                                             price: subscriptionManager.weeklyPriceDisplay,
-                                            badge: subscriptionManager.effectiveWeeklyIntro.map { String(localized: "首周 \($0)") },
                                             isSelected: selectedPlan == .weekly,
                                             onTap: { selectedPlan = .weekly }
                                         )
+                                        .overlay(alignment: .topLeading) {
+                                            Text("Popular")
+                                                .font(.system(size: 10, weight: .heavy))
+                                                .foregroundStyle(.white)
+                                                .padding(.horizontal, 9)
+                                                .padding(.vertical, 3.5)
+                                                .background(Color.warning, in: Capsule())
+                                                .offset(x: 12, y: -9)
+                                        }
+                                        .padding(.top, 9)
                                         .opacity(planRowsAppeared[0] ? 1 : 0)
                                         .offset(x: planRowsAppeared[0] ? 0 : -20)
                                     }
@@ -344,7 +353,7 @@ struct LegacyPaywallView: View {
 
     // MARK: - Plan Selection
 
-    private func subscriptionRow(title: String, price: String, badge: String? = nil, isSelected: Bool, onTap: @escaping () -> Void) -> some View {
+    private func subscriptionRow(title: String, price: String, isSelected: Bool, onTap: @escaping () -> Void) -> some View {
         Button {
             withAnimation(.easeInOut(duration: 0.25)) { onTap() }
         } label: {
@@ -352,14 +361,6 @@ struct LegacyPaywallView: View {
                 Text(title)
                     .font(.system(size: isSelected ? 16 : 15, weight: isSelected ? .semibold : .medium))
                     .foregroundStyle(Color(hex: isSelected ? "1E293B" : "94A3B8"))
-                if let badge {
-                    Text(badge)
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Color.warning, in: Capsule())
-                }
                 Spacer()
                 if isSelected {
                     ZStack {
