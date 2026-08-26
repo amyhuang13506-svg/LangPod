@@ -48,14 +48,13 @@ struct LegacyPaywallView: View {
                                             )
                                             .padding(.top, 9)
 
-                                            // 「最多人选择」角标：黄底深字，压在框的右上角边框上
+                                            // 「最多人选择」角标：价格同色胶囊，右缘贴齐框的右边框
                                             Text("最多人选择")
-                                                .font(.system(size: 11, weight: .heavy))
-                                                .foregroundStyle(Color(hex: "3A2A00"))
-                                                .padding(.horizontal, 10)
+                                                .font(.system(size: 11, weight: .medium))
+                                                .foregroundStyle(.white)
+                                                .padding(.horizontal, 11)
                                                 .padding(.vertical, 4)
-                                                .background(Color(hex: "FFC400"), in: RoundedRectangle(cornerRadius: 7))
-                                                .offset(x: -12)
+                                                .background(Color.warning, in: Capsule())
                                                 .zIndex(1)
                                         }
                                         .opacity(planRowsAppeared[0] ? 1 : 0)
