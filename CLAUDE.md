@@ -802,3 +802,27 @@ iOS App
 - **保留**：首页「听测」段、听力库、每日任务听测格、OnboardingTestIntroCard 代码链路（备用，不触发）
 - 1.6.1 (build 17) 同车带上图片缓存 300MB 修复（c31516b），已提审
 - 首页默认段远程开关（app_config.json）继续留着，数据关卡逻辑不变
+
+### 2026-08-22 深夜 — 订阅策略改版：周付 SKU + 付费墙重排 + 1.6.2 提审
+
+**背景**：订阅率过低（attempt 17→success 4）。用户拍板：不动月付价格，新增周付 SKU 主推。
+
+**定价结构（最终）**：
+- 周付 pro.weekly.v1（新）：**首周本币 0.99**（美 $0.99/欧 €0.99/中国 ¥1/日 ¥150 等效档）→ ¥16.8/周（美 $1.99、日 ¥300）
+- 月付 ¥48、年付 ¥298 不变，降为次选（折叠线下）
+- 中途否决的方案：~~月付降价 48→38 + 首月 9.9~~（用户不想降价）
+
+**ASC（全 API 化，坑都记在 asc-upload-credentials 记忆）**：产品+6语言+175 区定价（批量 PATCH）+首周优惠（PAY_AS_YOU_GO）+可售范围+审核截图（模拟器 -debugShowPaywall 自动截）；独立提审 subscriptionSubmissions
+
+**RC**：Chrome JS 自动化建产品（内部 API 需 X-Requested-With 头），entitlement 用户手动挂，三产品齐
+
+**App（PaywallView v3，多轮 UI 迭代）**：
+- 周付置顶默认选中 + 右上角 Popular 贴纸角标（UnevenRoundedRectangle 右下角收小贴框角，价格同色）
+- 明细两行：今天解锁（优惠价）/ 随时取消；合规行保留完整续费披露
+- 价格全动态（weekly 走 offering package 或直拉 StoreProduct 兜底；RC offering 未配 weekly 也能买）
+- SKU 未过审时周付行自动隐藏（weeklyAvailable gate）
+- 调试参数：-mockWeeklyIntro / -debugShowPaywall / -useRemotePaywall NO（Chrome 残留开关会走 RC 远程模板——排查"改了没生效"先看这个）
+
+**发版**：1.6.1（回滚版）当天过审上线；1.6.2 (18) 新付费墙 + 周付 SKU 双双 WAITING_FOR_REVIEW
+
+**待观察**：首周 0.99 的"薅一周就走"率（首周→次周续费率），出数后决定是否调整
