@@ -39,7 +39,7 @@ struct LegacyPaywallView: View {
                                 // Weekly row（主推）+ 优惠/续费明细（always above-fold）
                                 VStack(spacing: 12) {
                                     if subscriptionManager.weeklyAvailable {
-                                        ZStack(alignment: .topLeading) {
+                                        ZStack(alignment: .topTrailing) {
                                             subscriptionRow(
                                                 title: String(localized: "周付"),
                                                 price: subscriptionManager.weeklyPriceDisplay,
@@ -48,14 +48,14 @@ struct LegacyPaywallView: View {
                                             )
                                             .padding(.top, 9)
 
-                                            // Popular 角标：压在框的左上角边框上
-                                            Text("Popular")
-                                                .font(.system(size: 10, weight: .heavy))
-                                                .foregroundStyle(.white)
-                                                .padding(.horizontal, 9)
-                                                .padding(.vertical, 3.5)
-                                                .background(Color.warning, in: Capsule())
-                                                .offset(x: 12)
+                                            // 「最多人选择」角标：黄底深字，压在框的右上角边框上
+                                            Text("最多人选择")
+                                                .font(.system(size: 11, weight: .heavy))
+                                                .foregroundStyle(Color(hex: "3A2A00"))
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 4)
+                                                .background(Color(hex: "FFC400"), in: RoundedRectangle(cornerRadius: 7))
+                                                .offset(x: -12)
                                                 .zIndex(1)
                                         }
                                         .opacity(planRowsAppeared[0] ? 1 : 0)
