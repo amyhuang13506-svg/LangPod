@@ -39,22 +39,25 @@ struct LegacyPaywallView: View {
                                 // Weekly row（主推）+ 优惠/续费明细（always above-fold）
                                 VStack(spacing: 12) {
                                     if subscriptionManager.weeklyAvailable {
-                                        subscriptionRow(
-                                            title: String(localized: "周付"),
-                                            price: subscriptionManager.weeklyPriceDisplay,
-                                            isSelected: selectedPlan == .weekly,
-                                            onTap: { selectedPlan = .weekly }
-                                        )
-                                        .overlay(alignment: .topLeading) {
+                                        ZStack(alignment: .topLeading) {
+                                            subscriptionRow(
+                                                title: String(localized: "周付"),
+                                                price: subscriptionManager.weeklyPriceDisplay,
+                                                isSelected: selectedPlan == .weekly,
+                                                onTap: { selectedPlan = .weekly }
+                                            )
+                                            .padding(.top, 9)
+
+                                            // Popular 角标：压在框的左上角边框上
                                             Text("Popular")
                                                 .font(.system(size: 10, weight: .heavy))
                                                 .foregroundStyle(.white)
                                                 .padding(.horizontal, 9)
                                                 .padding(.vertical, 3.5)
                                                 .background(Color.warning, in: Capsule())
-                                                .offset(x: 12, y: -9)
+                                                .offset(x: 12)
+                                                .zIndex(1)
                                         }
-                                        .padding(.top, 9)
                                         .opacity(planRowsAppeared[0] ? 1 : 0)
                                         .offset(x: planRowsAppeared[0] ? 0 : -20)
                                     }
@@ -497,18 +500,6 @@ struct LegacyPaywallView: View {
             .offset(x: trialRowsAppeared[0] ? 0 : -20)
 
             HStack(spacing: 10) {
-                Circle()
-                    .fill(Color.textTertiary)
-                    .frame(width: 9, height: 9)
-                Text("下周起 · 按 \(renewalPriceText) 自动续费")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color.bodyText)
-                Spacer()
-            }
-            .opacity(trialRowsAppeared[1] ? 1 : 0)
-            .offset(x: trialRowsAppeared[1] ? 0 : -20)
-
-            HStack(spacing: 10) {
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 11))
                     .foregroundStyle(Color.success)
@@ -518,8 +509,8 @@ struct LegacyPaywallView: View {
                     .foregroundStyle(Color.bodyText)
                 Spacer()
             }
-            .opacity(trialRowsAppeared[2] ? 1 : 0)
-            .offset(x: trialRowsAppeared[2] ? 0 : -20)
+            .opacity(trialRowsAppeared[1] ? 1 : 0)
+            .offset(x: trialRowsAppeared[1] ? 0 : -20)
         }
         .padding(.horizontal, 4)
     }
