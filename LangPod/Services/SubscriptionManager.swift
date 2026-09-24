@@ -55,6 +55,10 @@ class SubscriptionManager {
     /// Last user-visible error from purchase flow. nil when no error / after dismiss.
     var lastPurchaseError: String?
 
+    /// 上一次购买失败的机器可读原因，用于埋点区分「商品没加载出来」和「用户主动取消」。
+    /// nil = 上一次没失败（或失败后已消费）。
+    var lastFailureReason: String?
+
     // Trial info fetched from offerings (nil = no intro offer OR user not eligible)
     var yearlyTrialInfo: TrialInfo?
     var monthlyTrialInfo: TrialInfo?
@@ -75,7 +79,7 @@ class SubscriptionManager {
         #if DEBUG
         if UserDefaults.standard.bool(forKey: "mockWeeklyIntro") { return true }
         #endif
-        return weeklyProduct != nil
+        return storeProduct(for: Self.weeklyID) != nil
     }
 
     /// Raw debug snapshot for the DEBUG overlay on PaywallView. Diagnostic only.
@@ -116,41 +120,72 @@ class SubscriptionManager {
 
     // MARK: - Localized Price Display
 
+    /// Offering 里的 package —— 走 RevenueCat 服务器（api.revenuecat.com）。
     private var yearlyPackage: Package?
     private var monthlyPackage: Package?
-    /// 周付：offering 里有 package 就用 package（正常路径），
-    /// 后台 offering 没配时退化为直接拉 StoreProduct（购买走 purchase(product:)）。
     private var weeklyPackage: Package?
+
+    /// StoreKit 直拉的商品兜底 —— 走 Apple 服务器，与 RC 服务器的死活无关。
+    /// 三档都留兜底：RC offerings 超时（国内网络常见）时，付费墙仍能显示真实价格
+    /// 并通过 `purchase(product:)` 正常成交。
+    private var yearlyProduct: StoreProduct?
+    private var monthlyProduct: StoreProduct?
     private var weeklyProduct: StoreProduct?
 
+    /// 某一档当前可用的商品信息：package 优先，StoreKit 直拉兜底。
+    private func storeProduct(for productID: String) -> StoreProduct? {
+        switch productID {
+        case Self.yearlyID:  return yearlyPackage?.storeProduct ?? yearlyProduct
+        case Self.monthlyID: return monthlyPackage?.storeProduct ?? monthlyProduct
+        case Self.weeklyID:  return weeklyPackage?.storeProduct ?? weeklyProduct
+        default:             return nil
+        }
+    }
+
+    private func package(for productID: String) -> Package? {
+        switch productID {
+        case Self.yearlyID:  return yearlyPackage
+        case Self.monthlyID: return monthlyPackage
+        case Self.weeklyID:  return weeklyPackage
+        default:             return nil
+        }
+    }
+
+    /// 三档里至少有一档拿到了真实商品。false = 付费墙显示的是写死兜底价，
+    /// 此时点购买必然失败，所以付费墙出现 / App 回前台时要重拉。
+    var productsLoaded: Bool {
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "mockWeeklyIntro") { return true }
+        #endif
+        return storeProduct(for: Self.weeklyID) != nil
+            || storeProduct(for: Self.monthlyID) != nil
+            || storeProduct(for: Self.yearlyID) != nil
+    }
+
     var weeklyPriceDisplay: String {
-        if let product = weeklyProduct {
+        if let product = storeProduct(for: Self.weeklyID) {
             return Self.formatPriceWithPeriod(product)
         }
         return String(localized: "¥16.8/周")
     }
 
     var yearlyPriceDisplay: String {
-        if let pkg = yearlyPackage {
-            return Self.formatPriceWithPeriod(pkg.storeProduct)
+        if let product = storeProduct(for: Self.yearlyID) {
+            return Self.formatPriceWithPeriod(product)
         }
         return String(localized: "¥298/年")
     }
 
     var monthlyPriceDisplay: String {
-        if let pkg = monthlyPackage {
-            return Self.formatPriceWithPeriod(pkg.storeProduct)
+        if let product = storeProduct(for: Self.monthlyID) {
+            return Self.formatPriceWithPeriod(product)
         }
         return String(localized: "¥48/月")
     }
 
     /// 订阅成功后给 Adjust 回传收入用（ROAS 出价）。商店未加载时回退写死 CNY 定价。
     func priceInfo(for productID: String) -> (value: Double, currency: String) {
-        let product: StoreProduct? = switch productID {
-        case Self.yearlyID:  yearlyPackage?.storeProduct
-        case Self.weeklyID:  weeklyProduct
-        default:             monthlyPackage?.storeProduct
-        }
+        let product: StoreProduct? = storeProduct(for: productID)
         if let product {
             return ((product.price as NSDecimalNumber).doubleValue, product.currencyCode ?? "CNY")
         }
@@ -184,6 +219,8 @@ class SubscriptionManager {
     static let weeklyID = "com.amyhuang.castlingo.pro.weekly.v1"
 
     private var customerInfoListener: Task<Void, Never>?
+    private var productLoadTask: Task<Void, Never>?
+    private var isLoadingProducts = false
 
     // MARK: - Free Tier Limits
 
@@ -206,37 +243,86 @@ class SubscriptionManager {
         // All Purchases.shared access is deferred into Tasks, so it runs after
         // LangPodApp.init() has called Purchases.configure() synchronously.
         customerInfoListener = listenForCustomerInfo()
-        Task { await loadProducts() }
+        productLoadTask = startProductLoading()
         Task { await checkStatus() }
     }
 
     deinit {
         customerInfoListener?.cancel()
+        productLoadTask?.cancel()
     }
 
     // MARK: - RevenueCat
 
+    /// 商品加载。两条链路**必须分开 try**：
+    /// - `offerings()` 走 RevenueCat 服务器（api.revenuecat.com）——国内网络下会超时
+    /// - `products(_:)` 走 StoreKit（Apple 服务器）——国内是通的
+    ///
+    /// 这两句原先放在同一个 do 块里：offerings 一抛错，后面的 StoreKit 直拉整段被跳过，
+    /// 三档商品全部为 nil，付费墙只能显示写死的兜底价、点购买必报「商品未加载」。
+    /// 而首次安装的用户没有 offerings 磁盘缓存，正是最容易踩中的人群。
     @MainActor
     func loadProducts() async {
         guard Purchases.isConfigured else { return }
+        guard !isLoadingProducts else { return }
+        isLoadingProducts = true
+        defer { isLoadingProducts = false }
+
+        // 1) Offerings（RC 服务器）。失败时保留上一次拿到的 package，不清空。
         do {
             let offerings = try await Purchases.shared.offerings()
             let offering = offerings.current
             yearlyPackage = offering?.annual
                 ?? offering?.availablePackages.first { $0.storeProduct.productIdentifier == Self.yearlyID }
+                ?? yearlyPackage
             monthlyPackage = offering?.monthly
                 ?? offering?.availablePackages.first { $0.storeProduct.productIdentifier == Self.monthlyID }
+                ?? monthlyPackage
             weeklyPackage = offering?.weekly
                 ?? offering?.availablePackages.first { $0.storeProduct.productIdentifier == Self.weeklyID }
-            if let pkg = weeklyPackage {
-                weeklyProduct = pkg.storeProduct
-            } else {
-                // Offering 里没配周付 → 直接按 product id 拉（购买走 purchase(product:)）
-                weeklyProduct = await Purchases.shared.products([Self.weeklyID]).first
-            }
-            await refreshTrialInfo()
+                ?? weeklyPackage
         } catch {
-            // Offerings not available yet (dashboard not configured / offline)
+            // RC 不可达（超时 / 后台没配 offering）——下面的 StoreKit 直拉照常进行。
+        }
+
+        // 2) StoreKit 直拉补齐 offering 没覆盖的档位。周付本来就不在 default offering 里，
+        //    月付/年付则是在 RC 超时的情况下靠这一步兜底，保证付费墙仍可成交。
+        let missing = [Self.weeklyID, Self.monthlyID, Self.yearlyID]
+            .filter { storeProduct(for: $0) == nil }
+        if !missing.isEmpty {
+            for product in await Purchases.shared.products(missing) {
+                switch product.productIdentifier {
+                case Self.yearlyID:  yearlyProduct = product
+                case Self.monthlyID: monthlyProduct = product
+                case Self.weeklyID:  weeklyProduct = product
+                default: break
+                }
+            }
+        }
+
+        await refreshTrialInfo()
+    }
+
+    /// 付费墙出现 / App 回前台时调用：商品还没拿到就再拉一次。
+    /// 原先只在 init 里拉一次且失败静默，用户整个 session 都买不了。
+    @MainActor
+    func refreshProductsIfNeeded() async {
+        guard !productsLoaded else { return }
+        await loadProducts()
+    }
+
+    /// 冷启动首拉 + 弱网退避重试。首次安装的用户必须成功连通一次才有缓存，
+    /// 一次失败就放弃太脆。
+    private func startProductLoading() -> Task<Void, Never> {
+        Task { @MainActor [weak self] in
+            for delaySeconds in [0, 2, 5, 15] {
+                if delaySeconds > 0 {
+                    try? await Task.sleep(nanoseconds: UInt64(delaySeconds) * 1_000_000_000)
+                }
+                guard let self, !Task.isCancelled else { return }
+                await self.loadProducts()
+                if self.productsLoaded { return }
+            }
         }
     }
 
@@ -315,29 +401,31 @@ class SubscriptionManager {
 
     @MainActor
     func purchase(_ productID: String) async -> Bool {
+        lastFailureReason = nil
         guard Purchases.isConfigured else {
+            lastFailureReason = "not_configured"
             lastPurchaseError = String(localized: "暂时无法购买，请稍后重试。")
-            return false
-        }
-
-        let package: Package?
-        switch productID {
-        case Self.yearlyID:  package = yearlyPackage
-        case Self.monthlyID: package = monthlyPackage
-        case Self.weeklyID:  package = weeklyPackage
-        default:             package = nil
-        }
-
-        // 周付允许无 package（offering 未配）时直接按 StoreProduct 购买
-        let directProduct: StoreProduct? = (package == nil && productID == Self.weeklyID) ? weeklyProduct : nil
-
-        guard package != nil || directProduct != nil else {
-            lastPurchaseError = String(localized: "商品未加载，请稍后重试。")
             return false
         }
 
         isPurchasing = true
         defer { isPurchasing = false }
+
+        // 商品没加载出来（冷启动时弱网 / RC 超时）：当场重拉一次再买。
+        // 转圈已经在转了，用户感知就是「点了要等一下」，而不是直接被甩一句"请稍后重试"。
+        if package(for: productID) == nil && storeProduct(for: productID) == nil {
+            await loadProducts()
+        }
+
+        let package = self.package(for: productID)
+        // 无 package（offering 未配 / RC 不可达）时直接按 StoreProduct 购买
+        let directProduct: StoreProduct? = package == nil ? storeProduct(for: productID) : nil
+
+        guard package != nil || directProduct != nil else {
+            lastFailureReason = "product_not_loaded"
+            lastPurchaseError = String(localized: "商品未加载，请稍后重试。")
+            return false
+        }
 
         do {
             let result: PurchaseResultData
@@ -346,14 +434,19 @@ class SubscriptionManager {
             } else {
                 result = try await Purchases.shared.purchase(product: directProduct!)
             }
-            if result.userCancelled { return false }  // user closed the sheet
+            if result.userCancelled {
+                lastFailureReason = "cancelled"
+                return false  // user closed the sheet
+            }
             let active = result.customerInfo.entitlements[RevenueCatConfig.entitlementID]?.isActive == true
             isPro = active
             if !active {
+                lastFailureReason = "no_entitlement"
                 lastPurchaseError = String(localized: "购买已完成，但未获得 Pro 权益，请稍后重试或联系客服。")
             }
             return active
         } catch {
+            lastFailureReason = "store_error"
             lastPurchaseError = String(localized: "购买失败：\(error.localizedDescription)")
             return false
         }
@@ -415,6 +508,9 @@ class SubscriptionManager {
     /// Last user-visible error from purchase flow. nil when no error / after dismiss.
     /// PaywallView binds to this to surface silent StoreKit failures as an alert.
     var lastPurchaseError: String?
+
+    /// 上一次购买失败的机器可读原因（埋点用）。与 RC 分支保持一致。
+    var lastFailureReason: String?
 
     // Trial info fetched from products (nil = backend didn't configure OR user not eligible)
     var yearlyTrialInfo: TrialInfo?
@@ -575,15 +671,30 @@ class SubscriptionManager {
 
     // MARK: - StoreKit 2
 
+    /// 三档里至少有一档拿到了真实商品（与 RC 分支同义）。
+    var productsLoaded: Bool {
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "mockWeeklyIntro") { return true }
+        #endif
+        return !products.isEmpty
+    }
+
     @MainActor
     func loadProducts() async {
         do {
-            let ids = [Self.yearlyID, Self.monthlyID]
+            let ids = [Self.yearlyID, Self.monthlyID, Self.weeklyID]
             products = try await Product.products(for: ids)
             await refreshTrialInfo()
         } catch {
             // Products not available yet (App Store Connect not configured)
         }
+    }
+
+    /// 付费墙出现 / App 回前台时调用：商品还没拿到就再拉一次。
+    @MainActor
+    func refreshProductsIfNeeded() async {
+        guard !productsLoaded else { return }
+        await loadProducts()
     }
 
     /// Reads `introductoryOffer` + eligibility for each loaded product and
@@ -668,13 +779,20 @@ class SubscriptionManager {
 
     @MainActor
     func purchase(_ productID: String) async -> Bool {
+        lastFailureReason = nil
+        isPurchasing = true
+        defer { isPurchasing = false }
+
+        // 商品没加载出来就当场重拉一次再买（与 RC 分支同策略）
+        if !products.contains(where: { $0.id == productID }) {
+            await loadProducts()
+        }
+
         guard let product = products.first(where: { $0.id == productID }) else {
+            lastFailureReason = "product_not_loaded"
             lastPurchaseError = String(localized: "商品未加载，请稍后重试。")
             return false
         }
-
-        isPurchasing = true
-        defer { isPurchasing = false }
 
         do {
             let result = try await product.purchase()
@@ -686,16 +804,20 @@ class SubscriptionManager {
                     isPro = true
                     return true
                 case .unverified(_, let error):
+                    lastFailureReason = "unverified"
                     lastPurchaseError = String(localized: "交易验证失败：\(error.localizedDescription)")
                 }
             case .userCancelled:
-                break  // user intentionally closed the sheet — no error
+                lastFailureReason = "cancelled"
             case .pending:
+                lastFailureReason = "pending"
                 lastPurchaseError = String(localized: "购买待处理：可能需要家长批准或账号验证，请去 设置 → Apple ID 完成验证后重试。")
             @unknown default:
+                lastFailureReason = "unknown"
                 lastPurchaseError = String(localized: "未知购买结果类型。")
             }
         } catch {
+            lastFailureReason = "store_error"
             lastPurchaseError = String(localized: "购买失败：\(error.localizedDescription)")
         }
         return false

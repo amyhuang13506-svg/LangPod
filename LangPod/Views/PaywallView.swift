@@ -5,6 +5,8 @@ struct LegacyPaywallView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
 
     @State private var selectedPlan: PricePlan = .weekly
+    /// 用户手动点过档位后，商品迟到加载完也不再自动改他的选择。
+    @State private var userPickedPlan = false
     @State private var breathePhase = false
     @State private var headerAppeared = false
     @State private var iconFloat = false
@@ -44,7 +46,7 @@ struct LegacyPaywallView: View {
                                                 title: String(localized: "周付"),
                                                 price: subscriptionManager.weeklyPriceDisplay,
                                                 isSelected: selectedPlan == .weekly,
-                                                onTap: { selectedPlan = .weekly }
+                                                onTap: { selectedPlan = .weekly; userPickedPlan = true }
                                             )
                                             .padding(.top, 7)
 
@@ -85,13 +87,13 @@ struct LegacyPaywallView: View {
                                     title: String(localized: "月付"),
                                     price: subscriptionManager.monthlyPriceDisplay,
                                     isSelected: selectedPlan == .monthly,
-                                    onTap: { selectedPlan = .monthly }
+                                    onTap: { selectedPlan = .monthly; userPickedPlan = true }
                                 )
                                 subscriptionRow(
                                     title: String(localized: "年付"),
                                     price: subscriptionManager.yearlyPriceDisplay,
                                     isSelected: selectedPlan == .yearly,
-                                    onTap: { selectedPlan = .yearly }
+                                    onTap: { selectedPlan = .yearly; userPickedPlan = true }
                                 )
                             }
                             .opacity(planRowsAppeared[1] ? 1 : 0)
@@ -120,6 +122,16 @@ struct LegacyPaywallView: View {
         .onAppear {
             startAnimations()
             Analytics.track(.paywallView)
+            // 商品可能在冷启动时没拉到（弱网 / RC 超时）——付费墙一露面就补一次，
+            // 否则用户看到的是写死兜底价，点购买必失败。
+            Task { await subscriptionManager.refreshProductsIfNeeded() }
+            syncSelectedPlanWithAvailability()
+        }
+        // 周付行是按 weeklyAvailable 显示/隐藏的，但 selectedPlan 初值就是 .weekly：
+        // 周付没加载出来时那一行会消失，选中态却还停在周付上——用户看到月付年付都不高亮，
+        // 点 CTA 买的仍是买不了的周付。加载状态一变就把选中档位拉回来。
+        .onChange(of: subscriptionManager.weeklyAvailable) { _, _ in
+            syncSelectedPlanWithAvailability()
         }
         .alert(
             "购买未完成",
@@ -451,6 +463,15 @@ struct LegacyPaywallView: View {
         }
     }
 
+    /// 周付不可用时把选中档位落到年付；周付恢复后再回到主推的周付。
+    private func syncSelectedPlanWithAvailability() {
+        if !subscriptionManager.weeklyAvailable && selectedPlan == .weekly {
+            selectedPlan = .yearly
+        } else if subscriptionManager.weeklyAvailable && selectedPlan == .yearly && !userPickedPlan {
+            selectedPlan = .weekly
+        }
+    }
+
     /// Active trial info for the currently selected plan — nil means no trial available.
     private var currentTrial: TrialInfo? {
         switch selectedPlan {
@@ -639,19 +660,24 @@ struct LegacyPaywallView: View {
                 let startsTrial = hasActiveTrial
                 Task {
                     let success = await subscriptionManager.purchase(productID)
-                    Analytics.track(success ? .purchaseSuccess : .purchaseFail, params: ["product": productID])
-                    if success {
-                        if startsTrial {
-                            // 试用开始：报 trial_start（无金额——此刻未扣费，FB 投放的主优化目标）。
-                            // 真实扣费在 3 天后转正，那笔收入由续订监听/服务端通知另行回传。
-                            Analytics.track(.trialStart, params: ["product": productID])
-                        } else {
-                            // 直接扣费：Adjust 收入回传（带 value + currency，FB ROAS 出价依赖这条）
-                            let price = subscriptionManager.priceInfo(for: productID)
-                            AdjustTracker.trackRevenue(.purchaseSuccess, amount: price.value, currency: price.currency)
-                        }
-                        dismiss()
+                    guard success else {
+                        Analytics.track(.purchaseFail, params: [
+                            "product": productID,
+                            "reason": subscriptionManager.lastFailureReason ?? "unknown",
+                        ])
+                        return
                     }
+                    Analytics.track(.purchaseSuccess, params: ["product": productID])
+                    if startsTrial {
+                        // 试用开始：报 trial_start（无金额——此刻未扣费，FB 投放的主优化目标）。
+                        // 真实扣费在 3 天后转正，那笔收入由续订监听/服务端通知另行回传。
+                        Analytics.track(.trialStart, params: ["product": productID])
+                    } else {
+                        // 直接扣费：Adjust 收入回传（带 value + currency，FB ROAS 出价依赖这条）
+                        let price = subscriptionManager.priceInfo(for: productID)
+                        AdjustTracker.trackRevenue(.purchaseSuccess, amount: price.value, currency: price.currency)
+                    }
+                    dismiss()
                 }
             } label: {
                 Group {

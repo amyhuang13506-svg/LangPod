@@ -286,6 +286,9 @@ struct LangPodApp: App {
                 // Re-register on every foreground in case the user just turned
                 // on permission in Settings (system holds the prompt for life).
                 PushService.shared.registerIfAuthorized()
+                // 冷启动那一刻可能弱网 / RC 超时导致商品没拉到，之后整个 session 都买不了。
+                // 回前台是用户网络恢复的典型时机，补一次。
+                Task { await subscriptionManager.refreshProductsIfNeeded() }
                 Task { await autoShowDailyTasksIfNeeded() }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
