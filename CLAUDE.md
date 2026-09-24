@@ -826,3 +826,24 @@ iOS App
 **发版**：1.6.1（回滚版）当天过审上线；1.6.2 (18) 新付费墙 + 周付 SKU 双双 WAITING_FOR_REVIEW
 
 **待观察**：首周 0.99 的"薅一周就走"率（首周→次周续费率），出数后决定是否调整
+
+### 2026-09-24 — 付费墙「商品未加载」根因修复 + RC offering 补周付
+
+**用户反馈**：有用户订阅时显示「商品未加载」，但多数人正常。
+
+**排查结论（配置全对，问题在客户端）**：ASC 三个订阅均 APPROVED、175 区可售、175 区价格齐；RC entitlement `pro` 挂了三个产品。真正原因在 `loadProducts()`：
+- `offerings()`（走 RC 服务器 api.revenuecat.com）和 `products()`（走 StoreKit）写在同一个 `do` 块 → RC 一超时（国内网络常见），StoreKit 直拉整段被跳过，三档全 nil
+- 老用户有 RC 的 offerings 磁盘缓存，所以不受影响；**首次安装的用户没有缓存，必须真的连通一次 RC** —— 这就是「有人好有人坏」
+- 失败被 `catch {}` 吞掉 + 只在 init 拉一次 + 付费墙/回前台都不重试 → 一次失败，整个 session 都买不了
+- 放大器：周付行按 `weeklyAvailable` 隐藏，但 `selectedPlan` 初值仍是 `.weekly`，用户点 CTA 买的是买不到的周付
+
+**修复（commit 08fb87d）**：两条链路分开 try；三档都加 StoreKit 直拉兜底；启动退避重试 0/2/5/15s + 付费墙 onAppear + 回前台各补一次；`purchase()` 失败前先重拉（包在已有转圈里）；`selectedPlan` 在周付不可用时回落年付（用户手动选过就不再改）；`purchase_fail` 带 reason 参数；SK2 后备分支补齐（含漏掉的 weekly id）。
+
+**RC 后台**：给 `default` offering 补了 `$rc_weekly` package 并挂上周付产品 —— 此前周付不在 offering 里，只能单点直拉。对线上 1.6.2 立即生效。走的是 v2 REST API（后台有现成的 v2 secret key，比 Chrome 自动化干净）。
+
+**友盟待办（做不了，需等发版）**：`purchase_fail` 的 `reason` 参数无法预先注册 —— 友盟要求参数先由 SDK 实际上报，才会出现在「新发现未在计算中参数」里供勾选。发版后再去注册。
+
+### 待办（2026-09-25）
+- [ ] 打包 1.6.3 提审（付费墙加固）
+- [ ] 上线后去友盟注册 `purchase_fail` 的 `reason` 参数
+- [ ] 观察 `purchase_fail` 按 reason 的分布，确认 product_not_loaded 归零
